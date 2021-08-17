@@ -1,0 +1,51 @@
+---
+
+- name: Check if k3s storage device is attached
+  stat:
+    path: "{{ k3s_storage_device }}"
+  register: k3s_storage_device_stat
+
+- name: Configure k3s storage device
+  block:
+    - name: Ensure filesystem exists on storage device
+      filesystem:
+        fstype: "{{ k3s_storage_fstype }}"
+        dev: "{{ k3s_storage_device }}"
+        resizefs: true
+    
+    - name: Mount filesystem at required location
+      mount:
+        src: "{{ k3s_storage_device }}"
+        fstype: "{{ k3s_storage_fstype }}"
+        path: /var/lib/rancher/k3s
+        state: mounted
+  when: k3s_storage_device_stat.stat.exists
+
+- name: Download k3s binary
+  get_url:
+    url: "{{ k3s_binary_url }}"
+    checksum: "{{ k3s_binary_checksum }}"
+    dest: /usr/bin/k3s
+    mode: u=rwx,g=rx,o=rx
+  register: k3s_binary
+
+- name: Install k3s server systemd unit file
+  template:
+    src: k3s-server.service.j2
+    dest: /etc/systemd/system/k3s-server.service
+  register: k3s_server_systemd_unit
+
+- name: Reload systemd units
+  systemd:
+    daemon_reload: yes
+  when: k3s_server_systemd_unit is changed
+
+- name: Determine whether k3s server restart is required
+  set_fact:
+    k3s_restart_required: "{{ k3s_binary is changed or k3s_server_systemd_unit is changed }}"
+
+- name: Ensure k3s server is started
+  service:
+    name: k3s-server
+    state: "{{ 'restarted' if k3s_restart_required else 'started' }}"
+    enabled: yes

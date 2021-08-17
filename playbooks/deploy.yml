@@ -1,0 +1,8 @@
+---
+
+- hosts: all
+  become: yes
+  collections:
+    - stackhpc.capi_manager
+  roles:
+    - k3s
