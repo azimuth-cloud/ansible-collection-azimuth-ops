@@ -1,0 +1,33 @@
+---
+
+- name: Install clusterctl binary
+  get_url:
+    url: "{{ clusterctl_binary_url }}"
+    dest: /usr/bin/clusterctl
+    mode: u=rwx,g=rx,o=rx
+
+- name: Initialise Cluster API providers
+  command: >-
+    clusterctl init --wait-providers
+    {%- if capi_core_provider %}
+      --core {{ capi_core_provider }}
+    {%- endif %}
+    {%- if capi_bootstrap_providers %}
+      --bootstrap {{ capi_bootstrap_providers | join(',') }}
+    {%- endif %}
+    {%- if capi_control_plane_providers %}
+      --control-plane {{ capi_control_plane_providers | join(',') }}
+    {%- endif %}
+    {%- if capi_infrastructure_providers %}
+      --infrastructure {{ capi_infrastructure_providers | join(',') }}
+    {%- endif %}
+
+# TODO: Remove task once changes to OpenStack provider are merged
+- name: Install custom provider manifest
+  copy:
+    src: infrastructure-components.yaml
+    dest: /tmp/infrastructure-components.yaml
+
+# TODO: Remove task once changes to OpenStack provider are merged
+- name: Install custom providers
+  command: "{{ kubectl_executable }} apply -f /tmp/infrastructure-components.yaml"
