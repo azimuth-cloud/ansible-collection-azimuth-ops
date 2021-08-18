@@ -29,8 +29,7 @@ pip install --upgrade pip
 pip install ansible-core
 
 # Install the collection using Ansible Galaxy
-# ansible-galaxy collection install -f git+https://github.com/stackhpc/ansible-collection-capi-manager.git
-ansible-galaxy collection install -f /opt/capi-manager
+ansible-galaxy collection install -f git+https://github.com/stackhpc/ansible-collection-capi-manager.git
 
 # Execute the specified playbook against localhost
 # We use the Python interpreter from the Ansible virtualenv
