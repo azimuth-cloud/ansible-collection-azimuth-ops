@@ -1093,6 +1093,12 @@ spec:
           spec:
             description: OpenStackClusterSpec defines the desired state of OpenStackCluster.
             properties:
+              allowAllInClusterTraffic:
+                description: AllowAllInClusterTraffic is only used when managed security
+                  groups are in use. If set to true, the rules for the managed security
+                  groups are configured so that all ingress and egress between cluster
+                  nodes is permitted, allowing CNIs other than Calico to be used.
+                type: boolean
               apiServerFixedIP:
                 description: APIServerFixedIP is the fixed IP which will be associated
                   with the API server. In the case where the API server has a floating
@@ -1108,7 +1114,7 @@ spec:
                 description: APIServerFloatingIP is the floatingIP which will be associated
                   with the API server. The floatingIP will be created if it does not
                   already exist. If not specified, a new floatingIP is allocated.
-                  This field is not used if DisableAPIServerFloatingIP is set.
+                  This field is not used if DisableAPIServerFloatingIP is set to true.
                 type: string
               apiServerLoadBalancerAdditionalPorts:
                 description: APIServerLoadBalancerAdditionalPorts adds additional
@@ -1226,7 +1232,7 @@ spec:
                               items:
                                 properties:
                                   filter:
-                                    description: Filters for optional network query
+                                    description: Filters for optional subnet query
                                     properties:
                                       cidr:
                                         type: string
@@ -1272,14 +1278,17 @@ spec:
                                         type: string
                                     type: object
                                   uuid:
-                                    description: The UUID of the network. Required
-                                      if you omit the port attribute.
+                                    description: Optional UUID of the subnet. If specified
+                                      this will not be validated prior to server creation.
+                                      If specified, the enclosing `NetworkParam` must
+                                      also be specified by UUID.
                                     type: string
                                 type: object
                               type: array
                             uuid:
-                              description: The UUID of the network. Required if you
-                                omit the port attribute.
+                              description: Optional UUID of the network. If specified
+                                this will not be validated prior to server creation.
+                                Required if `Subnets` specifies a subnet by UUID.
                               type: string
                           type: object
                         type: array
@@ -1523,7 +1532,7 @@ spec:
                         Gateway of this router
                       properties:
                         filter:
-                          description: Filters for optional network query
+                          description: Filters for optional subnet query
                           properties:
                             cidr:
                               type: string
@@ -1569,8 +1578,10 @@ spec:
                               type: string
                           type: object
                         uuid:
-                          description: The UUID of the network. Required if you omit
-                            the port attribute.
+                          description: Optional UUID of the subnet. If specified this
+                            will not be validated prior to server creation. If specified,
+                            the enclosing `NetworkParam` must also be specified by
+                            UUID.
                           type: string
                       type: object
                   required:
@@ -1600,12 +1611,12 @@ spec:
                   for the APIServer should be created.
                 type: boolean
               managedSecurityGroups:
-                description: 'ManagedSecurityGroups defines that kubernetes manages
-                  the OpenStack security groups for now, that means that we''ll create
-                  security group allows traffic to/from machines belonging to that
-                  group based on Calico CNI plugin default network requirements: BGP
-                  and IP-in-IP for master node(s) and worker node(s) respectively.
-                  In the future, we could make this more flexible.'
+                description: ManagedSecurityGroups determines whether OpenStack security
+                  groups for the cluster will be managed by the OpenStack provider
+                  or whether pre-existing security groups will be specified as part
+                  of the configuration. By default, the managed security groups have
+                  rules that allow the Kubelet, etcd, the Kubernetes API server and
+                  the Calico CNI plugin to function correctly.
                 type: boolean
               network:
                 description: If NodeCIDR cannot be set this can be used to detect
@@ -2481,6 +2492,13 @@ spec:
                     description: OpenStackClusterSpec defines the desired state of
                       OpenStackCluster.
                     properties:
+                      allowAllInClusterTraffic:
+                        description: AllowAllInClusterTraffic is only used when managed
+                          security groups are in use. If set to true, the rules for
+                          the managed security groups are configured so that all ingress
+                          and egress between cluster nodes is permitted, allowing
+                          CNIs other than Calico to be used.
+                        type: boolean
                       apiServerFixedIP:
                         description: APIServerFixedIP is the fixed IP which will be
                           associated with the API server. In the case where the API
@@ -2498,7 +2516,7 @@ spec:
                           be associated with the API server. The floatingIP will be
                           created if it does not already exist. If not specified,
                           a new floatingIP is allocated. This field is not used if
-                          DisableAPIServerFloatingIP is set.
+                          DisableAPIServerFloatingIP is set to true.
                         type: string
                       apiServerLoadBalancerAdditionalPorts:
                         description: APIServerLoadBalancerAdditionalPorts adds additional
@@ -2618,7 +2636,7 @@ spec:
                                       items:
                                         properties:
                                           filter:
-                                            description: Filters for optional network
+                                            description: Filters for optional subnet
                                               query
                                             properties:
                                               cidr:
@@ -2665,14 +2683,19 @@ spec:
                                                 type: string
                                             type: object
                                           uuid:
-                                            description: The UUID of the network.
-                                              Required if you omit the port attribute.
+                                            description: Optional UUID of the subnet.
+                                              If specified this will not be validated
+                                              prior to server creation. If specified,
+                                              the enclosing `NetworkParam` must also
+                                              be specified by UUID.
                                             type: string
                                         type: object
                                       type: array
                                     uuid:
-                                      description: The UUID of the network. Required
-                                        if you omit the port attribute.
+                                      description: Optional UUID of the network. If
+                                        specified this will not be validated prior
+                                        to server creation. Required if `Subnets`
+                                        specifies a subnet by UUID.
                                       type: string
                                   type: object
                                 type: array
@@ -2925,7 +2948,7 @@ spec:
                                 for the Gateway of this router
                               properties:
                                 filter:
-                                  description: Filters for optional network query
+                                  description: Filters for optional subnet query
                                   properties:
                                     cidr:
                                       type: string
@@ -2971,8 +2994,10 @@ spec:
                                       type: string
                                   type: object
                                 uuid:
-                                  description: The UUID of the network. Required if
-                                    you omit the port attribute.
+                                  description: Optional UUID of the subnet. If specified
+                                    this will not be validated prior to server creation.
+                                    If specified, the enclosing `NetworkParam` must
+                                    also be specified by UUID.
                                   type: string
                               type: object
                           required:
@@ -3004,13 +3029,13 @@ spec:
                           a LoadBalancer for the APIServer should be created.
                         type: boolean
                       managedSecurityGroups:
-                        description: 'ManagedSecurityGroups defines that kubernetes
-                          manages the OpenStack security groups for now, that means
-                          that we''ll create security group allows traffic to/from
-                          machines belonging to that group based on Calico CNI plugin
-                          default network requirements: BGP and IP-in-IP for master
-                          node(s) and worker node(s) respectively. In the future,
-                          we could make this more flexible.'
+                        description: ManagedSecurityGroups determines whether OpenStack
+                          security groups for the cluster will be managed by the OpenStack
+                          provider or whether pre-existing security groups will be
+                          specified as part of the configuration. By default, the
+                          managed security groups have rules that allow the Kubelet,
+                          etcd, the Kubernetes API server and the Calico CNI plugin
+                          to function correctly.
                         type: boolean
                       network:
                         description: If NodeCIDR cannot be set this can be used to
@@ -3627,7 +3652,7 @@ spec:
                       items:
                         properties:
                           filter:
-                            description: Filters for optional network query
+                            description: Filters for optional subnet query
                             properties:
                               cidr:
                                 type: string
@@ -3673,14 +3698,17 @@ spec:
                                 type: string
                             type: object
                           uuid:
-                            description: The UUID of the network. Required if you
-                              omit the port attribute.
+                            description: Optional UUID of the subnet. If specified
+                              this will not be validated prior to server creation.
+                              If specified, the enclosing `NetworkParam` must also
+                              be specified by UUID.
                             type: string
                         type: object
                       type: array
                     uuid:
-                      description: The UUID of the network. Required if you omit the
-                        port attribute.
+                      description: Optional UUID of the network. If specified this
+                        will not be validated prior to server creation. Required if
+                        `Subnets` specifies a subnet by UUID.
                       type: string
                   type: object
                 type: array
@@ -4355,7 +4383,7 @@ spec:
                               items:
                                 properties:
                                   filter:
-                                    description: Filters for optional network query
+                                    description: Filters for optional subnet query
                                     properties:
                                       cidr:
                                         type: string
@@ -4401,14 +4429,17 @@ spec:
                                         type: string
                                     type: object
                                   uuid:
-                                    description: The UUID of the network. Required
-                                      if you omit the port attribute.
+                                    description: Optional UUID of the subnet. If specified
+                                      this will not be validated prior to server creation.
+                                      If specified, the enclosing `NetworkParam` must
+                                      also be specified by UUID.
                                     type: string
                                 type: object
                               type: array
                             uuid:
-                              description: The UUID of the network. Required if you
-                                omit the port attribute.
+                              description: Optional UUID of the network. If specified
+                                this will not be validated prior to server creation.
+                                Required if `Subnets` specifies a subnet by UUID.
                               type: string
                           type: object
                         type: array
@@ -4897,7 +4928,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - openstackcluster
+    - openstackclusters
   sideEffects: None
 - admissionReviewVersions:
   - v1beta1
@@ -4970,7 +5001,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - openstackcluster
+    - openstackclusters
   sideEffects: None
 - admissionReviewVersions:
   - v1beta1
