@@ -1,0 +1,27 @@
+- name: Provision infrastructure
+  hosts: openstack
+  roles:
+    - role: stackhpc.terraform-infra
+      vars:
+        # Variables controlling the Terraform provisioning
+        terraform_project_path: "{{ playbook_dir }}/terraform"
+        terraform_state: "{{ capi_manager_state | default('present') }}"
+        terraform_variables:
+          cluster_name: "{{ capi_manager_name }}"
+          network_cidr: "{{ capi_manager_network_cidr }}"
+          image_id: "{{ capi_manager_image_id }}"
+          flavor_id: "{{ capi_manager_flavor_id }}"
+          key_pair: "{{ capi_manager_key_pair }}"
+          floatingip_address: "{{ capi_manager_floatingip_address }}"
+          external_network_id: "{{ capi_manager_external_network_id }}"
+          data_volume_size: "{{ capi_manager_data_volume_size }}"
+
+- hosts: capi_managers
+  become: yes
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  vars:
+    kubectl_executable: "k3s kubectl"
+  roles:
+    - k3s
+    - clusterapi

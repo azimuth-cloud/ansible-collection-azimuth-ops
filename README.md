@@ -1,5 +1,9 @@
-# Ansible Collection - stackhpc.capi_manager
+# ansible-capi-manage
 
-Collection of Ansible roles and playbooks to deploy a [Kubernetes](https://kubernetes.io/)
-cluster using [K3S](https://k3s.io/) to act as a
-[Cluster API](https://github.com/kubernetes-sigs/cluster-api) management cluster.
+[Ansible](https://www.ansible.com/) playbook to deploy a
+[Cluster API](https://github.com/kubernetes-sigs/cluster-api) management cluster from scratch.
+
+It can use [Terraform](https://www.terraform.io/) to provision infrastructure - currently
+resources exist to provision infrastructure on an [OpenStack](https://www.openstack.org/).
+
+Kubernetes is deployed using [k3s](https://k3s.io/).

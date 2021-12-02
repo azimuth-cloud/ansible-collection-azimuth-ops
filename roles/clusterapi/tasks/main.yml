@@ -4,7 +4,14 @@
   get_url:
     url: "{{ clusterctl_binary_url }}"
     dest: /usr/bin/clusterctl
+    force: yes
     mode: u=rwx,g=rx,o=rx
+
+- name: Check for existing Cluster API installation
+  command: >-
+    k3s kubectl -n capi-system get deploy capi-controller-manager
+  register: clusterapi_exists
+  failed_when: "clusterapi_exists.rc != 0 and 'NotFound' not in clusterapi_exists.stderr"
 
 - name: Initialise Cluster API providers
   command: >-
@@ -21,13 +28,8 @@
     {%- if capi_infrastructure_providers %}
       --infrastructure {{ capi_infrastructure_providers | join(',') }}
     {%- endif %}
+  when: clusterapi_exists.rc != 0
 
-# TODO: Remove task once changes to OpenStack provider are merged
-- name: Install custom provider manifest
-  copy:
-    src: infrastructure-components.yaml
-    dest: /tmp/infrastructure-components.yaml
-
-# TODO: Remove task once changes to OpenStack provider are merged
-- name: Install custom providers
-  command: "{{ kubectl_executable }} apply -f /tmp/infrastructure-components.yaml"
+- name: Upgrade Cluster API providers
+  command: >-
+    clusterctl upgrade apply --contract {{ capi_contract_version }}
