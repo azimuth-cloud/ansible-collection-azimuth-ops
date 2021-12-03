@@ -7,4 +7,4 @@ collections:
 roles:
   - name: stackhpc.terraform-infra
     src: https://github.com/stackhpc/ansible-role-terraform-infra.git
-    version: 4d4ae114d18f751e8e5c3f449f95c4662157f958
+    version: 032ca5d051c8979d1edc4a457c19f9fad4d1d07a
