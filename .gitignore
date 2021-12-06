@@ -3,4 +3,4 @@
 .terraform
 .terraform.lock.hcl
 *.tfstate*
-terraform/backend.tf
+backend.tf

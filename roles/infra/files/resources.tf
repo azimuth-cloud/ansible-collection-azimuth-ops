@@ -1,5 +1,5 @@
 #####
-##### Terraform resources for provisioning a CAPI manage
+##### Terraform resources for provisioning a CAPI manager
 #####
 
 resource "openstack_networking_secgroup_v2" "capi_manager" {
@@ -60,11 +60,16 @@ resource "openstack_networking_port_v2" "capi_manager" {
   ]
 }
 
+resource "openstack_compute_keypair_v2" "capi_manager_deploy" {
+  name       = "capi-manager-deploy"
+  public_key = var.deploy_public_key
+}
+
 resource "openstack_compute_instance_v2" "capi_manager" {
   name      = var.cluster_name
   image_id  = var.image_id
   flavor_id = var.flavor_id
-  key_pair  = var.key_pair
+  key_pair  = openstack_compute_keypair_v2.capi_manager_deploy.name
 
   network {
     port = openstack_networking_port_v2.capi_manager.id

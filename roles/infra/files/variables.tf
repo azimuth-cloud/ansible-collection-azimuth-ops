@@ -1,3 +1,8 @@
+variable "deploy_public_key" {
+  type        = string
+  description = "The SSH public key used to access the deployed machine"
+}
+
 variable "cluster_name" {
   type        = string
   description = "The name of the cluster"
@@ -21,11 +26,6 @@ variable "image_id" {
 variable "flavor_id" {
   type        = string
   description = "The id of the flavor to use"
-}
-
-variable "key_pair" {
-  type        = string
-  description = "The name of the key pair to use"
 }
 
 variable "data_volume_size" {

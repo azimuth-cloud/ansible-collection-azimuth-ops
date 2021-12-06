@@ -8,9 +8,9 @@
     mode: u=rwx,g=rx,o=rx
 
 - name: Check for existing Cluster API installation
-  command: >-
-    k3s kubectl -n capi-system get deploy capi-controller-manager
+  command: kubectl -n capi-system get deploy capi-controller-manager
   register: clusterapi_exists
+  changed_when: false
   failed_when: "clusterapi_exists.rc != 0 and 'NotFound' not in clusterapi_exists.stderr"
 
 - name: Initialise Cluster API providers

@@ -1,0 +1,6 @@
+---
+
+- name: Provision infrastructure
+  hosts: openstack
+  roles:
+    - stackhpc.capi_manager.infra

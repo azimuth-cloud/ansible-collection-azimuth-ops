@@ -1,0 +1,33 @@
+---
+
+- name: Make Terraform project directory
+  file:
+    path: "{{ inventory_dir }}/.terraform"
+    state: directory
+
+- name: Copy Terraform files into project directory
+  copy:
+    src: "{{ item }}"
+    dest: "{{ inventory_dir }}/.terraform"
+  loop:
+    - outputs.tf
+    - providers.tf
+    - resources.tf
+    - variables.tf
+
+- name: Provision infrastructure
+  import_role:
+    name: stackhpc.terraform.infra
+  vars:
+    cluster_ssh_private_key_file: "{{ capi_manager_ssh_private_key_file }}"
+    # Variables controlling the Terraform provisioning
+    terraform_project_path: "{{ inventory_dir }}/.terraform"
+    terraform_variables:
+      deploy_public_key: "{{ capi_manager_deploy_public_key }}"
+      cluster_name: "{{ capi_manager_name }}"
+      network_cidr: "{{ capi_manager_network_cidr }}"
+      image_id: "{{ capi_manager_image_id }}"
+      flavor_id: "{{ capi_manager_flavor_id }}"
+      floatingip_address: "{{ capi_manager_floatingip_address }}"
+      external_network_id: "{{ capi_manager_external_network_id }}"
+      data_volume_size: "{{ capi_manager_data_volume_size }}"

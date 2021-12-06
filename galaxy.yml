@@ -1,0 +1,15 @@
+namespace: stackhpc
+name: capi_manager
+version: 0.1.0
+description: Tools for provisioning clusters using Cluster API.
+readme: README.md
+authors:
+  - "Matt Pryor <matt@stackhpc.com>"
+license:
+  - "Apache-2.0"
+repository: "https://github.com/stackhpc/ansible-collection-capi-manager"
+
+dependencies:
+  ansible.posix: "*"
+  community.general: "*"
+  "git+https://github.com/stackhpc/ansible-collection-terraform.git": "main"

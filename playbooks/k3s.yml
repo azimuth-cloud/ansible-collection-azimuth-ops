@@ -1,0 +1,6 @@
+---
+
+- hosts: capi_managers
+  become: yes
+  roles:
+    - stackhpc.capi_manager.k3s
