@@ -1,0 +1,37 @@
+---
+
+- name: Ensure unpack destination exists
+  file:
+    path: /opt/helm/{{ helm_version }}
+    state: directory
+
+- name: Download Helm archive
+  get_url:
+    url: "{{ helm_archive_url }}"
+    checksum: "{{ helm_archive_checksum }}"
+    dest: "/opt/helm/{{ helm_archive_name }}"
+
+- name: Unpack Helm archive
+  unarchive:
+    remote_src: yes
+    src: "/opt/helm/{{ helm_archive_name }}"
+    dest: "/opt/helm/{{ helm_version }}"
+
+- name: Symlink latest Helm version
+  file:
+    path: /opt/helm/latest
+    src: /opt/helm/{{ helm_version }}
+    state: link
+
+- name: Symlink Helm executable to PATH location
+  file:
+    path: /usr/local/bin/helm
+    src: /opt/helm/latest/linux-amd64/helm
+    state: link
+
+- name: Update managed clusters
+  include_tasks: install_upgrade_cluster.yml
+  loop: "{{ capi_helm_clusters }}"
+  loop_control:
+    loop_var: cluster
+    label: "{{ cluster.release_namespace | default('default') }}/{{ cluster.release_name }}"

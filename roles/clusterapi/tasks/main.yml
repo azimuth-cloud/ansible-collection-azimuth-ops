@@ -30,6 +30,15 @@
     {%- endif %}
   when: clusterapi_exists.rc != 0
 
+- name: Check if upgrades are available for Cluster API providers
+  command: clusterctl upgrade plan
+  register: clusterctl_upgrade_plan
+  changed_when: false
+
 - name: Upgrade Cluster API providers
   command: >-
-    clusterctl upgrade apply --contract {{ capi_contract_version }}
+    {{
+      clusterctl_upgrade_plan.stdout |
+        regex_search("clusterctl upgrade apply --contract [a-z0-9]+")
+    }}
+  when: "'You are already up to date!' not in clusterctl_upgrade_plan.stdout"

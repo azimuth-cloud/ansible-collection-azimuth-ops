@@ -12,4 +12,5 @@ repository: "https://github.com/stackhpc/ansible-collection-capi-manager"
 dependencies:
   ansible.posix: "*"
   community.general: "*"
+  kubernetes.core: "*"
   "git+https://github.com/stackhpc/ansible-collection-terraform.git": "main"

@@ -1,4 +1,4 @@
-# ansible-capi-manage
+# ansible-collection-capi-manager
 
 [Ansible](https://www.ansible.com/) playbook to deploy a
 [Cluster API](https://github.com/kubernetes-sigs/cluster-api) management cluster from scratch.

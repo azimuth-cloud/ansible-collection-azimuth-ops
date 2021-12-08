@@ -1,0 +1,29 @@
+---
+
+helm_version: v3.7.1
+helm_archive_name: helm-{{ helm_version }}-linux-amd64.tar.gz
+helm_archive_url: https://get.helm.sh/{{ helm_archive_name }}
+helm_archive_checksum: sha256:6cd6cad4b97e10c33c978ff3ac97bb42b68f79766f1d2284cfd62ec04cd177f4
+
+capi_helm_repo_url: https://stackhpc.github.io/capi-helm-charts
+# This is a list of clusters that should be deployed
+capi_helm_clusters: []
+  # Each item should have the following configuration
+  # - # The name of the chart to use, e.g. openstack-cluster
+  #   chart_name:
+  #   # The version of the chart to use
+  #   chart_version:
+  #   # The name of the release
+  #   release_name:
+  #   # The namespace for the release
+  #   # Defaults to 'default' if not given
+  #   release_namespace: default
+  #   # The state of the release, either 'present' or 'absent'
+  #   # Defaults to 'present' if not given
+  #   release_state: present
+  #   # The values to use
+  #   # Defaults to an empty dictionary if not given
+  #   release_values: {}
+
+# The default cluster state if not otherwise specified
+cluster_state_default: present

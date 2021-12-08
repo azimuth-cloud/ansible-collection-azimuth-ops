@@ -1,8 +1,3 @@
-variable "deploy_public_key" {
-  type        = string
-  description = "The SSH public key used to access the deployed machine"
-}
-
 variable "cluster_name" {
   type        = string
   description = "The name of the cluster"
@@ -33,7 +28,7 @@ variable "data_volume_size" {
   description = "The size in GB for the data volume"
 }
 
-variable "floatingip_address" {
+variable "floatingip_pool" {
   type        = string
-  description = "The address of the floating IP to use"
+  description = "The pool to use for floating IP allocation"
 }

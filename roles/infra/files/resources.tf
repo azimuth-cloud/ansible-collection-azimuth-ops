@@ -62,7 +62,6 @@ resource "openstack_networking_port_v2" "capi_manager" {
 
 resource "openstack_compute_keypair_v2" "capi_manager_deploy" {
   name       = "capi-manager-deploy"
-  public_key = var.deploy_public_key
 }
 
 resource "openstack_compute_instance_v2" "capi_manager" {
@@ -86,7 +85,11 @@ resource "openstack_compute_volume_attach_v2" "capi_manager" {
   volume_id   = openstack_blockstorage_volume_v3.capi_manager_data.id
 }
 
+resource "openstack_networking_floatingip_v2" "capi_manager_fip" {
+  pool = var.floatingip_pool
+}
+
 resource "openstack_compute_floatingip_associate_v2" "capi_manager" {
-  floating_ip = var.floatingip_address
+  floating_ip = openstack_networking_floatingip_v2.capi_manager_fip.address
   instance_id = openstack_compute_instance_v2.capi_manager.id
 }
