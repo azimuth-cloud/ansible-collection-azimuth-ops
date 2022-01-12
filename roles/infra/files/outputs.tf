@@ -20,7 +20,7 @@ output "cluster_nodes" {
           k3s_storage_device = openstack_compute_volume_attach_v2.capi_manager.device
           # Include the network id of the CAPI manager as a variable for provisioned hosts
           # This allows clusters to be placed onto the network by referencing this
-          capi_manager_network_id = openstack_networking_network_v2.capi_manager.id
+          capi_manager_network_id = data.openstack_networking_network_v2.capi_manager.id
           # Also include the keypair name for the same reason
           capi_manager_keypair = openstack_compute_keypair_v2.capi_manager_deploy.name
         }

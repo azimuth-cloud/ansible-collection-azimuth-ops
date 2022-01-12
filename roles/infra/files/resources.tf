@@ -28,6 +28,10 @@ resource "openstack_networking_network_v2" "capi_manager" {
   admin_state_up = "true"
 }
 
+data "openstack_networking_network_v2" "capi_manager" {
+  name       = openstack_networking_network_v2.capi_manager.name
+}
+
 resource "openstack_networking_subnet_v2" "capi_manager" {
   name       = var.cluster_name
   network_id = openstack_networking_network_v2.capi_manager.id
@@ -71,7 +75,7 @@ resource "openstack_compute_instance_v2" "capi_manager" {
   key_pair  = openstack_compute_keypair_v2.capi_manager_deploy.name
 
   network {
-    port = openstack_networking_port_v2.capi_manager.id
+    port = data.openstack_networking_port_v2.capi_manager.id
   }
 }
 
