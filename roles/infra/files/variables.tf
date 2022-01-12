@@ -6,11 +6,19 @@ variable "cluster_name" {
 variable "external_network_id" {
   type        = string
   description = "The ID of the external network to use"
+  default     = "false"
 }
 
 variable "network_cidr" {
   type        = string
   description = "The CIDR of the network"
+  default     = "false"
+}
+
+variable "existing_network_name" {
+  type        = string
+  description = "The name of an existing tenant network to use"
+  default     = "false"
 }
 
 variable "image_id" {
