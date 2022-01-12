@@ -18,7 +18,7 @@ resource "openstack_compute_instance_v2" "capi_manager" {
   key_pair  = openstack_compute_keypair_v2.capi_manager_deploy.name
 
   network {
-    port = data.openstack_networking_port_v2.capi_manager.id
+    uuid = data.openstack_networking_network_v2.capi_manager.id
   }
 }
 
