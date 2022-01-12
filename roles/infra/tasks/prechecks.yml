@@ -1,0 +1,19 @@
+---
+
+- name: Test for incompatible configuration (capi_manager_existing_network_name NOR capi_manager_network_cidr)
+  fail:
+    msg: > 
+      Neither capi_manager_existing_network_name or capi_manager_network_cidr
+      are set. To use an exising network set capi_manager_existing_network_name
+      or set capi_manager_network_cidr to provision a new network.
+      with the specified CIDR.
+  when: capi_manager_existing_network_name is not defined and capi_manager_network_cidr is not defined
+
+- name: Test for incompatible configuration (capi_manager_existing_network_name AND capi_manager_network_cidr)
+  fail:
+    msg: >
+      Both capi_manager_existing_network_name and capi_manager_network_cidr
+      are set. To use an exising network set capi_manager_existing_network_name 
+      or set capi_manager_network_cidr to provision a new network.
+      with the specified CIDR.
+  when: capi_manager_existing_network_name is defined and capi_manager_network_cidr is defined

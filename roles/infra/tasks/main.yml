@@ -1,4 +1,6 @@
 ---
+- name: Run prechecks
+  include_tasks: prechecks.yml
 
 - name: Make Terraform project directory
   file:
@@ -26,7 +28,8 @@
     terraform_project_path: "{{ inventory_dir }}/.terraform"
     terraform_variables:
       cluster_name: "{{ capi_manager_name }}"
-      network_cidr: "{{ capi_manager_network_cidr }}"
+      existing_network_name: "{{ capi_manager_existing_network_name | default(omit) }}"
+      network_cidr: "{{ capi_manager_network_cidr | default(omit) }}"
       image_id: "{{ capi_manager_image_id }}"
       flavor_id: "{{ capi_manager_flavor_id }}"
       external_network_id: "{{ capi_manager_external_network_id }}"
