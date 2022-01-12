@@ -14,8 +14,12 @@
   loop:
     - outputs.tf
     - providers.tf
-    - resources.tf
     - variables.tf
+
+- name: Copy Terraform files into project directory
+  copy:
+    src: "{% if capi_manager_existing_network_name is defined %}resources_existing_network.tf{% else %}resources.tf{% endif %}"
+    dest: "{{ inventory_dir }}/.terraform/resources.tf"
 
 - name: Provision infrastructure
   import_role:
