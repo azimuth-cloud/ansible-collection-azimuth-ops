@@ -27,12 +27,14 @@
 
     - name: Wait for addons to deploy
       command: >-
-        kubectl get job {{ cluster.release_name }}-addons-{{ cluster_helm_release.status.revision }}
-          -n {{ cluster.release_namespace | default('default') }}
-          -o jsonpath='{.status.conditions[?(@.type == "Complete")].status}'
+        kubectl wait jobs --all \
+          -l app.kubernetes.io/name=addons,app.kubernetes.io/instance={{ cluster.release_name }}
+          -n {{ cluster.release_namespace | default('default') }} \
+          --for=condition=Complete
+          --timeout=0
       changed_when: false
       register: cluster_addons_complete_cmd
-      until: cluster_addons_complete_cmd.stdout == "True"
+      until: cluster_addons_complete_cmd.rc == 0
       # Wait up to 60 mins for the addons to deploy
       retries: 360
       delay: 10
