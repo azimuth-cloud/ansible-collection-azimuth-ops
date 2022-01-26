@@ -23,7 +23,6 @@
     OS_CLOUD: openstack
   vars:
     # Variables controlling the Terraform provisioning
-    terraform_project_path: "{{ terraform_project_path }}"
     terraform_variables:
       cluster_name: "{{ capi_manager_name }}"
       network_cidr: "{{ capi_manager_network_cidr }}"
