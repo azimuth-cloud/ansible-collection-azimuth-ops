@@ -61,7 +61,7 @@ resource "openstack_networking_port_v2" "capi_manager" {
 }
 
 resource "openstack_compute_keypair_v2" "capi_manager_deploy" {
-  name       = "capi-manager-deploy"
+  name = "${var.cluster_name}-deploy"
 }
 
 resource "openstack_compute_instance_v2" "capi_manager" {

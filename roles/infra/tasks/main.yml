@@ -2,13 +2,13 @@
 
 - name: Make Terraform project directory
   file:
-    path: "{{ inventory_dir }}/.terraform"
+    path: "{{ terraform_project_path }}"
     state: directory
 
 - name: Copy Terraform files into project directory
   copy:
     src: "{{ item }}"
-    dest: "{{ inventory_dir }}/.terraform"
+    dest: "{{ terraform_project_path }}"
   loop:
     - outputs.tf
     - providers.tf
@@ -23,7 +23,7 @@
     OS_CLOUD: openstack
   vars:
     # Variables controlling the Terraform provisioning
-    terraform_project_path: "{{ inventory_dir }}/.terraform"
+    terraform_project_path: "{{ terraform_project_path }}"
     terraform_variables:
       cluster_name: "{{ capi_manager_name }}"
       network_cidr: "{{ capi_manager_network_cidr }}"
