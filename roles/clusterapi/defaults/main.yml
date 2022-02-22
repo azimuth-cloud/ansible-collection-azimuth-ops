@@ -1,6 +1,6 @@
 ---
 
-clusterctl_version: v1.0.2
+clusterctl_version: v1.1.2
 clusterctl_binary_url: https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterctl_version }}/clusterctl-linux-amd64
 
 # If empty, the default providers for each will be used
