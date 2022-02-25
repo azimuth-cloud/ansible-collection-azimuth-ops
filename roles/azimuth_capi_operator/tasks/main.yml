@@ -1,0 +1,30 @@
+---
+
+- name: Install Azimuth CAPI operator on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ azimuth_capi_operator_chart_name }}"
+    chart_repo_url: "{{ azimuth_capi_operator_chart_repo }}"
+    chart_version: "{{ azimuth_capi_operator_chart_version }}"
+    release_namespace: "{{ azimuth_capi_operator_release_namespace }}"
+    release_name: "{{ azimuth_capi_operator_release_name }}"
+    release_values: "{{ azimuth_capi_operator_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ azimuth_capi_operator_wait_timeout }}"
+
+- name: Install Azimuth CAPI cluster templates
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: azimuth.stackhpc.com/v1alpha1
+      kind: ClusterTemplate
+      metadata:
+        name: "{{ template.name }}"
+      spec:
+        label: "{{ template.label }}"
+        description: "{{ template.description }}"
+        values: "{{ template['values'] }}"   # values collides with a dictionary method
+  loop: "{{ azimuth_capi_operator_cluster_templates }}"
+  loop_control:
+    loop_var: template
+    label: "{{ template.name }}"

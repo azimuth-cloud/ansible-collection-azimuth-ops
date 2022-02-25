@@ -1,44 +1,32 @@
 ---
 
-- name: Install clusterctl binary
-  get_url:
-    url: "{{ clusterctl_binary_url }}"
-    dest: /usr/bin/clusterctl
-    force: yes
-    mode: u=rwx,g=rx,o=rx
+- name: Make kustomization directory
+  file:
+    path: "{{ clusterapi_kustomization_directory }}"
+    state: directory
 
-- name: Check for existing Cluster API installation
-  command: kubectl -n capi-system get deploy capi-controller-manager
-  register: clusterapi_exists
-  changed_when: false
-  failed_when: "clusterapi_exists.rc != 0 and 'NotFound' not in clusterapi_exists.stderr"
+- name: Write kustomization file
+  copy:
+    content: "{{ clusterapi_kustomization | to_nice_yaml }}"
+    dest: "{{ clusterapi_kustomization_directory }}/kustomization.yaml"
 
-- name: Initialise Cluster API providers
+- name: Install Cluster API resources
+  kubernetes.core.k8s:
+    definition: "{{ lookup('kubernetes.core.kustomize', dir = clusterapi_kustomization_directory) }}"
+
+- name: Wait for Cluster API controllers to become ready
   command: >-
-    clusterctl init --wait-providers
-    {%- if capi_core_provider %}
-      --core {{ capi_core_provider }}
-    {%- endif %}
-    {%- if capi_bootstrap_providers %}
-      --bootstrap {{ capi_bootstrap_providers | join(',') }}
-    {%- endif %}
-    {%- if capi_control_plane_providers %}
-      --control-plane {{ capi_control_plane_providers | join(',') }}
-    {%- endif %}
-    {%- if capi_infrastructure_providers %}
-      --infrastructure {{ capi_infrastructure_providers | join(',') }}
-    {%- endif %}
-  when: clusterapi_exists.rc != 0
-
-- name: Check if upgrades are available for Cluster API providers
-  command: clusterctl upgrade plan
-  register: clusterctl_upgrade_plan
+    kubectl wait
+      --for=condition={{ watch.condition }}
+      --namespace {{ watch.namespace }}
+      --timeout 0s
+      {{ watch.kind }}/{{ watch.name }}
   changed_when: false
-
-- name: Upgrade Cluster API providers
-  command: >-
-    {{
-      clusterctl_upgrade_plan.stdout |
-        regex_search("clusterctl upgrade apply --contract [a-z0-9]+")
-    }}
-  when: "'You are already up to date!' not in clusterctl_upgrade_plan.stdout"
+  register: clusterapi_controller_wait
+  until: clusterapi_controller_wait is succeeded
+  retries: 60
+  delay: 10
+  loop: "{{ clusterapi_watches }}"
+  loop_control:
+    loop_var: watch
+    label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"

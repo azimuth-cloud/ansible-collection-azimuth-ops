@@ -1,0 +1,97 @@
+---
+
+# The chart to use
+zenith_chart_repo: https://stackhpc.github.io/zenith
+zenith_chart_name: zenith-server
+zenith_chart_version: 0.1.0-dev.0.main.149
+
+# Release information for the Zenith release
+zenith_release_namespace: zenith
+zenith_release_name: zenith-server
+
+# The timeout to wait for Zenith to become ready
+zenith_wait_timeout: 10m
+
+# Ingress settings
+#   The base domain for Zenith ingress resources
+zenith_ingress_base_domain: "{{ undef(hint = 'zenith_ingress_base_domain is required') }}"
+#   Annotations for Zenith ingress resources
+zenith_ingress_annotations: {}
+#   The subdomain to use for the registrar ingress resource
+zenith_ingress_registrar_subdomain: registrar
+#   Indicates whether TLS should be enabled
+zenith_ingress_tls_enabled: true
+#   The TLS secret name (can be null)
+zenith_ingress_tls_secret_name:
+#   Any TLS-specific annotations
+zenith_ingress_tls_annotations: {}
+
+# The signing key for Zenith subdomain tokens
+zenith_registrar_subdomain_token_signing_key: "{{ undef(hint = 'zenith_registrar_subdomain_token_signing_key is required') }}"
+# List of subdomains that are reserved and cannot be requested via Zenith
+# Note that the registrar subdomain is always added to this list
+zenith_registrar_reserved_subdomains: []
+
+# The Consul server and port
+zenith_consul_server_host: "{{ undef(hint = 'zenith_consul_server_host is required') }}"
+zenith_consul_server_port: "{{ undef(hint = 'zenith_consul_server_port is required') }}"
+
+# Settings for the auth callout
+#   The URL for the auth callout
+#   If not set, no auth callout is configured
+zenith_auth_url:
+#   The URL to redirect to when the verify URL returns a 401
+#   If not set, the 401 will just be returned
+zenith_auth_signin_url:
+#   The URL parameter to contain the original URL when redirecting
+zenith_auth_next_url_param: next
+#   Dictionary of headers to set for authentication requests
+#   These will override headers from the incoming request, which would otherwise be forwarded
+#   In particular, you may need to override the accepts header to suit the content types served
+#   by the external authentication service
+zenith_auth_request_headers: {}
+#   List of headers from the authentication response to add to the upstream request
+zenith_auth_response_headers: []
+
+# The namespace to create Zenith services in
+zenith_sync_target_namespace: zenith-services
+
+# The values for the release
+zenith_release_defaults:
+  # We don't need Zenith to deploy a Consul server
+  consul:
+    enabled: false
+  common:
+    consul:
+      address: "{{ zenith_consul_server_host }}"
+      port: "{{ zenith_consul_server_port }}"
+    ingress:
+      baseDomain: "{{ zenith_ingress_base_domain }}"
+      annotations: "{{ zenith_ingress_annotations }}"
+      tls:
+        enabled: "{{ zenith_ingress_tls_enabled }}"
+        secretName: "{{ zenith_ingress_tls_secret_name }}"
+        annotations: "{{ zenith_ingress_tls_annotations }}"
+  sync:
+    config:
+      kubernetes:
+        targetNamespace: "{{ zenith_sync_target_namespace }}"
+        ingress:
+          auth:
+            url: "{{ zenith_auth_url }}"
+            signinUrl: "{{ zenith_auth_signin_url }}"
+            nextUrlParam: "{{ zenith_auth_next_url_param }}"
+            requestHeaders: "{{ zenith_auth_request_headers }}"
+            responseHeaders: "{{ zenith_auth_response_headers }}"
+  registrar:
+    ingress:
+      subdomain: "{{ zenith_ingress_registrar_subdomain }}"
+    config:
+      subdomainTokenSigningKey: "{{ zenith_registrar_subdomain_token_signing_key }}"
+      reservedSubdomains: "{{ zenith_registrar_reserved_subdomains }}"
+zenith_release_overrides: {}
+zenith_release_values: >-
+  {{-
+    zenith_release_defaults |
+      combine(zenith_release_overrides, recursive = True)
+  }}

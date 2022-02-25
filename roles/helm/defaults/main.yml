@@ -1,0 +1,19 @@
+---
+
+# The Helm version to download
+helm_version: v3.8.0
+# The OS variant and architecture to use
+# See https://github.com/helm/helm/releases for the available options
+helm_os: "{{ ansible_system | lower }}"
+helm_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+# The name of the Helm archive
+helm_archive_name: helm-{{ helm_version }}-{{ helm_os }}-{{ helm_architecture }}.tar.gz
+# The URL of the Helm archive to download
+helm_archive_url: https://get.helm.sh/{{ helm_archive_name }}
+
+# The directory into which the Helm archive should be unpacked
+helm_unpack_directory: "/opt/helm/{{ helm_version }}"
+# The subdirectory inside the Helm archive that contains the binary
+helm_archive_subdirectory: "{{ helm_os }}-{{ helm_architecture }}"
+# The directory into which the Helm binary should be placed
+helm_bin_directory: /usr/local/bin

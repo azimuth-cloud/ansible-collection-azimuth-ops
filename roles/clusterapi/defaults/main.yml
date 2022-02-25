@@ -1,17 +1,66 @@
 ---
 
-clusterctl_version: v1.1.2
-clusterctl_binary_url: https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterctl_version }}/clusterctl-linux-amd64
+# The version and manifest URL for the Cluster API core components
+clusterapi_core_version: v1.1.2
+clusterapi_core_components: https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml
 
-# If empty, the default providers for each will be used
-capi_core_provider:
-capi_bootstrap_providers: []
-capi_control_plane_providers: []
-# By default, deploy the openstack infrastructure provider
-capi_infrastructure_providers: [openstack]
+# The version and manifest URL for the Cluster API OpenStack provider components
+clusterapi_openstack_version: v0.5.2
+clusterapi_openstack_components: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml
 
-# The target contract version
-capi_contract_version: v1beta1
+# List of Cluster API component manifests to install
+clusterapi_manifests:
+  - "{{ clusterapi_core_components }}"
+  - "{{ clusterapi_openstack_components }}"
 
-# The kubectl executable to use
-kubectl_executable: kubectl
+# List of patches to apply to the resources in the manifests
+clusterapi_patches:
+  # The manifests contain environment variable substitutions for feature gates that we do not need
+  - patch: |-
+      - op: remove
+        path: /spec/template/spec/containers/0/args/2
+    target:
+      kind: Deployment
+      namespace: capi-system
+      name: capi-controller-manager
+  - patch: |-
+      - op: remove
+        path: /spec/template/spec/containers/0/args/2
+    target:
+      kind: Deployment
+      namespace: capi-kubeadm-bootstrap-system
+      name: capi-kubeadm-bootstrap-controller-manager
+  - patch: |-
+      - op: remove
+        path: /spec/template/spec/containers/0/args/2
+    target:
+      kind: Deployment
+      namespace: capi-kubeadm-control-plane-system
+      name: capi-kubeadm-control-plane-controller-manager
+
+# The kustomization to use for Cluster API
+clusterapi_kustomization:
+  resources: "{{ clusterapi_manifests }}"
+  patches: "{{ clusterapi_patches }}"
+
+# Use a directory in $HOME for the kustomization by default
+clusterapi_kustomization_directory: "{{ (ansible_env.HOME, 'clusterapi') | path_join }}"
+
+# List of resources to watch for completeness
+clusterapi_watches:
+  - kind: deployment
+    namespace: capi-system
+    name: capi-controller-manager
+    condition: Available
+  - kind: deployment
+    namespace: capi-kubeadm-bootstrap-system
+    name: capi-kubeadm-bootstrap-controller-manager
+    condition: Available
+  - kind: deployment
+    namespace: capi-kubeadm-control-plane-system
+    name: capi-kubeadm-control-plane-controller-manager
+    condition: Available
+  - kind: deployment
+    namespace: capo-system
+    name: capo-controller-manager
+    condition: Available

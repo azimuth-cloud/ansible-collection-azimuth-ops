@@ -1,0 +1,50 @@
+---
+
+# The chart to use
+certmanager_chart_repo: https://charts.jetstack.io
+certmanager_chart_name: cert-manager
+certmanager_chart_version: v1.5.3  # This is the version currently required by Cluster API
+
+# Release information for the cert-manager release
+certmanager_release_namespace: cert-manager
+certmanager_release_name: cert-manager
+
+# The timeout to wait for cert-manager to become ready
+certmanager_wait_timeout: 10m
+
+# The values for the release
+certmanager_release_defaults:
+  installCRDs: true
+certmanager_release_overrides: {}
+certmanager_release_values: >-
+  {{-
+    certmanager_release_defaults |
+      combine(certmanager_release_overrides, recursive = True)
+  }}
+
+# Indicates if an ACME HTTP01 cluster issuer should be created
+certmanager_acmehttp01issuer_enabled: yes
+# The name of the issuer
+certmanager_acmehttp01issuer_name: zerossl
+# The ACME server to use
+certmanager_acmehttp01issuer_server: https://acme.zerossl.com/v2/DV90
+# The ingress class to use for resolving HTTP01 challenges
+certmanager_acmehttp01issuer_ingress_class: nginx
+# Indicates whether an External Account Binding (EAB) is required
+# By default we use ZeroSSL, which requires an EAB for use with cert-manager
+# See https://zerossl.com/documentation/acme/
+certmanager_acmehttp01issuer_eab_required: yes
+# The key ID of the EAB
+certmanager_acmehttp01issuer_eab_kid: >-
+  {{
+    undef(hint = 'certmanager_acmehttp01issuer_eab_kid is required')
+    if certmanager_acmehttp01issuer_eab_required
+    else None
+  }}
+# The HMAC key of the EAB
+certmanager_acmehttp01issuer_eab_key: >-
+  {{
+    undef(hint = 'certmanager_acmehttp01issuer_eab_key is required')
+    if certmanager_acmehttp01issuer_eab_required
+    else None
+  }}

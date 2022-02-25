@@ -1,0 +1,45 @@
+---
+
+- name: Install Consul on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ consul_chart_name }}"
+    chart_repo_url: "{{ consul_chart_repo }}"
+    chart_version: "{{ consul_chart_version }}"
+    release_namespace: "{{ consul_release_namespace }}"
+    release_name: "{{ consul_release_name }}"
+    release_values: "{{ consul_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ consul_wait_timeout }}"
+
+- name: Get Consul service information
+  set_fact:
+    consul_server_service: >-
+      {{
+        query(
+          'kubernetes.core.k8s',
+          kind = 'Service',
+          namespace = consul_release_namespace,
+          label_selector = consul_server_service_selector
+        ) | first
+      }}
+  vars:
+    consul_server_service_selector: "app={{ consul_release_name }},component=server"
+
+- name: Set Consul server facts
+  set_fact:
+    consul_server_host: >-
+      {{-
+        "{}.{}".format(
+          consul_server_service.metadata.name,
+          consul_server_service.metadata.namespace
+        )
+      }}
+    consul_server_port: >-
+      {{-
+        consul_server_service.spec.ports |
+          selectattr('name', 'equalto', 'http') |
+          map(attribute = 'port') |
+          first
+      }}

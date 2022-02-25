@@ -1,0 +1,8 @@
+#####
+# This playbook uses Terraform to provision a single-node k3s cluster with the Cluster API
+# controllers installed (the 'seed')
+# It then uses the seed cluster to manage a HA cluster on OpenStack using Cluster API, into
+# which Azimuth and all it's dependencies are installed
+#####
+
+- import_playbook:

@@ -1,0 +1,40 @@
+---
+
+# The chart to use
+azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
+azimuth_capi_operator_chart_name: azimuth-capi-operator
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.35
+
+# Release information for the CAPI operator release
+azimuth_capi_operator_release_namespace: azimuth-capi-operator
+azimuth_capi_operator_release_name: azimuth-capi-operator
+
+# The timeout to wait for CAPI operator to become ready
+azimuth_capi_operator_wait_timeout: 10m
+
+# The Zenith registrar admin URL for Zenith support
+# If not given, Zenith support is not enabled
+azimuth_capi_operator_zenith_registrar_admin_url:
+# The host and port for the Zenith SSHD server
+azimuth_capi_operator_zenith_sshd_host:
+azimuth_capi_operator_zenith_sshd_port: "22"
+
+# The values for the release
+azimuth_capi_operator_release_defaults:
+  zenith:
+    registrarAdminUrl: "{{ azimuth_capi_operator_zenith_registrar_admin_url }}"
+    sshdHost: "{{ azimuth_capi_operator_zenith_sshd_host }}"
+    sshdPort: "{{ azimuth_capi_operator_zenith_sshd_port }}"
+azimuth_capi_operator_release_overrides: {}
+azimuth_capi_operator_release_values: >-
+  {{-
+    azimuth_capi_operator_release_defaults |
+      combine(azimuth_capi_operator_release_overrides, recursive = True)
+  }}
+
+# List of template definitions to use
+azimuth_capi_operator_cluster_templates: []
+  # - name: kube-1-22-10
+  #   label: v1.22.10
+  #   description: Kubernetes v1.22.10 with HA control plane.
+  #   values: {}

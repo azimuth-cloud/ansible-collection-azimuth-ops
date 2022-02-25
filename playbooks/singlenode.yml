@@ -1,0 +1,6 @@
+#####
+# This playbook uses Terraform to provision a single-node k3s cluster into which Azimuth
+# and all it's dependencies are installed
+#####
+
+

@@ -1,0 +1,30 @@
+---
+
+# The namespace that AWX should be deployed into
+awx_namespace: awx-operator
+
+# The URL and version of the AWX operator
+awx_operator_repo_url: https://github.com/ansible/awx-operator.git
+awx_operator_version: 0.17.0
+# The directory into which the AWX operator should be cloned
+awx_operator_directory: /opt/awx-operator
+
+# The admin password for the AWX instance
+awx_admin_password: "{{ undef(hint = 'awx_admin_password is required') }}"
+
+# The name for the AWX instance
+awx_name: awx
+
+# The labels for the AWX instance
+awx_labels:
+  app.kubernetes.io/managed-by: ansible-collection-azimuth-ops
+  app.kubernetes.io/instance: "{{ awx_name }}"
+
+# The spec for the AWX instance
+awx_spec_defaults:
+  service_type: ClusterIP
+  ingress_type: none
+  create_preload_data: false
+  garbage_collect_secrets: true
+awx_spec_overrides: {}
+awx_spec: "{{ awx_spec_defaults | combine(awx_spec_overrides, recursive = True) }}"

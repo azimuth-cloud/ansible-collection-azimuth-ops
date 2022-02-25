@@ -1,6 +1,0 @@
----
-
-- import_playbook: stackhpc.capi_manager.infra
-- import_playbook: stackhpc.capi_manager.k3s
-- import_playbook: stackhpc.capi_manager.clusterapi
-- import_playbook: stackhpc.capi_manager.clusters
