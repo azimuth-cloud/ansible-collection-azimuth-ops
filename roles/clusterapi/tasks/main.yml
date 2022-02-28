@@ -11,8 +11,7 @@
     dest: "{{ clusterapi_kustomization_directory }}/kustomization.yaml"
 
 - name: Install Cluster API resources
-  kubernetes.core.k8s:
-    definition: "{{ lookup('kubernetes.core.kustomize', dir = clusterapi_kustomization_directory) }}"
+  command: kubectl apply -k {{ clusterapi_kustomization_directory }}
 
 - name: Wait for Cluster API controllers to become ready
   command: >-

@@ -13,12 +13,14 @@
     wait: yes
     wait_timeout: "{{ certmanager_wait_timeout }}"
 
-- name: Install ACME HTTP01 cluster issuer
-  kubernetes.core.k8s:
-    template: acmehttp01issuer.yaml.j2
-  when: certmanager_acmehttp01issuer_enabled
+- block:
+    - name: Install ACME HTTP01 cluster issuer
+      command: kubectl apply -f -
+      args:
+        stdin: "{{ lookup('template', 'acmehttp01issuer.yaml.j2') }}"
 
-- name: Set auto-TLS facts
-  set_fact:
-    certmanager_ingress_annotations:
-      cert-manager.io/cluster-issuer: "{{ certmanager_acmehttp01issuer_name }}"
+    - name: Set auto-TLS facts
+      set_fact:
+        certmanager_ingress_annotations:
+          cert-manager.io/cluster-issuer: "{{ certmanager_acmehttp01issuer_name }}"
+  when: certmanager_acmehttp01issuer_enabled

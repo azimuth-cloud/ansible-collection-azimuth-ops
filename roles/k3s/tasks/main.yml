@@ -40,29 +40,13 @@
     daemon_reload: yes
   when: k3s_server_systemd_unit is changed
 
-- name: Determine whether k3s server restart is required
-  set_fact:
-    k3s_restart_required: "{{ k3s_binary is changed or k3s_server_systemd_unit is changed }}"
-
 - name: Ensure k3s server is started
   service:
     name: k3s-server
-    state: "{{ 'restarted' if k3s_restart_required else 'started' }}"
+    state: >-
+      {{-
+        'restarted'
+        if k3s_binary is changed or k3s_server_systemd_unit is changed
+        else 'started'
+      }}
     enabled: yes
-
-- name: Link to k3s kubectl
-  file:
-    src: /var/lib/rancher/k3s/data/current/bin/kubectl
-    dest: /usr/local/bin/kubectl
-    state: link
-
-- name: Ensure kubectl config directory exists
-  file:
-    path: "{{ ansible_env.HOME }}/.kube"
-    state: directory
-
-- name: Copy kubeconfig file into kubectl config directory
-  copy:
-    remote_src: yes
-    src: /etc/rancher/k3s/k3s.yaml
-    dest: "{{ ansible_env.HOME }}/.kube/config"

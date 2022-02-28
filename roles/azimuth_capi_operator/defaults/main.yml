@@ -21,10 +21,11 @@ azimuth_capi_operator_zenith_sshd_port: "22"
 
 # The values for the release
 azimuth_capi_operator_release_defaults:
-  zenith:
-    registrarAdminUrl: "{{ azimuth_capi_operator_zenith_registrar_admin_url }}"
-    sshdHost: "{{ azimuth_capi_operator_zenith_sshd_host }}"
-    sshdPort: "{{ azimuth_capi_operator_zenith_sshd_port }}"
+  config:
+    zenith:
+      registrarAdminUrl: "{{ azimuth_capi_operator_zenith_registrar_admin_url }}"
+      sshdHost: "{{ azimuth_capi_operator_zenith_sshd_host }}"
+      sshdPort: "{{ azimuth_capi_operator_zenith_sshd_port }}"
 azimuth_capi_operator_release_overrides: {}
 azimuth_capi_operator_release_values: >-
   {{-

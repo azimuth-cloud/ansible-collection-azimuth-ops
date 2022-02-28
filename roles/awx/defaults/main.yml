@@ -5,9 +5,14 @@ awx_namespace: awx-operator
 
 # The URL and version of the AWX operator
 awx_operator_repo_url: https://github.com/ansible/awx-operator.git
-awx_operator_version: 0.17.0
+awx_operator_version: 0.17.0  # This should point to a tag
 # The directory into which the AWX operator should be cloned
 awx_operator_directory: /opt/awx-operator
+
+# The registry to use for the AWX operator controller image
+awx_operator_image_registry: quay.io/ansible/awx-operator
+# The image to use for the AWX operator controller
+awx_operator_image: "{{ awx_operator_image_registry }}:{{ awx_operator_version }}"
 
 # The admin password for the AWX instance
 awx_admin_password: "{{ undef(hint = 'awx_admin_password is required') }}"

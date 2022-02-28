@@ -14,8 +14,11 @@
     wait_timeout: "{{ azimuth_capi_operator_wait_timeout }}"
 
 - name: Install Azimuth CAPI cluster templates
-  kubernetes.core.k8s:
-    definition:
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ template_definition | to_nice_yaml }}"
+  vars:
+    template_definition:
       apiVersion: azimuth.stackhpc.com/v1alpha1
       kind: ClusterTemplate
       metadata:

@@ -7,12 +7,18 @@
     version: "{{ awx_operator_version }}"
     force: yes
 
+- name: Set AWX operator controller image
+  command: kustomize edit set image controller={{ awx_operator_image }}
+  args:
+    chdir: "{{ awx_operator_directory }}/config/manager"
+
+- name: Set AWX operator namespace
+  command: kustomize edit set namespace {{ awx_namespace }}
+  args:
+    chdir: "{{ awx_operator_directory }}/config/default"
+
 - name: Install AWX operator
-  make:
-    chdir: "{{ awx_operator_directory }}"
-    target: deploy
-  environment:
-    NAMESPACE: "{{ awx_namespace }}"
+  command: kubectl apply -k {{ awx_operator_directory }}/config/default
 
 - name: Wait for AWX operator to become ready
   command: >-
@@ -30,10 +36,14 @@
 - name: Set AWX admin password secret fact
   set_fact:
     awx_admin_password_secret_name: "{{ awx_name }}-admin-password"
+  when: awx_admin_password_secret_name is not defined
 
 - name: Create AWX admin password secret
-  kubernetes.core.k8s:
-    definition:
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ awx_admin_password_secret_definition | to_nice_yaml }}"
+  vars:
+    awx_admin_password_secret_definition:
       apiVersion: v1
       kind: Secret
       metadata:
@@ -44,8 +54,11 @@
         password: "{{ awx_admin_password }}"
 
 - name: Install AWX instance
-  kubernetes.core.k8s:
-    definition:
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ awx_instance_definition | to_nice_yaml }}"
+  vars:
+    awx_instance_definition:
       apiVersion: awx.ansible.com/v1beta1
       kind: AWX
       metadata:
@@ -67,35 +80,37 @@
   retries: 60
   delay: 10
 
-- name: Get AWX service information
-  set_fact:
-    awx_service: >-
-      {{
-        query(
-          'kubernetes.core.k8s',
-          kind = 'Service',
-          namespace = awx_namespace,
-          label_selector = awx_service_selector
-        ) | first
-      }}
-  vars:
-    awx_service_selectors:
-      - app.kubernetes.io/managed-by=awx-operator
-      - app.kubernetes.io/component=awx
-      - app.kubernetes.io/name={{ awx_name }}
-    awx_service_selector: "{{ awx_service_selectors | join(',') }}"
-      
-- name: Set AWX server facts
-  set_fact:
-    # Use the internal URL for AWX
-    awx_url: >-
-      {{-
-        "http://{}.{}:{}".format(
-          awx_service.metadata.name,
-          awx_service.metadata.namespace,
-          awx_service.spec.ports |
-            selectattr('name', 'equalto', 'http') |
-            map(attribute = 'port') |
-            first
-        )
-      }}
+- block:
+    - name: Get AWX service information
+      command: >-
+        kubectl get service
+          --namespace {{ awx_namespace }}
+          --selector {{ awx_service_selector }}
+          --output json
+      register: awx_services_cmd
+      vars:
+        awx_service_selectors:
+          - app.kubernetes.io/managed-by=awx-operator
+          - app.kubernetes.io/component=awx
+          - app.kubernetes.io/name={{ awx_name }}
+        awx_service_selector: "{{ awx_service_selectors | join(',') }}"
+
+    - name: Set AWX service fact
+      set_fact:
+        awx_service: "{{ (awx_services_cmd.stdout | from_json)['items'] | first }}"
+
+    - name: Set AWX server facts
+      set_fact:
+        # Use the internal URL for AWX
+        awx_url: >-
+          {{-
+            "http://{}.{}:{}".format(
+              awx_service.metadata.name,
+              awx_service.metadata.namespace,
+              awx_service.spec.ports |
+                selectattr('name', 'equalto', 'http') |
+                map(attribute = 'port') |
+                first
+            )
+          }}
+  when: awx_url is not defined

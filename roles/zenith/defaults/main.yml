@@ -56,6 +56,15 @@ zenith_auth_response_headers: []
 # The namespace to create Zenith services in
 zenith_sync_target_namespace: zenith-services
 
+# The type of service to make for SSHD
+zenith_sshd_service_type: LoadBalancer
+# The port to use for the SSHD service
+zenith_sshd_service_port: 22
+# The nodePort for SSHD if using a NodePort service
+zenith_sshd_service_nodeport:
+# The fixed IP for a load balancer service, if using a load balancer service
+zenith_sshd_service_load_balancer_ip:
+
 # The values for the release
 zenith_release_defaults:
   # We don't need Zenith to deploy a Consul server
@@ -89,6 +98,24 @@ zenith_release_defaults:
     config:
       subdomainTokenSigningKey: "{{ zenith_registrar_subdomain_token_signing_key }}"
       reservedSubdomains: "{{ zenith_registrar_reserved_subdomains }}"
+  sshd:
+    service: >-
+      {{-
+        {
+          "type": zenith_sshd_service_type,
+          "port": zenith_sshd_service_port
+        } |
+          combine(
+            { "nodePort": zenith_sshd_service_nodeport }
+            if zenith_sshd_service_type == "NodePort" and zenith_sshd_service_nodeport
+            else {}
+          ) |
+          combine(
+            { "loadBalancerIP": zenith_sshd_service_load_balancer_ip }
+            if zenith_sshd_service_type == "LoadBalancer" and zenith_sshd_service_load_balancer_ip
+            else {}
+          )
+      }}
 zenith_release_overrides: {}
 zenith_release_values: >-
   {{-
