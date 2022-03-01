@@ -6,7 +6,8 @@ consul_chart_name: consul
 consul_chart_version: ~0.35.0
 
 # Release information for the Consul release
-consul_release_namespace: consul
+# By default, deploy into the same namespace as Azimuth
+consul_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
 consul_release_name: consul
 
 # The timeout to wait for Consul to become ready

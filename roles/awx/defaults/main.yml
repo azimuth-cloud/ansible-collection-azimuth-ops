@@ -1,7 +1,8 @@
 ---
 
 # The namespace that AWX should be deployed into
-awx_namespace: awx-operator
+# Azimuth needs to access AWX secrets, so put it in the azimuth namespace by default
+awx_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
 
 # The URL and version of the AWX operator
 awx_operator_repo_url: https://github.com/ansible/awx-operator.git

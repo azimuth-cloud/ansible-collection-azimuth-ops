@@ -22,15 +22,20 @@ azimuth_kubernetes_enabled: yes
 
 # Ingress settings
 #   The hostname to use for the ingress resource
-azimuth_ingress_host: "{{ undef(hint = 'azimuth_ingress_host is required') }}"
+azimuth_ingress_host: >-
+  {{-
+    "{}.{}".format(ingress_azimuth_portal_subdomain, ingress_base_domain)
+    if ingress_azimuth_portal_subdomain is defined and ingress_base_domain is defined
+    else undef(hint = 'azimuth_ingress_host is required')
+  }}
 #   Any annotations for the ingress
-azimuth_ingress_annotations: {}
+azimuth_ingress_annotations: "{{ ingress_annotations | default({}) }}"
 #   Indicates whether TLS should be enabled
-azimuth_ingress_tls_enabled: true
+azimuth_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
 #   The TLS secret name (can be null)
-azimuth_ingress_tls_secret_name:
+azimuth_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default(None) }}"
 #   Any TLS-specific annotations
-azimuth_ingress_tls_annotations: {}
+azimuth_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
 
 # The Django secret key, used mainly for ensuring session cookies are not tampered with
 azimuth_secret_key: "{{ undef(hint = 'azimuth_secret_key is required') }}"
@@ -47,7 +52,7 @@ azimuth_current_cloud_label: "{{ undef(hint = 'azimuth_current_cloud_label is re
 azimuth_authenticator_type: openstack-password  # openstack-{password,federation}
 # The URL of the federation endpoint when openstack-federation is used
 azimuth_authenticator_openstack_federation_url: >-
-  {{
+  {{-
     undef(hint = 'azimuth_authenticator_openstack_federation_url is required')
     if azimuth_authenticator_type == 'openstack-federation'
     else None
@@ -70,34 +75,50 @@ azimuth_openstack_internal_net_cidr: 192.168.3.0/24
 # App proxy settings
 #   The base domain for apps
 azimuth_apps_base_domain: >-
-  {{
-    undef(hint = 'azimuth_apps_base_domain is required')
-    if azimuth_apps_enabled
-    else None
+  {{-
+    ingress_base_domain
+    if ingress_base_domain is defined
+    else (
+      undef(hint = 'azimuth_apps_base_domain is required')
+      if azimuth_apps_enabled
+      else None
+    )
   }}
-#   The Zenith SSHD host
-azimuth_apps_sshd_host: >-
-  {{
-    undef(hint = 'azimuth_apps_sshd_host is required')
-    if azimuth_apps_enabled
-    else None
-  }}
-#   The Zenith SSHD port
-azimuth_apps_sshd_port: "22"
 #   The external URL for the Zenith registrar
 azimuth_apps_registrar_external_url: >-
-  {{
-    undef(hint = 'azimuth_apps_registrar_external_url is required')
-    if azimuth_apps_enabled
-    else None
+  {{-
+    zenith_registrar_external_url
+    if zenith_registrar_external_url is defined
+    else (
+      undef(hint = 'azimuth_apps_registrar_external_url is required')
+      if azimuth_apps_enabled
+      else None
+    )
   }}
 #   The admin URL for the Zenith registrar
 azimuth_apps_registrar_admin_url: >-
-  {{
-    undef(hint = 'azimuth_apps_registrar_admin_url is required')
-    if azimuth_apps_enabled
-    else None
+  {{-
+    zenith_registrar_admin_url
+    if zenith_registrar_admin_url is defined
+    else (
+      undef(hint = 'azimuth_apps_registrar_admin_url is required')
+      if azimuth_apps_enabled
+      else None
+    )
   }}
+#   The Zenith SSHD host
+azimuth_apps_sshd_host: >-
+  {{-
+    zenith_sshd_host
+    if zenith_sshd_host is defined
+    else (
+      undef(hint = 'azimuth_apps_sshd_host is required')
+      if azimuth_apps_enabled
+      else None
+    )
+  }}
+#   The Zenith SSHD port
+azimuth_apps_sshd_port: "{{ zenith_sshd_port | default(22) }}"
 #   The URL of the post-deploy script to execute
 azimuth_apps_post_deploy_script_url:
 
@@ -105,10 +126,14 @@ azimuth_apps_post_deploy_script_url:
 # AWX settings
 #   The AWX or Ansible Tower URL
 azimuth_caas_awx_url: >-
-  {{
-    undef(hint = 'azimuth_caas_awx_url is required')
-    if azimuth_clusters_enabled
-    else None
+  {{-
+    awx_url
+    if awx_url is defined
+    else (
+      undef(hint = 'azimuth_caas_awx_url is required')
+      if azimuth_clusters_enabled
+      else None
+    )
   }}
 #   Whether to verify SSL with the AWX/Tower API
 azimuth_caas_awx_verify_ssl: true
@@ -117,10 +142,14 @@ azimuth_caas_awx_verify_ssl: true
 azimuth_caas_awx_username: admin
 #   The name of a secret to get the AWX password from
 azimuth_caas_awx_password_secret_name: >-
-  {{
-    undef(hint = 'azimuth_caas_awx_password_secret_name is required')
-    if azimuth_clusters_enabled
-    else None
+  {{-
+    awx_admin_password_secret_name
+    if awx_admin_password_secret_name is defined
+    else (
+      undef(hint = 'azimuth_caas_awx_password_secret_name is required')
+      if azimuth_clusters_enabled
+      else None
+    )
   }}
 #   Indicates whether teams should be created automatically
 azimuth_caas_awx_create_teams: true
@@ -133,8 +162,38 @@ azimuth_caas_awx_bootstrap: true
 azimuth_caas_awx_admin_username: "{{ azimuth_caas_awx_username }}"
 #   The name of a secret containing the password for the admin user
 azimuth_caas_awx_admin_password_secret_name: "{{ azimuth_caas_awx_password_secret_name }}"
-#   List of default projects and job templates to create as part of the bootstrapping
-azimuth_caas_awx_default_projects: []
+# Terraform backend settings
+#   Indicates if the Terraform backend should be configured
+azimuth_caas_terraform_enabled: true
+#   The address, including port, of the Consul server to use
+azimuth_caas_terraform_consul_address: >-
+  {{-
+    "http://{}:{}".format(consul_server_host, consul_server_port)
+    if consul_server_host is defined and consul_server_port is defined
+    else (
+      undef(hint = 'azimuth_caas_terraform_consul_address is required')
+      if azimuth_clusters_enabled and azimuth_caas_terraform_enabled
+      else None
+    )
+  }}
+
+# List of default projects and job templates to create as part of the bootstrapping
+# By default, the StackHPC Slurm appliance is included
+azimuth_caas_stackhpc_slurm_appliance_version: main
+# This is the ID of a Rocky 8 image
+azimuth_caas_stackhpc_slurm_appliance_rocky8_image: >-
+  {{- undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_rocky8_image is required') }}
+azimuth_caas_awx_default_projects:
+  - name: StackHPC Slurm Appliance
+    gitUrl: https://github.com/stackhpc/caas-slurm-appliance.git
+    gitVersion: "{{ azimuth_caas_stackhpc_slurm_appliance_version }}"
+    metadataRoot: https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_version }}/ui-meta
+    playbooks: [slurm-infra.yml]
+    extraVars:
+      __ALL__:
+        cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_rocky8_image }}"
+    executionEnvironment:
+      image: ghcr.io/stackhpc/caas-ee:main
 # - # The name of the project
 #   name: My Site Appliances
 #   # The git URL of the project
@@ -164,16 +223,6 @@ azimuth_caas_awx_default_projects: []
 #     image: registry.example.com/org/image:tag
 #     # Whether to re-pull the image each time it is required (defaults to false if not given)
 #     alwaysPull: true
-# Terraform backend settings
-#   Indicates if the Terraform backend should be configured
-azimuth_caas_terraform_enabled: true
-#   The address, including port, of the Consul server to use
-azimuth_caas_terraform_consul_address: >-
-  {{
-    undef(hint = 'azimuth_caas_terraform_consul_address is required')
-    if azimuth_clusters_enabled and azimuth_caas_terraform_enabled
-    else None
-  }}
 
 # Theme settings
 #   Custom bootstrap CSS URL
@@ -203,7 +252,7 @@ azimuth_release_defaults:
   authenticator:
     type: "{{ azimuth_authenticator_type }}"
     openstackFederation: >-
-      {{
+      {{-
         { "federationUrl": azimuth_authenticator_openstack_federation_url }
         if azimuth_authenticator_type == "openstack-federation"
         else {}
@@ -217,7 +266,7 @@ azimuth_release_defaults:
       createInternalNet: "{{ azimuth_openstack_create_internal_net }}"
       internalNetCidr: "{{ azimuth_openstack_internal_net_cidr }}"
   apps: >-
-    {{
+    {{-
       {
         "baseDomain": azimuth_apps_base_domain,
         "sshdHost": azimuth_apps_sshd_host,
@@ -230,7 +279,7 @@ azimuth_release_defaults:
       else {}        
     }}
   clusterEngine: >-
-    {{
+    {{-
       {
         "awx": {
           "url": azimuth_caas_awx_url,
@@ -257,7 +306,7 @@ azimuth_release_defaults:
       else {}
     }}
   theme: >-
-    {{
+    {{-
       {} |
         combine(
           { "bootstrapCssUrl": azimuth_theme_bootstrap_css_url }

@@ -6,26 +6,165 @@ azimuth_capi_operator_chart_name: azimuth-capi-operator
 azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.35
 
 # Release information for the CAPI operator release
-azimuth_capi_operator_release_namespace: azimuth-capi-operator
+# Use the same namespace as Azimuth by default
+azimuth_capi_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
 azimuth_capi_operator_release_name: azimuth-capi-operator
 
 # The timeout to wait for CAPI operator to become ready
 azimuth_capi_operator_wait_timeout: 10m
 
+# The repo, name and version for the CAPI Helm charts
+# Leave blank to use the operator defaults
+azimuth_capi_operator_capi_helm_chart_repo:
+azimuth_capi_operator_capi_helm_chart_name:
+azimuth_capi_operator_capi_helm_chart_version:
+
+# The registry mirrors for provisioned clusters
+azimuth_capi_operator_capi_helm_registry_mirrors: {}
+# The additional packages for provisioned clusters
+azimuth_capi_operator_capi_helm_additional_packages: []
+# Overrides for the CAPI Helm chart releases for all clusters
+azimuth_capi_operator_capi_helm_values_overrides: {}
+# Default values for the CAPI Helm chart releases for all clusters
+azimuth_capi_operator_capi_helm_default_values: >-
+  {{-
+    {
+      "registryMirrors": azimuth_capi_operator_capi_helm_registry_mirrors,
+      "additionalPackages": azimuth_capi_operator_capi_helm_additional_packages,
+    } |
+      combine(azimuth_capi_operator_capi_helm_values_overrides, recursive = True)
+  }}
+  
+
 # The Zenith registrar admin URL for Zenith support
 # If not given, Zenith support is not enabled
-azimuth_capi_operator_zenith_registrar_admin_url:
+azimuth_capi_operator_zenith_registrar_admin_url: >-
+  {{-
+    azimuth_apps_registrar_admin_url
+    if azimuth_apps_registrar_admin_url is defined
+    else (
+      zenith_registrar_admin_url
+      if zenith_registrar_admin_url is defined
+      else None
+    )
+  }}
 # The host and port for the Zenith SSHD server
-azimuth_capi_operator_zenith_sshd_host:
-azimuth_capi_operator_zenith_sshd_port: "22"
+azimuth_capi_operator_zenith_sshd_host: >-
+  {{-
+    azimuth_apps_sshd_host
+    if azimuth_apps_sshd_host is defined
+    else (
+      zenith_sshd_host
+      if zenith_sshd_host is defined
+      else None
+    )
+  }}
+azimuth_capi_operator_zenith_sshd_port: >-
+  {{-
+    azimuth_apps_sshd_port
+    if azimuth_apps_sshd_port is defined
+    else (
+      zenith_sshd_port
+      if zenith_sshd_port is defined
+      else 22
+    )
+  }}
+# The Zenith chart repository and version to use for rendering API server manifests
+# Leave blank for the operator defaults
+azimuth_capi_operator_zenith_chart_repo:
+azimuth_capi_operator_zenith_chart_version:
+
+# The repo, chart name and version for the Kubeapps installations
+# Leave blank for the operator defaults
+azimuth_capi_operator_kubeapps_chart_repo:
+azimuth_capi_operator_kubeapps_chart_name:
+azimuth_capi_operator_kubeapps_chart_version:
+# The namespace for the kubeapps release
+# Leave blank for the operator default
+azimuth_capi_operator_kubeapps_release_namespace:
+
+# The initial Helm repositories to add to the kubeapps installations
+# Leave blank for the chart's default repositories
+azimuth_capi_operator_kubeapps_initial_repos:
+# The values to use for the release
+azimuth_capi_operator_kubeapps_release_defaults:
+  apprepository: >-
+    {{-
+      { "initialRepos": azimuth_capi_operator_kubeapps_initial_repos }
+      if azimuth_capi_operator_kubeapps_initial_repos is not none
+      else {}
+    }}
+azimuth_capi_operator_kubeapps_release_overrides: {}
+azimuth_capi_operator_kubeapps_release_values: >-
+  {{-
+    azimuth_capi_operator_kubeapps_release_defaults |
+      combine(azimuth_capi_operator_kubeapps_release_overrides, recursive = True)
+  }}
 
 # The values for the release
 azimuth_capi_operator_release_defaults:
   config:
-    zenith:
-      registrarAdminUrl: "{{ azimuth_capi_operator_zenith_registrar_admin_url }}"
-      sshdHost: "{{ azimuth_capi_operator_zenith_sshd_host }}"
-      sshdPort: "{{ azimuth_capi_operator_zenith_sshd_port }}"
+    capiHelm: >-
+      {{-
+        { "defaultValues": azimuth_capi_operator_capi_helm_default_values } |
+          combine(
+            { "chartRepository": azimuth_capi_operator_capi_helm_chart_repo }
+            if azimuth_capi_operator_capi_helm_chart_repo
+            else {}
+          ) |
+          combine(
+            { "chartName": azimuth_capi_operator_capi_helm_chart_name }
+            if azimuth_capi_operator_capi_helm_chart_name
+            else {}
+          ) |
+          combine(
+            { "chartVersion": azimuth_capi_operator_capi_helm_chart_version }
+            if azimuth_capi_operator_capi_helm_chart_version
+            else {}
+          )
+      }}
+    zenith: >-
+      {{-
+        {
+          "registrarAdminUrl": azimuth_capi_operator_zenith_registrar_admin_url,
+          "sshdHost": azimuth_capi_operator_zenith_sshd_host,
+          "sshdPort": azimuth_capi_operator_zenith_sshd_port,
+        } |
+          combine(
+            { "chartRepository": azimuth_capi_operator_zenith_chart_repo }
+            if azimuth_capi_operator_zenith_chart_repo
+            else {}
+          ) |
+          combine(
+            { "chartVersion": azimuth_capi_operator_zenith_chart_version }
+            if azimuth_capi_operator_zenith_chart_version
+            else {}
+          )
+      }}
+    kubeapps: >-
+      {{-
+        { "releaseValues": azimuth_capi_operator_kubeapps_release_values } |
+          combine(
+            { "chartRepository": azimuth_capi_operator_kubeapps_chart_repo }
+            if azimuth_capi_operator_kubeapps_chart_repo
+            else {}
+          ) |
+          combine(
+            { "chartName": azimuth_capi_operator_kubeapps_chart_name }
+            if azimuth_capi_operator_kubeapps_chart_name
+            else {}
+          ) |
+          combine(
+            { "chartVersion": azimuth_capi_operator_kubeapps_chart_version }
+            if azimuth_capi_operator_kubeapps_chart_version
+            else {}
+          ) |
+          combine(
+            { "releaseNamespace": azimuth_capi_operator_kubeapps_release_namespace }
+            if azimuth_capi_operator_kubeapps_release_namespace
+            else {}
+          )
+      }}
 azimuth_capi_operator_release_overrides: {}
 azimuth_capi_operator_release_values: >-
   {{-

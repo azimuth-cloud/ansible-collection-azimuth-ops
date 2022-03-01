@@ -45,3 +45,6 @@ infra_data_volume_size: "{{ undef(hint = 'infra_data_volume_size is required') }
 
 # The Ansible groups to place the provisioned node into
 infra_ansible_groups: []
+
+# We support Ubuntu images only, and the default cloud user is 'ubuntu'
+cluster_ssh_user: ubuntu

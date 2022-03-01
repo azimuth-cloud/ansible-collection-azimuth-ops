@@ -17,17 +17,27 @@ harbor_admin_password: "{{ undef(hint = 'harbor_admin_password is not set') }}"
 harbor_secret_key: "{{ undef(hint = 'harbor_secret_key is not set') }}"
 
 # The base domain when the core and notary share a common parent domain
-harbor_ingress_base_domain: "{{ undef(hint = 'harbor_ingress_base_domain is required') }}"
+harbor_ingress_base_domain: >-
+  {{
+    ingress_base_domain
+    if ingress_base_domain is defined
+    else undef(hint = 'harbor_ingress_base_domain is required')
+  }}
 # The subdomain to use for the core service
-harbor_ingress_subdomain_core: registry
+harbor_ingress_subdomain_core: "{{ ingress_harbor_core_subdomain | default('registry') }}"
 # The host to use for the core service
 harbor_ingress_host_core: "{{ harbor_ingress_subdomain_core }}.{{ harbor_ingress_base_domain }}"
 # The subdomain to use for the notary service
-harbor_ingress_subdomain_notary: notary
+harbor_ingress_subdomain_notary: "{{ ingress_harbor_notary_subdomain | default('notary') }}"
 # The host to use for the notary service
 harbor_ingress_host_notary: "{{ harbor_ingress_subdomain_notary }}.{{ harbor_ingress_base_domain }}"
+
+# At the time of writing, the Harbor chart doesn't support setting the ingress class
+# So we have to do it via the annotation
+_harbor_ingress_annotations:
+  kubernetes.io/ingress.class: "nginx"
 # Annotations to use for the ingress resources
-harbor_ingress_annotations: {}
+harbor_ingress_annotations: "{{ _harbor_ingress_annotations | combine(ingress_annotations | default({})) }}"
 
 # The scheme for the Harbor external URL
 harbor_external_url_scheme: "{{ 'https' if harbor_tls_enabled else 'http' }}"
@@ -35,8 +45,13 @@ harbor_external_url_scheme: "{{ 'https' if harbor_tls_enabled else 'http' }}"
 harbor_external_url: "{{ harbor_external_url_scheme }}://{{ harbor_ingress_host_core }}"
 
 # A pre-existing wildcard certificate and key
-harbor_tls_wildcard_certificate:
-harbor_tls_wildcard_key: "{{ undef(hint = 'harbor_tls_wildcard_key is required') }}"
+harbor_tls_wildcard_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
+harbor_tls_wildcard_key: >-
+  {{
+    ingress_tls_wildcard_key
+    if ingress_tls_wildcard_key is defined
+    else undef(hint = 'harbor_tls_wildcard_key is required')
+  }}
 # Or separate certificates and keys for core and notary
 harbor_tls_core_certificate:
 harbor_tls_core_key: "{{ undef(hint = 'harbor_tls_core_key is required') }}"
@@ -45,7 +60,7 @@ harbor_tls_notary_key: "{{ undef(hint = 'harbor_tls_notary_key is required') }}"
 
 # TLS-related annotations, e.g. for cert-manager
 # If used with the cert-manager role, the annotations set by that role will be picked up
-harbor_tls_ingress_annotations: {}
+harbor_tls_ingress_annotations: "{{ ingress_tls_annotations | default({}) }}"
 
 # Indicates if TLS should be enabled
 harbor_tls_enabled: >-
@@ -73,7 +88,8 @@ harbor_tls_notary_secret_name: >-
     else 'harbor-tls-notary'
   }}
 
-harbor_update_strategy: RollingUpdate
+# The default storage class on most platforms is RWO, so use Recreate here
+harbor_update_strategy: Recreate
 
 # The values for the Harbor release
 harbor_release_defaults:
