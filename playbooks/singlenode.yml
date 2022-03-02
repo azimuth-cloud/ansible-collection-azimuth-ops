@@ -4,60 +4,15 @@
 #####
 
 
-# Provision the node using Terraform
-- hosts: terraform_provision
-  roles:
-    - stackhpc.azimuth_ops.infra
-  vars:
-    infra_ansible_groups: [azimuth_deploy]
+# Provision the K3S cluster
+- import_playbook: stackhpc.azimuth_ops.k3s
 
 
-# Configure the node as a K3S cluster with the NGINX ingress controller
+# Install the NGINX ingress controller on the K3S cluster
 - hosts: azimuth_deploy
-  tasks:
-    - block:
-        - include_role:
-            name: stackhpc.azimuth_ops.k3s
-
-        - name: Get installed Kubernetes version
-          command: k3s kubectl version --output json
-          changed_when: false
-          register: k3s_kubectl_version
-
-        - name: Set kubectl version fact
-          set_fact:
-            kubectl_version: "{{ (k3s_kubectl_version.stdout | from_json).serverVersion.gitVersion.split('+') | first }}"
-
-        - include_role:
-            name: stackhpc.azimuth_ops.kubectl
-
-        - include_role:
-            name: stackhpc.azimuth_ops.helm
-
-        - include_role:
-            name: stackhpc.azimuth_ops.kustomize
-
-        - name: Slurp kubeconfig file
-          slurp:
-            src: /etc/rancher/k3s/k3s.yaml
-          register: k3s_kubeconfig
-      become: yes
-
-    - name: Ensure kube config directory exists
-      file:
-        path: "{{ ansible_env.HOME }}/.kube"
-        state: directory
-        mode: u=rwx,g=rx,o=rx
-
-    - name: Write kubeconfig file
-      copy:
-        content: "{{ k3s_kubeconfig.content | b64decode }}"
-        dest: "{{ ansible_env.HOME }}/.kube/config"
-        mode: u=rwx,g=,o=
-
-    - include_role:
-        name: stackhpc.azimuth_ops.ingress_nginx
+  roles:
+    - stackhpc.azimuth_ops.ingress_nginx
 
 
-# Install Azimuth onto the single node
+# Install Azimuth onto the node
 - import_playbook: stackhpc.azimuth_ops.deploy

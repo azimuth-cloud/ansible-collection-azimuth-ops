@@ -15,10 +15,9 @@
 
 - name: Wait for Cluster API controllers to become ready
   command: >-
-    kubectl wait
-      --for=condition={{ watch.condition }}
+    kubectl rollout status
       --namespace {{ watch.namespace }}
-      --timeout 0s
+      --timeout 1s
       {{ watch.kind }}/{{ watch.name }}
   changed_when: false
   register: clusterapi_controller_wait

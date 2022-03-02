@@ -1,0 +1,56 @@
+---
+
+- name: Install or upgrade cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ capi_cluster_chart_name }}"
+    chart_repo_url: "{{ capi_cluster_chart_repo }}"
+    chart_version: "{{ capi_cluster_chart_version }}"
+    release_namespace: "{{ capi_cluster_release_namespace }}"
+    release_name: "{{ capi_cluster_release_name }}"
+    release_values: "{{ capi_cluster_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ capi_cluster_release_wait_timeout }}"
+
+- name: Wait for cluster to become ready
+  command: >-
+    kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
+      --for=condition=Ready
+      --namespace {{ capi_cluster_release_namespace }}
+      --timeout 0s
+  changed_when: false
+  register: capi_cluster_ready
+  until: capi_cluster_ready is succeeded
+  retries: 360
+  delay: 10
+
+- name: Wait for addons to deploy
+  command: >-
+    kubectl wait jobs --all \
+      --for=condition=Complete
+      --namespace {{ capi_cluster_release_namespace }}
+      --selector app.kubernetes.io/name=addons,app.kubernetes.io/instance={{ capi_cluster_release_name }}
+      --timeout=0
+  changed_when: false
+  register: capi_cluster_addons_complete
+  until: capi_cluster_addons_complete is succeeded
+  # Wait up to 60 mins for the addons to deploy
+  retries: 360
+  delay: 10
+
+- block:
+    - name: Generate kubeconfig for cluster
+      command: >-
+        kubectl get secret {{ capi_cluster_release_name }}-kubeconfig
+          --namespace {{ capi_cluster_release_namespace }}
+          --output jsonpath='{.data.value}'
+      changed_when: false
+      register: capi_cluster_kubeconfig_cmd
+
+    - name: Write kubeconfig file for cluster
+      copy:
+        content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
+        dest: "{{ capi_cluster_kubeconfig_path }}"
+        mode: u=rw,g=,o=
+  when: capi_cluster_kubeconfig_path is defined

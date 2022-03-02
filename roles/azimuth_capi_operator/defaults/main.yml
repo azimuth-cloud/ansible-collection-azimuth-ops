@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.35
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.36
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -19,22 +19,52 @@ azimuth_capi_operator_capi_helm_chart_repo:
 azimuth_capi_operator_capi_helm_chart_name:
 azimuth_capi_operator_capi_helm_chart_version:
 
+# Indicates the CIDR blocks to use for pods and services of provisioned clusters respectively
+# Leave blank for the chart defaults
+azimuth_capi_operator_capi_helm_pods_cidr:
+azimuth_capi_operator_capi_helm_services_cidr:
+
+# The DNS nameservers for provisioned clusters
+# Leave blank for the chart defaults
+azimuth_capi_operator_capi_helm_dns_nameservers:
+
 # The registry mirrors for provisioned clusters
 azimuth_capi_operator_capi_helm_registry_mirrors: {}
 # The additional packages for provisioned clusters
 azimuth_capi_operator_capi_helm_additional_packages: []
+
+azimuth_capi_operator_capi_helm_values_defaults:
+  kubeNetwork:
+    pods: >-
+      {{-
+        { "cidrBlocks": [azimuth_capi_operator_capi_helm_pods_cidr] }
+        if azimuth_capi_operator_capi_helm_pods_cidr
+        else {}
+      }}
+    services: >-
+      {{-
+        { "cidrBlocks": [azimuth_capi_operator_capi_helm_services_cidr] }
+        if azimuth_capi_operator_capi_helm_services_cidr
+        else {}
+      }}
+  clusterNetworking: >-
+    {{-
+      { "dnsNameservers": azimuth_capi_operator_capi_helm_dns_nameservers }
+      if azimuth_capi_operator_capi_helm_dns_nameservers
+      else {}
+    }}
+  registryMirrors: "{{ azimuth_capi_operator_capi_helm_registry_mirrors }}"
+  additionalPackages: "{{ azimuth_capi_operator_capi_helm_additional_packages }}"
+
 # Overrides for the CAPI Helm chart releases for all clusters
 azimuth_capi_operator_capi_helm_values_overrides: {}
 # Default values for the CAPI Helm chart releases for all clusters
-azimuth_capi_operator_capi_helm_default_values: >-
+azimuth_capi_operator_capi_helm_values: >-
   {{-
-    {
-      "registryMirrors": azimuth_capi_operator_capi_helm_registry_mirrors,
-      "additionalPackages": azimuth_capi_operator_capi_helm_additional_packages,
-    } |
+    azimuth_capi_operator_capi_helm_values_defaults |
       combine(azimuth_capi_operator_capi_helm_values_overrides, recursive = True)
   }}
-  
+
 
 # The Zenith registrar admin URL for Zenith support
 # If not given, Zenith support is not enabled
@@ -106,7 +136,7 @@ azimuth_capi_operator_release_defaults:
   config:
     capiHelm: >-
       {{-
-        { "defaultValues": azimuth_capi_operator_capi_helm_default_values } |
+        { "defaultValues": azimuth_capi_operator_capi_helm_values } |
           combine(
             { "chartRepository": azimuth_capi_operator_capi_helm_chart_repo }
             if azimuth_capi_operator_capi_helm_chart_repo
@@ -125,11 +155,16 @@ azimuth_capi_operator_release_defaults:
       }}
     zenith: >-
       {{-
-        {
-          "registrarAdminUrl": azimuth_capi_operator_zenith_registrar_admin_url,
-          "sshdHost": azimuth_capi_operator_zenith_sshd_host,
-          "sshdPort": azimuth_capi_operator_zenith_sshd_port,
-        } |
+        {} |
+          combine(
+            {
+              "registrarAdminUrl": azimuth_capi_operator_zenith_registrar_admin_url,
+              "sshdHost": azimuth_capi_operator_zenith_sshd_host,
+              "sshdPort": azimuth_capi_operator_zenith_sshd_port,
+            }
+            if azimuth_capi_operator_zenith_registrar_admin_url
+            else {}
+          ) |
           combine(
             { "chartRepository": azimuth_capi_operator_zenith_chart_repo }
             if azimuth_capi_operator_zenith_chart_repo

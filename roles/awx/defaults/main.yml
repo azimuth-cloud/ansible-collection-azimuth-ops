@@ -6,7 +6,7 @@ awx_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
 
 # The URL and version of the AWX operator
 awx_operator_repo_url: https://github.com/ansible/awx-operator.git
-awx_operator_version: 0.17.0  # This should point to a tag
+awx_operator_version: 0.16.0  # This should point to a tag
 # The directory into which the AWX operator should be cloned
 awx_operator_directory: /opt/awx-operator
 

@@ -19,3 +19,5 @@
     - role: stackhpc.azimuth_ops.azimuth_capi_operator
       when: azimuth_kubernetes_enabled
     - stackhpc.azimuth_ops.azimuth
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path | default('') }}"

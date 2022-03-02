@@ -40,7 +40,7 @@ output "cluster_nodes" {
           infra_network_id = openstack_networking_network_v2.internal_net.id
 {% endif %}
           # Also include the keypair name for the same reason
-          deploy_keypair = openstack_compute_keypair_v2.keypair_deploy.name
+          infra_deploy_keypair = openstack_compute_keypair_v2.keypair_deploy.name
         }
       }
     ]

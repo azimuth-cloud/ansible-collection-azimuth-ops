@@ -1,8 +1,34 @@
 #####
 # This playbook uses Terraform to provision a single-node k3s cluster with the Cluster API
 # controllers installed (the 'seed')
+#
 # It then uses the seed cluster to manage a HA cluster on OpenStack using Cluster API, into
 # which Azimuth and all it's dependencies are installed
 #####
 
-- import_playbook:
+
+# Provision the K3S cluster
+- import_playbook: stackhpc.azimuth_ops.k3s
+
+
+# Configure the node as a Cluster API management cluster and use it to provision the HA cluster
+- hosts: ha_provision
+  tasks:
+    - include_role:
+        name: stackhpc.azimuth_ops.certmanager
+      vars:
+        certmanager_acmehttp01issuer_enabled: no
+
+    - include_role:
+        name: stackhpc.azimuth_ops.clusterapi
+
+    - include_role:
+        name: stackhpc.azimuth_ops.capi_cluster
+      vars:
+        capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+
+
+# Install Azimuth on the HA cluster
+- import_playbook: stackhpc.azimuth_ops.deploy
+  vars:
+    kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"

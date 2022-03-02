@@ -22,10 +22,9 @@
 
 - name: Wait for AWX operator to become ready
   command: >-
-    kubectl wait
-      --for=condition=Available
+    kubectl rollout status
       --namespace {{ awx_namespace }}
-      --timeout 0s
+      --timeout 1s
       deployment/awx-operator-controller-manager
   changed_when: false
   register: awx_operator_wait
@@ -69,11 +68,10 @@
 
 - name: Wait for AWX to become available
   command: >-
-    kubectl wait
-      --for=condition=Available
+    kubectl rollout status
       --namespace {{ awx_namespace }}
-      --timeout 0s
-      deployment/"{{ awx_name }}"
+      --timeout 1s
+      deployment/{{ awx_name }}
   changed_when: false
   register: awx_deployment_wait
   until: awx_deployment_wait is succeeded

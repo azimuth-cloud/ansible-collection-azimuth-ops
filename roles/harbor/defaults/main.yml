@@ -77,8 +77,8 @@ harbor_tls_secret_name: harbor-tls
 harbor_tls_core_secret_name: >-
   {{-
     harbor_tls_secret_name
-    if harbor_tls_wildcard_certificate else
-    'harbor-tls-core'
+    if harbor_tls_wildcard_certificate
+    else 'harbor-tls-core'
   }}
 # The name of the secret containing the TLS certificate for the notary service
 harbor_tls_notary_secret_name: >-
