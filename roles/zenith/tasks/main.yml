@@ -1,0 +1,108 @@
+---
+
+- name: Install Zenith on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ zenith_chart_name }}"
+    chart_repo_url: "{{ zenith_chart_repo }}"
+    chart_version: "{{ zenith_chart_version }}"
+    release_namespace: "{{ zenith_release_namespace }}"
+    release_name: "{{ zenith_release_name }}"
+    release_values: "{{ zenith_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ zenith_wait_timeout }}"
+
+- name: Get Zenith service information
+  command: >-
+    kubectl get services
+      --namespace {{ zenith_release_namespace }}
+      --selector {{ zenith_services_selector }}
+      --output json
+  register: zenith_services_cmd
+  vars:
+    zenith_services_selectors:
+      - app.kubernetes.io/name={{ zenith_chart_name }}
+      - app.kubernetes.io/instance={{ zenith_release_name }}
+    zenith_services_selector: "{{ zenith_services_selectors | join(',') }}"
+
+- name: Set Zenith service facts
+  set_fact:
+    zenith_registrar_service: >-
+      {{
+        zenith_services_cmd.stdout |
+          from_json |
+          json_query('items[?metadata.labels."app.kubernetes.io/component" == `registrar`]') |
+          first
+      }}
+    zenith_sshd_service: >-
+      {{
+        zenith_services_cmd.stdout |
+          from_json |
+          json_query('items[?metadata.labels."app.kubernetes.io/component" == `sshd`]') |
+          first
+      }}
+
+- name: Set Zenith server facts
+  set_fact:
+    zenith_registrar_external_url: >-
+      {{-
+        zenith_registrar_external_url
+        if zenith_registrar_external_url is defined
+        else (
+          "{}://{}.{}".format(
+            'https' if zenith_ingress_tls_enabled else 'http',
+            zenith_ingress_registrar_subdomain,
+            zenith_ingress_base_domain
+          )
+        )
+      }}
+    zenith_registrar_admin_url: >-
+      {{-
+        zenith_registrar_admin_url
+        if zenith_registrar_admin_url is defined
+        else (
+          "http://{}.{}:{}".format(
+            zenith_registrar_service.metadata.name,
+            zenith_registrar_service.metadata.namespace,
+            zenith_registrar_service.spec.ports |
+              selectattr('name', 'equalto', 'http') |
+              map(attribute = 'port') |
+              first
+          )
+        )
+      }}
+    zenith_sshd_host: >-
+      {{-
+        zenith_sshd_host
+        if zenith_sshd_host is defined
+        else (
+          zenith_sshd_service.status.loadBalancer.ingress[0].ip
+          if zenith_sshd_service.spec.type == "LoadBalancer"
+          else (
+            zenith_ingress_base_domain
+            if zenith_sshd_service.spec.type == "NodePort"
+            else undef(hint = 'Unable to determine zenith_sshd_host')
+          )
+        )
+      }}
+    zenith_sshd_port: >-
+      {{-
+        zenith_sshd_port
+        if zenith_sshd_port is defined
+        else (
+          zenith_sshd_service.spec.ports |
+            selectattr('name', 'equalto', 'sshd') |
+            map(attribute = 'port') |
+            first
+          if zenith_sshd_service.spec.type == "LoadBalancer"
+          else (
+            zenith_sshd_service.spec.ports |
+              selectattr('name', 'equalto', 'sshd') |
+              map(attribute = 'nodePort') |
+              first
+            if zenith_sshd_service.spec.type == "NodePort"
+            else undef(hint = 'Unable to determine zenith_sshd_port')
+          )
+        )
+      }}

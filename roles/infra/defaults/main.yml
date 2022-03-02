@@ -1,1 +1,50 @@
+# The location into which the Terraform files should be templated
 terraform_project_path: "{{ inventory_dir }}/.terraform"
+
+# The name of the provisioned node
+infra_name: "{{ undef(hint = 'infra_name is required') }}"
+
+# The exposed port ranges for the provisioned node
+infra_exposed_port_ranges: []
+  # - name:
+  #   min:
+  #   max:
+
+# The ID of an existing network onto which the node should be provisioned
+# This network should be connected to an external network via a router
+infra_network_id:
+# OR
+# The CIDR of the subnet that should be created
+infra_network_cidr: 192.168.100.0/24
+# The ID of the external network to connect to via a router
+infra_external_network_id: >-
+  {{-
+    undef(hint = 'infra_external_network_id is required when infra_network_id is not given')
+    if not infra_network_id
+    else None
+  }}
+
+# The fixed floating IP to associate with the machine
+infra_fixed_floatingip:
+# OR
+# The name of the floating IP pool
+infra_floatingip_pool: >-
+  {{
+    undef(hint = 'infra_floatingip_pool is required when infra_fixed_floatingip is not given')
+    if not infra_fixed_floatingip
+    else None
+  }}
+
+
+# The ID of the image to use for the node
+infra_image_id: "{{ undef(hint = 'infra_image_id is required') }}"
+# The ID of the flavor to use for the node
+infra_flavor_id: "{{ undef(hint = 'infra_flavor_id is required') }}"
+# The size in GB of the data volume
+infra_data_volume_size: "{{ undef(hint = 'infra_data_volume_size is required') }}"
+
+# The Ansible groups to place the provisioned node into
+infra_ansible_groups: []
+
+# We support Ubuntu images only, and the default cloud user is 'ubuntu'
+cluster_ssh_user: ubuntu

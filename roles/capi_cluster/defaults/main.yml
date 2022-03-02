@@ -1,0 +1,202 @@
+---
+
+# The chart to use
+capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
+capi_cluster_chart_name: openstack-cluster
+capi_cluster_chart_version: 0.1.0-dev.0.main.133
+
+# Release information for the cluster release
+capi_cluster_release_namespace: default
+capi_cluster_release_name: "{{ undef(hint = 'capi_cluster_release_name is required')}}"
+
+# The state of the cluster - present to install/update, absent to delete
+capi_cluster_release_state: present
+
+# The timeout to wait for the cluster release to become ready
+capi_cluster_release_wait_timeout: 10m
+
+# Read the credentials for the deployment from the current clouds.yaml by default
+capi_cluster_clouds_file: >-
+  {{-
+    lookup('env', 'OS_CLIENT_CONFIG_FILE') or
+    undef(hint = 'capi_cluster_clouds_file is required')
+  }}
+capi_cluster_credentials: "{{ lookup('file', capi_cluster_clouds_file) | from_yaml }}"
+# The cloud to use in the clouds file
+capi_cluster_cloud_name: "{{ lookup('env', 'OS_CLOUD') or 'openstack' }}"
+# The OpenStack Cluster API provider requires the project ID to be present in the clouds file
+capi_cluster_openstack_project_id: "{{ undef(hint = 'capi_cluster_openstack_project_id is required') }}"
+
+# The CA certificate to use to validate OpenStack connections
+# If not given, then connections are not verified
+capi_cluster_openstack_ca_cert_file:
+capi_cluster_openstack_ca_cert: >-
+  {{-
+    lookup('file', capi_cluster_openstack_ca_cert_file)
+    if capi_cluster_openstack_ca_cert_file
+    else None
+  }}
+
+# The Kubernetes version of the cluster
+capi_cluster_kubernetes_version: "{{ undef(hint = 'capi_cluster_kubernetes_version is required') }}"
+
+# The name of the machine image
+capi_cluster_machine_image: "ubuntu-2004-kube-v{{ capi_cluster_kubernetes_version }}"
+
+# The SSH key to use
+# Defaults to the deploy key created by Terraform if available
+capi_cluster_ssh_keypair: >-
+  {{-
+    infra_deploy_keypair
+    if infra_deploy_keypair is defined
+    else undef(hint = 'capi_cluster_ssh_keypair is required')
+  }}
+
+# The internal network to use
+# Defaults to the network created by Terraform if available
+# Otherwise, if left empty a network will be created
+capi_cluster_internal_network_id: >-
+  {{-
+    infra_network_id
+    if infra_network_id is defined
+    else None
+  }}
+# The external network to use
+# If not given, the external network will be detected
+# Required if multiple external networks are present
+capi_cluster_external_network_id: >-
+  {{
+    infra_external_network_id
+    if infra_external_network_id is defined
+    else None
+  }}
+
+# Indicates the CIDR blocks to use for pods and services respectively
+# Leave blank for the chart defaults
+capi_cluster_pods_cidr:
+capi_cluster_services_cidr:
+
+# The DNS nameservers for the cluster
+# Leave blank for the chart defaults
+capi_cluster_dns_nameservers:
+
+# Indicates whether the API server should have a load balancer and a floating IP
+# By default, we use a load balancer without a floating IP so that the API is only reachable from the seed node
+capi_cluster_apiserver_load_balancer: true
+capi_cluster_apiserver_floating_ip: false
+
+# The name of the flavors to use for control plane and worker nodes respectively
+capi_cluster_control_plane_flavor: >-
+  {{ undef(hint = 'capi_cluster_control_plane_flavor is required') }}
+capi_cluster_worker_flavor: >-
+  {{ undef(hint = 'capi_cluster_worker_flavor is required') }}
+# The number of workers to use
+capi_cluster_worker_count: 3
+
+# Configuration for addons
+#   Enable monitoring by default
+capi_cluster_addons_monitoring: true
+#   Require the specification of a pre-allocated IP for the ingress load balancer
+#   This IP should have the wildcard domain assigned to it
+capi_cluster_addons_ingress_load_balancer_ip: >-
+  {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
+
+# The values for the release
+capi_cluster_release_defaults:
+  global:
+    kubernetesVersion: "{{ capi_cluster_kubernetes_version }}"
+  machineImage: "{{ capi_cluster_machine_image }}"
+  machineSSHKeyName: "{{ capi_cluster_ssh_keypair }}"
+  clusterNetworking: >-
+    {{-
+      {} |
+        combine(
+          { "dnsNameservers": capi_cluster_dns_nameservers }
+          if capi_cluster_dns_nameservers
+          else {},
+          recursive = True
+        ) |
+        combine(
+          {
+            "internalNetwork": {
+              "networkFilter": {
+                "id": capi_cluster_internal_network_id
+              }
+            }
+          }
+          if capi_cluster_internal_network_id
+          else {},
+          recursive = True
+        ) |
+        combine(
+          { "externalNetworkId": capi_cluster_external_network_id }
+          if capi_cluster_external_network_id
+          else {},
+          recursive = True
+        )
+    }}
+  kubeNetwork:
+    pods: >-
+      {{-
+        { "cidrBlocks": [capi_cluster_pods_cidr] }
+        if capi_cluster_pods_cidr
+        else {}
+      }}
+    services: >-
+      {{-
+        { "cidrBlocks": [capi_cluster_services_cidr] }
+        if capi_cluster_services_cidr
+        else {}
+      }}
+  apiServer:
+    enableLoadBalancer: "{{ capi_cluster_apiserver_load_balancer }}"
+    associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
+  controlPlane:
+    machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
+  nodeGroupDefaults:
+    machineFlavor: "{{ capi_cluster_worker_flavor }}"
+  nodeGroups:
+    - name: md-0
+      machineCount: "{{ capi_cluster_worker_count }}"
+  addons:
+    # NFD and the NVIDIA operator are only needed for consuming GPUs
+    nodeFeatureDiscovery:
+      enabled: false
+    nvidiaGPUOperator:
+      enabled: false
+    # cert-manager is installed as part of the Azimuth installation
+    certManager:
+      enabled: false
+    # The NGINX ingress controller is required
+    ingress:
+      enabled: true
+      nginx:
+        release:
+          values:
+            controller:
+              service:
+                loadBalancerIP: "{{ capi_cluster_addons_ingress_load_balancer_ip }}"
+    monitoring:
+      enabled: "{{ capi_cluster_addons_monitoring }}"
+
+capi_cluster_release_overrides: {}
+capi_cluster_release_values: >-
+  {{-
+    { "clouds": { "openstack": capi_cluster_credentials.clouds[capi_cluster_cloud_name] } } |
+      combine(
+        { "clouds": { "openstack": { "auth": { "project_id": capi_cluster_openstack_project_id } } } },
+        recursive = True
+      ) |
+      combine(
+        { "cloudCACert": capi_cluster_openstack_ca_cert }
+        if capi_cluster_openstack_ca_cert
+        else { "clouds": { "openstack": { "verify": False } } },
+        recursive = True
+      ) |
+      combine(capi_cluster_release_defaults, recursive = True) |
+      combine(capi_cluster_release_overrides, recursive = True)
+  }}
+
+# The name of the file into which the kubeconfig of the cluster should be output
+# If not given, the kubeconfig is not output
+capi_cluster_kubeconfig_path:

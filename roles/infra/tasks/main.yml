@@ -5,29 +5,15 @@
     path: "{{ terraform_project_path }}"
     state: directory
 
-- name: Copy Terraform files into project directory
-  copy:
-    src: "{{ item }}"
-    dest: "{{ terraform_project_path }}"
+- name: Template Terraform files into project directory
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ terraform_project_path }}/{{ item }}"
   loop:
     - outputs.tf
     - providers.tf
     - resources.tf
-    - variables.tf
 
 - name: Provision infrastructure
-  import_role:
+  include_role:
     name: stackhpc.terraform.infra
-  environment:
-    OS_CLIENT_CONFIG_FILE: "{{ openstack_clouds_file }}"
-    OS_CLOUD: openstack
-  vars:
-    # Variables controlling the Terraform provisioning
-    terraform_variables:
-      cluster_name: "{{ capi_manager_name }}"
-      network_cidr: "{{ capi_manager_network_cidr }}"
-      image_id: "{{ capi_manager_image_id }}"
-      flavor_id: "{{ capi_manager_flavor_id }}"
-      external_network_id: "{{ capi_manager_external_network_id }}"
-      data_volume_size: "{{ capi_manager_data_volume_size }}"
-      floatingip_pool: "{{ capi_manager_floatingip_pool }}"

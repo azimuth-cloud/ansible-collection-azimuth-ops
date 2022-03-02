@@ -1,9 +1,15 @@
-# ansible-collection-capi-manager
+# ansible-collection-azimuth-ops
 
-[Ansible](https://www.ansible.com/) playbook to deploy a
-[Cluster API](https://github.com/kubernetes-sigs/cluster-api) management cluster from scratch.
+This [Ansible collection](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html)
+contains roles and playbooks for deploying [Azimuth](https://github.com/stackhpc/azimuth) and
+all of its dependencies onto a [Kubernetes](https://kubernetes.io/) cluster.
 
-It can use [Terraform](https://www.terraform.io/) to provision infrastructure - currently
-resources exist to provision infrastructure on an [OpenStack](https://www.openstack.org/).
+It can function in three configurations:
 
-Kubernetes is deployed using [k3s](https://k3s.io/).
+  1. Deploy Azimuth onto a pre-existing Kubernetes cluster.
+  1. Provision a single-node [K3S](https://k3s.io/) cluster into an
+     [OpenStack](https://www.openstack.org/) project using [Terraform](https://www.terraform.io/)
+     and deploy Azimuth onto it.
+  1. Provision a single-node K3S cluster as a seed node using Terraform, configure
+     it as a [Cluster API](https://cluster-api.sigs.k8s.io/) management cluster, use it
+     to deploy a HA cluster using Cluster API and deploy Azimuth onto the HA cluster.

@@ -1,0 +1,14 @@
+---
+
+- name: Install NGINX Ingress Controller on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ ingress_nginx_chart_name }}"
+    chart_repo_url: "{{ ingress_nginx_chart_repo }}"
+    chart_version: "{{ ingress_nginx_chart_version }}"
+    release_namespace: "{{ ingress_nginx_release_namespace }}"
+    release_name: "{{ ingress_nginx_release_name }}"
+    release_values: "{{ ingress_nginx_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ ingress_nginx_wait_timeout }}"

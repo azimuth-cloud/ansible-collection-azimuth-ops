@@ -1,0 +1,15 @@
+---
+
+# The kustomize version to download
+kustomize_version: v4.5.2
+# The OS variant and architecture to use
+# See https://github.com/kubernetes-sigs/kustomize/releases for the available options
+kustomize_os: "{{ ansible_system | lower }}"
+kustomize_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+# The name of the kustomize archive
+kustomize_archive_name: kustomize_{{ kustomize_version }}_{{ kustomize_os }}_{{ kustomize_architecture }}.tar.gz
+# The URL of the kustomize archive to download
+kustomize_archive_url: https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F{{ kustomize_version }}/{{ kustomize_archive_name }}
+
+# The directory into which the kustomize binary should be placed
+kustomize_bin_directory: /usr/local/bin

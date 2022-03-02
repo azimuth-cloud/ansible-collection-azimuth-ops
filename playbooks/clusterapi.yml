@@ -1,6 +1,0 @@
----
-
-- hosts: capi_managers
-  become: yes
-  roles:
-    - stackhpc.capi_manager.clusterapi

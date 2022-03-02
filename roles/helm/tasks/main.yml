@@ -1,0 +1,24 @@
+---
+
+- name: Ensure unpack directory exists
+  file:
+    path: "{{ helm_unpack_directory }}"
+    state: directory
+
+- name: Download and extract Helm archive
+  unarchive:
+    remote_src: yes
+    src: "{{ helm_archive_url }}"
+    dest: "{{ helm_unpack_directory }}"
+
+- name: Ensure binary directory exists
+  file:
+    path: "{{ helm_bin_directory }}"
+    state: directory
+
+- name: Copy executable to binary directory
+  copy:
+    remote_src: yes
+    src: "{{ (helm_unpack_directory, helm_archive_subdirectory, 'helm') | path_join }}"
+    dest: "{{ helm_bin_directory }}"
+    mode: u=rwx,g=rw,o=rx

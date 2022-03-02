@@ -1,0 +1,12 @@
+---
+
+- name: Ensure bin directory exists
+  file:
+    path: "{{ kustomize_bin_directory }}"
+    state: directory
+
+- name: Download and extract kustomize binary
+  unarchive:
+    remote_src: yes
+    src: "{{ kustomize_archive_url }}"
+    dest: "{{ kustomize_bin_directory }}"

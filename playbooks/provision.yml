@@ -1,6 +1,90 @@
----
+#####
+# This playbook uses Terraform and Cluster API to provision infrastructure onto which Azimuth is deployed
+#####
 
-- import_playbook: stackhpc.capi_manager.infra
-- import_playbook: stackhpc.capi_manager.k3s
-- import_playbook: stackhpc.capi_manager.clusterapi
-- import_playbook: stackhpc.capi_manager.clusters
+
+# Provision the node using Terraform
+- hosts: terraform_provision
+  roles:
+    - stackhpc.azimuth_ops.infra
+  vars:
+    infra_ansible_groups: [k3s, azimuth_deploy]
+
+
+# Configure the node as a K3S cluster
+- hosts: k3s
+  tasks:
+    - block:
+        - include_role:
+            name: stackhpc.azimuth_ops.k3s
+
+        - name: Get installed Kubernetes version
+          command: k3s kubectl version --output json
+          changed_when: false
+          register: k3s_kubectl_version
+
+        - name: Set kubectl version fact
+          set_fact:
+            kubectl_version: "{{ (k3s_kubectl_version.stdout | from_json).serverVersion.gitVersion.split('+') | first }}"
+
+        - include_role:
+            name: stackhpc.azimuth_ops.kubectl
+
+        - include_role:
+            name: stackhpc.azimuth_ops.helm
+
+        - include_role:
+            name: stackhpc.azimuth_ops.kustomize
+
+        - name: Slurp kubeconfig file
+          slurp:
+            src: /etc/rancher/k3s/k3s.yaml
+          register: k3s_kubeconfig
+      become: yes
+
+    - name: Ensure kube config directory exists
+      file:
+        path: "{{ ansible_env.HOME }}/.kube"
+        state: directory
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Write kubeconfig file
+      copy:
+        content: "{{ k3s_kubeconfig.content | b64decode }}"
+        dest: "{{ ansible_env.HOME }}/.kube/config"
+        mode: u=rwx,g=,o=
+
+    # Install the NGINX ingress controller on the K3S cluster when doing a single node installation
+    - include_role:
+        name: stackhpc.azimuth_ops.ingress_nginx
+      when: install_mode == 'singlenode'
+
+    # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
+    # Configure the node as a Cluster API management cluster and use it to provision the HA cluster
+    - block:
+        - include_role:
+            name: stackhpc.azimuth_ops.certmanager
+          vars:
+            certmanager_acmehttp01issuer_enabled: no
+
+        - include_role:
+            name: stackhpc.azimuth_ops.clusterapi
+
+        - include_role:
+            name: stackhpc.azimuth_ops.capi_cluster
+          vars:
+            capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+      when: install_mode == 'ha'
+
+
+# Install Azimuth
+- import_playbook: stackhpc.azimuth_ops.deploy
+  vars:
+    # In HA mode, use the kubeconfig for the HA cluster
+    # In single node mode, use the default kubeconfig file
+    kubeconfig_path: >-
+      {{-
+        "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
+        if install_mode == 'ha'
+        else ""
+      }}

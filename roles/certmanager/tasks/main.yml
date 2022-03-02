@@ -1,0 +1,26 @@
+---
+
+- name: Install cert-manager on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ certmanager_chart_name }}"
+    chart_repo_url: "{{ certmanager_chart_repo }}"
+    chart_version: "{{ certmanager_chart_version }}"
+    release_namespace: "{{ certmanager_release_namespace }}"
+    release_name: "{{ certmanager_release_name }}"
+    release_values: "{{ certmanager_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ certmanager_wait_timeout }}"
+
+- block:
+    - name: Install ACME HTTP01 cluster issuer
+      command: kubectl apply -f -
+      args:
+        stdin: "{{ lookup('template', 'acmehttp01issuer.yaml.j2') }}"
+
+    - name: Set auto-TLS facts
+      set_fact:
+        certmanager_ingress_annotations:
+          cert-manager.io/cluster-issuer: "{{ certmanager_acmehttp01issuer_name }}"
+  when: certmanager_acmehttp01issuer_enabled

@@ -1,9 +1,12 @@
 ---
 
-k3s_version: v1.22.5+k3s2
+k3s_version: v1.22.7+k3s1
 k3s_binary_url: https://github.com/k3s-io/k3s/releases/download/{{ k3s_version }}/k3s
-k3s_binary_checksum: sha256:5f8570b7e3b6420f3dd07d135367a35ac7a77052b4e1c0b42f699fbc194200c7
+k3s_binary_checksum: sha256:da1a566c6b3d470102ce431afdb921275ebe663659219562ac4d9854e5bbdf38
 
 # Settings for an additional block device that will hold the k3s state, if present
 k3s_storage_device: /dev/sdb
 k3s_storage_fstype: xfs
+
+# Indicates if the Traefik ingress controller should be enabled
+k3s_traefik_enabled: false

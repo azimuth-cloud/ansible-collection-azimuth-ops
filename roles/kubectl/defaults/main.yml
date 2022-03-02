@@ -1,0 +1,12 @@
+---
+
+# The kubectl version to download
+kubectl_version: "{{ undef(hint = 'kubectl_version is required') }}"
+# The OS variant and architecture to use
+kubectl_os: "{{ ansible_system | lower }}"
+kubectl_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+# The URL of the kubectl binary to download
+kubectl_url: https://dl.k8s.io/release/{{ kubectl_version }}/bin/{{ kubectl_os }}/{{ kubectl_architecture }}/kubectl
+
+# The directory into which the kubectl binary should be placed
+kubectl_bin_directory: /usr/local/bin

@@ -1,0 +1,35 @@
+---
+
+- name: Install Harbor on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ harbor_chart_name }}"
+    chart_repo_url: "{{ harbor_chart_repo }}"
+    chart_version: "{{ harbor_chart_version }}"
+    release_namespace: "{{ harbor_release_namespace }}"
+    release_name: "{{ harbor_release_name }}"
+    release_values: "{{ harbor_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ harbor_wait_timeout }}"
+
+- name: Wait for Harbor API to become available
+  uri:
+    url: "{{ harbor_external_url }}/api/v2.0/projects"
+    method: GET
+    user: admin
+    password: "{{ harbor_admin_password }}"
+    force_basic_auth: yes
+    timeout: 5
+  register: harbor_api_available
+  until: harbor_api_available is succeeded
+  retries: 60
+  delay: 10
+  
+
+- name: Create proxy cache projects
+  include_tasks: proxy_cache_project.yaml
+  loop: "{{ harbor_proxy_cache_projects }}"
+  loop_control:
+    loop_var: project
+    label: "{{ project.name }}"

@@ -1,0 +1,192 @@
+---
+
+# The chart to use
+zenith_chart_repo: https://stackhpc.github.io/zenith
+zenith_chart_name: zenith-server
+zenith_chart_version: 0.1.0-dev.0.main.149
+
+# Release information for the Zenith release
+# Use the same namespace as the Azimuth release by default
+zenith_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
+zenith_release_name: zenith-server
+
+# The timeout to wait for Zenith to become ready
+zenith_wait_timeout: 10m
+
+# Ingress settings
+#   The base domain for Zenith ingress resources
+zenith_ingress_base_domain: >-
+  {{-
+    ingress_base_domain
+    if ingress_base_domain is defined
+    else undef(hint = 'zenith_ingress_base_domain is required')
+  }}
+#   Annotations for Zenith ingress resources
+zenith_ingress_annotations: "{{ ingress_annotations | default({}) }}"
+#   The subdomain to use for the registrar ingress resource
+zenith_ingress_registrar_subdomain: "{{ ingress_zenith_registrar_subdomain | default('registrar') }}"
+#   Indicates whether TLS should be enabled
+zenith_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
+#   The TLS secret name (can be null)
+zenith_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default(None) }}"
+#   Any TLS-specific annotations
+zenith_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
+
+# The signing key for Zenith subdomain tokens
+zenith_registrar_subdomain_token_signing_key: "{{ undef(hint = 'zenith_registrar_subdomain_token_signing_key is required') }}"
+# List of subdomains that are reserved and cannot be requested via Zenith
+# Note that the registrar subdomain is always added to this list
+# Make sure all the subdomains we are using are reserved
+zenith_registrar_reserved_subdomains: >-
+  {{-
+    [
+      ingress_azimuth_portal_subdomain | default(None),
+      ingress_zenith_registrar_subdomain | default(None),
+      ingress_harbor_core_subdomain | default(None),
+      ingress_harbor_notary_subdomain | default(None),
+    ] |
+    select() |
+    list
+  }}
+
+# The Consul server and port
+zenith_consul_server_host: >-
+  {{-
+    consul_server_host
+    if consul_server_host is defined
+    else undef(hint = 'zenith_consul_server_host is required')
+  }}
+zenith_consul_server_port: >-
+  {{
+    consul_server_port
+    if consul_server_port is defined
+    else undef(hint = 'zenith_consul_server_port is required')
+  }}
+
+# Settings for the auth callout
+#   The URL for the auth callout
+#   If not set, no auth callout is configured
+_azimuth_release_name: "{{ azimuth_release_name | default('azimuth') }}"
+_azimuth_api_service_name: >-
+  {{
+    "{}-api".format(
+      _azimuth_release_name
+      if 'azimuth' in _azimuth_release_name
+      else "{}-azimuth".format(_azimuth_release_name)
+    )
+  }}
+zenith_auth_url: >-
+  {{
+    "http://{}.{}.svc.cluster.local/api/session/verify/".format(
+      _azimuth_api_service_name,
+      azimuth_release_namespace | default('azimuth')
+    )
+  }}
+#   The URL to redirect to when the verify URL returns a 401
+#   If not set, the 401 will just be returned
+_azimuth_ingress_tls_enabled: >-
+  {{-
+    azimuth_ingress_tls_enabled
+    if azimuth_ingress_tls_enabled is defined
+    else (ingress_tls_enabled | default(True))
+  }}
+_azimuth_ingress_host: >-
+  {{-
+    azimuth_ingress_host
+    if azimuth_ingress_host is defined
+    else (
+      "{}.{}".format(ingress_azimuth_portal_subdomain, ingress_base_domain)
+      if ingress_azimuth_portal_subdomain is defined and ingress_base_domain is defined
+      else None
+    )
+  }}
+zenith_auth_signin_url: >-
+  {{
+    "{}://{}/auth/login".format(
+      'https' if _azimuth_ingress_tls_enabled else 'http',
+      _azimuth_ingress_host
+    )
+    if _azimuth_ingress_host
+    else undef(hint = 'zenith_auth_signin_url is required')
+  }}
+#   The URL parameter to contain the original URL when redirecting
+zenith_auth_next_url_param: next
+#   Dictionary of headers to set for authentication requests
+#   These will override headers from the incoming request, which would otherwise be forwarded
+#   In particular, you may need to override the accepts header to suit the content types served
+#   by the external authentication service
+zenith_auth_request_headers:
+  accept: application/json
+#   List of headers from the authentication response to add to the upstream request
+zenith_auth_response_headers:
+  - X-Remote-User
+
+# The namespace to create Zenith services in
+zenith_sync_target_namespace: zenith-services
+
+# The type of service to make for SSHD
+zenith_sshd_service_type: LoadBalancer
+# The port to use for the SSHD service
+zenith_sshd_service_port: 22
+# The nodePort for SSHD if using a NodePort service
+zenith_sshd_service_nodeport:
+# The fixed IP for a load balancer service, if using a load balancer service
+zenith_sshd_service_load_balancer_ip:
+
+# The values for the release
+zenith_release_defaults:
+  # We don't need Zenith to deploy a Consul server
+  consul:
+    enabled: false
+  common:
+    consul:
+      address: "{{ zenith_consul_server_host }}"
+      port: "{{ zenith_consul_server_port }}"
+    ingress:
+      baseDomain: "{{ zenith_ingress_base_domain }}"
+      annotations: "{{ zenith_ingress_annotations }}"
+      tls:
+        enabled: "{{ zenith_ingress_tls_enabled }}"
+        secretName: "{{ zenith_ingress_tls_secret_name }}"
+        annotations: "{{ zenith_ingress_tls_annotations }}"
+  sync:
+    config:
+      kubernetes:
+        targetNamespace: "{{ zenith_sync_target_namespace }}"
+        ingress:
+          auth:
+            url: "{{ zenith_auth_url }}"
+            signinUrl: "{{ zenith_auth_signin_url }}"
+            nextUrlParam: "{{ zenith_auth_next_url_param }}"
+            requestHeaders: "{{ zenith_auth_request_headers }}"
+            responseHeaders: "{{ zenith_auth_response_headers }}"
+  registrar:
+    ingress:
+      subdomain: "{{ zenith_ingress_registrar_subdomain }}"
+    config:
+      subdomainTokenSigningKey: "{{ zenith_registrar_subdomain_token_signing_key }}"
+      reservedSubdomains: "{{ zenith_registrar_reserved_subdomains }}"
+  sshd:
+    service: >-
+      {{-
+        {
+          "type": zenith_sshd_service_type,
+          "port": zenith_sshd_service_port
+        } |
+          combine(
+            { "nodePort": zenith_sshd_service_nodeport }
+            if zenith_sshd_service_type == "NodePort" and zenith_sshd_service_nodeport
+            else {}
+          ) |
+          combine(
+            { "loadBalancerIP": zenith_sshd_service_load_balancer_ip }
+            if zenith_sshd_service_type == "LoadBalancer" and zenith_sshd_service_load_balancer_ip
+            else {}
+          )
+      }}
+zenith_release_overrides: {}
+zenith_release_values: >-
+  {{-
+    zenith_release_defaults |
+      combine(zenith_release_overrides, recursive = True)
+  }}

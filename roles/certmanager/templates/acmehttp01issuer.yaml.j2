@@ -1,0 +1,30 @@
+{% if certmanager_acmehttp01issuer_eab_required %}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ certmanager_acmehttp01issuer_name }}-eab
+  namespace: {{ certmanager_release_namespace }}
+stringData:
+  key: "{{ certmanager_acmehttp01issuer_eab_key }}"
+{% endif %}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ certmanager_acmehttp01issuer_name }}
+spec:
+  acme:
+    server: "{{ certmanager_acmehttp01issuer_server }}"
+{% if certmanager_acmehttp01issuer_eab_required %}
+    externalAccountBinding:
+      keyID: "{{ certmanager_acmehttp01issuer_eab_kid }}"
+      keySecretRef:
+        name: {{ certmanager_acmehttp01issuer_name }}-eab
+        key: key
+{% endif %}
+    privateKeySecretRef:
+      name: {{ certmanager_acmehttp01issuer_name }}-privkey
+    solvers:
+      - http01:
+          ingress:
+            class: {{ certmanager_acmehttp01issuer_ingress_class }}

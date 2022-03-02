@@ -1,0 +1,114 @@
+---
+
+- name: Clone AWX operator repository
+  git:
+    repo: "{{ awx_operator_repo_url }}"
+    dest: "{{ awx_operator_directory }}"
+    version: "{{ awx_operator_version }}"
+    force: yes
+
+- name: Set AWX operator controller image
+  command: kustomize edit set image controller={{ awx_operator_image }}
+  args:
+    chdir: "{{ awx_operator_directory }}/config/manager"
+
+- name: Set AWX operator namespace
+  command: kustomize edit set namespace {{ awx_namespace }}
+  args:
+    chdir: "{{ awx_operator_directory }}/config/default"
+
+- name: Install AWX operator
+  command: kubectl apply -k {{ awx_operator_directory }}/config/default
+
+- name: Wait for AWX operator to become ready
+  command: >-
+    kubectl rollout status
+      --namespace {{ awx_namespace }}
+      --timeout 1s
+      deployment/awx-operator-controller-manager
+  changed_when: false
+  register: awx_operator_wait
+  until: awx_operator_wait is succeeded
+  retries: 60
+  delay: 10
+
+- name: Set AWX admin password secret fact
+  set_fact:
+    awx_admin_password_secret_name: "{{ awx_name }}-admin-password"
+  when: awx_admin_password_secret_name is not defined
+
+- name: Create AWX admin password secret
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ awx_admin_password_secret_definition | to_nice_yaml }}"
+  vars:
+    awx_admin_password_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ awx_admin_password_secret_name }}"
+        namespace: "{{ awx_namespace }}"
+        labels: "{{ awx_labels }}"
+      stringData:
+        password: "{{ awx_admin_password }}"
+
+- name: Install AWX instance
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ awx_instance_definition | to_nice_yaml }}"
+  vars:
+    awx_instance_definition:
+      apiVersion: awx.ansible.com/v1beta1
+      kind: AWX
+      metadata:
+        name: "{{ awx_name }}"
+        namespace: "{{ awx_namespace }}"
+        labels: "{{ awx_labels }}"
+      spec: "{{ awx_spec }}"
+
+- name: Wait for AWX to become available
+  command: >-
+    kubectl rollout status
+      --namespace {{ awx_namespace }}
+      --timeout 1s
+      deployment/{{ awx_name }}
+  changed_when: false
+  register: awx_deployment_wait
+  until: awx_deployment_wait is succeeded
+  retries: 60
+  delay: 10
+
+- block:
+    - name: Get AWX service information
+      command: >-
+        kubectl get service
+          --namespace {{ awx_namespace }}
+          --selector {{ awx_service_selector }}
+          --output json
+      register: awx_services_cmd
+      vars:
+        awx_service_selectors:
+          - app.kubernetes.io/managed-by=awx-operator
+          - app.kubernetes.io/component=awx
+          - app.kubernetes.io/name={{ awx_name }}
+        awx_service_selector: "{{ awx_service_selectors | join(',') }}"
+
+    - name: Set AWX service fact
+      set_fact:
+        awx_service: "{{ (awx_services_cmd.stdout | from_json)['items'] | first }}"
+
+    - name: Set AWX server facts
+      set_fact:
+        # Use the internal URL for AWX
+        awx_url: >-
+          {{-
+            "http://{}.{}:{}".format(
+              awx_service.metadata.name,
+              awx_service.metadata.namespace,
+              awx_service.spec.ports |
+                selectattr('name', 'equalto', 'http') |
+                map(attribute = 'port') |
+                first
+            )
+          }}
+  when: awx_url is not defined

@@ -1,0 +1,22 @@
+---
+
+# The chart to use
+ingress_nginx_chart_repo: https://kubernetes.github.io/ingress-nginx
+ingress_nginx_chart_name: ingress-nginx
+ingress_nginx_chart_version: 4.0.17
+
+# Release information for the NGINX ingress controller release
+ingress_nginx_release_namespace: ingress-nginx
+ingress_nginx_release_name: ingress-nginx
+
+# The timeout to wait for NGINX ingress controller to become ready
+ingress_nginx_wait_timeout: 10m
+
+# The values for the release
+ingress_nginx_release_defaults: {}
+ingress_nginx_release_overrides: {}
+ingress_nginx_release_values: >-
+  {{-
+    ingress_nginx_release_defaults |
+      combine(ingress_nginx_release_overrides, recursive = True)
+  }}

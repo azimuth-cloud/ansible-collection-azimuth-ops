@@ -1,13 +1,13 @@
 namespace: stackhpc
-name: capi_manager
+name: azimuth_ops
 version: 0.1.0
-description: Tools for provisioning clusters using Cluster API.
+description: Roles and playbooks for performing Azimuth operations.
 readme: README.md
 authors:
   - "Matt Pryor <matt@stackhpc.com>"
 license:
   - "Apache-2.0"
-repository: "https://github.com/stackhpc/ansible-collection-capi-manager"
+repository: "https://github.com/stackhpc/ansible-collection-azimuth-ops"
 
 dependencies:
   ansible.posix: "*"

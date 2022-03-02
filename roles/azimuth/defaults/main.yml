@@ -1,0 +1,337 @@
+---
+
+# The chart to use
+azimuth_chart_repo: https://stackhpc.github.io/azimuth
+azimuth_chart_name: azimuth
+azimuth_chart_version: 0.1.0-dev.0.k8s-zenith.559
+
+# Release information for the CAPI operator release
+azimuth_release_namespace: azimuth
+azimuth_release_name: azimuth
+
+# The timeout to wait for CAPI operator to become ready
+azimuth_wait_timeout: 10m
+
+# Feature flags
+#   Indicates if the app proxy should be enabled
+azimuth_apps_enabled: yes
+#   Indicates if Cluster-as-a-Service should be enabled 
+azimuth_clusters_enabled: yes
+#   Indicates if Kubernetes clusters should be enabled
+azimuth_kubernetes_enabled: yes
+
+# Ingress settings
+#   The hostname to use for the ingress resource
+azimuth_ingress_host: >-
+  {{-
+    "{}.{}".format(ingress_azimuth_portal_subdomain, ingress_base_domain)
+    if ingress_azimuth_portal_subdomain is defined and ingress_base_domain is defined
+    else undef(hint = 'azimuth_ingress_host is required')
+  }}
+#   Any annotations for the ingress
+azimuth_ingress_annotations: "{{ ingress_annotations | default({}) }}"
+#   Indicates whether TLS should be enabled
+azimuth_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
+#   The TLS secret name (can be null)
+azimuth_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default(None) }}"
+#   Any TLS-specific annotations
+azimuth_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
+
+# The Django secret key, used mainly for ensuring session cookies are not tampered with
+azimuth_secret_key: "{{ undef(hint = 'azimuth_secret_key is required') }}"
+
+# Settings for the available clouds
+#   List of linked clouds - each item should contain name, label and url
+azimuth_linked_clouds: []
+#   The name of this cloud
+azimuth_current_cloud_name: "{{ undef(hint = 'azimuth_current_cloud_name is required') }}"
+#   The label for this cloud
+azimuth_current_cloud_label: "{{ undef(hint = 'azimuth_current_cloud_label is required') }}"
+
+# Authenticator settings
+azimuth_authenticator_type: openstack-password  # openstack-{password,federation}
+# The URL of the federation endpoint when openstack-federation is used
+azimuth_authenticator_openstack_federation_url: >-
+  {{-
+    undef(hint = 'azimuth_authenticator_openstack_federation_url is required')
+    if azimuth_authenticator_type == 'openstack-federation'
+    else None
+  }}
+
+# OpenStack provider settings
+#   The Keystone auth URL
+azimuth_openstack_auth_url: "{{ undef(hint = 'azimuth_openstack_auth_url is required') }}"
+#   The domain
+azimuth_openstack_domain: default
+#   The interface - should rarely need to be changed from the default
+azimuth_openstack_interface: public
+#   Whether or not to verify SSL
+azimuth_openstack_verify_ssl: true
+#   Indicates whether tenant internal networks should be auto-created if not present
+azimuth_openstack_create_internal_net: true
+#   The CIDR to use for auto-created tenant internal networks
+azimuth_openstack_internal_net_cidr: 192.168.3.0/24
+
+# App proxy settings
+#   The base domain for apps
+azimuth_apps_base_domain: >-
+  {{-
+    ingress_base_domain
+    if ingress_base_domain is defined
+    else (
+      undef(hint = 'azimuth_apps_base_domain is required')
+      if azimuth_apps_enabled
+      else None
+    )
+  }}
+#   The external URL for the Zenith registrar
+azimuth_apps_registrar_external_url: >-
+  {{-
+    zenith_registrar_external_url
+    if zenith_registrar_external_url is defined
+    else (
+      undef(hint = 'azimuth_apps_registrar_external_url is required')
+      if azimuth_apps_enabled
+      else None
+    )
+  }}
+#   The admin URL for the Zenith registrar
+azimuth_apps_registrar_admin_url: >-
+  {{-
+    zenith_registrar_admin_url
+    if zenith_registrar_admin_url is defined
+    else (
+      undef(hint = 'azimuth_apps_registrar_admin_url is required')
+      if azimuth_apps_enabled
+      else None
+    )
+  }}
+#   The Zenith SSHD host
+azimuth_apps_sshd_host: >-
+  {{-
+    zenith_sshd_host
+    if zenith_sshd_host is defined
+    else (
+      undef(hint = 'azimuth_apps_sshd_host is required')
+      if azimuth_apps_enabled
+      else None
+    )
+  }}
+#   The Zenith SSHD port
+azimuth_apps_sshd_port: "{{ zenith_sshd_port | default(22) }}"
+#   The URL of the post-deploy script to execute
+azimuth_apps_post_deploy_script_url:
+
+# Cluster-as-a-Service settings
+# AWX settings
+#   The AWX or Ansible Tower URL
+azimuth_caas_awx_url: >-
+  {{-
+    awx_url
+    if awx_url is defined
+    else (
+      undef(hint = 'azimuth_caas_awx_url is required')
+      if azimuth_clusters_enabled
+      else None
+    )
+  }}
+#   Whether to verify SSL with the AWX/Tower API
+azimuth_caas_awx_verify_ssl: true
+#   The username to use for the AWX/Tower API
+#   The user must be at least an org admin for the CaaS organisation
+azimuth_caas_awx_username: admin
+#   The name of a secret to get the AWX password from
+azimuth_caas_awx_password_secret_name: >-
+  {{-
+    awx_admin_password_secret_name
+    if awx_admin_password_secret_name is defined
+    else (
+      undef(hint = 'azimuth_caas_awx_password_secret_name is required')
+      if azimuth_clusters_enabled
+      else None
+    )
+  }}
+#   Indicates whether teams should be created automatically
+azimuth_caas_awx_create_teams: true
+#   Indicates whether automatically-created teams should be granted access to all cluster types
+azimuth_caas_awx_create_team_allow_all_permission: true
+#   Indicates whether CaaS bootstrap resources should be created in AWX
+azimuth_caas_awx_bootstrap: true
+#   The username of the global admin user
+#   Bootstrapping requires a global admin user
+azimuth_caas_awx_admin_username: "{{ azimuth_caas_awx_username }}"
+#   The name of a secret containing the password for the admin user
+azimuth_caas_awx_admin_password_secret_name: "{{ azimuth_caas_awx_password_secret_name }}"
+# Terraform backend settings
+#   Indicates if the Terraform backend should be configured
+azimuth_caas_terraform_enabled: true
+#   The address, including port, of the Consul server to use
+azimuth_caas_terraform_consul_address: >-
+  {{-
+    "http://{}:{}".format(consul_server_host, consul_server_port)
+    if consul_server_host is defined and consul_server_port is defined
+    else (
+      undef(hint = 'azimuth_caas_terraform_consul_address is required')
+      if azimuth_clusters_enabled and azimuth_caas_terraform_enabled
+      else None
+    )
+  }}
+
+# List of default projects and job templates to create as part of the bootstrapping
+# By default, the StackHPC Slurm appliance is included
+azimuth_caas_stackhpc_slurm_appliance_version: main
+# This is the ID of a Rocky 8 image
+azimuth_caas_stackhpc_slurm_appliance_rocky8_image: >-
+  {{- undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_rocky8_image is required') }}
+azimuth_caas_awx_default_projects:
+  - name: StackHPC Slurm Appliance
+    gitUrl: https://github.com/stackhpc/caas-slurm-appliance.git
+    gitVersion: "{{ azimuth_caas_stackhpc_slurm_appliance_version }}"
+    metadataRoot: https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_version }}/ui-meta
+    playbooks: [slurm-infra.yml]
+    extraVars:
+      __ALL__:
+        cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_rocky8_image }}"
+    executionEnvironment:
+      image: ghcr.io/stackhpc/caas-ee:main
+# - # The name of the project
+#   name: My Site Appliances
+#   # The git URL of the project
+#   gitUrl: https://github.com/myorg/site-appliances.git
+#   # The branch, tag or commit id to use
+#   gitVersion: master
+#   # The base URL for cluster metadata files
+#   metadataRoot: https://raw.githubusercontent.com/myorg/site-appliances/master/ui-meta
+#   ##
+#   # OPTIONAL KEYS
+#   ##
+#   # Indicates if the project should be updated to the latest version on each job launch
+#   # Can be useful during development but recommend to leave as false in production
+#   # Defaults to false if not given
+#   alwaysUpdate: true
+#   # List of playbooks to create job templates for
+#   # If not given, a job template is created for each playbook in the project
+#   playbooks: ['cluster1-playbook.yml', 'cluster2-playbook.yml']
+#   # Map whose keys are the playbooks and whose values are maps of Ansible extra_vars for those playbooks
+#   # The special key __ALL__ can be used to set common extra_vars for all playbooks in a project
+#   extraVars:
+#     __ALL__: { var1: value1, var2: value2 }
+#     cluster1-playbook.yml: { var1: "override value1" }
+#   # (ADVANCED) Definition of a custom execution environment for the project
+#   executionEnvironment:
+#     # The image to use (required)
+#     image: registry.example.com/org/image:tag
+#     # Whether to re-pull the image each time it is required (defaults to false if not given)
+#     alwaysPull: true
+
+# Theme settings
+#   Custom bootstrap CSS URL
+azimuth_theme_bootstrap_css_url:
+#   Custom CSS snippet
+azimuth_theme_custom_css:
+
+# The values for the release
+azimuth_release_defaults:
+  tags:
+    apps: "{{ azimuth_apps_enabled }}"
+    clusters: "{{ azimuth_clusters_enabled }}"
+    kubernetes: "{{ azimuth_kubernetes_enabled }}"
+  ingress:
+    host: "{{ azimuth_ingress_host }}"
+    annotations: "{{ azimuth_ingress_annotations }}"
+    tls:
+      enabled: "{{ azimuth_ingress_tls_enabled }}"
+      secretName: "{{ azimuth_ingress_tls_secret_name }}"
+      annotations: "{{ azimuth_ingress_tls_annotations }}"
+  settings:
+    secretKey: "{{ azimuth_secret_key }}"
+    availableClouds: "{{ azimuth_linked_clouds }}"
+    currentCloud:
+      name: "{{ azimuth_current_cloud_name }}"
+      label: "{{ azimuth_current_cloud_label }}"
+  authenticator:
+    type: "{{ azimuth_authenticator_type }}"
+    openstackFederation: >-
+      {{-
+        { "federationUrl": azimuth_authenticator_openstack_federation_url }
+        if azimuth_authenticator_type == "openstack-federation"
+        else {}
+      }}
+  provider:
+    openstack:
+      authUrl: "{{ azimuth_openstack_auth_url }}"
+      domain: "{{ azimuth_openstack_domain }}"
+      interface: "{{ azimuth_openstack_interface }}"
+      verifySsl: "{{ azimuth_openstack_verify_ssl }}"
+      createInternalNet: "{{ azimuth_openstack_create_internal_net }}"
+      internalNetCidr: "{{ azimuth_openstack_internal_net_cidr }}"
+  apps: >-
+    {{-
+      {
+        "baseDomain": azimuth_apps_base_domain,
+        "sshdHost": azimuth_apps_sshd_host,
+        "sshdPort": azimuth_apps_sshd_port,
+        "registrarExternalUrl": azimuth_apps_registrar_external_url,
+        "registrarAdminUrl": azimuth_apps_registrar_admin_url,
+        "postDeployScriptUrl": azimuth_apps_post_deploy_script_url,
+      }
+      if azimuth_apps_enabled
+      else {}        
+    }}
+  clusterEngine: >-
+    {{-
+      {
+        "awx": {
+          "url": azimuth_caas_awx_url,
+          "verifySsl": azimuth_caas_awx_verify_ssl,
+          "username": azimuth_caas_awx_username,
+          "passwordSecretName": azimuth_caas_awx_password_secret_name,
+          "createTeams": azimuth_caas_awx_create_teams,
+          "createTeamAllowAllPermission": azimuth_caas_awx_create_team_allow_all_permission,
+          "createResources": azimuth_caas_awx_bootstrap,
+          "adminUsername": azimuth_caas_awx_admin_username,
+          "adminPasswordSecretName": azimuth_caas_awx_admin_password_secret_name,
+          "defaultProjects": azimuth_caas_awx_default_projects,
+        },
+        "terraformBackend": {
+          "enabled": azimuth_caas_terraform_enabled,
+          "consul": (
+            { "address": azimuth_caas_terraform_consul_address }
+            if azimuth_caas_terraform_enabled
+            else {}
+          ),
+        },
+      }
+      if azimuth_clusters_enabled
+      else {}
+    }}
+  theme: >-
+    {{-
+      {} |
+        combine(
+          { "bootstrapCssUrl": azimuth_theme_bootstrap_css_url }
+          if azimuth_theme_bootstrap_css_url
+          else {}
+        ) |
+        combine(
+          { "customCss": azimuth_theme_custom_css }
+          if azimuth_theme_custom_css
+          else {}
+        )
+    }}
+  # Disable the internal Consul, Zenith, CAPI operator and AWX instances
+  # These will be removed from the chart in future versions
+  consul:
+    enabled: false
+  zenith:
+    enabled: false
+  capi-operator:
+    enabled: false
+  awx:
+    enabled: false
+azimuth_release_overrides: {}
+azimuth_release_values: >-
+  {{-
+    azimuth_release_defaults |
+      combine(azimuth_release_overrides, recursive = True)
+  }}
