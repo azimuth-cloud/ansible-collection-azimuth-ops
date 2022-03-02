@@ -64,7 +64,12 @@ capi_cluster_internal_network_id: >-
 # The external network to use
 # If not given, the external network will be detected
 # Required if multiple external networks are present
-capi_cluster_external_network_id:
+capi_cluster_external_network_id: >-
+  {{
+    infra_external_network_id
+    if infra_external_network_id is defined
+    else None
+  }}
 
 # Indicates the CIDR blocks to use for pods and services respectively
 # Leave blank for the chart defaults
