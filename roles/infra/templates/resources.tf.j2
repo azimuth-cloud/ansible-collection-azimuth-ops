@@ -40,6 +40,13 @@ resource "openstack_networking_subnet_v2" "internal_subnet" {
   network_id = openstack_networking_network_v2.internal_net.id
   cidr       = "{{ infra_network_cidr }}"
   ip_version = 4
+{% if infra_subnet_dns_nameservers %}
+  dns_nameservers = [
+{% for ns in infra_subnet_dns_nameservers %}
+    "{{ ns }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+{% endif %}
 }
 
 resource "openstack_networking_router_v2" "router" {
@@ -61,10 +68,6 @@ resource "openstack_networking_port_v2" "port" {
   {% else %}
   network_id     = openstack_networking_network_v2.internal_net.id
   {% endif %}
-
-  fixed_ip {
-    subnet_id = openstack_networking_subnet_v2.internal_subnet.id
-  }
 
   security_group_ids = [
     openstack_networking_secgroup_v2.secgroup.id
