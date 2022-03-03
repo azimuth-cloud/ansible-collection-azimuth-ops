@@ -265,6 +265,7 @@ azimuth_release_defaults:
       verifySsl: "{{ azimuth_openstack_verify_ssl }}"
       createInternalNet: "{{ azimuth_openstack_create_internal_net }}"
       internalNetCidr: "{{ azimuth_openstack_internal_net_cidr }}"
+      externalNetTemplate: "{{ azimuth_openstack_external_net_name | default(omit) }}"
   apps: >-
     {{-
       {
