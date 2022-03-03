@@ -19,6 +19,12 @@ azimuth_capi_operator_capi_helm_chart_repo:
 azimuth_capi_operator_capi_helm_chart_name:
 azimuth_capi_operator_capi_helm_chart_version:
 
+# The ID of the external network to use if there are multiple external networks
+# If specified here, the network MUST be shared by all tenants
+# If not given the external network is discovered, which only works if there is exactly
+# one external network available to a project
+azimuth_capi_operator_external_network_id:
+
 # Indicates the CIDR blocks to use for pods and services of provisioned clusters respectively
 # Leave blank for the chart defaults
 azimuth_capi_operator_capi_helm_pods_cidr:
@@ -49,9 +55,17 @@ azimuth_capi_operator_capi_helm_values_defaults:
       }}
   clusterNetworking: >-
     {{-
-      { "dnsNameservers": azimuth_capi_operator_capi_helm_dns_nameservers }
-      if azimuth_capi_operator_capi_helm_dns_nameservers
-      else {}
+      {} |
+        combine(
+          { "externalNetworkId": azimuth_capi_operator_external_network_id }
+          if azimuth_capi_operator_external_network_id
+          else {}
+        ) |
+        combine(
+          { "dnsNameservers": azimuth_capi_operator_capi_helm_dns_nameservers }
+          if azimuth_capi_operator_capi_helm_dns_nameservers
+          else {}
+        )
     }}
   registryMirrors: "{{ azimuth_capi_operator_capi_helm_registry_mirrors }}"
   additionalPackages: "{{ azimuth_capi_operator_capi_helm_additional_packages }}"
