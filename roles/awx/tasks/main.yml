@@ -32,12 +32,91 @@
   retries: 60
   delay: 10
 
+- block:
+    - name: Create postgresql auth secret
+      # Use create so that we only generate passwords once
+      command: kubectl create -f -
+      args:
+        stdin: "{{ awx_postgresql_auth_secret_definition | to_nice_yaml }}"
+      vars:
+        awx_postgresql_auth_secret_definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "{{ awx_postgresql_auth_secret_name }}"
+            namespace: "{{ awx_namespace }}"
+            labels: "{{ awx_labels }}"
+          stringData:
+            # The password for the postgres user
+            postgres-password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"
+            # The password for the AWX user
+            password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"
+            # The password for the replication user
+            replication-password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"
+      register: awx_postgresql_auth_secret_create
+      failed_when: >-
+        awx_postgresql_auth_secret_create.rc != 0 and
+        'AlreadyExists' not in awx_postgresql_auth_secret_create.stderr
+
+    - name: Install AWX posgresql on target Kubernetes cluster
+      kubernetes.core.helm:
+        chart_ref: "{{ awx_postgresql_chart_name }}"
+        chart_repo_url: "{{ awx_postgresql_chart_repo }}"
+        chart_version: "{{ awx_postgresql_chart_version }}"
+        release_namespace: "{{ awx_namespace }}"
+        release_name: "{{ awx_postgresql_release_name }}"
+        release_values: "{{ awx_postgresql_release_values }}"
+        atomic: yes
+        create_namespace: yes
+        wait: yes
+        wait_timeout: "{{ awx_postgresql_wait_timeout }}"
+
+    - name: Get postgresql auth secret information
+      command: >-
+        kubectl get secret {{ awx_postgresql_auth_secret_name }}
+          --namespace {{ awx_namespace }}
+          --output json
+      changed_when: false
+      register: awx_postgresql_auth_secret_cmd
+
+    - name: Get postgresql service information
+      command: >-
+        kubectl get services {{ awx_postgresql_release_name }}
+          --namespace {{ awx_namespace }}
+          --output json
+      register: awx_postgresql_service_cmd
+
+    - name: Set posgresql service fact
+      set_fact:
+        awx_posgresql_service: "{{ awx_postgresql_service_cmd.stdout | from_yaml }}"
+
+    - name: Set postgresql connection facts
+      set_fact:
+        awx_postgresql_host: >-
+          {{
+            '{}.{}'.format(
+              awx_posgresql_service.metadata.name,
+              awx_posgresql_service.metadata.namespace
+            )
+          }}
+        awx_postgresql_port: >-
+          {{
+            awx_posgresql_service.spec.ports |
+              selectattr('name', 'equalto', 'tcp-postgresql') |
+              map(attribute = 'port') |
+              first
+          }}
+        awx_postgresql_database: "{{ awx_postgresql_release_values.auth.database }}"
+        awx_postgresql_username: "{{ awx_postgresql_release_values.auth.username }}"
+        awx_postgresql_password: "{{ (awx_postgresql_auth_secret_cmd.stdout | from_json).data.password | b64decode }}"
+  when: not awx_postgresql_host
+
 - name: Set AWX admin password secret fact
   set_fact:
     awx_admin_password_secret_name: "{{ awx_name }}-admin-password"
   when: awx_admin_password_secret_name is not defined
 
-- name: Create AWX admin password secret
+- name: Install AWX admin password secret
   command: kubectl apply -f -
   args:
     stdin: "{{ awx_admin_password_secret_definition | to_nice_yaml }}"
@@ -51,6 +130,44 @@
         labels: "{{ awx_labels }}"
       stringData:
         password: "{{ awx_admin_password }}"
+
+- name: Install AWX trust bundle
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ awx_trust_bundle_secret_definition | to_nice_yaml }}"
+  vars:
+    awx_trust_bundle_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ awx_trust_bundle_secret_name }}"
+        namespace: "{{ awx_namespace }}"
+        labels: "{{ awx_labels }}"
+      stringData:
+        bundle-ca.crt: "{{ awx_trust_bundle }}"
+  when: awx_trust_bundle
+
+- name: Install AWX database configuration
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ awx_postgresql_configuration_secret_definition | to_nice_yaml }}"
+  vars:
+    awx_postgresql_configuration_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ awx_postgresql_configuration_secret_name }}"
+        namespace: "{{ awx_namespace }}"
+        labels: "{{ awx_labels }}"
+      stringData:
+        # This indicates to AWX that it isn't managing the database
+        type: unmanaged
+        host: "{{ awx_postgresql_host }}"
+        port: "{{ awx_postgresql_port }}"
+        database: "{{ awx_postgresql_database }}"
+        username: "{{ awx_postgresql_username }}"
+        password: "{{ awx_postgresql_password }}"
+        sslmode: "{{ awx_postgresql_sslmode }}"
 
 - name: Install AWX instance
   command: kubectl apply -f -

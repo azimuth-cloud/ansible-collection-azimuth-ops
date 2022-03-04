@@ -12,9 +12,40 @@ certmanager_release_name: cert-manager
 # The timeout to wait for cert-manager to become ready
 certmanager_wait_timeout: 10m
 
+# The trust bundle to use in the cert-manager containers
+# If empty, the default trust bundle will be used
+certmanager_trust_bundle: "{{ trust_bundle | default(None) }}"
+certmanager_trust_bundle_configmap_name: "{{ trust_bundle_configmap_name | default('certmanager-trust-bundle') }}"
+
 # The values for the release
 certmanager_release_defaults:
   installCRDs: true
+  # If using a custom trust bundle, mount the configmap over /etc/ssl/certs
+  volumes: >-
+    {{
+      [
+        {
+          "name": certmanager_trust_bundle_configmap_name,
+          "configMap": {
+            "name": certmanager_trust_bundle_configmap_name
+          }
+        }
+      ]
+      if certmanager_trust_bundle
+      else []
+    }}
+  volumeMounts: >-
+    {{
+      [
+        {
+          "name": certmanager_trust_bundle_configmap_name,
+          "mountPath": "/etc/ssl/certs",
+          "readOnly": true
+        }
+      ]
+      if certmanager_trust_bundle
+      else []
+    }}
 certmanager_release_overrides: {}
 certmanager_release_values: >-
   {{-

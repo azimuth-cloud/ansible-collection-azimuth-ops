@@ -1,5 +1,28 @@
 ---
 
+- name: Create cert-manager release namespace
+  command: kubectl create namespace {{ certmanager_release_namespace }}
+  register: certmanager_create_namespace
+  changed_when: certmanager_create_namespace.rc == 0
+  failed_when: >-
+    certmanager_create_namespace.rc != 0 and
+    'AlreadyExists' not in certmanager_create_namespace.stderr
+
+- name: Install trust bundle
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ certmanager_trust_bundle_configmap_definition | to_nice_yaml }}"
+  vars:
+    certmanager_trust_bundle_configmap_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: "{{ certmanager_trust_bundle_configmap_name }}"
+        namespace: "{{ certmanager_release_namespace }}"
+      data:
+        ca-certificates.crt: "{{ certmanager_trust_bundle }}"
+  when: certmanager_trust_bundle
+
 - name: Install cert-manager on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ certmanager_chart_name }}"

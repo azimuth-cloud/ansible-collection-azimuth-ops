@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.k8s-zenith.561
+azimuth_chart_version: 0.1.0-dev.0.k8s-zenith.567
 
 # Release information for the CAPI operator release
 azimuth_release_namespace: azimuth
@@ -36,6 +36,11 @@ azimuth_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
 azimuth_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default(None) }}"
 #   Any TLS-specific annotations
 azimuth_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
+
+# Custom trust bundle for SSL verification
+azimuth_trust_bundle: "{{ trust_bundle | default(None) }}"
+# The name of the configmap into which the trust bundle should be placed
+azimuth_trust_bundle_configmap_name: "{{ trust_bundle_configmap_name | default('azimuth-trust-bundle') }}"
 
 # The Django secret key, used mainly for ensuring session cookies are not tampered with
 azimuth_secret_key: "{{ undef(hint = 'azimuth_secret_key is required') }}"
@@ -84,6 +89,11 @@ azimuth_apps_base_domain: >-
       else None
     )
   }}
+#   Indicates whether SSL should be verified when determining whether a service is ready
+azimuth_apps_verify_ssl: true
+#   Indicates whether SSL should be verified by clients when associating keys with the
+#   registrar using the external endpoint
+azimuth_apps_verify_ssl_clients: "{{ azimuth_apps_verify_ssl }}"
 #   The external URL for the Zenith registrar
 azimuth_apps_registrar_external_url: >-
   {{-
@@ -243,6 +253,12 @@ azimuth_release_defaults:
       enabled: "{{ azimuth_ingress_tls_enabled }}"
       secretName: "{{ azimuth_ingress_tls_secret_name }}"
       annotations: "{{ azimuth_ingress_tls_annotations }}"
+  trustBundleConfigMapName: >-
+    {{-
+      azimuth_trust_bundle_configmap_name
+      if azimuth_trust_bundle
+      else None
+    }}
   settings:
     secretKey: "{{ azimuth_secret_key }}"
     availableClouds: "{{ azimuth_linked_clouds }}"
@@ -269,6 +285,8 @@ azimuth_release_defaults:
     {{-
       {
         "baseDomain": azimuth_apps_base_domain,
+        "verifySsl": azimuth_apps_verify_ssl,
+        "verifySslClients": azimuth_apps_verify_ssl_clients,
         "sshdHost": azimuth_apps_sshd_host,
         "sshdPort": azimuth_apps_sshd_port,
         "registrarExternalUrl": azimuth_apps_registrar_external_url,

@@ -6,7 +6,7 @@ awx_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
 
 # The URL and version of the AWX operator
 awx_operator_repo_url: https://github.com/ansible/awx-operator.git
-awx_operator_version: 0.16.0  # This should point to a tag
+awx_operator_version: 0.17.0  # This should point to a tag
 # The directory into which the AWX operator should be cloned
 awx_operator_directory: /opt/awx-operator
 
@@ -14,9 +14,6 @@ awx_operator_directory: /opt/awx-operator
 awx_operator_image_registry: quay.io/ansible/awx-operator
 # The image to use for the AWX operator controller
 awx_operator_image: "{{ awx_operator_image_registry }}:{{ awx_operator_version }}"
-
-# The admin password for the AWX instance
-awx_admin_password: "{{ undef(hint = 'awx_admin_password is required') }}"
 
 # The name for the AWX instance
 awx_name: awx
@@ -26,11 +23,74 @@ awx_labels:
   app.kubernetes.io/managed-by: ansible-collection-azimuth-ops
   app.kubernetes.io/instance: "{{ awx_name }}"
 
+# The chart to use to deploy postgresql
+awx_postgresql_chart_repo: https://charts.bitnami.com/bitnami
+awx_postgresql_chart_name: postgresql
+awx_postgresql_chart_version: 11.1.3
+# Release information for the postgresql release
+awx_postgresql_release_name: "{{ awx_name }}-postgresql"
+# The timeout to wait for the postgresql release to become ready
+awx_postgresql_wait_timeout: 10m
+# The name of the secret containing the postgresql passwords
+awx_postgresql_auth_secret_name: "{{ awx_name }}-postgresql-auth"
+# The storage class to use for postgresql PVC
+awx_postgresql_persistence_storage_class:
+# The size of the PVC for the postgresql data
+awx_postgresql_persistence_size: 8Gi
+# The values for the postgresql release
+awx_postgresql_release_defaults:
+  architecture: standalone
+  auth:
+    database: awx
+    username: awx
+    existingSecret: "{{ awx_postgresql_auth_secret_name }}"
+  primary:
+    persistence:
+      storageClass: "{{ awx_postgresql_persistence_storage_class }}"
+      size: "{{ awx_postgresql_persistence_size }}"
+awx_postgresql_release_overrides: {}
+awx_postgresql_release_values: >-
+  {{-
+    awx_postgresql_release_defaults |
+      combine(awx_postgresql_release_overrides, recursive = True)
+  }}
+
+# The admin password for the AWX instance
+awx_admin_password: "{{ undef(hint = 'awx_admin_password is required') }}"
+
+# The database connection details for the postgresql database used by AWX
+# Until https://github.com/ansible/awx-operator/issues/802 is fixed we cannot use the managed db
+# If database host is not set, then a database is created using the Bitnami Helm chart
+awx_postgresql_host:
+awx_postgresql_port: 5432
+awx_postgresql_database: "{{ undef(hint = 'awx_postgresql_database is required') }}"
+awx_postgresql_username: "{{ undef(hint = 'awx_postgresql_username is required') }}"
+awx_postgresql_password: "{{ undef(hint = 'awx_postgresql_password is required') }}"
+awx_postgresql_sslmode: disable
+# The name of the secret containing the postgresql configuration for AWX
+awx_postgresql_configuration_secret_name: "{{ awx_name }}-postgresql-configuration"
+
+# A bundle of additional certificates to add to the AWX instance
+# If empty, the default trusted CAs will be used
+awx_trust_bundle: "{{ trust_bundle | default(None) }}"
+awx_trust_bundle_secret_name: "{{ trust_bundle_configmap_name | default('awx-trust-bundle') }}"
+
 # The spec for the AWX instance
-awx_spec_defaults:
-  service_type: ClusterIP
-  ingress_type: none
-  create_preload_data: false
-  garbage_collect_secrets: true
+awx_spec_defaults: >-
+  {{
+    {
+      "service_type": "ClusterIP",
+      "ingress_type": "none",
+      "create_preload_data": False,
+      "garbage_collect_secrets": True,
+      "admin_password_secret": awx_admin_password_secret_name,
+      "postgres_configuration_secret": awx_postgresql_configuration_secret_name
+    } |
+      combine(
+        { "bundle_cacert_secret": awx_trust_bundle_secret_name }
+        if awx_trust_bundle
+        else {}
+      )
+  }}
 awx_spec_overrides: {}
 awx_spec: "{{ awx_spec_defaults | combine(awx_spec_overrides, recursive = True) }}"
