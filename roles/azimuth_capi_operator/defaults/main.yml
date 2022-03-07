@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.36
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.37
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -35,7 +35,12 @@ azimuth_capi_operator_capi_helm_services_cidr:
 azimuth_capi_operator_capi_helm_dns_nameservers:
 
 # The registry mirrors for provisioned clusters
-azimuth_capi_operator_capi_helm_registry_mirrors: {}
+azimuth_capi_operator_capi_helm_registry_mirrors: >-
+  {{-
+    harbor_registry_mirrors
+    if harbor_registry_mirrors is defined
+    else {}
+  }}
 # The additional packages for provisioned clusters
 azimuth_capi_operator_capi_helm_additional_packages: []
 

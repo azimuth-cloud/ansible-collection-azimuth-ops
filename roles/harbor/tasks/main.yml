@@ -21,6 +21,8 @@
     password: "{{ harbor_admin_password }}"
     force_basic_auth: yes
     timeout: 5
+    ca_path: "{{ harbor_ca_path or omit }}"
+    validate_certs: "{{ harbor_validate_certs }}"
   register: harbor_api_available
   until: harbor_api_available is succeeded
   retries: 60
@@ -29,7 +31,16 @@
 
 - name: Create proxy cache projects
   include_tasks: proxy_cache_project.yaml
-  loop: "{{ harbor_proxy_cache_projects }}"
+  loop: "{{ harbor_proxy_cache_projects.values() }}"
   loop_control:
     loop_var: project
     label: "{{ project.name }}"
+
+- name: Set registry mirrors fact
+  set_fact:
+    harbor_registry_mirrors: >-
+      {
+        {% for registry, project in harbor_proxy_cache_projects.items() %}
+        "{{ registry }}": "{{ "{}/v2/{}".format(harbor_external_url, project.name) }}",
+        {% endfor %}
+      }

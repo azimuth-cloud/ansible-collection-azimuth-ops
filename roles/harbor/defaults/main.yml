@@ -123,8 +123,14 @@ harbor_release_values: >-
       combine(harbor_release_overrides, recursive = True)
   }}
 
+# Path to a CA file to use when talking to the Harbor API
+harbor_ca_path:
+# Whether or not to validate SSL certificates when talking to the Harbor API
+harbor_validate_certs: yes
+
 # The proxy cache projects to create
-harbor_proxy_cache_projects: []
-  # - name: dockerhub-public
+harbor_proxy_cache_projects: {}
+  # docker.io:
+  #   name: dockerhub-public
   #   type: docker-hub
   #   url: https://hub.docker.com
