@@ -65,17 +65,16 @@ certmanager_acmehttp01issuer_ingress_class: nginx
 # By default we use ZeroSSL, which requires an EAB for use with cert-manager
 # See https://zerossl.com/documentation/acme/
 certmanager_acmehttp01issuer_eab_required: yes
+# The secret name to use for the EAB
+certmanager_acmehttp01issuer_eab_secret_name: "{{ certmanager_acmehttp01issuer_name }}-eab"
 # The key ID of the EAB
-certmanager_acmehttp01issuer_eab_kid: >-
-  {{
-    undef(hint = 'certmanager_acmehttp01issuer_eab_kid is required')
-    if certmanager_acmehttp01issuer_eab_required
-    else None
-  }}
+certmanager_acmehttp01issuer_eab_kid:
 # The HMAC key of the EAB
-certmanager_acmehttp01issuer_eab_key: >-
-  {{
-    undef(hint = 'certmanager_acmehttp01issuer_eab_key is required')
-    if certmanager_acmehttp01issuer_eab_required
-    else None
-  }}
+certmanager_acmehttp01issuer_eab_key:
+# OR
+# The API to use when generating new EAB credentials
+certmanager_acmehttp01issuer_eab_generate_apikey: >-
+  {{ undef(hint = 'certmanager_acmehttp01issuer_eab_generate_apikey is required') }}
+# The URL where new EAB credentials can be obtained
+certmanager_acmehttp01issuer_eab_generate_url: >-
+  https://api.zerossl.com/acme/eab-credentials?access_key={{ certmanager_acmehttp01issuer_eab_generate_apikey }}

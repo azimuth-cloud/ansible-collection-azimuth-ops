@@ -37,6 +37,43 @@
     wait_timeout: "{{ certmanager_wait_timeout }}"
 
 - block:
+    - name: Check if EAB secret exists
+      command: >-
+        kubectl get secret {{ certmanager_acmehttp01issuer_eab_secret_name }}
+          --namespace {{ certmanager_release_name }}
+          --output json
+      register: certmanager_acmehttp01issuer_eab_secret_cmd
+      changed_when: false
+      failed_when: >-
+        certmanager_acmehttp01issuer_eab_secret_cmd.rc != 0 and
+        "NotFound" not in certmanager_acmehttp01issuer_eab_secret_cmd.stderr
+
+    - name: Set EAB credential facts from secret
+      set_fact:
+        certmanager_acmehttp01issuer_eab_kid: >-
+          {{ (certmanager_acmehttp01issuer_eab_secret_cmd.stdout | from_json).data.kid | b64decode }}
+        certmanager_acmehttp01issuer_eab_key: >-
+          {{ (certmanager_acmehttp01issuer_eab_secret_cmd.stdout | from_json).data.key | b64decode }}
+      when: certmanager_acmehttp01issuer_eab_secret_cmd.rc == 0
+
+    - block:
+        - name: Generate EAB credentials
+          uri:
+            url: "{{ certmanager_acmehttp01issuer_eab_generate_url }}"
+            method: POST
+          register: certmanager_acmehttp01issuer_eab_credentials
+
+        - name: Set EAB credential facts from response
+          set_fact:
+            certmanager_acmehttp01issuer_eab_kid: "{{ certmanager_acmehttp01issuer_eab_credentials.json.eab_kid }}"
+            certmanager_acmehttp01issuer_eab_key: "{{ certmanager_acmehttp01issuer_eab_credentials.json.eab_hmac_key }}"
+      when: certmanager_acmehttp01issuer_eab_secret_cmd.rc != 0
+  when: >-
+    certmanager_acmehttp01issuer_enabled and
+    certmanager_acmehttp01issuer_eab_required and
+    not certmanager_acmehttp01issuer_eab_kid
+
+- block:
     - name: Install ACME HTTP01 cluster issuer
       command: kubectl apply -f -
       args:

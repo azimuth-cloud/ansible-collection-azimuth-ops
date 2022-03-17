@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.master.584
+azimuth_chart_version: 0.1.0-dev.0.master.587
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -192,7 +192,11 @@ azimuth_caas_terraform_consul_address: >-
 azimuth_caas_stackhpc_slurm_appliance_version: main
 # This is the ID of a Rocky 8 image
 azimuth_caas_stackhpc_slurm_appliance_rocky8_image: >-
-  {{- undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_rocky8_image is required') }}
+  {{-
+    undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_rocky8_image is required')
+    if azimuth_clusters_enabled
+    else None
+  }}
 azimuth_caas_awx_default_projects:
   - name: StackHPC Slurm Appliance
     gitUrl: https://github.com/stackhpc/caas-slurm-appliance.git

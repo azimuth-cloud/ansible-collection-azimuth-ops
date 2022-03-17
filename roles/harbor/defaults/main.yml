@@ -91,6 +91,16 @@ harbor_tls_notary_secret_name: >-
 # The default storage class on most platforms is RWO, so use Recreate here
 harbor_update_strategy: Recreate
 
+# Settings for persistence
+harbor_persistence_enabled: yes
+harbor_persistence_image_chart_storage_type: filesystem
+harbor_persistence_pvc_chartmuseum_size: 5Gi
+harbor_persistence_pvc_database_size: 1Gi
+harbor_persistence_pvc_jobservice_size: 1Gi
+harbor_persistence_pvc_redis_size: 1Gi
+harbor_persistence_pvc_registry_size: 5Gi
+harbor_persistence_pvc_trivy_size: 5Gi
+
 # The values for the Harbor release
 harbor_release_defaults:
   externalURL: "{{ harbor_external_url }}"
@@ -116,6 +126,23 @@ harbor_release_defaults:
       secret:
         secretName: "{{ harbor_tls_core_secret_name }}"
         notarySecretName: "{{ harbor_tls_notary_secret_name }}"
+  persistence:
+    enabled: "{{ harbor_persistence_enabled }}"
+    imageChartStorage:
+      type: "{{ harbor_persistence_image_chart_storage_type }}"
+    persistentVolumeClaim:
+      chartmuseum:
+        size: "{{ harbor_persistence_pvc_chartmuseum_size }}"
+      database:
+        size: "{{ harbor_persistence_pvc_database_size }}"
+      jobservice:
+        size: "{{ harbor_persistence_pvc_jobservice_size }}"
+      redis:
+        size: "{{ harbor_persistence_pvc_redis_size }}"
+      registry:
+        size: "{{ harbor_persistence_pvc_registry_size }}"
+      trivy:
+        size: "{{ harbor_persistence_pvc_trivy_size }}"
 harbor_release_overrides: {}
 harbor_release_values: >-
   {{-

@@ -2,9 +2,10 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ certmanager_acmehttp01issuer_name }}-eab
+  name: {{ certmanager_acmehttp01issuer_eab_secret_name }}
   namespace: {{ certmanager_release_namespace }}
 stringData:
+  kid: "{{ certmanager_acmehttp01issuer_eab_kid }}"
   key: "{{ certmanager_acmehttp01issuer_eab_key }}"
 {% endif %}
 ---
@@ -19,7 +20,7 @@ spec:
     externalAccountBinding:
       keyID: "{{ certmanager_acmehttp01issuer_eab_kid }}"
       keySecretRef:
-        name: {{ certmanager_acmehttp01issuer_name }}-eab
+        name: {{ certmanager_acmehttp01issuer_eab_secret_name }}
         key: key
 {% endif %}
     privateKeySecretRef:

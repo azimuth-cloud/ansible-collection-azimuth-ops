@@ -56,11 +56,15 @@ resource "openstack_networking_router_interface_v2" "router_interface" {
 
 resource "openstack_networking_port_v2" "port" {
   admin_state_up = "true"
-  {% if infra_network_id %}
-  network_id     = "{{ infra_network_id }}"
-  {% else %}
-  network_id     = openstack_networking_network_v2.internal_net.id
-  {% endif %}
+{% if infra_network_id %}
+  network_id = "{{ infra_network_id }}"
+{% else %}
+  network_id = openstack_networking_network_v2.internal_net.id
+
+  fixed_ip {
+    subnet_id = openstack_networking_subnet_v2.internal_subnet.id
+  }
+{% endif %}
 
   security_group_ids = [
     openstack_networking_secgroup_v2.secgroup.id
@@ -74,11 +78,11 @@ resource "openstack_compute_keypair_v2" "keypair_deploy" {
 resource "openstack_compute_instance_v2" "node" {
   name      = "{{ infra_name }}"
   image_id  = "{{ infra_image_id }}"
-  {% if infra_flavor_id %}
+{% if infra_flavor_id %}
   flavor_id = "{{ infra_flavor_id }}"
-  {% else %}
+{% else %}
   flavor_name = "{{ infra_flavor_name }}"
-  {% endif %}
+{% endif %}
   key_pair  = openstack_compute_keypair_v2.keypair_deploy.name
 
   network {
