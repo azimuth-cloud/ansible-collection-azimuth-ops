@@ -56,15 +56,15 @@ certmanager_release_values: >-
 # Indicates if an ACME HTTP01 cluster issuer should be created
 certmanager_acmehttp01issuer_enabled: yes
 # The name of the issuer
-certmanager_acmehttp01issuer_name: zerossl
+certmanager_acmehttp01issuer_name: letsencrypt
 # The ACME server to use
-certmanager_acmehttp01issuer_server: https://acme.zerossl.com/v2/DV90
+certmanager_acmehttp01issuer_server: https://acme-v02.api.letsencrypt.org/directory
 # The ingress class to use for resolving HTTP01 challenges
 certmanager_acmehttp01issuer_ingress_class: nginx
 # Indicates whether an External Account Binding (EAB) is required
-# By default we use ZeroSSL, which requires an EAB for use with cert-manager
+# For example, ZeroSSL requires an EAB for use with cert-manager
 # See https://zerossl.com/documentation/acme/
-certmanager_acmehttp01issuer_eab_required: yes
+certmanager_acmehttp01issuer_eab_required: no
 # The secret name to use for the EAB
 certmanager_acmehttp01issuer_eab_secret_name: "{{ certmanager_acmehttp01issuer_name }}-eab"
 # The key ID of the EAB
@@ -72,9 +72,9 @@ certmanager_acmehttp01issuer_eab_kid:
 # The HMAC key of the EAB
 certmanager_acmehttp01issuer_eab_key:
 # OR
-# The API to use when generating new EAB credentials
-certmanager_acmehttp01issuer_eab_generate_apikey: >-
-  {{ undef(hint = 'certmanager_acmehttp01issuer_eab_generate_apikey is required') }}
+# The ZeroSSL API key to use when generating new EAB credentials
+certmanager_acmehttp01issuer_eab_zerossl_apikey: >-
+  {{ undef(hint = 'certmanager_acmehttp01issuer_eab_zerossl_apikey is required') }}
 # The URL where new EAB credentials can be obtained
 certmanager_acmehttp01issuer_eab_generate_url: >-
-  https://api.zerossl.com/acme/eab-credentials?access_key={{ certmanager_acmehttp01issuer_eab_generate_apikey }}
+  https://api.zerossl.com/acme/eab-credentials?access_key={{ certmanager_acmehttp01issuer_eab_zerossl_apikey }}

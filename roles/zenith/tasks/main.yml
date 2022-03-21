@@ -1,5 +1,30 @@
 ---
 
+- name: Create Zenith release namespace
+  command: kubectl create namespace {{ zenith_release_namespace }}
+  register: zenith_create_namespace
+  changed_when: zenith_create_namespace.rc == 0
+  failed_when: >-
+    zenith_create_namespace.rc != 0 and
+    'AlreadyExists' not in zenith_create_namespace.stderr
+
+- name: Install wildcard TLS certificate
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ zenith_ingress_tls_wildcard_secret_definition | to_nice_yaml }}"
+  vars:
+    zenith_ingress_tls_wildcard_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ zenith_ingress_tls_secret_name }}"
+        namespace: "{{ zenith_release_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ zenith_ingress_tls_wildcard_certificate }}"
+        tls.key: "{{ zenith_ingress_tls_wildcard_key }}"
+  when: zenith_ingress_tls_wildcard_certificate
+
 - name: Install Zenith on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ zenith_chart_name }}"

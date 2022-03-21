@@ -31,6 +31,14 @@ zenith_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
 zenith_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default(None) }}"
 #   Any TLS-specific annotations
 zenith_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
+#   Wildcard TLS certificate, if available
+zenith_ingress_tls_wildcard_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
+zenith_ingress_tls_wildcard_key: >-
+  {{-
+    ingress_tls_wildcard_key
+    if ingress_tls_wildcard_key is defined
+    else undef(hint = 'zenith_ingress_tls_wildcard_key is required')
+  }}
 
 # The signing key for Zenith subdomain tokens
 zenith_registrar_subdomain_token_signing_key: "{{ undef(hint = 'zenith_registrar_subdomain_token_signing_key is required') }}"

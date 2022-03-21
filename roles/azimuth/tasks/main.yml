@@ -8,6 +8,23 @@
     azimuth_create_namespace.rc != 0 and
     'AlreadyExists' not in azimuth_create_namespace.stderr
 
+- name: Install wildcard TLS certificate
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ azimuth_ingress_tls_wildcard_secret_definition | to_nice_yaml }}"
+  vars:
+    azimuth_ingress_tls_wildcard_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ azimuth_ingress_tls_secret_name }}"
+        namespace: "{{ azimuth_release_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ azimuth_ingress_tls_certificate }}"
+        tls.key: "{{ azimuth_ingress_tls_key }}"
+  when: azimuth_ingress_tls_certificate
+
 - name: Install trust bundle
   command: kubectl apply -f -
   args:

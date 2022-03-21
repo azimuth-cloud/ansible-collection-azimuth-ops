@@ -1,5 +1,30 @@
 ---
 
+- name: Create Harbor release namespace
+  command: kubectl create namespace {{ harbor_release_namespace }}
+  register: harbor_create_namespace
+  changed_when: harbor_create_namespace.rc == 0
+  failed_when: >-
+    harbor_create_namespace.rc != 0 and
+    'AlreadyExists' not in harbor_create_namespace.stderr
+
+- name: Install wildcard TLS certificate
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ harbor_tls_wildcard_secret_definition | to_nice_yaml }}"
+  vars:
+    harbor_tls_wildcard_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ harbor_tls_secret_name }}"
+        namespace: "{{ harbor_release_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ harbor_tls_wildcard_certificate }}"
+        tls.key: "{{ harbor_tls_wildcard_key }}"
+  when: harbor_tls_wildcard_certificate
+
 - name: Install Harbor on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ harbor_chart_name }}"

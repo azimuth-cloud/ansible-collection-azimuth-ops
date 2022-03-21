@@ -36,6 +36,14 @@ azimuth_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
 azimuth_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default(None) }}"
 #   Any TLS-specific annotations
 azimuth_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
+#   Wildcard TLS certificate, if available
+azimuth_ingress_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
+azimuth_ingress_tls_key: >-
+  {{-
+    ingress_tls_wildcard_key
+    if ingress_tls_wildcard_key is defined
+    else undef(hint = 'azimuth_ingress_tls_key is required')
+  }}
 
 # Custom trust bundle for SSL verification
 azimuth_trust_bundle: "{{ trust_bundle | default(None) }}"
