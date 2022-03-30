@@ -44,6 +44,9 @@ azimuth_capi_operator_capi_helm_registry_mirrors: >-
 # The additional packages for provisioned clusters
 azimuth_capi_operator_capi_helm_additional_packages: []
 
+# The default failure domain (availability zone) for cluster nodes
+azimuth_capi_operator_capi_helm_default_failure_domain: nova
+
 azimuth_capi_operator_capi_helm_values_defaults:
   kubeNetwork:
     pods: >-
@@ -74,6 +77,8 @@ azimuth_capi_operator_capi_helm_values_defaults:
     }}
   registryMirrors: "{{ azimuth_capi_operator_capi_helm_registry_mirrors }}"
   additionalPackages: "{{ azimuth_capi_operator_capi_helm_additional_packages }}"
+  nodeGroupDefaults:
+    failureDomain: "{{ azimuth_capi_operator_capi_helm_default_failure_domain }}"
 
 # Overrides for the CAPI Helm chart releases for all clusters
 azimuth_capi_operator_capi_helm_values_overrides: {}

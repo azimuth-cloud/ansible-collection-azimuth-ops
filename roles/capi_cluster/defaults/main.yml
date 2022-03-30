@@ -90,6 +90,8 @@ capi_cluster_control_plane_flavor: >-
   {{ undef(hint = 'capi_cluster_control_plane_flavor is required') }}
 capi_cluster_worker_flavor: >-
   {{ undef(hint = 'capi_cluster_worker_flavor is required') }}
+# The failure domain (availability zone) to use for workers
+capi_cluster_worker_failure_domain: nova
 # The number of workers to use
 capi_cluster_worker_count: 3
 
@@ -154,6 +156,7 @@ capi_cluster_release_defaults:
   controlPlane:
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
   nodeGroupDefaults:
+    failureDomain: "{{ capi_cluster_worker_failure_domain }}"
     machineFlavor: "{{ capi_cluster_worker_flavor }}"
   nodeGroups:
     - name: md-0
