@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.0-dev.0.main.145
+capi_cluster_chart_version: 0.1.0-dev.0.main.148
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -163,6 +163,9 @@ capi_cluster_release_defaults:
     nodeFeatureDiscovery:
       enabled: false
     nvidiaGPUOperator:
+      enabled: false
+    # The Mellanox operator is only required for high-performance networking
+    mellanoxNetworkOperator:
       enabled: false
     # cert-manager is installed as part of the Azimuth installation
     certManager:
