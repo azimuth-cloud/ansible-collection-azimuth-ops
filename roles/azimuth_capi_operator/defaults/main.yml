@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.53
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.54
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -46,6 +46,10 @@ azimuth_capi_operator_capi_helm_additional_packages: []
 
 # The default failure domain (availability zone) for cluster nodes
 azimuth_capi_operator_capi_helm_default_failure_domain: nova
+# The Cinder availability zone for the default Cinder CSI storage class
+azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone: nova
+# The Cinder volume type for the default Cinder CSI storage class
+azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type:
 
 azimuth_capi_operator_capi_helm_values_defaults:
   kubeNetwork:
@@ -79,6 +83,19 @@ azimuth_capi_operator_capi_helm_values_defaults:
   additionalPackages: "{{ azimuth_capi_operator_capi_helm_additional_packages }}"
   nodeGroupDefaults:
     failureDomain: "{{ azimuth_capi_operator_capi_helm_default_failure_domain }}"
+  addons:
+    # Configure the CSI Cinder storage class
+    openstack:
+      csiCinder:
+        storageClass: >-
+          {{-
+            { "availabilityZone": azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone } |
+              combine(
+                { "volumeType": azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type }
+                if azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type
+                else {}
+              )
+          }}
 
 # Overrides for the CAPI Helm chart releases for all clusters
 azimuth_capi_operator_capi_helm_values_overrides: {}

@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.0-dev.0.main.148
+capi_cluster_chart_version: 0.1.0-dev.0.main.150
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -102,6 +102,10 @@ capi_cluster_addons_monitoring: true
 #   This IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
   {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
+# The availability zone for the default Cinder CSI storage class
+capi_cluster_addons_csi_cinder_availability_zone: nova
+# The Cinder volume type for the default Cinder CSI storage class
+capi_cluster_addons_csi_cinder_volume_type:
 
 # The values for the release
 capi_cluster_release_defaults:
@@ -182,8 +186,21 @@ capi_cluster_release_defaults:
             controller:
               service:
                 loadBalancerIP: "{{ capi_cluster_addons_ingress_load_balancer_ip }}"
+    # Enable the monitoring if specified
     monitoring:
       enabled: "{{ capi_cluster_addons_monitoring }}"
+    # Configure the CSI Cinder storage class
+    openstack:
+      csiCinder:
+        storageClass: >-
+          {{-
+            { "availabilityZone": capi_cluster_addons_csi_cinder_availability_zone } |
+              combine(
+                { "volumeType": capi_cluster_addons_csi_cinder_volume_type }
+                if capi_cluster_addons_csi_cinder_volume_type
+                else {}
+              )
+          }}
 
 capi_cluster_release_overrides: {}
 capi_cluster_release_values: >-
