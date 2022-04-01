@@ -10,6 +10,12 @@ infra_exposed_port_ranges: []
   #   min:
   #   max:
 
+#####
+# Configuration for the internal network onto which Kubernetes nodes will be provisioned
+#
+# This can use either a pre-existing network, which should already be connected to an
+# external network using a router, or a network and router can be provisioned
+#####
 # The ID of an existing network onto which the node should be provisioned
 # This network should be connected to an external network via a router
 infra_network_id:
@@ -24,14 +30,27 @@ infra_external_network_id: >-
     else None
   }}
 
+#####
+# Configuration for the accessible endpoint for the seed node
+#
+# This can use one of:
+#   * A provisioning network
+#   * A fixed floating IP
+#   * A floating IP from a pool
+#
+# In the case where a provisioning network is used, the seed has two NICs - one on the provisioning
+# network and one on the internal network above
+#####
+# The ID of the provisioning network to use
+infra_provisioning_network_id:
 # The fixed floating IP to associate with the machine
 infra_fixed_floatingip:
 # OR
 # The name of the floating IP pool
 infra_floatingip_pool: >-
   {{
-    undef(hint = 'infra_floatingip_pool is required when infra_fixed_floatingip is not given')
-    if not infra_fixed_floatingip
+    undef(hint = 'One of infra_provisioning_network_id, infra_fixed_floatingip or infra_floatingip_pool is required')
+    if not infra_provisioning_network_id and not infra_fixed_floatingip
     else None
   }}
 
