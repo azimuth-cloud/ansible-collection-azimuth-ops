@@ -9,10 +9,7 @@
     release_name: "{{ capi_cluster_release_name }}"
     release_state: "{{ capi_cluster_release_state }}"
     release_values: "{{ capi_cluster_release_values }}"
-    atomic: yes
     create_namespace: yes
-    wait: yes
-    wait_timeout: "{{ capi_cluster_release_wait_timeout }}"
 
 - block:
     - name: Wait for cluster to become ready

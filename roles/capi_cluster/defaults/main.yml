@@ -12,9 +12,6 @@ capi_cluster_release_name: "{{ undef(hint = 'capi_cluster_release_name is requir
 # The state of the cluster - present to install/update, absent to delete
 capi_cluster_release_state: present
 
-# The timeout to wait for the cluster release to become ready
-capi_cluster_release_wait_timeout: 10m
-
 # Read the credentials for the deployment from the current clouds.yaml by default
 capi_cluster_clouds_file: >-
   {{-
