@@ -28,6 +28,7 @@ output "cluster_nodes" {
         ]
         facts  = {
           k3s_storage_device = openstack_compute_volume_attach_v2.data_volume_attach.device
+
           # Set the gateway IP as a fact that can be consumed
 {% if not infra_provisioning_network_id %}
 {% if infra_fixed_floatingip %}
@@ -36,6 +37,7 @@ output "cluster_nodes" {
           infra_external_ip = openstack_networking_floatingip_v2.fip.address
 {% endif %}
 {% endif %}
+
           # Include the network id of the provisioned network as a variable for provisioned hosts
           # This allows clusters to be placed onto the same network by referencing this
 {% if infra_network_id %}
@@ -43,8 +45,16 @@ output "cluster_nodes" {
 {% else %}
           infra_network_id = openstack_networking_network_v2.internal_net.id
 {% endif %}
+
           # Also include the keypair name for the same reason
           infra_deploy_keypair = openstack_compute_keypair_v2.keypair_deploy.name
+
+          # Also set a variable containing the image UUIDs for each id
+          infra_community_image_info = {
+{% for image_id in infra_community_images.keys() %}
+            {{ image_id }} = openstack_images_image_v2.{{ image_id }}.id
+{% endfor %}
+          }
         }
       }
     ]

@@ -67,3 +67,6 @@ infra_ansible_groups: []
 
 # We support Ubuntu images only, and the default cloud user is 'ubuntu'
 cluster_ssh_user: ubuntu
+
+# The images to upload to the Azimuth project as community images
+infra_community_images: {}

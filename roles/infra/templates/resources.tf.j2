@@ -133,3 +133,21 @@ resource "openstack_compute_floatingip_associate_v2" "fip_associate" {
   instance_id = openstack_compute_instance_v2.node.id
 }
 {% endif %}
+
+{% for image_id, image in infra_community_images.items() %}
+resource "openstack_images_image_v2" "{{ image_id }}" {
+  name             = "{{ image.name }}"
+{% if image.source_url %}
+  image_source_url = "{{ image.source_url }}"
+{% endif %}
+  container_format = "{{ image.container_format }}"
+  disk_format      = "{{ image.disk_format }}"
+  visibility       = "community"
+
+  properties = {
+{% if "web_console_supported" in image and image.web_console_supported %}
+    azimuth_web_console_supported = "1"
+{% endif %}
+  }
+}
+{% endfor %}
