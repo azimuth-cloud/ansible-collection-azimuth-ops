@@ -144,10 +144,8 @@ resource "openstack_images_image_v2" "{{ image_id }}" {
   disk_format      = "{{ image.disk_format }}"
   visibility       = "community"
 
-  properties = {
 {% if "web_console_supported" in image and image.web_console_supported %}
-    azimuth_web_console_supported = "1"
+  tags = ["azimuth_web_console_supported"]
 {% endif %}
-  }
 }
 {% endfor %}
