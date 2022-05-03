@@ -1,3 +1,31 @@
+{% for image_id, image in infra_community_images.items() %}
+resource "openstack_images_image_v2" "{{ image_id }}" {
+  name             = "{{ image.name }}"
+{% if image.source_url %}
+  image_source_url = "{{ image.source_url }}"
+{% endif %}
+  container_format = "{{ image.container_format }}"
+  disk_format      = "{{ image.disk_format }}"
+
+{% if infra_community_images_projects %}
+  visibility = "shared"
+{% else %}
+  visibility = "community"
+{% endif %}
+
+{% if "web_console_supported" in image and image.web_console_supported %}
+  tags = ["azimuth_web_console_supported"]
+{% endif %}
+}
+
+{% for project in infra_community_images_projects %}
+resource "openstack_images_image_access_v2" "{{ image_id }}_{{ project.key }}" {
+  image_id  = openstack_images_image_v2.{{ image_id }}.id
+  member_id = "{{ project.id }}"
+}
+{% endfor %}
+{% endfor %}
+
 resource "openstack_networking_secgroup_v2" "secgroup" {
   name                 = "{{ infra_name }}"
   delete_default_rules = true   # Fully manage with terraform
@@ -88,7 +116,11 @@ resource "openstack_compute_keypair_v2" "keypair_deploy" {
 
 resource "openstack_compute_instance_v2" "node" {
   name      = "{{ infra_name }}"
-  image_id  = "{{ infra_image_id }}"
+{% if infra_image_id %}
+  image_id = "{{ infra_image_id }}"
+{% else %}
+  image_id = openstack_images_image_v2.{{ infra_image_key }}.id
+{% endif %}
 {% if infra_flavor_id %}
   flavor_id = "{{ infra_flavor_id }}"
 {% else %}
@@ -133,19 +165,3 @@ resource "openstack_compute_floatingip_associate_v2" "fip_associate" {
   instance_id = openstack_compute_instance_v2.node.id
 }
 {% endif %}
-
-{% for image_id, image in infra_community_images.items() %}
-resource "openstack_images_image_v2" "{{ image_id }}" {
-  name             = "{{ image.name }}"
-{% if image.source_url %}
-  image_source_url = "{{ image.source_url }}"
-{% endif %}
-  container_format = "{{ image.container_format }}"
-  disk_format      = "{{ image.disk_format }}"
-  visibility       = "community"
-
-{% if "web_console_supported" in image and image.web_console_supported %}
-  tags = ["azimuth_web_console_supported"]
-{% endif %}
-}
-{% endfor %}
