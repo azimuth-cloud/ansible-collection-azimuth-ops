@@ -17,3 +17,23 @@
 - name: Provision infrastructure
   include_role:
     name: stackhpc.terraform.infra
+
+# Workaround for the fact that multiple OpenStack Terraform providers isn't working
+# https://github.com/terraform-provider-openstack/terraform-provider-openstack/issues/1298
+- block:
+    - name: Fetch image ids from k3s host
+      set_fact:
+        infra_community_image_info: "{{ hostvars[groups.k3s | first].infra_community_image_info }}"
+
+    - name: Accept shared images
+      command: openstack image set --accept {{ item.1 }}
+      environment:
+        OS_CLOUD: "{{ item.0 }}"
+      loop: >-
+        {{
+          infra_community_images_projects |
+            map(attribute = "key") |
+            product(infra_community_image_info | dict2items | map(attribute = "value")) |
+            list
+        }}
+  when: terraform_state == "present"
