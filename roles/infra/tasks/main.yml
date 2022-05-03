@@ -36,4 +36,4 @@
             product(infra_community_image_info | dict2items | map(attribute = "value")) |
             list
         }}
-  when: terraform_state == "present"
+  when: (terraform_state | default("present")) == "present"
