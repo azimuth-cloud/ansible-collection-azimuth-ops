@@ -17,9 +17,9 @@ resource "openstack_images_image_v2" "{{ image_id }}" {
   tags = ["azimuth_web_console_supported"]
 {% endif %}
 
-{% if image.properties %}
+{% if image.properties is defined %}
   properties = {
-{% for property_key, property_value in image.properties %}
+{% for property_key, property_value in image.properties.items() %}
     {{ property_key }} = "{{ property_value }}"
 {% endfor %} 
   }
