@@ -6,6 +6,7 @@
 # Provision the node using Terraform
 - hosts: terraform_provision
   roles:
+    - stackhpc.azimuth_ops.image
     - stackhpc.azimuth_ops.infra
   vars:
     infra_ansible_groups: [k3s, azimuth_deploy]

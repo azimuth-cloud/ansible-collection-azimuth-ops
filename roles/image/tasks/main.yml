@@ -1,0 +1,28 @@
+---
+
+- name: Check image variables
+  ansible.builtin.fail:
+    msg: "Set either source_url OR local_file_path on image: {{ image.key }}"
+  loop: "{{ infra_community_images | dict2items }}"
+  loop_control:
+    label: "{{ image.key }}"
+    loop_var: image
+  when: >-
+    ( image.value.source_url is defined and image.value.local_file_path is defined ) or
+    ( image.value.source_url is not defined and image.value.local_file_path is not defined )
+
+- name: Install qemu-img
+  ansible.builtin.package:
+    name: qemu-img
+    state: present
+  become: true
+
+- name: Stage and convert cloud images
+  ansible.builtin.include_tasks: convert_image_format.yml
+  loop: "{{ infra_community_images | dict2items }}"
+  loop_control:
+    label: "{{ image.key }}"
+    loop_var: image
+  when: 
+    - image.value.source_url is defined 
+    - image.value.local_file_path is not defined

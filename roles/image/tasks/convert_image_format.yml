@@ -1,0 +1,51 @@
+---
+
+- name: Create temporary image download directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: image-download
+  register: download_tmpdir
+
+- name: Download image
+  ansible.builtin.get_url:
+    url: "{{ image.value.source_url }}"
+    dest: "{{ download_tmpdir.path }}"
+  register: image_download
+
+- name: Create temporary image conversion output directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: qemu-img-convert
+  register: convert_tmpdir
+
+- name: Convert image
+  ansible.builtin.command:
+    cmd: >
+      qemu-img convert -O {{ image.value.disk_format }}
+        {{ image_download.dest }}
+        {{ (convert_tmpdir.path, image.value.name) | path_join }}.{{ image.value.disk_format }}
+  
+- name: Get path of converted image file
+  ansible.builtin.find:
+    paths: "{{ convert_tmpdir.path }}"
+    use_regex: false
+    patterns: "{{ image.value.name }}.{{ image.value.disk_format }}"
+  register: converted_image
+    
+- name: Add the converted image path to infra_community_images
+  ansible.builtin.set_fact:
+    infra_community_images:
+      "{{ infra_community_images |
+        combine(
+          { 
+            image.key : { 
+              'local_file_path' : converted_image.files[0].path
+              } 
+            }, recursive=True
+          ) 
+        }}"
+
+- name: Clean up downloaded image
+  ansible.builtin.file:
+    path: "{{ image_download.dest }}"
+    state: absent
