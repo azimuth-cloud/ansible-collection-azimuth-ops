@@ -3,6 +3,7 @@
 - name: Create temporary image download directory
   ansible.builtin.tempfile:
     state: directory
+    path: "{{ image_format_conversion_dir }}"
     suffix: image-download
   register: download_tmpdir
 
