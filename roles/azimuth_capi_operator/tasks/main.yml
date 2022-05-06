@@ -23,10 +23,8 @@
       kind: ClusterTemplate
       metadata:
         name: "{{ template.name }}"
-      spec:
-        label: "{{ template.label }}"
-        description: "{{ template.description }}"
-        values: "{{ template['values'] }}"   # values collides with a dictionary method
+      # Use all the values except the name as the spec
+      spec: "{{ template | dict2items | rejectattr('key', 'eq', 'name') | list | items2dict }}"
   loop: "{{ azimuth_capi_operator_cluster_templates }}"
   loop_control:
     loop_var: template
