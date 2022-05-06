@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.master.600
+azimuth_chart_version: 0.1.0-dev.0.master.602
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -197,7 +197,7 @@ azimuth_caas_terraform_consul_address: >-
 
 # List of default projects and job templates to create as part of the bootstrapping
 # By default, the StackHPC Slurm appliance is included
-azimuth_caas_stackhpc_slurm_appliance_version: main
+azimuth_caas_stackhpc_slurm_appliance_version: af8e55e1840a3b96a2623f6ffe6ef4100acd54fb
 # This is the ID of a Rocky 8 image
 azimuth_caas_stackhpc_slurm_appliance_rocky8_image: >-
   {{-

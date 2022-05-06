@@ -10,3 +10,4 @@
     url: "{{ kubectl_url }}"
     dest: "{{ (kubectl_bin_directory, 'kubectl') | path_join }}"
     mode: u=rwx,g=rx,o=rx
+    force: yes

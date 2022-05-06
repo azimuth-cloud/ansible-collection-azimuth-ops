@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.0-dev.0.main.153
+capi_cluster_chart_version: 0.1.0-dev.0.main.157
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -37,8 +37,8 @@ capi_cluster_openstack_ca_cert: >-
 # The Kubernetes version of the cluster
 capi_cluster_kubernetes_version: "{{ undef(hint = 'capi_cluster_kubernetes_version is required') }}"
 
-# The name of the machine image
-capi_cluster_machine_image: "ubuntu-2004-kube-v{{ capi_cluster_kubernetes_version }}"
+# The id of the machine image
+capi_cluster_machine_image_id: "{{ undef(hint = 'capi_cluster_machine_image_id is required') }}"
 
 # The SSH key to use
 # Defaults to the deploy key created by Terraform if available
@@ -108,7 +108,7 @@ capi_cluster_addons_csi_cinder_volume_type:
 capi_cluster_release_defaults:
   global:
     kubernetesVersion: "{{ capi_cluster_kubernetes_version }}"
-  machineImage: "{{ capi_cluster_machine_image }}"
+  machineImageId: "{{ capi_cluster_machine_image_id }}"
   machineSSHKeyName: "{{ capi_cluster_ssh_keypair }}"
   clusterNetworking: >-
     {{-

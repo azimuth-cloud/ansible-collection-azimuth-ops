@@ -1,8 +1,8 @@
 ---
 
-k3s_version: v1.22.7+k3s1
+k3s_version: v1.22.9+k3s1
 k3s_binary_url: https://github.com/k3s-io/k3s/releases/download/{{ k3s_version }}/k3s
-k3s_binary_checksum: sha256:da1a566c6b3d470102ce431afdb921275ebe663659219562ac4d9854e5bbdf38
+k3s_binary_checksum: sha256:0b9bc681ba6fd7b75687f48245e5c5b73e4557e0b2fb29f6cfb9246aed1ae21e
 
 # Settings for an additional block device that will hold the k3s state, if present
 k3s_storage_device: /dev/sdb
