@@ -1,9 +1,9 @@
 {% for image_id, image in infra_community_images.items() %}
 resource "openstack_images_image_v2" "{{ image_id }}" {
   name             = "{{ image.name }}"
-{% if image.local_file_path %}
+
   local_file_path = "{{ image.local_file_path }}"
-{% endif %}
+
   container_format = "{{ image.container_format }}"
   disk_format      = "{{ image.disk_format }}"
 
