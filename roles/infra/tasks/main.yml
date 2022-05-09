@@ -5,6 +5,51 @@
     path: "{{ terraform_project_path }}"
     state: directory
 
+- block:
+    - name: Get previous Terraform state
+      command: terraform output -json
+      args:
+        chdir: "{{ terraform_project_path }}"
+      register: infra_terraform_output
+
+    - name: Extract known images from previous Terraform state
+      set_fact:
+        infra_known_images: >-
+          {{
+            infra_terraform_output.stdout |
+              from_json |
+              json_query("cluster_nodes.value[*].facts.infra_community_image_info | keys") |
+              default([], true)
+          }}
+
+    - name: Ensure working directory is ready
+      block:
+        - name: Get temporary working directory
+          tempfile:
+            state: directory
+          register: infra_community_images_tempdir
+
+        - name: Set working directory fact
+          set_fact:
+            infra_community_images_workdir: "{{ infra_community_images_tempdir.path }}"
+      when: not infra_community_images_workdir
+
+    - name: Ensure working directory exists
+      file:
+        state: directory
+        path: "{{ infra_community_images_workdir }}"
+
+    - name: Download and convert images where required
+      include_tasks: convert_image.yml
+      when:
+        - image.key not in infra_known_images
+        - '"local_file_path" not in image.value'
+      loop: "{{ infra_community_images | dict2items | list }}"
+      loop_control:
+        loop_var: image
+        label: "{{ image.key }}"
+  when: (terraform_state | default("present")) == "present"
+
 - name: Template Terraform files into project directory
   template:
     src: "{{ item }}.j2"
