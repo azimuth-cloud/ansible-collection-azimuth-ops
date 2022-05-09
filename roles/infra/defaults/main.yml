@@ -95,3 +95,6 @@ infra_community_images: {}
 infra_community_images_projects: []
   # - key: project_name
   #   id: project_id
+# The directory into which images will be downloaded / converted
+# If not given, a temporary directory will be used
+infra_community_images_workdir:

@@ -1,0 +1,49 @@
+---
+
+- name: Set image facts
+  set_fact:
+    infra_community_images_download_path: >-
+      {{ (infra_community_images_workdir, image.key + '.download') | path_join }}
+    infra_community_images_convert_path: >-
+      {{ (infra_community_images_workdir, image.key + '.convert') | path_join }}
+    infra_community_images_requires_conversion: >-
+      {{
+        image.value.source_disk_format is defined and
+        image.value.source_disk_format != image.value.disk_format
+      }}
+
+- name: "Download image - {{ image.key }}"
+  get_url:
+    url: "{{ image.value.source_url }}"
+    dest: "{{ infra_community_images_download_path }}"
+  register: infra_community_image_download
+
+- name: "Convert image - {{ image.key }}"
+  command: >-
+    qemu-img convert
+      -f {{ image.value.source_disk_format }}
+      -O {{ image.value.disk_format }}
+      "{{ infra_community_images_download_path }}"
+      "{{ infra_community_images_convert_path }}"
+  args:
+    creates: "{{ infra_community_images_convert_path }}"
+  when: infra_community_images_requires_conversion
+
+- name: "Set local file path for image - {{ image.key }}"
+  set_fact:
+    infra_community_images: >-
+      {{
+        infra_community_images |
+          combine(
+            {
+              image.key: {
+                "local_file_path": (
+                  infra_community_images_convert_path
+                  if infra_community_images_requires_conversion
+                  else infra_community_images_download_path
+                )
+              },
+            },
+            recursive = True
+          )
+      }}

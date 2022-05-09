@@ -1,8 +1,8 @@
 {% for image_id, image in infra_community_images.items() %}
 resource "openstack_images_image_v2" "{{ image_id }}" {
   name             = "{{ image.name }}"
-{% if image.source_url %}
-  image_source_url = "{{ image.source_url }}"
+{% if image.local_file_path is defined %}
+  local_file_path = "{{ image.local_file_path }}"
 {% endif %}
   container_format = "{{ image.container_format }}"
   disk_format      = "{{ image.disk_format }}"
@@ -16,6 +16,13 @@ resource "openstack_images_image_v2" "{{ image_id }}" {
 {% if "web_console_supported" in image and image.web_console_supported %}
   tags = ["azimuth_web_console_supported"]
 {% endif %}
+
+  lifecycle {
+    ignore_changes = [
+      image_source_url,
+      local_file_path
+    ]
+  }
 }
 
 {% for project in infra_community_images_projects %}
