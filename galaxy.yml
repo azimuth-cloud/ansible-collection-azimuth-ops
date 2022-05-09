@@ -13,4 +13,4 @@ dependencies:
   ansible.posix: "1.3.0"
   community.general: "4.5.0"
   kubernetes.core: "2.2.3"
-  "git+https://github.com/stackhpc/ansible-collection-terraform.git": "ae1dc46a9d266bcdc6e79a6e290edbb080596f7f"
+  "git+https://github.com/stackhpc/ansible-collection-terraform.git": "8c7acce4538aab8c0e928972155a2ccb5cb1b2a1"

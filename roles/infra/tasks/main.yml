@@ -5,21 +5,28 @@
     path: "{{ terraform_project_path }}"
     state: directory
 
+- name: Write backend configuration
+  copy:
+    content: |
+      terraform {
+        backend "{{ terraform_backend_type }}" { }
+      }
+    dest: "{{ terraform_project_path }}/backend.tf"
+
 - block:
     - name: Get previous Terraform state
-      command: terraform output -json
-      args:
-        chdir: "{{ terraform_project_path }}"
+      stackhpc.terraform.terraform_output:
+        binary_path: "{{ terraform_binary_path | default(omit) }}"
+        project_path: "{{ terraform_project_path }}"
+        backend_config: "{{ terraform_backend_config }}"
       register: infra_terraform_output
 
     - name: Extract known images from previous Terraform state
       set_fact:
         infra_known_images: >-
           {{
-            infra_terraform_output.stdout |
-              from_json |
-              json_query("cluster_nodes.value[*].facts.infra_community_image_info | keys") |
-              default([], true)
+            infra_terraform_output.outputs |
+              json_query("keys(cluster_nodes.value[0].facts.infra_community_image_info || `{}`)")
           }}
 
     - name: Ensure working directory is ready
