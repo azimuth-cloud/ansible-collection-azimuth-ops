@@ -18,7 +18,7 @@
       stackhpc.terraform.terraform_output:
         binary_path: "{{ terraform_binary_path | default(omit) }}"
         project_path: "{{ terraform_project_path }}"
-        backend_config: "{{ terraform_backend_config }}"
+        backend_config: "{{ terraform_backend_config | default(omit) }}"
       register: infra_terraform_output
 
     - name: Extract known images from previous Terraform state
