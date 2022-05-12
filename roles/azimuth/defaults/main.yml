@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.master.602
+azimuth_chart_version: 0.1.0-dev.0.master.605
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -195,27 +195,78 @@ azimuth_caas_terraform_consul_address: >-
     )
   }}
 
-# List of default projects and job templates to create as part of the bootstrapping
-# By default, the StackHPC Slurm appliance is included
-azimuth_caas_stackhpc_slurm_appliance_version: af8e55e1840a3b96a2623f6ffe6ef4100acd54fb
-# This is the ID of a Rocky 8 image
+# The image to use for the CaaS execution environment
+azimuth_caas_awx_ee_image: ghcr.io/stackhpc/caas-ee:5289aa7
+# Whether to pull the EE image for every CaaS job
+azimuth_caas_awx_ee_always_pull: false
+# If the EE image is in a private registry, these are the host, username and token
+azimuth_caas_awx_ee_credentials_host:
+azimuth_caas_awx_ee_credentials_username: >-
+  {{-
+    undef(hint = 'azimuth_caas_awx_ee_credentials_username is required')
+    if azimuth_caas_awx_ee_credentials_host
+    else None
+  }}
+azimuth_caas_awx_ee_credentials_token: >-
+  {{-
+    undef(hint = 'azimuth_caas_awx_ee_credentials_token is required')
+    if azimuth_caas_awx_ee_credentials_host
+    else None
+  }}
+# The merged EE configuration for the chart
+azimuth_caas_awx_ee: >-
+  {{-
+    {
+      "image": azimuth_caas_awx_ee_image,
+      "alwaysPull": azimuth_caas_awx_ee_always_pull,
+    } |
+      combine(
+        {
+          "credentials": {
+            "host": azimuth_caas_awx_ee_credentials_host,
+            "username": azimuth_caas_awx_ee_credentials_username,
+            "token": azimuth_caas_awx_ee_credentials_token,
+          },
+        }
+        if azimuth_caas_awx_ee_credentials_host
+        else {}
+      )
+  }}
+
+# The name of the StackHPC Slurm appliance project
+azimuth_caas_stackhpc_slurm_appliance_name: StackHPC Slurm Appliance
+# The git URL for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
+# The git version for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_git_version: af8e55e1840a3b96a2623f6ffe6ef4100acd54fb
+# The metadata root for the StackHPC Slurm appliance project
+azimuth_caas_stackhpc_slurm_appliance_metadata_root: >-
+  https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta
+# The playbooks to use for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_playbooks: [slurm-infra.yml]
+# The ID of a Rocky 8 image for use with the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_rocky8_image: >-
   {{-
     undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_rocky8_image is required')
     if azimuth_clusters_enabled
     else None
   }}
+# The extra vars for templates in the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_extra_vars:
+  __ALL__:
+    cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_rocky8_image }}"
+# The project definition for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_project:
+  name: "{{ azimuth_caas_stackhpc_slurm_appliance_name }}"
+  gitUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_git_url }}"
+  gitVersion: "{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}"
+  metadataRoot: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_root }}"
+  playbooks: "{{ azimuth_caas_stackhpc_slurm_appliance_playbooks }}"
+  extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
+# List of default projects and job templates to create as part of the bootstrapping
+# By default, the StackHPC Slurm appliance is included
 azimuth_caas_awx_default_projects:
-  - name: StackHPC Slurm Appliance
-    gitUrl: https://github.com/stackhpc/caas-slurm-appliance.git
-    gitVersion: "{{ azimuth_caas_stackhpc_slurm_appliance_version }}"
-    metadataRoot: https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_version }}/ui-meta
-    playbooks: [slurm-infra.yml]
-    extraVars:
-      __ALL__:
-        cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_rocky8_image }}"
-    executionEnvironment:
-      image: ghcr.io/stackhpc/caas-ee:main
+  - "{{ azimuth_caas_stackhpc_slurm_appliance_project }}"
 # - # The name of the project
 #   name: My Site Appliances
 #   # The git URL of the project
@@ -321,6 +372,7 @@ azimuth_release_defaults:
           "createResources": azimuth_caas_awx_bootstrap,
           "adminUsername": azimuth_caas_awx_admin_username,
           "adminPasswordSecretName": azimuth_caas_awx_admin_password_secret_name,
+          "executionEnvironment": azimuth_caas_awx_ee,
           "defaultProjects": azimuth_caas_awx_default_projects,
         },
         "terraformBackend": {
