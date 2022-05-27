@@ -155,14 +155,16 @@ azimuth_capi_operator_kubeapps_chart_version:
 azimuth_capi_operator_kubeapps_release_namespace:
 
 # The initial Helm repositories to add to the kubeapps installations
-# Leave blank for the chart's default repositories
+# By default, we use the Azimuth charts
 azimuth_capi_operator_kubeapps_initial_repos:
+  - name: azimuth-charts
+    url: https://stackhpc.github.io/azimuth-charts
 # The values to use for the release
 azimuth_capi_operator_kubeapps_release_defaults:
   apprepository: >-
     {{-
       { "initialRepos": azimuth_capi_operator_kubeapps_initial_repos }
-      if azimuth_capi_operator_kubeapps_initial_repos is not none
+      if azimuth_capi_operator_kubeapps_initial_repos
       else {}
     }}
 azimuth_capi_operator_kubeapps_release_overrides: {}
