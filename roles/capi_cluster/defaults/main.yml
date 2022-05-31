@@ -87,6 +87,10 @@ capi_cluster_control_plane_flavor: >-
   {{ undef(hint = 'capi_cluster_control_plane_flavor is required') }}
 capi_cluster_worker_flavor: >-
   {{ undef(hint = 'capi_cluster_worker_flavor is required') }}
+# The size of the root disks for the control plane and worker nodes respectively
+# If greater than zero, boot from volume will be used, zero means use the root disk from the flavor
+capi_cluster_control_plane_root_volume_size: 0
+capi_cluster_worker_root_volume_size: 0
 # The failure domain (availability zone) to use for workers
 capi_cluster_worker_failure_domain: nova
 # The number of workers to use
@@ -156,9 +160,11 @@ capi_cluster_release_defaults:
     associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
   controlPlane:
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
+    machineRootVolumeSize: "{{ capi_cluster_control_plane_root_volume_size }}"
   nodeGroupDefaults:
     failureDomain: "{{ capi_cluster_worker_failure_domain }}"
     machineFlavor: "{{ capi_cluster_worker_flavor }}"
+    machineRootVolumeSize: "{{ capi_cluster_worker_root_volume_size }}"
   nodeGroups:
     - name: md-0
       machineCount: "{{ capi_cluster_worker_count }}"
