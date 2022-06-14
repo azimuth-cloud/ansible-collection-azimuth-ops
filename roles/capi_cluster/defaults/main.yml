@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.0-dev.0.main.159
+capi_cluster_chart_version: 0.1.0-dev.0.main.161
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -87,14 +87,39 @@ capi_cluster_control_plane_flavor: >-
   {{ undef(hint = 'capi_cluster_control_plane_flavor is required') }}
 capi_cluster_worker_flavor: >-
   {{ undef(hint = 'capi_cluster_worker_flavor is required') }}
-# The size of the root disks for the control plane and worker nodes respectively
-# If greater than zero, boot from volume will be used, zero means use the root disk from the flavor
-capi_cluster_control_plane_root_volume_size: 0
-capi_cluster_worker_root_volume_size: 0
-# The failure domain (availability zone) to use for workers
-capi_cluster_worker_failure_domain: nova
+
 # The number of workers to use
 capi_cluster_worker_count: 3
+
+# Indicates whether to use explicit failure domains (availability zones) for control plane nodes
+#   * If set to true, failure domains are ignored for the control plane and Nova will
+#     pick an appropriate failure domain based on other scheduling constraints
+#   * If set to false, Cluster API will explicitly set failure domains for each control
+#     plane node based on the availability zones of the cloud
+capi_cluster_control_plane_ignore_failure_domains: true
+# A list of failure domains to consider for control plane nodes
+# Leave blank to consider all available failure domains
+capi_cluster_control_plane_failure_domains:
+# The failure domain to use for workers
+# Leave blank to allow Nova to choose a suitable failure domain based on
+# other scheduling constraints
+capi_cluster_worker_failure_domain:
+
+# The size of the root disks if boot-from-volume is required
+# Leave blank to use the root disk from the flavor
+capi_cluster_root_volume_size:
+capi_cluster_control_plane_root_volume_size: "{{ capi_cluster_root_volume_size }}"
+capi_cluster_worker_root_volume_size: "{{ capi_cluster_root_volume_size }}"
+# The volume type for the root disk
+# Leave blank for the default volume type
+capi_cluster_root_volume_type:
+capi_cluster_control_plane_root_volume_type: "{{ capi_cluster_root_volume_type }}"
+capi_cluster_worker_root_volume_type: "{{ capi_cluster_root_volume_type }}"
+# The Cinder availability zone for the root disk
+# If left blank, the compute availability zone for the node will be used
+capi_cluster_root_volume_availability_zone:
+capi_cluster_control_plane_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
+capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 
 # Configuration for addons
 #   Enable monitoring by default
@@ -160,11 +185,47 @@ capi_cluster_release_defaults:
     associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
   controlPlane:
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
-    machineRootVolumeSize: "{{ capi_cluster_control_plane_root_volume_size }}"
+    ignoreFailureDomains: "{{ capi_cluster_control_plane_ignore_failure_domains }}"
+    failureDomains: "{{ capi_cluster_control_plane_failure_domains }}"
+    machineRootVolume: >-
+      {{-
+        (
+          { "diskSize": capi_cluster_control_plane_root_volume_size } |
+            combine(
+              { "volumeType": capi_cluster_control_plane_root_volume_type }
+              if capi_cluster_control_plane_root_volume_type
+              else {}
+            ) |
+            combine(
+              { "availabilityZone": capi_cluster_control_plane_root_volume_availability_zone }
+              if capi_cluster_control_plane_root_volume_availability_zone
+              else {}
+            )
+        )
+        if capi_cluster_control_plane_root_volume_size
+        else None
+      }}
   nodeGroupDefaults:
     failureDomain: "{{ capi_cluster_worker_failure_domain }}"
     machineFlavor: "{{ capi_cluster_worker_flavor }}"
-    machineRootVolumeSize: "{{ capi_cluster_worker_root_volume_size }}"
+    machineRootVolume: >-
+      {{-
+        (
+          { "diskSize": capi_cluster_worker_root_volume_size } |
+            combine(
+              { "volumeType": capi_cluster_worker_root_volume_type }
+              if capi_cluster_worker_root_volume_type
+              else {}
+            ) |
+            combine(
+              { "availabilityZone": capi_cluster_worker_root_volume_availability_zone }
+              if capi_cluster_worker_root_volume_availability_zone
+              else {}
+            )
+        )
+        if capi_cluster_worker_root_volume_size
+        else None
+      }}
   nodeGroups:
     - name: md-0
       machineCount: "{{ capi_cluster_worker_count }}"
