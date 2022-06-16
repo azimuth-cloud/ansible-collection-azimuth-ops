@@ -267,6 +267,8 @@ azimuth_caas_stackhpc_slurm_appliance_project:
 # By default, the StackHPC Slurm appliance is included
 azimuth_caas_awx_default_projects:
   - "{{ azimuth_caas_stackhpc_slurm_appliance_project }}"
+
+azimuth_caas_awx_projects: []
 # - # The name of the project
 #   name: My Site Appliances
 #   # The git URL of the project
@@ -373,7 +375,10 @@ azimuth_release_defaults:
           "adminUsername": azimuth_caas_awx_admin_username,
           "adminPasswordSecretName": azimuth_caas_awx_admin_password_secret_name,
           "executionEnvironment": azimuth_caas_awx_ee,
-          "defaultProjects": azimuth_caas_awx_default_projects,
+          "defaultProjects": ( 
+          azimuth_caas_awx_default_projects + 
+          azimuth_caas_awx_projects 
+          ),
         },
         "terraformBackend": {
           "enabled": azimuth_caas_terraform_enabled,
