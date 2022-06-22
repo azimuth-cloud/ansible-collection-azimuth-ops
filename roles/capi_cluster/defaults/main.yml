@@ -49,6 +49,13 @@ capi_cluster_ssh_keypair: >-
     else undef(hint = 'capi_cluster_ssh_keypair is required')
   }}
 
+# Any registry authentication to add to cluster nodes
+# This allows containerd to authenticate directly without requiring imagePullSecrets
+capi_cluster_registry_auth: {}
+  # registry-1.docker.io:
+  #   username: "<username>"
+  #   password: "<password>"
+
 # The internal network to use
 # Defaults to the network created by Terraform if available
 # Otherwise, if left empty a network will be created
@@ -172,6 +179,7 @@ capi_cluster_release_defaults:
         if capi_cluster_services_cidr
         else {}
       }}
+  registryAuth: "{{ capi_cluster_registry_auth }}"
   apiServer:
     enableLoadBalancer: "{{ capi_cluster_apiserver_load_balancer }}"
     associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
