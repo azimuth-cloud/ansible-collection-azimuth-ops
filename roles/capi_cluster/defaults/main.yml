@@ -91,19 +91,11 @@ capi_cluster_worker_flavor: >-
 # The number of workers to use
 capi_cluster_worker_count: 3
 
-# Indicates whether to use explicit failure domains (availability zones) for control plane nodes
-#   * If set to true, failure domains are ignored for the control plane and Nova will
-#     pick an appropriate failure domain based on other scheduling constraints
-#   * If set to false, Cluster API will explicitly set failure domains for each control
-#     plane node based on the availability zones of the cloud
-capi_cluster_control_plane_ignore_failure_domains: true
 # A list of failure domains to consider for control plane nodes
 # Leave blank to consider all available failure domains
 capi_cluster_control_plane_failure_domains:
 # The failure domain to use for workers
-# Leave blank to allow Nova to choose a suitable failure domain based on
-# other scheduling constraints
-capi_cluster_worker_failure_domain:
+capi_cluster_worker_failure_domain: nova
 
 # The size of the root disks if boot-from-volume is required
 # Leave blank to use the root disk from the flavor
@@ -185,7 +177,6 @@ capi_cluster_release_defaults:
     associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
   controlPlane:
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
-    ignoreFailureDomains: "{{ capi_cluster_control_plane_ignore_failure_domains }}"
     failureDomains: "{{ capi_cluster_control_plane_failure_domains }}"
     machineRootVolume: >-
       {{-
