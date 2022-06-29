@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.70
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.71
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -44,8 +44,28 @@ azimuth_capi_operator_capi_helm_registry_mirrors: >-
 # The additional packages for provisioned clusters
 azimuth_capi_operator_capi_helm_additional_packages: []
 
-# The default failure domain (availability zone) for cluster nodes
-azimuth_capi_operator_capi_helm_default_failure_domain: nova
+# A list of failure domains to consider for control plane nodes
+# Leave blank to consider all available failure domains
+azimuth_capi_operator_capi_helm_control_plane_failure_domains:
+# The failure domain to use for workers
+azimuth_capi_operator_capi_helm_worker_failure_domain: nova
+
+# The size of the root disks if boot-from-volume is required
+# Leave blank to use the root disk from the flavor
+azimuth_capi_operator_capi_helm_root_volume_size:
+azimuth_capi_operator_capi_helm_control_plane_root_volume_size: "{{ azimuth_capi_operator_capi_helm_root_volume_size }}"
+azimuth_capi_operator_capi_helm_worker_root_volume_size: "{{ azimuth_capi_operator_capi_helm_root_volume_size }}"
+# The volume type for the root disk
+# Leave blank for the default volume type
+azimuth_capi_operator_capi_helm_root_volume_type:
+azimuth_capi_operator_capi_helm_control_plane_root_volume_type: "{{ azimuth_capi_operator_capi_helm_root_volume_type }}"
+azimuth_capi_operator_capi_helm_worker_root_volume_type: "{{ azimuth_capi_operator_capi_helm_root_volume_type }}"
+# The Cinder availability zone for the root disk
+# If left blank, the compute availability zone for the node will be used
+azimuth_capi_operator_capi_helm_root_volume_availability_zone:
+azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone: "{{ azimuth_capi_operator_capi_helm_root_volume_availability_zone }}"
+azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone: "{{ azimuth_capi_operator_capi_helm_root_volume_availability_zone }}"
+
 # The Cinder availability zone for the default Cinder CSI storage class
 azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone: nova
 # The Cinder volume type for the default Cinder CSI storage class
@@ -81,8 +101,46 @@ azimuth_capi_operator_capi_helm_values_defaults:
     }}
   registryMirrors: "{{ azimuth_capi_operator_capi_helm_registry_mirrors }}"
   additionalPackages: "{{ azimuth_capi_operator_capi_helm_additional_packages }}"
+  controlPlane:
+    failureDomains: "{{ azimuth_capi_operator_capi_helm_control_plane_failure_domains }}"
+    machineRootVolume: >-
+      {{-
+        (
+          { "diskSize": azimuth_capi_operator_capi_helm_control_plane_root_volume_size } |
+            combine(
+              { "volumeType": azimuth_capi_operator_capi_helm_control_plane_root_volume_type }
+              if azimuth_capi_operator_capi_helm_control_plane_root_volume_type
+              else {}
+            ) |
+            combine(
+              { "availabilityZone": azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone }
+              if azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone
+              else {}
+            )
+        )
+        if azimuth_capi_operator_capi_helm_control_plane_root_volume_size
+        else None
+      }}
   nodeGroupDefaults:
-    failureDomain: "{{ azimuth_capi_operator_capi_helm_default_failure_domain }}"
+    failureDomain: "{{ azimuth_capi_operator_capi_helm_worker_failure_domain }}"
+    machineRootVolume: >-
+      {{-
+        (
+          { "diskSize": azimuth_capi_operator_capi_helm_worker_root_volume_size } |
+            combine(
+              { "volumeType": azimuth_capi_operator_capi_helm_worker_root_volume_type }
+              if azimuth_capi_operator_capi_helm_worker_root_volume_type
+              else {}
+            ) |
+            combine(
+              { "availabilityZone": azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone }
+              if azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone
+              else {}
+            )
+        )
+        if azimuth_capi_operator_capi_helm_worker_root_volume_size
+        else None
+      }}
   addons:
     # Configure the CSI Cinder storage class
     openstack:
