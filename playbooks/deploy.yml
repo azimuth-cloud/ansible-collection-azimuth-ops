@@ -8,6 +8,8 @@
       when: certmanager_enabled
     - role: stackhpc.azimuth_ops.harbor
       when: harbor_enabled
+    - role: stackhpc.azimuth_ops.cloud_metrics
+      when: cloud_metrics_enabled
     - role: stackhpc.azimuth_ops.clusterapi
       when: azimuth_kubernetes_enabled
     - role: stackhpc.azimuth_ops.awx

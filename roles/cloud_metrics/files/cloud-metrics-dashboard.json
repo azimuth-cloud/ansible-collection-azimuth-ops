@@ -1,0 +1,11 @@
+{
+  "uid": "g__ksD67z",
+  "title": "Cloud Metrics",
+  "panels": [
+    {
+      "type": "text",
+      "mode": "markdown",
+      "content": "# Cloud metrics will go in this dashboard"
+    }
+  ]
+}

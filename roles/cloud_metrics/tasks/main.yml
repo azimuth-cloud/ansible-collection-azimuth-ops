@@ -1,0 +1,85 @@
+---
+
+#####
+# These tasks deploy a Grafana for showing project-specific cloud metrics
+#
+# It is separate to the Grafana that provides metrics for the cluster that Azimuth is running in
+#####
+
+- name: Create Grafana release namespace
+  command: kubectl create namespace {{ cloud_metrics_grafana_release_namespace }}
+  register: cloud_metrics_grafana_create_namespace
+  changed_when: cloud_metrics_grafana_create_namespace.rc == 0
+  failed_when: >-
+    cloud_metrics_grafana_create_namespace.rc != 0 and
+    'AlreadyExists' not in cloud_metrics_grafana_create_namespace.stderr
+
+- name: Install wildcard TLS certificate
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ cloud_metrics_grafana_ingress_tls_secret_definition | to_nice_yaml }}"
+  vars:
+    cloud_metrics_grafana_ingress_tls_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ cloud_metrics_grafana_ingress_tls_secret_name }}"
+        namespace: "{{ cloud_metrics_grafana_release_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ cloud_metrics_grafana_ingress_tls_certificate }}"
+        tls.key: "{{ cloud_metrics_grafana_ingress_tls_key }}"
+  when: cloud_metrics_grafana_ingress_tls_certificate
+
+- name: Install Grafana admin password secret
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ cloud_metrics_grafana_admin_secret_definition | to_nice_yaml }}"
+  vars:
+    cloud_metrics_grafana_admin_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ cloud_metrics_grafana_admin_secret_name }}"
+        namespace: "{{ cloud_metrics_grafana_release_namespace }}"
+      stringData: >-
+        {{-
+          {
+            cloud_metrics_grafana_admin_secret_user_key: cloud_metrics_grafana_admin_username,
+            cloud_metrics_grafana_admin_secret_password_key: cloud_metrics_grafana_admin_password,
+          }
+        }}
+
+- name: Install Grafana on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ cloud_metrics_grafana_chart_name }}"
+    chart_repo_url: "{{ cloud_metrics_grafana_chart_repo }}"
+    chart_version: "{{ cloud_metrics_grafana_chart_version }}"
+    release_namespace: "{{ cloud_metrics_grafana_release_namespace }}"
+    release_name: "{{ cloud_metrics_grafana_release_name }}"
+    release_values: "{{ cloud_metrics_grafana_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ cloud_metrics_grafana_wait_timeout }}"
+
+- name: Set Grafana URL fact
+  set_fact:
+    cloud_metrics_grafana_url: >-
+      {{-
+        "{scheme}://{host}".format(
+          scheme = "https" if cloud_metrics_grafana_ingress_tls_enabled else "http",
+          host = cloud_metrics_grafana_ingress_host
+        )
+      }}
+
+- name: Set Grafana project dashboard URL template
+  set_fact:
+    cloud_metrics_grafana_project_dashboard_url_template: >-
+      {{-
+        "{url}/d/{dashboard_uid}?var-{project_var}={{project_id}}".format(
+          url = cloud_metrics_grafana_url,
+          dashboard_uid = cloud_metrics_grafana_project_dashboard_uid,
+          project_var = cloud_metrics_grafana_project_id_var
+        )
+      }}
