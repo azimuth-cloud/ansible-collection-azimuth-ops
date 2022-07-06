@@ -129,14 +129,14 @@ cloud_metrics_grafana_persistence_storage_class_name:
 
 # Configuration for the dashboards to add
 cloud_metrics_grafana_dashboard_home: "{{ lookup('file', 'cloud-metrics-dashboard.json') }}"
-cloud_metrics_grafana_dashboard_project: "{{ lookup('file', 'project-metrics-dashboard.json') }}"
+cloud_metrics_grafana_dashboard_tenant: "{{ lookup('file', 'tenant-metrics-dashboard.json') }}"
 #   When the above variables are used, they are interpreted as datastructures
 cloud_metrics_grafana_dashboards:
   default:
     home:
       json: "{{ cloud_metrics_grafana_dashboard_home | to_json }}"
-    project:
-      json: "{{ cloud_metrics_grafana_dashboard_project | to_json }}"
+    tenant:
+      json: "{{ cloud_metrics_grafana_dashboard_tenant | to_json }}"
 #   The dashboards must have a corresponding provider configuration
 cloud_metrics_grafana_dashboard_providers:
   dashboardproviders.yaml:
@@ -157,16 +157,22 @@ cloud_metrics_grafana_dashboard_providers:
         {% endfor %}
       ]
 
-# The UID of the project dashboard
-# Used to build the URL template that is handed to Azimuth for project metrics
-cloud_metrics_grafana_project_dashboard_uid: >-
+# The UIDs of the home and tenant dashboards
+# Used to build the URLs that are handed to Azimuth for metrics
+cloud_metrics_grafana_home_dashboard_uid: >-
   {{-
-    cloud_metrics_grafana_dashboards.default.project.json |
+    cloud_metrics_grafana_dashboards.default.home.json |
       from_json |
       json_query("uid")
   }}
-# The variable name that the project ID should be placed in
-cloud_metrics_grafana_project_id_var: project_id
+cloud_metrics_grafana_tenant_dashboard_uid: >-
+  {{-
+    cloud_metrics_grafana_dashboards.default.tenant.json |
+      from_json |
+      json_query("uid")
+  }}
+# The variable name that the tenant ID should be placed in
+cloud_metrics_grafana_tenant_id_var: tenant_id
 
 # The deployment strategy for Grafana
 # If using persistence with RWO PVCs, this must be Recreate or the deployment gets stuck

@@ -1,12 +1,12 @@
 {
   "uid": "mXiuBDe7z",
-  "title": "Project Metrics",
+  "title": "Tenant Metrics",
   "panels": [
     {
       "type": "text",
-      "title": "Project ID",
+      "title": "Tenant ID",
       "mode": "markdown",
-      "content": "${project_id}"
+      "content": "${tenant_id}"
     }
   ],
   "templating": {
@@ -14,8 +14,8 @@
     "list": [
       {
         "type": "textbox",
-        "name": "project_id",
-        "label": "Project ID",
+        "name": "tenant_id",
+        "label": "Tenant ID",
         "hide": 2
       }
     ]

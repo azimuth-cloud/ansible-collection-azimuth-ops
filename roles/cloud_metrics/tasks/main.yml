@@ -1,7 +1,7 @@
 ---
 
 #####
-# These tasks deploy a Grafana for showing project-specific cloud metrics
+# These tasks deploy a Grafana for showing cloud metrics
 #
 # It is separate to the Grafana that provides metrics for the cluster that Azimuth is running in
 #####
@@ -63,23 +63,22 @@
     wait: yes
     wait_timeout: "{{ cloud_metrics_grafana_wait_timeout }}"
 
-- name: Set Grafana URL fact
+- name: Set Grafana dashboard URL facts
   set_fact:
-    cloud_metrics_grafana_url: >-
+    cloud_metrics_grafana_home_dashboard_url: >-
       {{-
-        "{scheme}://{host}".format(
+        "{scheme}://{host}/d/{dashboard_uid}?kiosk=tv".format(
           scheme = "https" if cloud_metrics_grafana_ingress_tls_enabled else "http",
-          host = cloud_metrics_grafana_ingress_host
+          host = cloud_metrics_grafana_ingress_host,
+          dashboard_uid = cloud_metrics_grafana_home_dashboard_uid
         )
       }}
-
-- name: Set Grafana project dashboard URL template
-  set_fact:
-    cloud_metrics_grafana_project_dashboard_url_template: >-
+    cloud_metrics_grafana_tenant_dashboard_url_template: >-
       {{-
-        "{url}/d/{dashboard_uid}?var-{project_var}={{project_id}}".format(
-          url = cloud_metrics_grafana_url,
-          dashboard_uid = cloud_metrics_grafana_project_dashboard_uid,
-          project_var = cloud_metrics_grafana_project_id_var
+        "{scheme}://{host}/d/{dashboard_uid}?kiosk=tv&var-{tenant_var}={{tenant_id}}".format(
+          scheme = "https" if cloud_metrics_grafana_ingress_tls_enabled else "http",
+          host = cloud_metrics_grafana_ingress_host,
+          dashboard_uid = cloud_metrics_grafana_tenant_dashboard_uid,
+          tenant_var = cloud_metrics_grafana_tenant_id_var
         )
       }}
