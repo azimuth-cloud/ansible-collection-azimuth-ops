@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.feature-platforms-panel.625
+azimuth_chart_version: 0.1.0-dev.0.feature-platforms-panel.627
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -75,6 +75,14 @@ azimuth_metrics_tenant_metrics_url_template: >-
     if cloud_metrics_grafana_tenant_dashboard_url_template is defined
     else None
   }}
+
+# The documentation URL
+# By default, we use the generic Azimuth docs
+azimuth_documentation_url: https://stackhpc.github.io/azimuth-user-docs/
+
+# A mapping of curated sizes, mapping ID to an alternative name
+# If no sizes are given, the sizes returned by the cloud provider are used
+azimuth_curated_sizes: {}
 
 # Authenticator settings
 azimuth_authenticator_type: openstack-password  # openstack-{password,federation}
@@ -361,6 +369,8 @@ azimuth_release_defaults:
             else {}
           )
       }}
+    documentationUrl: "{{ azimuth_documentation_url }}"
+    curatedSizes: "{{ azimuth_curated_sizes }}"
   authenticator:
     type: "{{ azimuth_authenticator_type }}"
     openstackFederation: >-
