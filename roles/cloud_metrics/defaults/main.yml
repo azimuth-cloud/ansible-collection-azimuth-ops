@@ -1,0 +1,237 @@
+---
+
+# The chart to use for Grafana
+cloud_metrics_grafana_chart_repo: https://grafana.github.io/helm-charts
+cloud_metrics_grafana_chart_name: grafana
+cloud_metrics_grafana_chart_version: ~6.32.0
+
+# Release information for the Grafana release
+# By default, deploy into the same namespace as Azimuth
+cloud_metrics_grafana_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
+cloud_metrics_grafana_release_name: cloud-metrics
+
+# The timeout to wait for Grafana to become ready
+cloud_metrics_grafana_wait_timeout: 10m
+
+# Ingress settings for Grafana
+#   The name of the ingress class to use
+cloud_metrics_grafana_ingress_class: nginx
+#   The hostname to use for the ingress resource
+cloud_metrics_grafana_ingress_host: >-
+  {{-
+    "{}.{}".format(ingress_cloud_metrics_grafana_subdomain, ingress_base_domain)
+    if ingress_cloud_metrics_grafana_subdomain is defined and ingress_base_domain is defined
+    else undef(hint = 'cloud_metrics_grafana_ingress_host is required')
+  }}
+#   Any annotations for the ingress
+cloud_metrics_grafana_ingress_annotations: "{{ ingress_annotations | default({}) }}"
+#   The TLS secret name (can be null)
+cloud_metrics_grafana_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default('cloud-metrics-grafana-tls', True) }}"
+#   Any TLS-specific annotations
+cloud_metrics_grafana_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
+#   Wildcard TLS certificate, if available
+cloud_metrics_grafana_ingress_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
+cloud_metrics_grafana_ingress_tls_key: >-
+  {{-
+    ingress_tls_wildcard_key
+    if ingress_tls_wildcard_key is defined
+    else undef(hint = 'cloud_metrics_grafana_ingress_tls_key is required')
+  }}
+#   Indicates whether TLS should be enabled
+cloud_metrics_grafana_ingress_tls_enabled: >-
+  {{-
+    not not (
+      cloud_metrics_grafana_ingress_tls_certificate or
+      cloud_metrics_grafana_ingress_tls_annotations
+    )
+  }}
+
+# Settings for the auth callout
+#   The URL for the auth callout
+#   If not set, no auth callout is configured
+_azimuth_release_name: "{{ azimuth_release_name | default('azimuth') }}"
+_azimuth_api_service_name: >-
+  {{
+    "{}-api".format(
+      _azimuth_release_name
+      if 'azimuth' in _azimuth_release_name
+      else "{}-azimuth".format(_azimuth_release_name)
+    )
+  }}
+cloud_metrics_grafana_ingress_auth_url: >-
+  {{
+    "http://{}.{}.svc.cluster.local/api/session/verify/".format(
+      _azimuth_api_service_name,
+      azimuth_release_namespace | default('azimuth')
+    )
+  }}
+#   The URL to redirect to when the verify URL returns a 401
+#   If not set, the 401 will just be returned
+_azimuth_ingress_tls_enabled: >-
+  {{-
+    azimuth_ingress_tls_enabled
+    if azimuth_ingress_tls_enabled is defined
+    else (ingress_tls_enabled | default(True))
+  }}
+_azimuth_ingress_host: >-
+  {{-
+    azimuth_ingress_host
+    if azimuth_ingress_host is defined
+    else (
+      "{}.{}".format(ingress_azimuth_portal_subdomain, ingress_base_domain)
+      if ingress_azimuth_portal_subdomain is defined and ingress_base_domain is defined
+      else None
+    )
+  }}
+cloud_metrics_grafana_ingress_auth_signin_url: >-
+  {{
+    "{}://{}/auth/login".format(
+      'https' if _azimuth_ingress_tls_enabled else 'http',
+      _azimuth_ingress_host
+    )
+    if _azimuth_ingress_host
+    else undef(hint = 'cloud_metrics_grafana_ingress_auth_signin_url is required')
+  }}
+#   The URL parameter to contain the original URL when redirecting
+cloud_metrics_grafana_ingress_auth_next_url_param: next
+#   Dictionary of headers to set for authentication requests
+#   These will override headers from the incoming request, which would otherwise be forwarded
+#   In particular, you may need to override the accepts header to suit the content types served
+#   by the external authentication service
+cloud_metrics_grafana_ingress_auth_request_headers:
+  accept: application/json
+#   The ingress annotations that configure the auth callout
+cloud_metrics_grafana_ingress_auth_annotations:
+  nginx.ingress.kubernetes.io/auth-url: "{{ cloud_metrics_grafana_ingress_auth_url }}"
+  nginx.ingress.kubernetes.io/auth-signin: "{{ cloud_metrics_grafana_ingress_auth_signin_url }}"
+  nginx.ingress.kubernetes.io/auth-signin-redirect-param: "{{ cloud_metrics_grafana_ingress_auth_next_url_param }}"
+  nginx.ingress.kubernetes.io/auth-snippet: |-
+    {% for name, value in cloud_metrics_grafana_ingress_auth_request_headers.items() %}
+    proxy_set_header {{ name }} {{ value }};
+    {% endfor %}
+
+# The admin username and password for Grafana
+cloud_metrics_grafana_admin_username: admin
+cloud_metrics_grafana_admin_password: "{{ undef(hint = 'cloud_metrics_grafana_admin_password is required') }}"
+
+# Details for the Grafana admin secret
+cloud_metrics_grafana_admin_secret_name: "{{ cloud_metrics_grafana_release_name }}-grafana-admin"
+cloud_metrics_grafana_admin_secret_user_key: username
+cloud_metrics_grafana_admin_secret_password_key: password
+
+# Configuration for persistent storage, so that changes to the Grafana DB are persistent
+#   Indicates whether persistence should be enabled
+cloud_metrics_grafana_persistence_enabled: true
+#   The size of the PVC to use
+cloud_metrics_grafana_persistence_size: 10Gi
+#   The name of the storage class to use - leave blank for the default
+cloud_metrics_grafana_persistence_storage_class_name:
+
+# Configuration for the dashboards to add
+cloud_metrics_grafana_dashboard_home: "{{ lookup('file', 'cloud-metrics-dashboard.json') }}"
+cloud_metrics_grafana_dashboard_tenant: "{{ lookup('file', 'tenant-metrics-dashboard.json') }}"
+#   When the above variables are used, they are interpreted as datastructures
+cloud_metrics_grafana_dashboards:
+  default:
+    home:
+      json: "{{ cloud_metrics_grafana_dashboard_home | to_json }}"
+    tenant:
+      json: "{{ cloud_metrics_grafana_dashboard_tenant | to_json }}"
+#   The dashboards must have a corresponding provider configuration
+cloud_metrics_grafana_dashboard_providers:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers: >-
+      [
+        {% for provider in cloud_metrics_grafana_dashboards.keys() %}
+        {
+          "name": "{{ provider }}",
+          "type": "file",
+          "disableDeletion": true,
+          "updateIntervalSeconds": 86400,
+          "allowUiUpdates": false,
+          "options": {
+            "path": "/var/lib/grafana/dashboards/{{ provider }}"
+          }
+        },
+        {% endfor %}
+      ]
+
+# The UIDs of the home and tenant dashboards
+# Used to build the URLs that are handed to Azimuth for metrics
+cloud_metrics_grafana_home_dashboard_uid: >-
+  {{-
+    cloud_metrics_grafana_dashboards.default.home.json |
+      from_json |
+      json_query("uid")
+  }}
+cloud_metrics_grafana_tenant_dashboard_uid: >-
+  {{-
+    cloud_metrics_grafana_dashboards.default.tenant.json |
+      from_json |
+      json_query("uid")
+  }}
+# The variable name that the tenant ID should be placed in
+cloud_metrics_grafana_tenant_id_var: tenant_id
+
+# The deployment strategy for Grafana
+# If using persistence with RWO PVCs, this must be Recreate or the deployment gets stuck
+cloud_metrics_grafana_deployment_strategy:
+  type: Recreate
+
+# The values for the release
+cloud_metrics_grafana_release_defaults:
+  deploymentStrategy: "{{ cloud_metrics_grafana_deployment_strategy }}"
+  ingress:
+    enabled: true
+    hosts: ["{{ cloud_metrics_grafana_ingress_host }}"]
+    ingressClassName: "{{ cloud_metrics_grafana_ingress_class }}"
+    annotations: >-
+      {{-
+        cloud_metrics_grafana_ingress_annotations |
+          combine(cloud_metrics_grafana_ingress_auth_annotations) |
+          combine(
+            cloud_metrics_grafana_ingress_tls_annotations
+            if (
+              cloud_metrics_grafana_ingress_tls_enabled and
+              not cloud_metrics_grafana_ingress_tls_certificate
+            )
+            else {}
+          )
+      }}
+    tls: >-
+      {{-
+        [
+          {
+            "hosts": [cloud_metrics_grafana_ingress_host],
+            "secretName": cloud_metrics_grafana_ingress_tls_secret_name,
+          }
+        ]
+        if cloud_metrics_grafana_ingress_tls_enabled
+        else []
+      }}
+  persistence:
+    enabled: "{{ cloud_metrics_grafana_persistence_enabled }}"
+    size: "{{ cloud_metrics_grafana_persistence_size }}"
+    storageClassName: "{{ cloud_metrics_grafana_persistence_storage_class_name }}"
+  admin:
+    existingSecret: "{{ cloud_metrics_grafana_admin_secret_name }}"
+    userKey: "{{ cloud_metrics_grafana_admin_secret_user_key }}"
+    passwordKey: "{{ cloud_metrics_grafana_admin_secret_password_key }}"
+  dashboards: "{{ cloud_metrics_grafana_dashboards }}"
+  dashboardProviders: "{{ cloud_metrics_grafana_dashboard_providers }}"
+  # Enable anonymous auth as we are already imposing Azimuth auth
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+    dashboards:
+      # This is the path where the dashboards are mounted in the pod
+      default_home_dashboard_path: /var/lib/grafana/dashboards/default/home.json
+  rbac:
+    pspEnabled: false
+cloud_metrics_grafana_release_overrides: {}
+cloud_metrics_grafana_release_values: >-
+  {{-
+    cloud_metrics_grafana_release_defaults |
+      combine(cloud_metrics_grafana_release_overrides, recursive = True)
+  }}

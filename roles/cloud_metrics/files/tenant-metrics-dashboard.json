@@ -1,0 +1,23 @@
+{
+  "uid": "mXiuBDe7z",
+  "title": "Tenant Metrics",
+  "panels": [
+    {
+      "type": "text",
+      "title": "Tenant ID",
+      "mode": "markdown",
+      "content": "${tenant_id}"
+    }
+  ],
+  "templating": {
+    "enable": true,
+    "list": [
+      {
+        "type": "textbox",
+        "name": "tenant_id",
+        "label": "Tenant ID",
+        "hide": 2
+      }
+    ]
+  }
+}
