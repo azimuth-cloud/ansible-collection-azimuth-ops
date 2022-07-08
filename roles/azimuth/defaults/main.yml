@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.master.628
+azimuth_chart_version: 0.1.0-dev.0.master.635
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -84,14 +84,54 @@ azimuth_documentation_url: https://stackhpc.github.io/azimuth-user-docs/
 # If no sizes are given, the sizes returned by the cloud provider are used
 azimuth_curated_sizes: {}
 
-# Authenticator settings
-azimuth_authenticator_type: openstack-password  # openstack-{password,federation}
-# The URL of the federation endpoint when openstack-federation is used
-azimuth_authenticator_openstack_federation_url: >-
+# Settings for the configured authenticators
+#   Configuration for the password authenticator
+azimuth_authenticator_password_enabled: true
+azimuth_authenticator_password_label: "Username + Password"
+azimuth_authenticator_password_type: openstack-password
+azimuth_authenticator_password_auth_url: "{{ azimuth_openstack_auth_url }}"
+azimuth_authenticator_password_domain: "{{ azimuth_openstack_domain }}"
+azimuth_authenticator_password_verify_ssl: "{{ azimuth_openstack_verify_ssl }}"
+azimuth_authenticator_password:
+  label: "{{ azimuth_authenticator_password_label }}"
+  type: "{{ azimuth_authenticator_password_type }}"
+  openstackPassword:
+    authUrl: "{{ azimuth_authenticator_password_auth_url }}"
+    domain: "{{ azimuth_authenticator_password_domain }}"
+    verifySsl: "{{ azimuth_authenticator_password_verify_ssl }}"
+#   Configuration for the appcred authenticator
+azimuth_authenticator_appcred_enabled: false
+azimuth_authenticator_appcred_label: "Application Credential"
+azimuth_authenticator_appcred_type: openstack-application-credential
+azimuth_authenticator_appcred_auth_url: "{{ azimuth_openstack_auth_url }}"
+azimuth_authenticator_appcred_verify_ssl: "{{ azimuth_openstack_verify_ssl }}"
+azimuth_authenticator_appcred:
+  label: "{{ azimuth_authenticator_appcred_label }}"
+  type: "{{ azimuth_authenticator_appcred_type }}"
+  openstackApplicationCredential:
+    authUrl: "{{ azimuth_authenticator_appcred_auth_url }}"
+    verifySsl: "{{ azimuth_authenticator_appcred_verify_ssl }}"
+#   Configuration for the federated authenticator
+azimuth_authenticator_federated_enabled: false
+azimuth_authenticator_federated_label: "Federated"
+azimuth_authenticator_federated_type: openstack-federation
+azimuth_authenticator_federated_auth_url: "{{ azimuth_openstack_auth_url }}"
+azimuth_authenticator_federated_provider: >-
+  {{ undef(hint = 'azimuth_authenticator_federated_provider is required') }}
+azimuth_authenticator_federated:
+  label: "{{ azimuth_authenticator_federated_label }}"
+  type: "{{ azimuth_authenticator_federated_type }}"
+  openstackFederation:
+    authUrl: "{{ azimuth_authenticator_federated_auth_url }}"
+    provider: "{{ azimuth_authenticator_federated_provider }}"
+#   List of authenticator names in the order in which they should appear
+#   The authenticators are configured using variables of the form "azimuth_authenticator_<name>"
+azimuth_authenticators: >-
   {{-
-    undef(hint = 'azimuth_authenticator_openstack_federation_url is required')
-    if azimuth_authenticator_type == 'openstack-federation'
-    else None
+    [] +
+      (["federated"] if azimuth_authenticator_federated_enabled else []) +
+      (["password"] if azimuth_authenticator_password_enabled else []) +
+      (["appcred"] if azimuth_authenticator_appcred_enabled else [])
   }}
 
 # OpenStack provider settings
@@ -371,14 +411,15 @@ azimuth_release_defaults:
       }}
     documentationUrl: "{{ azimuth_documentation_url }}"
     curatedSizes: "{{ azimuth_curated_sizes }}"
-  authenticator:
-    type: "{{ azimuth_authenticator_type }}"
-    openstackFederation: >-
-      {{-
-        { "federationUrl": azimuth_authenticator_openstack_federation_url }
-        if azimuth_authenticator_type == "openstack-federation"
-        else {}
-      }}
+  authenticators: >-
+    [
+      {% for authenticator_name in azimuth_authenticators %}
+      {{
+        { "name": authenticator_name } |
+          combine(lookup("vars", "azimuth_authenticator_" + authenticator_name))
+      }},
+      {% endfor %}
+    ]
   provider:
     openstack:
       authUrl: "{{ azimuth_openstack_auth_url }}"
