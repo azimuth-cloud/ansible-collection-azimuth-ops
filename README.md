@@ -2,14 +2,19 @@
 
 This [Ansible collection](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html)
 contains roles and playbooks for deploying [Azimuth](https://github.com/stackhpc/azimuth) and
-all of its dependencies onto a [Kubernetes](https://kubernetes.io/) cluster.
+all of its dependencies.
 
-It can function in three configurations:
+It can function in three modes:
 
   1. Deploy Azimuth onto a pre-existing Kubernetes cluster.
-  1. Provision a single-node [K3S](https://k3s.io/) cluster into an
+  2. Provision a single-node [K3S](https://k3s.io/) cluster into an
      [OpenStack](https://www.openstack.org/) project using [Terraform](https://www.terraform.io/)
      and deploy Azimuth onto it.
-  1. Provision a single-node K3S cluster as a seed node using Terraform, configure
+  3. Provision a single-node K3S cluster into an OpenStack project using Terraform, configure
      it as a [Cluster API](https://cluster-api.sigs.k8s.io/) management cluster, use it
-     to deploy a HA cluster using Cluster API and deploy Azimuth onto the HA cluster.
+     to deploy a high-availability Kubernetes cluster into the same OpenStack project using
+     Cluster API and finally deploy Azimuth onto the high-availability cluster.
+
+This collection is designed to be used with a configuration repository that is forked
+from [azimuth-config](https://github.com/stackhpc/azimuth-config), and user documentation
+for configuration options can be found in that project.
