@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.master.638
+azimuth_chart_version: 0.1.0-dev.0.master.642
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -59,7 +59,8 @@ azimuth_linked_clouds: []
 #   The name of this cloud
 azimuth_current_cloud_name: "{{ undef(hint = 'azimuth_current_cloud_name is required') }}"
 #   The label for this cloud
-azimuth_current_cloud_label: "{{ undef(hint = 'azimuth_current_cloud_label is required') }}"
+azimuth_current_cloud_label: >-
+  {{ azimuth_current_cloud_name | regex_replace('[^a-z0-9]+', ' ') | capitalize }}
 
 # Settings for the metrics dashboards, if available
 # By default, these are provided by the cloud_metrics role
@@ -311,12 +312,20 @@ azimuth_caas_stackhpc_slurm_appliance_metadata_root: >-
 azimuth_caas_stackhpc_slurm_appliance_playbooks: [slurm-infra.yml]
 # The ID of the image to use with the StackHPC Slurm appliance
 # Support the old name for backwards compatibility
+# By default, use the Rocky 8 image from community images if available
 azimuth_caas_stackhpc_slurm_appliance_image: >-
   {{-
     azimuth_caas_stackhpc_slurm_appliance_rocky8_image
     if azimuth_caas_stackhpc_slurm_appliance_rocky8_image is defined
     else (
-      undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+      (
+        community_images_image_ids.rocky_8_20220702
+        if (
+          community_images_image_ids is defined and
+          'rocky_8_20220702' in community_images_image_ids
+        )
+        else undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+      )
       if azimuth_caas_stackhpc_slurm_appliance_enabled
       else None
     )
@@ -352,6 +361,8 @@ azimuth_caas_stackhpc_slurm_appliance_project:
 
 # Indicates if the StackHPC workstation should be enabled
 azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
+# Indicates if the SSH variant of the workstation should be enabled
+azimuth_caas_stackhpc_workstation_ssh_enabled: false
 # The name of the StackHPC workstation project
 azimuth_caas_stackhpc_workstation_name: StackHPC Workstation
 # The git URL for the StackHPC workstation
@@ -362,13 +373,25 @@ azimuth_caas_stackhpc_workstation_git_version: 3d59c9eb041812a804dbf9e2607f00ef8
 azimuth_caas_stackhpc_workstation_metadata_root: >-
   https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta
 # The playbooks to use for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_playbooks:
-  - "workstation.yml"
-  - "workstation-external-ssh.yml"
+azimuth_caas_stackhpc_workstation_playbooks: >-
+  [
+    "workstation.yml",
+    {% if azimuth_caas_stackhpc_workstation_ssh_enabled %}
+    "workstation-external-ssh.yml",
+    {% endif %}
+  ]
 # The ID of the image for use with the StackHPC workstation
+# By default, use the workstation image from community images if available
 azimuth_caas_stackhpc_workstation_image: >-
   {{-
-    undef(hint = 'azimuth_caas_stackhpc_workstation_image is required')
+    (
+      community_images_image_ids.workstation_20220711_2135
+      if (
+        community_images_image_ids is defined and
+        'workstation_20220711_2135' in community_images_image_ids
+      )
+      else undef(hint = 'azimuth_caas_stackhpc_workstation_image is required')
+    )
     if azimuth_caas_stackhpc_workstation_enabled
     else None
   }}
@@ -399,9 +422,17 @@ azimuth_caas_stackhpc_repo2docker_metadata_root: >-
 # The playbooks to use for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_playbooks: ["repo2docker.yml"]
 # The ID of the image for use with the StackHPC repo2docker appliance
+# By default, use the repo2docker image from community images if available
 azimuth_caas_stackhpc_repo2docker_image: >-
   {{-
-    undef(hint = 'azimuth_caas_stackhpc_repo2docker_image is required')
+    (
+      community_images_image_ids.repo2docker_20220712_0914
+      if (
+        community_images_image_ids is defined and
+        'repo2docker_20220712_0914' in community_images_image_ids
+      )
+      else undef(hint = 'azimuth_caas_stackhpc_repo2docker_image is required')
+    )
     if azimuth_caas_stackhpc_repo2docker_enabled
     else None
   }}

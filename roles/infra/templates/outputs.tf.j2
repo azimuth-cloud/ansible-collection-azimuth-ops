@@ -48,13 +48,6 @@ output "cluster_nodes" {
 
           # Also include the keypair name for the same reason
           infra_deploy_keypair = openstack_compute_keypair_v2.keypair_deploy.name
-
-          # Also set a variable containing the image UUIDs for each id
-          infra_community_image_info = {
-{% for image_id in infra_community_images.keys() %}
-            {{ image_id }} = openstack_images_image_v2.{{ image_id }}.id
-{% endfor %}
-          }
         }
       }
     ]

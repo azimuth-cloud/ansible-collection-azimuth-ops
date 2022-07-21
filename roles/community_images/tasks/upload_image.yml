@@ -1,0 +1,155 @@
+---
+
+#####
+# This set of tasks downloads, decompresses, converts and uploads an image to the target cloud
+# The "output" of the tasks is a variable containing the image ID
+#####
+
+- name: Ensure working directory is ready
+  block:
+    - name: Get temporary working directory
+      tempfile:
+        state: directory
+      register: community_images_tempdir
+
+    - name: Set working directory fact
+      set_fact:
+        community_images_workdir: "{{ community_images_tempdir.path }}"
+  when: not community_images_workdir
+
+- name: Ensure working directory exists
+  file:
+    state: directory
+    path: "{{ community_images_workdir }}"
+
+# openstack.cloud.image_info does not respect clouds.yaml in the current working directory
+# So use the OpenStack CLI directly instead
+- name: "Check if image exists - {{ community_images_image_spec.name }}"
+  command: "openstack image show -f json {{ community_images_image_spec.name }}"
+  changed_when: false
+  failed_when: >-
+    community_images_image_info.rc != 0 and
+    "no image found" not in community_images_image_info.stderr.lower()
+  register: community_images_image_info
+
+- name: "Set ID from pre-existing image - {{ community_images_image_spec.name }}"
+  set_fact:
+    community_images_image_id: "{{ community_images_image_info.stdout | from_json | json_query('id') }}"
+  when: community_images_image_info.rc == 0
+
+- block:
+    - name: "Set image facts - {{ community_images_image_spec.name }}"
+      set_fact:
+        community_images_image_download_path: >-
+          {{ (community_images_workdir, community_images_image_spec.name + '.download') | path_join }}
+        community_images_image_decompress_path: >-
+          {{ (community_images_workdir, community_images_image_spec.name + '.decompress') | path_join }}
+        community_images_image_convert_path: >-
+          {{ (community_images_workdir, community_images_image_spec.name + '.convert') | path_join }}
+        community_images_image_decompression_required: >-
+          {{ community_images_image_spec.source_url.split('.')[-1] in ['bz2'] }}
+
+    - name: "Set image facts (2) - {{ community_images_image_spec.name }}"
+      set_fact:
+        community_images_image_convert_in_path: >-
+          {{-
+            community_images_image_decompress_path
+            if community_images_image_decompression_required
+            else community_images_image_download_path
+          }}
+
+    - name: "Set image facts (3) - {{ community_images_image_spec.name }}"
+      set_fact:
+        community_images_image_upload_in_path: >-
+          {{-
+            community_images_image_convert_in_path
+            if community_images_image_spec.source_disk_format == community_images_disk_format
+            else community_images_image_convert_path
+          }}
+
+    - name: "Download image - {{ community_images_image_spec.name }}"
+      get_url:
+        url: "{{ community_images_image_spec.source_url }}"
+        dest: "{{ community_images_image_download_path }}"
+        timeout: 600
+
+    - name: "Uncompress image (bzip2) - {{ community_images_image_spec.name }}"
+      shell: "bunzip2 -dc {{ community_images_image_download_path }} > {{ community_images_image_decompress_path }}"
+      args:
+        creates: "{{ community_images_image_decompress_path }}"
+      when: community_images_image_spec.source_url.endswith('bz2')
+
+    - name: "Convert image - {{ community_images_image_spec.name }}"
+      command: >-
+        qemu-img convert
+          -f {{ community_images_image_spec.source_disk_format }}
+          -O {{ community_images_disk_format }}
+          "{{ community_images_image_convert_in_path }}"
+          "{{ community_images_image_convert_path }}"
+      args:
+        creates: "{{ community_images_image_convert_path }}"
+      when: community_images_image_spec.source_disk_format != community_images_disk_format
+
+    # openstack.cloud.image is currently broken due to JSON processing code
+    # https://storyboard.openstack.org/#!/story/2008740
+    # Instead, we use the OpenStack CLI directly
+    - name: "Upload image - {{ community_images_image_spec.name }}"
+      command: >-
+        openstack image create
+          -f json
+          --container-format {{ community_images_image_spec.container_format }}
+          --disk-format {{ community_images_disk_format }}
+          --file {{ community_images_image_upload_in_path }}
+          {{ community_images_image_spec.name }}
+      register: community_images_create_image_cmd
+
+    - name: "Clean up files - {{ community_images_image_spec.name }}"
+      file:
+        path: "{{ path }}"
+        state: absent
+      loop:
+        - "{{ community_images_image_download_path }}"
+        - "{{ community_images_image_decompress_path }}"
+        - "{{ community_images_image_convert_path }}"
+      loop_control:
+        loop_var: path
+
+    - name: "Set image ID fact - {{ community_images_image_spec.name }}"
+      set_fact:
+        community_images_image_id: >-
+          {{-
+            community_images_create_image_cmd.stdout |
+              from_json |
+              json_query("id")
+          }}
+  when: community_images_image_info.rc != 0
+
+- name: "Set image visibility fact - {{ community_images_image_spec.name }}"
+  set_fact:
+    community_images_image_visibility: >-
+      {{ community_images_image_spec.get('visibility', community_images_default_visibility) }}
+
+- name: "Set image visibility - {{ community_images_image_spec.name }}"
+  command: >-
+    openstack image set --{{ community_images_image_visibility }} {{ community_images_image_id }}
+
+- block:
+    - name: "Share image with project - {{ community_images_image_spec.name }}"
+      command: "openstack image add project {{ community_images_image_id }} {{ project_id }}"
+      register: community_images_image_add_project
+      changed_when: community_images_image_add_project.rc == 0
+      failed_when: >-
+        community_images_image_add_project.rc != 0 and
+        not community_images_image_add_project.stderr.startswith("ConflictException")
+      loop: "{{ community_images_share_projects | map(attribute = 'id') | list }}"
+      loop_control:
+        loop_var: project_id
+
+    - name: "Accept image into project - {{ community_images_image_spec.name }}"
+      command: "openstack image set --accept {{ community_images_image_id }}"
+      environment:
+        OS_CLOUD: "{{ project_key }}"
+      loop: "{{ community_images_share_projects | map(attribute = 'key') | list }}"
+      loop_control:
+        loop_var: project_key
+  when: "community_images_image_visibility == 'shared'"

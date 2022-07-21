@@ -1,0 +1,36 @@
+---
+
+- block:
+    - name: Ensure required packages are available
+      apt:
+        name:
+          - python3-pip
+          - qemu-utils
+        state: present
+        update_cache: yes
+
+    - name: Ensure OpenStack CLI (and SDK) are available
+      pip:
+        name: python-openstackclient
+        executable: pip3
+  become: yes
+
+- name: Ensure OpenStack config directory exists
+  file:
+    path: "{{ community_images_os_config_dir }}"
+    state: directory
+
+- name: Install OpenStack credentials
+  copy:
+    content: "{{ lookup('file', community_images_os_clouds_file_local) }}"
+    dest: "{{ community_images_os_clouds_file }}"
+
+- include_tasks:
+    file: upload_image_and_store_id.yml
+    apply:
+      environment:
+        OS_CLOUD: "{{ community_images_os_cloud }}"
+        OS_CLIENT_CONFIG_FILE: "{{ community_images_os_clouds_file }}"
+  loop: "{{ community_images | dict2items | list }}"
+  loop_control:
+    label: "{{ item.value.name }}"

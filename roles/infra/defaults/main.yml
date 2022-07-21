@@ -38,63 +38,46 @@ infra_external_network_id: >-
 #   * A fixed floating IP
 #   * A floating IP from a pool
 #
+# If none are given, the name of the external network is used as the floating IP pool
+#
 # In the case where a provisioning network is used, the seed has two NICs - one on the provisioning
 # network and one on the internal network above
 #####
 # The ID of the provisioning network to use
 infra_provisioning_network_id:
+# OR
 # The fixed floating IP to associate with the machine
 infra_fixed_floatingip:
 # OR
 # The name of the floating IP pool
-infra_floatingip_pool: >-
-  {{
-    undef(hint = 'One of infra_provisioning_network_id, infra_fixed_floatingip or infra_floatingip_pool is required')
-    if not infra_provisioning_network_id and not infra_fixed_floatingip
-    else None
-  }}
+infra_floatingip_pool:
 
-# The key of an image in infra_community_images to use for the node
-infra_image_key: >-
-  {{
-    undef(hint = 'One of infra_image_key or infra_image_id is required')
-    if not infra_image_id
-    else None
-  }}
-# The ID of the image to use for the node
+#####
+# Configuration for the image to use for the seed node
+#
+# This can either use an pre-existing image by ID or an image can be uploaded
+# The image is uploaded as a private image for the project in which Azimuth is being deployed
+# The image can be converted to a different disk format if required for the target cloud
+#####
+# The ID of a pre-existing the image to use for the node
 infra_image_id:
+# OR
+# The name of the image to upload (should be changed when the image changes)
+infra_image_name: ubuntu-focal-20220711
+# The source URL for the image
+infra_image_source_url: https://cloud-images.ubuntu.com/releases/focal/release-20220711/ubuntu-20.04-server-cloudimg-amd64.img
+# The disk format of the image as downloaded
+infra_image_source_disk_format: qcow2
+# The container format for the image
+infra_image_container_format: bare
+
 # The ID of the flavor to use for the node
 infra_flavor_id: "{{ undef(hint = 'infra_flavor_id is required') }}"
 # The size in GB of the data volume
-infra_data_volume_size: "{{ undef(hint = 'infra_data_volume_size is required') }}"
+infra_data_volume_size: 100
 
 # The Ansible groups to place the provisioned node into
 infra_ansible_groups: []
 
 # We support Ubuntu images only, and the default cloud user is 'ubuntu'
 cluster_ssh_user: ubuntu
-
-# The images to upload to the Azimuth project
-infra_community_images: {}
-  # # The key for the image, used to refer to the image ID elsewhere in Ansible variables
-  # ubuntu_2004_20220411:
-  #   # The name of the image
-  #   name: Ubuntu-Focal-20.04-20220411
-  #   # The source URL for the image
-  #   source_url: https://cloud-images.ubuntu.com/focal/20220411/focal-server-cloudimg-amd64.img
-  #   # The container format for the image
-  #   container_format: bare
-  #   # The disk format for the image
-  #   disk_format: qcow2
-  #   # Indicates whether or not the web console is supported
-  #   web_console_supported: true
-# The projects to explicitly share images with
-# If not given, images will be shared with all projects as community images
-# Entries should have the keys "key" and "id", where "key" is a valid Terraform
-# identifier for the project and "id" is the OpenStack project ID
-infra_community_images_projects: []
-  # - key: project_name
-  #   id: project_id
-# The directory into which images will be downloaded / converted
-# If not given, a temporary directory will be used
-infra_community_images_workdir:

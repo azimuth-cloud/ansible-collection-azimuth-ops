@@ -1,5 +1,27 @@
 ---
 
+- name: Install Terraform
+  include_role:
+    name: stackhpc.terraform.install
+
+- block:
+    - name: Upload infra image
+      include_role:
+        name: stackhpc.azimuth_ops.community_images
+        tasks_from: upload_image
+      vars:
+        community_images_image_spec:
+          name: "{{ infra_image_name }}"
+          source_url: "{{ infra_image_source_url }}"
+          source_disk_format: "{{ infra_image_source_disk_format }}"
+          container_format: "{{ infra_image_container_format }}"
+          visibility: private
+
+    - name: Set infra image ID fact
+      set_fact:
+        infra_image_id: "{{ community_images_image_id }}"
+  when: not infra_image_id
+
 - name: Make Terraform project directory
   file:
     path: "{{ terraform_project_path }}"
@@ -13,50 +35,6 @@
       }
     dest: "{{ terraform_project_path }}/backend.tf"
 
-- block:
-    - name: Get previous Terraform state
-      stackhpc.terraform.terraform_output:
-        binary_path: "{{ terraform_binary_path | default(omit) }}"
-        project_path: "{{ terraform_project_path }}"
-        backend_config: "{{ terraform_backend_config | default(omit) }}"
-      register: infra_terraform_output
-
-    - name: Extract known images from previous Terraform state
-      set_fact:
-        infra_known_images: >-
-          {{
-            infra_terraform_output.outputs |
-              json_query("keys(cluster_nodes.value[0].facts.infra_community_image_info || `{}`)")
-          }}
-
-    - name: Ensure working directory is ready
-      block:
-        - name: Get temporary working directory
-          tempfile:
-            state: directory
-          register: infra_community_images_tempdir
-
-        - name: Set working directory fact
-          set_fact:
-            infra_community_images_workdir: "{{ infra_community_images_tempdir.path }}"
-      when: not infra_community_images_workdir
-
-    - name: Ensure working directory exists
-      file:
-        state: directory
-        path: "{{ infra_community_images_workdir }}"
-
-    - name: Download and convert images where required
-      include_tasks: convert_image.yml
-      when:
-        - image.key not in infra_known_images
-        - '"local_file_path" not in image.value'
-      loop: "{{ infra_community_images | dict2items | list }}"
-      loop_control:
-        loop_var: image
-        label: "{{ image.key }}"
-  when: (terraform_state | default("present")) == "present"
-
 - name: Template Terraform files into project directory
   template:
     src: "{{ item }}.j2"
@@ -69,23 +47,3 @@
 - name: Provision infrastructure
   include_role:
     name: stackhpc.terraform.infra
-
-# Workaround for the fact that multiple OpenStack Terraform providers isn't working
-# https://github.com/terraform-provider-openstack/terraform-provider-openstack/issues/1298
-- block:
-    - name: Fetch image ids from k3s host
-      set_fact:
-        infra_community_image_info: "{{ hostvars[groups.k3s | first].infra_community_image_info }}"
-
-    - name: Accept shared images
-      command: openstack image set --accept {{ item.1 }}
-      environment:
-        OS_CLOUD: "{{ item.0 }}"
-      loop: >-
-        {{
-          infra_community_images_projects |
-            map(attribute = "key") |
-            product(infra_community_image_info | dict2items | map(attribute = "value")) |
-            list
-        }}
-  when: (terraform_state | default("present")) == "present"
