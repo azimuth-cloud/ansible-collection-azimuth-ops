@@ -1,0 +1,96 @@
+---
+
+# The directory into which images will be downloaded / converted
+# If not given, a temporary directory will be used
+community_images_workdir:
+
+# OpenStack credentials for uploading images
+#   The value of the OS_CLOUD environment variable to use
+community_images_os_cloud: >-
+  {{-
+    lookup(
+      'env',
+      'OS_CLOUD',
+      default = undef(hint = 'OS_CLOUD is not set')
+    )
+  }}
+#   This is the local path to the application credential
+community_images_os_clouds_file_local: >-
+  {{-
+    lookup(
+      'env',
+      'OS_CLIENT_CONFIG_FILE',
+      default = undef(hint = 'OS_CLIENT_CONFIG_FILE is not set')
+    )
+  }}
+#   The directory/path to upload the clouds.yaml to
+community_images_os_config_dir: "{{ ansible_env.HOME }}/.config/openstack"
+community_images_os_clouds_file: "{{ community_images_os_config_dir }}/clouds.yaml"
+
+# The disk format for the target cloud
+community_images_disk_format: qcow2
+
+# The default community images to upload
+# By default, we upload images for Kubernetes and CaaS appliances
+community_images_default:
+  # Cluster API images for the latest patch release of different Kubernetes versions
+  # See https://github.com/osism/k8s-capi-images
+  kube_1_22_12:
+    name: ubuntu-2004-kube-v1.22.12
+    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.22/ubuntu-2004-kube-v1.22.12.qcow2
+    source_disk_format: qcow2
+    container_format: bare
+  kube_1_23_9:
+    name: ubuntu-2004-kube-v1.23.9
+    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.23/ubuntu-2004-kube-v1.23.9.qcow2
+    source_disk_format: qcow2
+    container_format: bare
+  kube_1_24_2:
+    name: ubuntu-2004-kube-v1.24.2
+    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.24/ubuntu-2004-kube-v1.24.2.qcow2
+    source_disk_format: qcow2
+    container_format: bare
+  # Images for CaaS appliances
+  # See https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_f0dc9cb312144d0aa44037c9149d2513/azimuth-images-prerelease/ for builds
+  repo2docker_20220712_0914:
+    name: ubuntu-focal-jupyter-repo2docker-220712-0914
+    source_url: https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_f0dc9cb312144d0aa44037c9149d2513/azimuth-images-prerelease/ubuntu-focal-jupyter-repo2docker-220712-0914.qcow2
+    source_disk_format: qcow2
+    container_format: bare
+  workstation_20220711_2135:
+    name: ubuntu-focal-desktop-220711-2135
+    source_url: https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_f0dc9cb312144d0aa44037c9149d2513/azimuth-images-prerelease/ubuntu-focal-desktop-220711-2135.qcow2
+    source_disk_format: qcow2
+    container_format: bare
+  rocky_8_20220702:
+    name: rocky-8-20220702
+    source_url: http://download.rockylinux.org/pub/rocky/8.6/images/Rocky-8-GenericCloud-8.6.20220702.0.x86_64.qcow2
+    source_disk_format: qcow2
+    container_format: bare
+
+# Any extra community images to upload as well as the defaults
+community_images_extra: {}
+  # # The key for the image, used to refer to the image ID elsewhere in Ansible variables
+  # ubuntu_2004_20220411:
+  #   # The name of the image
+  #   name: Ubuntu-Focal-20.04-20220411
+  #   # The source URL for the image
+  #   source_url: https://cloud-images.ubuntu.com/focal/20220411/focal-server-cloudimg-amd64.img
+  #   # The disk format of the image source
+  #   source_disk_format: qcow2
+  #   # The container format for the image
+  #   container_format: bare
+
+# The full set of community images to upload to the Azimuth project
+community_images: >-
+  {{ community_images_default | combine(community_images_extra, recursive = True) }}
+
+# The default visibility for images
+# Can be overridden on a per-image basis if required
+community_images_default_visibility: community
+
+# The projects to explicitly share images with
+# Only used if the default visibility is set to shared
+community_images_share_projects: []
+  # - key: "key of credential in clouds.yaml to use to accept the images"
+  #   id: "id of project"

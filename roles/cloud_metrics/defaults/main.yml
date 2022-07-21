@@ -25,6 +25,8 @@ cloud_metrics_grafana_ingress_host: >-
   }}
 #   Any annotations for the ingress
 cloud_metrics_grafana_ingress_annotations: "{{ ingress_annotations | default({}) }}"
+#   Indicates whether TLS should be enabled
+cloud_metrics_grafana_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
 #   The TLS secret name (can be null)
 cloud_metrics_grafana_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default('cloud-metrics-grafana-tls', True) }}"
 #   Any TLS-specific annotations
@@ -36,14 +38,6 @@ cloud_metrics_grafana_ingress_tls_key: >-
     ingress_tls_wildcard_key
     if ingress_tls_wildcard_key is defined
     else undef(hint = 'cloud_metrics_grafana_ingress_tls_key is required')
-  }}
-#   Indicates whether TLS should be enabled
-cloud_metrics_grafana_ingress_tls_enabled: >-
-  {{-
-    not not (
-      cloud_metrics_grafana_ingress_tls_certificate or
-      cloud_metrics_grafana_ingress_tls_annotations
-    )
   }}
 
 # Settings for the auth callout

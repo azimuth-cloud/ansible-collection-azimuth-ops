@@ -14,6 +14,9 @@
 # Configure the node as a K3S cluster
 - hosts: k3s
   tasks:
+    - include_role:
+        name: stackhpc.azimuth_ops.community_images
+
     - block:
         - include_role:
             name: stackhpc.azimuth_ops.k3s
