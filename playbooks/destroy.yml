@@ -17,6 +17,9 @@
 # The k3s group will be empty if the install_mode is not 'ha'
 - hosts: k3s
   roles:
+    # community_images_image_ids needs to be populated, or we get undefined variable errors
+    - role: stackhpc.azimuth_ops.community_images
+
     - role: stackhpc.azimuth_ops.capi_cluster
       vars:
         capi_cluster_release_state: absent
