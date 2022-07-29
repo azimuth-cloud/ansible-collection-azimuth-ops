@@ -63,7 +63,9 @@
         content: >-
           AZIMUTH_URL="{{ scheme }}://{{ host }}"
         dest: "{{ azimuth_url_envfile }}"
-      when: azimuth_url_envfile is defined
+      when: azimuth_url_envfile != ""
+      vars:
+        azimuth_url_envfile: "{{ lookup('env', 'AZIMUTH_URL_ENVFILE') }}"
   vars:
     scheme: "{{ 'https' if azimuth_ingress_tls_enabled else 'http' }}"
     host: "{{ azimuth_ingress_host }}"
