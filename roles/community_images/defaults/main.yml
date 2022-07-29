@@ -88,6 +88,8 @@ community_images: >-
 # The default visibility for images
 # Can be overridden on a per-image basis if required
 community_images_default_visibility: community
+# Indicates whether the visibility should be updated for pre-existing images
+community_images_update_existing_visibility: true
 
 # The projects to explicitly share images with
 # Only used if the default visibility is set to shared

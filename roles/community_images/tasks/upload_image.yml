@@ -32,9 +32,10 @@
     "no image found" not in community_images_image_info.stderr.lower()
   register: community_images_image_info
 
-- name: "Set ID from pre-existing image - {{ community_images_image_spec.name }}"
+- name: "Set facts from pre-existing image - {{ community_images_image_spec.name }}"
   set_fact:
     community_images_image_id: "{{ community_images_image_info.stdout | from_json | json_query('id') }}"
+    community_images_image_current_visibility: "{{ community_images_image_info.stdout | from_json | json_query('visibility') }}"
   when: community_images_image_info.rc == 0
 
 - block:
@@ -127,11 +128,24 @@
 - name: "Set image visibility fact - {{ community_images_image_spec.name }}"
   set_fact:
     community_images_image_visibility: >-
-      {{ community_images_image_spec.get('visibility', community_images_default_visibility) }}
+      {{-
+        community_images_image_current_visibility
+        if (
+          community_images_image_current_visibility is defined and
+          not community_images_update_existing_visibility
+        )
+        else community_images_image_spec.get('visibility', community_images_default_visibility)
+      }}
 
 - name: "Set image visibility - {{ community_images_image_spec.name }}"
   command: >-
     openstack image set --{{ community_images_image_visibility }} {{ community_images_image_id }}
+  when: >-
+    community_images_image_current_visibility is not defined or
+    (
+      community_images_update_existing_visibility and
+      community_images_image_visibility != community_images_image_current_visibility
+    )
 
 - block:
     - name: "Share image with project - {{ community_images_image_spec.name }}"

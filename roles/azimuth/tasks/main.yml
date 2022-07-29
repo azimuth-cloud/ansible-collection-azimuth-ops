@@ -53,8 +53,17 @@
     wait: yes
     wait_timeout: "{{ azimuth_wait_timeout }}"
 
-- debug:
-    msg: "Azimuth UI available at {{ scheme }}://{{ host }}"
+- block:
+    - debug:
+        msg: "Azimuth UI available at {{ scheme }}://{{ host }}"
+
+    - name: Write Azimuth URL to env file on localhost
+      local_action:
+        module: ansible.builtin.copy
+        content: >-
+          AZIMUTH_URL="{{ scheme }}://{{ host }}"
+        dest: "{{ azimuth_url_envfile }}"
+      when: azimuth_url_envfile is defined
   vars:
     scheme: "{{ 'https' if azimuth_ingress_tls_enabled else 'http' }}"
     host: "{{ azimuth_ingress_host }}"
