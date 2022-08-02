@@ -3,7 +3,8 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.0-dev.0.main.173
+# FIXME: Use capi-helm-chart branch with support for omitting AZs until the code is an a CAPO release
+capi_cluster_chart_version: 0.1.0-dev.0.feature-control-plane-omit-az.168
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -128,11 +129,16 @@ capi_cluster_worker_max_unavailable: 0
 # The maximum number of machines that can be scheduled above the desired count during an upgrade
 capi_cluster_worker_max_surge: 1
 
-# A list of failure domains to consider for control plane nodes
-# Leave blank to consider all available failure domains
+# Indicates whether the failure domain (availability zone) should be omitted from control plane nodes
+# Omitting the failure domain allows OpenStack to select a suitable AZ based on other scheduling constraints
+capi_cluster_control_plane_omit_failure_domain: true
+# A list of failure domains (availability zones) to consider for control plane nodes
+# Only used when capi_cluster_control_plane_omit_failure_domain = false
+# If not given, all availability zones will be considered for control plane nodes
 capi_cluster_control_plane_failure_domains:
-# The failure domain to use for workers
-capi_cluster_worker_failure_domain: nova
+# The failure domain (availability zone) to use for workers
+# Leave blank to let OpenStack select a suitable AZ based on other scheduling constraints
+capi_cluster_worker_failure_domain:
 
 # The size of the root disks if boot-from-volume is required
 # Leave blank to use the root disk from the flavor
@@ -145,8 +151,7 @@ capi_cluster_root_volume_type:
 capi_cluster_control_plane_root_volume_type: "{{ capi_cluster_root_volume_type }}"
 capi_cluster_worker_root_volume_type: "{{ capi_cluster_root_volume_type }}"
 # The Cinder availability zone for the root disk
-# If left blank, the compute availability zone for the node will be used
-capi_cluster_root_volume_availability_zone:
+capi_cluster_root_volume_availability_zone: nova
 capi_cluster_control_plane_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 
@@ -217,6 +222,7 @@ capi_cluster_release_defaults:
     associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
   controlPlane:
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
+    omitFailureDomain: "{{ capi_cluster_control_plane_omit_failure_domain }}"
     failureDomains: "{{ capi_cluster_control_plane_failure_domains }}"
     machineRootVolume: >-
       {{-
