@@ -81,9 +81,19 @@ azimuth_metrics_tenant_metrics_url_template: >-
 # By default, we use the generic Azimuth docs
 azimuth_documentation_url: https://stackhpc.github.io/azimuth-user-docs/
 
-# A mapping of curated sizes, mapping ID to an alternative name
+# A list of curated sizes, mapping a flavor ID to an alternative name and description
 # If no sizes are given, the sizes returned by the cloud provider are used
-azimuth_curated_sizes: {}
+azimuth_curated_sizes: []
+  # - # The ID of the flavor in the target cloud
+  #   id: "<id>"
+  #   # (OPTIONAL) The alternative name
+  #   name: "<name>"
+  #   # (OPTIONAL) The alternative description
+  #   # This is treated as a template with access to the "cpus", "ram", "disk"
+  #   # and "ephemeral_disk" for the target flavor, already formatted with units
+  #   # WARNING: To avoid Ansible trying to render the template, it must be wrapped in {% raw %}
+  #   description: >-
+  #     {% raw %}{{ cpus }} CPUs, {{ ram }} RAM, {{ disk }} disk, {{ ephemeral_disk }} ephemeral disk{% endraw %}
 
 # Settings for the configured authenticators
 #   Configuration for the password authenticator
