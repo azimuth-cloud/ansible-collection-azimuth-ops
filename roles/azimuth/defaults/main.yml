@@ -46,7 +46,12 @@ azimuth_ingress_tls_key: >-
   }}
 
 # Custom trust bundle for SSL verification
-azimuth_trust_bundle: "{{ trust_bundle | default(None) }}"
+azimuth_trust_bundle: |-
+  {%- if trust_bundle is defined %}
+  {%- for certificate in trust_bundle.values() %}
+  {{ certificate }}
+  {%- endfor %}
+  {%- endif %}
 # The name of the configmap into which the trust bundle should be placed
 azimuth_trust_bundle_configmap_name: "{{ trust_bundle_configmap_name | default('azimuth-trust-bundle') }}"
 

@@ -72,7 +72,12 @@ awx_postgresql_configuration_secret_name: "{{ awx_name }}-postgresql-configurati
 
 # A bundle of additional certificates to add to the AWX instance
 # If empty, the default trusted CAs will be used
-awx_trust_bundle: "{{ trust_bundle | default(None) }}"
+awx_trust_bundle: |-
+  {%- if trust_bundle is defined %}
+  {%- for certificate in trust_bundle.values() %}
+  {{ certificate }}
+  {%- endfor %}
+  {%- endif %}
 awx_trust_bundle_secret_name: "{{ trust_bundle_configmap_name | default('awx-trust-bundle') }}"
 
 awx_web_resource_requirements:

@@ -13,4 +13,4 @@ k3s_traefik_enabled: false
 
 # Bundle of certificates that should be added to the system trustroots
 # E.g. if using a registry with a custom CA chain
-k3s_trust_bundle: "{{ trust_bundle | default('') }}"
+k3s_trust_bundle: "{{ trust_bundle | default({}) }}"

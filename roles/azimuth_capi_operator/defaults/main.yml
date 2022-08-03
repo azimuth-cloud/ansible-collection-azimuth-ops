@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.72
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.73
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -34,6 +34,9 @@ azimuth_capi_operator_capi_helm_services_cidr:
 # Leave blank for the chart defaults
 azimuth_capi_operator_capi_helm_dns_nameservers:
 
+# Bundle of certificates that should be added to the system trustroots for provisioned clusters
+# E.g. for pulling containers from a registry with a custom CA chain
+azimuth_capi_operator_capi_helm_trust_bundle: "{{ trust_bundle | default({}) }}"
 # The registry mirrors for provisioned clusters
 azimuth_capi_operator_capi_helm_registry_mirrors: >-
   {{-
@@ -99,6 +102,7 @@ azimuth_capi_operator_capi_helm_values_defaults:
           else {}
         )
     }}
+  trustedCAs: "{{ azimuth_capi_operator_capi_helm_trust_bundle }}"
   registryMirrors: "{{ azimuth_capi_operator_capi_helm_registry_mirrors }}"
   additionalPackages: "{{ azimuth_capi_operator_capi_helm_additional_packages }}"
   controlPlane:
