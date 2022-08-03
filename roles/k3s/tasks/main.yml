@@ -2,17 +2,12 @@
 
 - name: Install custom certificates
   copy:
-    content: |
-      -----BEGIN CERTIFICATE-----
-      {{ certificate | trim }}
-      -----END CERTIFICATE-----
-    dest: /usr/local/share/ca-certificates/cert{{ certificate_idx }}.crt
+    content: "{{ item.certificate }}"
+    dest: /usr/local/share/ca-certificates/{{ item.name }}.crt
   # Split the trust bundle into individual certificates
-  loop: "{{ k3s_trust_bundle | regex_findall('(?<=-----BEGIN CERTIFICATE-----\n)[^-]+') }}"
+  loop: "{{ k3s_trust_bundle | dict2items(key_name = 'name', value_name = 'certificate') }}"
   loop_control:
-    loop_var: certificate
-    index_var: certificate_idx
-    label: "certificate {{ certificate_idx }}"
+    label: "{{ item.name }}"
   register: k3s_trusted_certificates
 
 - name: Update system trust bundles

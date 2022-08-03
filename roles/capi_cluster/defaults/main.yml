@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.0-dev.0.main.168
+capi_cluster_chart_version: 0.1.0-dev.0.main.172
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -63,6 +63,16 @@ capi_cluster_ssh_keypair: >-
     if infra_deploy_keypair is defined
     else undef(hint = 'capi_cluster_ssh_keypair is required')
   }}
+
+# Bundle of certificates that should be added to the system trustroots of cluster nodes
+# E.g. if using a registry with a custom CA chain
+capi_cluster_trust_bundle: "{{ trust_bundle | default({}) }}"
+
+# The registry mirrors for the cluster
+# NOTE: This cannot depend on Harbor as it isn't deployed yet!
+#       However if you maintain, for example, a Docker Hub mirror for your site
+#       independently of Azimuth, you can use that
+capi_cluster_registry_mirrors: {}
 
 # Any registry authentication to add to cluster nodes
 # This allows containerd to authenticate directly without requiring imagePullSecrets
@@ -194,7 +204,9 @@ capi_cluster_release_defaults:
         if capi_cluster_services_cidr
         else {}
       }}
+  trustedCAs: "{{ capi_cluster_trust_bundle }}"
   registryAuth: "{{ capi_cluster_registry_auth }}"
+  registryMirrors: "{{ capi_cluster_registry_mirrors }}"
   apiServer:
     enableLoadBalancer: "{{ capi_cluster_apiserver_load_balancer }}"
     associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
