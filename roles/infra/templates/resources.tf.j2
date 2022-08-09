@@ -110,6 +110,7 @@ resource "openstack_compute_instance_v2" "node" {
 resource "openstack_blockstorage_volume_v3" "data_volume" {
   name = "{{ infra_name }}-data"
   size = {{ infra_data_volume_size }}
+  enable_online_resize = true
 }
 
 resource "openstack_compute_volume_attach_v2" "data_volume_attach" {
