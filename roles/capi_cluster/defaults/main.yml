@@ -122,6 +122,11 @@ capi_cluster_worker_flavor: >-
 
 # The number of workers to use
 capi_cluster_worker_count: 3
+# max_unavailable and max_surge are set so that a new worker is made available to the cluster before one is deleted
+# The maximum number of machines that can be unavailable during an upgrade
+capi_cluster_worker_max_unavailable: 0
+# The maximum number of machines that can be scheduled above the desired count during an upgrade
+capi_cluster_worker_max_surge: 1
 
 # A list of failure domains to consider for control plane nodes
 # Leave blank to consider all available failure domains
@@ -252,6 +257,11 @@ capi_cluster_release_defaults:
         if capi_cluster_worker_root_volume_size
         else None
       }}
+    rolloutStrategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: "{{ capi_cluster_worker_max_unavailable }}"
+        maxSurge: "{{ capi_cluster_worker_max_surge }}"
   nodeGroups:
     - name: md-0
       machineCount: "{{ capi_cluster_worker_count }}"
