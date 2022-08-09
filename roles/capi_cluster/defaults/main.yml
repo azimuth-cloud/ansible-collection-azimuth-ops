@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.0-dev.0.main.172
+capi_cluster_chart_version: 0.1.0-dev.0.main.173
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
