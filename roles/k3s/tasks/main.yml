@@ -25,7 +25,6 @@
       filesystem:
         fstype: "{{ k3s_storage_fstype }}"
         dev: "{{ k3s_storage_device }}"
-        resizefs: true
     
     - name: Mount filesystem at required location
       mount:
@@ -33,6 +32,13 @@
         fstype: "{{ k3s_storage_fstype }}"
         path: /var/lib/rancher/k3s
         state: mounted
+
+    # XFS requires the filesystem to be mounted to do this
+    - name: Grow filesystem to fill available space
+      filesystem:
+        fstype: "{{ k3s_storage_fstype }}"
+        dev: "{{ k3s_storage_device }}"
+        resizefs: true
   when: k3s_storage_device_stat.stat.exists
 
 - name: Download k3s binary
