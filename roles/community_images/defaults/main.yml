@@ -52,14 +52,14 @@ community_images_default:
     container_format: bare
   # Images for CaaS appliances
   # See https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_f0dc9cb312144d0aa44037c9149d2513/azimuth-images-prerelease/ for builds
-  repo2docker_20220808_1351:
-    name: ubuntu-focal-jupyter-repo2docker-220808-1351
-    source_url: https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_f0dc9cb312144d0aa44037c9149d2513/azimuth-images-prerelease/ubuntu-focal-jupyter-repo2docker-220808-1351.qcow2
+  repo2docker_20220810_1028:
+    name: ubuntu-focal-jupyter-repo2docker-220810-1028
+    source_url: https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_f0dc9cb312144d0aa44037c9149d2513/azimuth-images-prerelease/ubuntu-focal-jupyter-repo2docker-220810-1028.qcow2
     source_disk_format: qcow2
     container_format: bare
-  workstation_20220808_1248:
-    name: ubuntu-focal-desktop-220808-1248
-    source_url: https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_f0dc9cb312144d0aa44037c9149d2513/azimuth-images-prerelease/ubuntu-focal-desktop-220808-1248.qcow2
+  workstation_20220810_0904:
+    name: ubuntu-focal-desktop-220810-0904
+    source_url: https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_f0dc9cb312144d0aa44037c9149d2513/azimuth-images-prerelease/ubuntu-focal-desktop-220810-0904.qcow2
     source_disk_format: qcow2
     container_format: bare
   rocky_8_20220702:
