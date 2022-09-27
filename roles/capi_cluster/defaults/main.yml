@@ -157,6 +157,13 @@ capi_cluster_addons_monitoring: true
 #   This IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
   {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
+# Nested dict of options to pass to openstack-cloud-controller-manager cloud-config
+capi_cluster_addons_openstack_cloud_config: {}
+# The openstack loadbalancer provider. Officially only octavia and amphora are
+# tested.
+capi_cluster_addons_openstack_lb_provider:
+# The order in which metadata sources are queried
+capi_cluster_addons_openstack_metadata_search_order:
 # The availability zone for the default Cinder CSI storage class
 capi_cluster_addons_csi_cinder_availability_zone: nova
 # The Cinder volume type for the default Cinder CSI storage class
@@ -289,8 +296,26 @@ capi_cluster_release_defaults:
     # Enable the monitoring if specified
     monitoring:
       enabled: "{{ capi_cluster_addons_monitoring }}"
-    # Configure the CSI Cinder storage class
     openstack:
+      cloudConfig: >-
+          {{-
+           capi_cluster_addons_openstack_cloud_config |
+            combine(
+              { "LoadBalancer": {
+                  "lb-provider": capi_cluster_addons_openstack_lb_provider } 
+                  }
+                if capi_cluster_addons_openstack_lb_provider
+                else {}
+            ) |
+            combine(
+              { "Metadata": {
+                  "search-order": capi_cluster_addons_openstack_metadata_search_order } 
+                  }
+                if capi_cluster_addons_openstack_metadata_search_order
+                else {}
+            )
+          }}
+      # Configure the CSI Cinder storage class
       csiCinder:
         storageClass: >-
           {{-
