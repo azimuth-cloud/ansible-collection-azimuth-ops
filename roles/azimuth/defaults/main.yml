@@ -319,7 +319,7 @@ azimuth_caas_stackhpc_slurm_appliance_name: StackHPC Slurm Appliance
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: 3b115f03a673f876675813099531e75a4d9a13a7
+azimuth_caas_stackhpc_slurm_appliance_git_version: update/2022-9-29
 # The metadata root for the StackHPC Slurm appliance project
 azimuth_caas_stackhpc_slurm_appliance_metadata_root: >-
   https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta
@@ -373,6 +373,7 @@ azimuth_caas_stackhpc_slurm_appliance_project:
   metadataRoot: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_root }}"
   playbooks: "{{ azimuth_caas_stackhpc_slurm_appliance_playbooks }}"
   extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
+  alwaysUpdate: true
 
 # Indicates if the StackHPC workstation should be enabled
 azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
