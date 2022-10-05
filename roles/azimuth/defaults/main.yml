@@ -327,7 +327,7 @@ azimuth_caas_stackhpc_slurm_appliance_metadata_root: >-
 azimuth_caas_stackhpc_slurm_appliance_playbooks: [slurm-infra.yml]
 # The ID of the image to use with the StackHPC Slurm appliance
 # Support the old name for backwards compatibility
-# By default, use the Rocky 8 image from community images if available
+# By default, use the openhpc image from community images if available
 azimuth_caas_stackhpc_slurm_appliance_image: >-
   {{-
     azimuth_caas_stackhpc_slurm_appliance_rocky8_image
@@ -337,7 +337,7 @@ azimuth_caas_stackhpc_slurm_appliance_image: >-
         community_images_image_ids.openhpc_220830_2042
         if (
           community_images_image_ids is defined and
-          'rocky_8_20220702' in community_images_image_ids
+          'openhpc_220830_2042' in community_images_image_ids
         )
         else undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
       )
