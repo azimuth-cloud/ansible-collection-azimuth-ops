@@ -94,7 +94,7 @@ awx_ee_resource_requirements:
     memory: 1Gi
 
 # The image to use as the control plane ee image
-awx_control_plane_ee_image: "quay.io/ansible/awx-ee@sha256:1b9564e397a5059b53d304a697fcc48250fb805caf828a8006ef799d69a8dd21"
+awx_control_plane_ee_image: ghcr.io/stackhpc/awx-ee:202210071828
 
 # The spec for the AWX instance
 awx_spec_defaults: >-
