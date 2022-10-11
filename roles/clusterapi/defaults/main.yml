@@ -17,22 +17,31 @@ clusterapi_manifests:
 clusterapi_patches:
   # The manifests contain environment variable substitutions for feature gates that we do not need
   - patch: |-
-      - op: remove
-        path: /spec/template/spec/containers/0/args/2
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - --leader-elect
+          - --metrics-bind-addr=localhost:8080
     target:
       kind: Deployment
       namespace: capi-system
       name: capi-controller-manager
   - patch: |-
-      - op: remove
-        path: /spec/template/spec/containers/0/args/2
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - --leader-elect
+          - --metrics-bind-addr=localhost:8080
     target:
       kind: Deployment
       namespace: capi-kubeadm-bootstrap-system
       name: capi-kubeadm-bootstrap-controller-manager
   - patch: |-
-      - op: remove
-        path: /spec/template/spec/containers/0/args/2
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - --leader-elect
+          - --metrics-bind-addr=localhost:8080
     target:
       kind: Deployment
       namespace: capi-kubeadm-control-plane-system
