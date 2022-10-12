@@ -1,12 +1,12 @@
 ---
 
 # The version and manifest URL for the Cluster API core components
-clusterapi_core_version: v1.1.3
+clusterapi_core_version: v1.2.3
 clusterapi_core_components: https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml
 
 # The version and manifest URL for the Cluster API OpenStack provider components
-clusterapi_openstack_version: v0.6.3
-clusterapi_openstack_components: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml
+clusterapi_openstack_version: v0.7.0-stackhpc.1
+clusterapi_openstack_components: https://github.com/stackhpc/cluster-api-provider-openstack/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml
 
 # List of Cluster API component manifests to install
 clusterapi_manifests:
@@ -17,22 +17,31 @@ clusterapi_manifests:
 clusterapi_patches:
   # The manifests contain environment variable substitutions for feature gates that we do not need
   - patch: |-
-      - op: remove
-        path: /spec/template/spec/containers/0/args/2
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - --leader-elect
+          - --metrics-bind-addr=localhost:8080
     target:
       kind: Deployment
       namespace: capi-system
       name: capi-controller-manager
   - patch: |-
-      - op: remove
-        path: /spec/template/spec/containers/0/args/2
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - --leader-elect
+          - --metrics-bind-addr=localhost:8080
     target:
       kind: Deployment
       namespace: capi-kubeadm-bootstrap-system
       name: capi-kubeadm-bootstrap-controller-manager
   - patch: |-
-      - op: remove
-        path: /spec/template/spec/containers/0/args/2
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - --leader-elect
+          - --metrics-bind-addr=localhost:8080
     target:
       kind: Deployment
       namespace: capi-kubeadm-control-plane-system

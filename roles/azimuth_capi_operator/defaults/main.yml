@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.75
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.76
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -47,10 +47,16 @@ azimuth_capi_operator_capi_helm_registry_mirrors: >-
 # The additional packages for provisioned clusters
 azimuth_capi_operator_capi_helm_additional_packages: []
 
-# A list of failure domains to consider for control plane nodes
-# Leave blank to consider all available failure domains
+
+# Indicates whether the failure domain (availability zone) should be omitted from control plane nodes
+# Omitting the failure domain allows OpenStack to select a suitable AZ based on other scheduling constraints
+azimuth_capi_operator_capi_helm_control_plane_omit_failure_domain: false
+# A list of failure domains (availability zones) to consider for control plane nodes
+# Only used when azimuth_capi_operator_capi_helm_control_plane_omit_failure_domain = false
+# If not given, all availability zones will be considered for control plane nodes
 azimuth_capi_operator_capi_helm_control_plane_failure_domains:
-# The failure domain to use for workers
+# The failure domain (availability zone) to use for workers
+# Set to null to let OpenStack select a suitable AZ based on other scheduling constraints
 azimuth_capi_operator_capi_helm_worker_failure_domain: nova
 
 # The size of the root disks if boot-from-volume is required
@@ -64,7 +70,7 @@ azimuth_capi_operator_capi_helm_root_volume_type:
 azimuth_capi_operator_capi_helm_control_plane_root_volume_type: "{{ azimuth_capi_operator_capi_helm_root_volume_type }}"
 azimuth_capi_operator_capi_helm_worker_root_volume_type: "{{ azimuth_capi_operator_capi_helm_root_volume_type }}"
 # The Cinder availability zone for the root disk
-# If left blank, the compute availability zone for the node will be used
+# If set to null, the compute availability zone for the node will be used
 azimuth_capi_operator_capi_helm_root_volume_availability_zone:
 azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone: "{{ azimuth_capi_operator_capi_helm_root_volume_availability_zone }}"
 azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone: "{{ azimuth_capi_operator_capi_helm_root_volume_availability_zone }}"
@@ -106,6 +112,7 @@ azimuth_capi_operator_capi_helm_values_defaults:
   registryMirrors: "{{ azimuth_capi_operator_capi_helm_registry_mirrors }}"
   additionalPackages: "{{ azimuth_capi_operator_capi_helm_additional_packages }}"
   controlPlane:
+    omitFailureDomain: "{{ azimuth_capi_operator_capi_helm_control_plane_omit_failure_domain }}"
     failureDomains: "{{ azimuth_capi_operator_capi_helm_control_plane_failure_domains }}"
     machineRootVolume: >-
       {{-
