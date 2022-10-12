@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.75
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.76
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -17,8 +17,7 @@ azimuth_capi_operator_wait_timeout: 10m
 # Leave blank to use the operator defaults
 azimuth_capi_operator_capi_helm_chart_repo:
 azimuth_capi_operator_capi_helm_chart_name:
-# FIXME: Use capi-helm-chart branch with support for omitting AZs until the code is an a CAPO release
-azimuth_capi_operator_capi_helm_chart_version: 0.1.0-dev.0.feature-control-plane-omit-az.175
+azimuth_capi_operator_capi_helm_chart_version:
 
 # The ID of the external network to use if there are multiple external networks
 # If specified here, the network MUST be shared by all tenants

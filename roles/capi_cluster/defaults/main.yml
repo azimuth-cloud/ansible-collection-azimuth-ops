@@ -3,8 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-# FIXME: Use capi-helm-chart branch with support for omitting AZs until the code is an a CAPO release
-capi_cluster_chart_version: 0.1.0-dev.0.feature-control-plane-omit-az.175
+capi_cluster_chart_version: 0.1.0-dev.0.main.179
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
