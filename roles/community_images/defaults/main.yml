@@ -91,6 +91,10 @@ community_images_default_visibility: community
 # Indicates whether the visibility should be updated for pre-existing images
 community_images_update_existing_visibility: true
 
+# Any custom properties to set on community images
+# Should be a list of strings in the format "key=value"
+community_images_custom_properties: []
+
 # The projects to explicitly share images with
 # Only used if the default visibility is set to shared
 community_images_share_projects: []

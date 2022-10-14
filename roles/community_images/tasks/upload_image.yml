@@ -143,6 +143,15 @@
     openstack image set --{{ community_images_image_visibility }} {{ community_images_image_id }}
   when: community_images_image_visibility != community_images_image_current_visibility
 
+- name: "Set custom properties for image - {{ community_images_image_spec.name }}"
+  command: >-
+    openstack image set
+      {%- for property in community_images_custom_properties %}
+      --property {{ property | quote }}
+      {%- endfor %}
+      {{ community_images_image_id }}
+  when: "community_images_custom_properties | length > 0"
+
 - block:
     - name: "Share image with project - {{ community_images_image_spec.name }}"
       command: "openstack image add project {{ community_images_image_id }} {{ project_id }}"
