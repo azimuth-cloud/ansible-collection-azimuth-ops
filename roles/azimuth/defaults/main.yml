@@ -326,7 +326,7 @@ azimuth_caas_stackhpc_slurm_appliance_metadata_root: >-
 # The playbooks to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbooks: [slurm-infra.yml]
 # Always update the cloned StackHPC Slurm appliance repo - useful for development on a branch
-azimuth_caas_stackhpc_slurm_appliance_alwaysUpdate: false
+azimuth_caas_stackhpc_slurm_appliance_always_update: false
 # The ID of the image to use with the StackHPC Slurm appliance
 # Support the old name for backwards compatibility
 # By default, use the openhpc image from community images if available
@@ -382,7 +382,7 @@ azimuth_caas_stackhpc_slurm_appliance_project:
   metadataRoot: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_root }}"
   playbooks: "{{ azimuth_caas_stackhpc_slurm_appliance_playbooks }}"
   extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
-  alwaysUpdate: "{{ azimuth_caas_stackhpc_slurm_appliance_alwaysUpdate }}"
+  alwaysUpdate: "{{ azimuth_caas_stackhpc_slurm_appliance_always_update }}"
 
 # Indicates if the StackHPC workstation should be enabled
 azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
