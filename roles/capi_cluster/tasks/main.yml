@@ -1,17 +1,17 @@
 ---
 
-- name: Install or upgrade cluster
-  kubernetes.core.helm:
-    chart_ref: "{{ capi_cluster_chart_name }}"
-    chart_repo_url: "{{ capi_cluster_chart_repo }}"
-    chart_version: "{{ capi_cluster_chart_version }}"
-    release_namespace: "{{ capi_cluster_release_namespace }}"
-    release_name: "{{ capi_cluster_release_name }}"
-    release_state: "{{ capi_cluster_release_state }}"
-    release_values: "{{ capi_cluster_release_values }}"
-    create_namespace: yes
-
 - block:
+    - name: Install or upgrade cluster
+      kubernetes.core.helm:
+        chart_ref: "{{ capi_cluster_chart_name }}"
+        chart_repo_url: "{{ capi_cluster_chart_repo }}"
+        chart_version: "{{ capi_cluster_chart_version }}"
+        release_namespace: "{{ capi_cluster_release_namespace }}"
+        release_name: "{{ capi_cluster_release_name }}"
+        release_state: present
+        release_values: "{{ capi_cluster_release_values }}"
+        create_namespace: yes
+
     - name: Wait for cluster to become ready
       command: >-
         kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
@@ -55,16 +55,23 @@
       when: capi_cluster_kubeconfig_path is defined
   when: capi_cluster_release_state == 'present'
 
-- name: Wait for cluster to be deleted
-  command: >-
-    kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
-      --for=delete
-      --namespace {{ capi_cluster_release_namespace }}
-      --timeout 0s
-  changed_when: false
-  register: capi_cluster_delete
-  until: capi_cluster_delete is succeeded
-  # Wait up to 60 mins for the cluster to delete
-  retries: 360
-  delay: 10
+- block:
+    - name: Delete cluster
+      kubernetes.core.helm:
+        release_namespace: "{{ capi_cluster_release_namespace }}"
+        release_name: "{{ capi_cluster_release_name }}"
+        release_state: absent
+
+    - name: Wait for cluster to be deleted
+      command: >-
+        kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
+          --for=delete
+          --namespace {{ capi_cluster_release_namespace }}
+          --timeout 0s
+      changed_when: false
+      register: capi_cluster_delete
+      until: capi_cluster_delete is succeeded
+      # Wait up to 60 mins for the cluster to delete
+      retries: 360
+      delay: 10
   when: capi_cluster_release_state == 'absent'

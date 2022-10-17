@@ -75,6 +75,25 @@ azimuth_capi_operator_capi_helm_root_volume_availability_zone:
 azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone: "{{ azimuth_capi_operator_capi_helm_root_volume_availability_zone }}"
 azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone: "{{ azimuth_capi_operator_capi_helm_root_volume_availability_zone }}"
 
+# Options for LoadBalancer services
+# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_method:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_create_monitor:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_delay:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_max_retries:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_timeout:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_flavor_id:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_availability_zone:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_max_shared_lb:
+# The metadata search order
+azimuth_capi_operator_capi_helm_openstack_metadata_search_order:
+# Options for OpenStack block storage
+# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/cinder-csi-plugin/using-cinder-csi-plugin.md#block-storage
+azimuth_capi_operator_capi_helm_openstack_block_storage_node_volume_attach_limit:
+azimuth_capi_operator_capi_helm_openstack_block_storage_rescan_on_resize:
+azimuth_capi_operator_capi_helm_openstack_block_storage_ignore_volume_az: true
+
 # The Cinder availability zone for the default Cinder CSI storage class
 azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone: nova
 # The Cinder volume type for the default Cinder CSI storage class
@@ -153,8 +172,88 @@ azimuth_capi_operator_capi_helm_values_defaults:
         else None
       }}
   addons:
-    # Configure the CSI Cinder storage class
     openstack:
+      # General OpenStack configuration
+      cloudConfig:
+        LoadBalancer: >-
+          {{-
+            {} |
+              combine(
+                { "lb-method": azimuth_capi_operator_capi_helm_openstack_loadbalancer_method }
+                if azimuth_capi_operator_capi_helm_openstack_loadbalancer_method
+                else {}
+              ) |
+              combine(
+                { "lb-provider": azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider }
+                if azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider
+                else {}
+              ) |
+              combine(
+                { "create-monitor": "true" }
+                if azimuth_capi_operator_capi_helm_openstack_loadbalancer_create_monitor
+                else {}
+              ) |
+              combine(
+                { "monitor-delay": azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_delay }
+                if azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_delay
+                else {}
+              ) |
+              combine(
+                { "monitor-max-retries": azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_max_retries }
+                if azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_max_retries
+                else {}
+              ) |
+              combine(
+                { "monitor-timeout": azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_timeout }
+                if azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_timeout
+                else {}
+              ) |
+              combine(
+                { "flavor-id": azimuth_capi_operator_capi_helm_openstack_loadbalancer_flavor_id }
+                if azimuth_capi_operator_capi_helm_openstack_loadbalancer_flavor_id
+                else {}
+              ) |
+              combine(
+                { "availability-zone": azimuth_capi_operator_capi_helm_openstack_loadbalancer_availability_zone }
+                if azimuth_capi_operator_capi_helm_openstack_loadbalancer_availability_zone
+                else {}
+              ) |
+              combine(
+                { "max-shared-lb": azimuth_capi_operator_capi_helm_openstack_loadbalancer_max_shared_lb }
+                if azimuth_capi_operator_capi_helm_openstack_loadbalancer_max_shared_lb
+                else {}
+              )
+          }}
+        Metadata: >-
+          {{-
+            {} |
+              combine(
+                { "search-order": azimuth_capi_operator_capi_helm_openstack_metadata_search_order }
+                if azimuth_capi_operator_capi_helm_openstack_metadata_search_order
+                else {}
+              )
+          }}
+        BlockStorage: >-
+          {{-
+            {
+              "ignore-volume-az": (
+                "true"
+                if azimuth_capi_operator_capi_helm_openstack_block_storage_ignore_volume_az
+                else "false"
+              )
+            } |
+              combine(
+                { "node-volume-attach-limit": azimuth_capi_operator_capi_helm_openstack_block_storage_node_volume_attach_limit }
+                if azimuth_capi_operator_capi_helm_openstack_block_storage_node_volume_attach_limit
+                else {}
+              ) |
+              combine(
+                { "rescan-on-resize": "true" }
+                if azimuth_capi_operator_capi_helm_openstack_block_storage_rescan_on_resize
+                else {}
+              )
+          }}
+      # Configure the CSI Cinder storage class
       csiCinder:
         storageClass: >-
           {{-
