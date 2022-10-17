@@ -362,17 +362,17 @@ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name: >-
     else None
   }}
 
-# The base extra vars for templates in the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_extra_vars_base:
+# The default extra vars for templates in the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
   login_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_login_flavor_name }}"
   control_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name }}"
 
-# Additional extra vars for templates in the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_extra_vars_extra: {}
+# extra_vars overrides for templates in the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
 
 azimuth_caas_stackhpc_slurm_appliance_extra_vars:
-  __ALL__: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars_base | combine(azimuth_caas_stackhpc_slurm_appliance_extra_vars_extra) }}"
+  __ALL__: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults | combine(azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides) }}"
 
 # The project definition for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_project:
@@ -421,15 +421,15 @@ azimuth_caas_stackhpc_workstation_image: >-
     else None
   }}
 
-# The base extra vars for templates in the StackHPC workstation
-azimuth_caas_stackhpc_workstation_extra_vars_base:
+# The default extra vars for templates in the StackHPC workstation
+azimuth_caas_stackhpc_workstation_extra_vars_defaults:
     cluster_image: "{{ azimuth_caas_stackhpc_workstation_image }}"
 
-# Additional extra vars for templates in the StackHPC workstation
-azimuth_caas_stackhpc_workstation_extra_vars_extra: {}
+# extra_vars overrides for templates in the StackHPC workstation
+azimuth_caas_stackhpc_workstation_extra_vars_overrides: {}
 
 azimuth_caas_stackhpc_workstation_extra_vars:
-  __ALL__: "{{ azimuth_caas_stackhpc_workstation_extra_vars_base | combine(azimuth_caas_stackhpc_workstation_extra_vars_extra) }}"
+  __ALL__: "{{ azimuth_caas_stackhpc_workstation_extra_vars_defaults | combine(azimuth_caas_stackhpc_workstation_extra_vars_overrides) }}"
 
 # The project definition for the StackHPC workstation
 azimuth_caas_stackhpc_workstation_project:
@@ -469,15 +469,15 @@ azimuth_caas_stackhpc_repo2docker_image: >-
     else None
   }}
 
-# The base extra vars for templates in the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_extra_vars_base:
+# The default extra vars for templates in the StackHPC repo2docker appliance
+azimuth_caas_stackhpc_repo2docker_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_stackhpc_repo2docker_image }}"
 
-# Additional extra vars for templates in the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_extra_vars_extra: {}
+# extra_vars overrides for templates in the StackHPC repo2docker appliance
+azimuth_caas_stackhpc_repo2docker_extra_vars_overrides: {}
 
 azimuth_caas_stackhpc_repo2docker_extra_vars:
-  __ALL__: "{{ azimuth_caas_stackhpc_repo2docker_extra_vars_base | combine(azimuth_caas_stackhpc_repo2docker_extra_vars_extra) }}"
+  __ALL__: "{{ azimuth_caas_stackhpc_repo2docker_extra_vars_defaults | combine(azimuth_caas_stackhpc_repo2docker_extra_vars_overrides) }}"
 
 # The project definition for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_project:
