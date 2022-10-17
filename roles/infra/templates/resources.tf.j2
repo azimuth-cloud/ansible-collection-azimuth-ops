@@ -88,7 +88,20 @@ resource "openstack_compute_keypair_v2" "keypair_deploy" {
 
 resource "openstack_compute_instance_v2" "node" {
   name      = "{{ infra_name }}"
+
+{% if infra_root_volume_enabled %}
+  block_device {
+    uuid                  = "{{ infra_image_id }}"
+    source_type           = "image"
+    volume_size           = {{ infra_root_volume_size }}
+    boot_index            = 0
+    destination_type      = "volume"
+    delete_on_termination = true
+  }
+{% else %}
   image_id  = "{{ infra_image_id }}"
+{% endif %}
+
 {% if infra_flavor_id %}
   flavor_id = "{{ infra_flavor_id }}"
 {% else %}
