@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.0-dev.0.main.173
+capi_cluster_chart_version: 0.1.0-dev.0.main.179
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -128,10 +128,15 @@ capi_cluster_worker_max_unavailable: 0
 # The maximum number of machines that can be scheduled above the desired count during an upgrade
 capi_cluster_worker_max_surge: 1
 
-# A list of failure domains to consider for control plane nodes
-# Leave blank to consider all available failure domains
+# Indicates whether the failure domain (availability zone) should be omitted from control plane nodes
+# Omitting the failure domain allows OpenStack to select a suitable AZ based on other scheduling constraints
+capi_cluster_control_plane_omit_failure_domain: false
+# A list of failure domains (availability zones) to consider for control plane nodes
+# Only used when capi_cluster_control_plane_omit_failure_domain = false
+# If not given, all availability zones will be considered for control plane nodes
 capi_cluster_control_plane_failure_domains:
-# The failure domain to use for workers
+# The failure domain (availability zone) to use for workers
+# Set to null to let OpenStack select a suitable AZ based on other scheduling constraints
 capi_cluster_worker_failure_domain: nova
 
 # The size of the root disks if boot-from-volume is required
@@ -145,7 +150,7 @@ capi_cluster_root_volume_type:
 capi_cluster_control_plane_root_volume_type: "{{ capi_cluster_root_volume_type }}"
 capi_cluster_worker_root_volume_type: "{{ capi_cluster_root_volume_type }}"
 # The Cinder availability zone for the root disk
-# If left blank, the compute availability zone for the node will be used
+# If set to null, the compute availability zone for the node will be used
 capi_cluster_root_volume_availability_zone:
 capi_cluster_control_plane_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
@@ -157,6 +162,24 @@ capi_cluster_addons_monitoring: true
 #   This IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
   {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
+# Options for LoadBalancer services
+# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
+capi_cluster_addons_openstack_loadbalancer_method:
+capi_cluster_addons_openstack_loadbalancer_provider:
+capi_cluster_addons_openstack_loadbalancer_create_monitor:
+capi_cluster_addons_openstack_loadbalancer_monitor_delay:
+capi_cluster_addons_openstack_loadbalancer_monitor_max_retries:
+capi_cluster_addons_openstack_loadbalancer_monitor_timeout:
+capi_cluster_addons_openstack_loadbalancer_flavor_id:
+capi_cluster_addons_openstack_loadbalancer_availability_zone:
+capi_cluster_addons_openstack_loadbalancer_max_shared_lb:
+# The metadata search order
+capi_cluster_addons_openstack_metadata_search_order:
+# Options for OpenStack block storage
+# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/cinder-csi-plugin/using-cinder-csi-plugin.md#block-storage
+capi_cluster_addons_openstack_block_storage_node_volume_attach_limit:
+capi_cluster_addons_openstack_block_storage_rescan_on_resize:
+capi_cluster_addons_openstack_block_storage_ignore_volume_az: true
 # The availability zone for the default Cinder CSI storage class
 capi_cluster_addons_csi_cinder_availability_zone: nova
 # The Cinder volume type for the default Cinder CSI storage class
@@ -217,6 +240,7 @@ capi_cluster_release_defaults:
     associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
   controlPlane:
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
+    omitFailureDomain: "{{ capi_cluster_control_plane_omit_failure_domain }}"
     failureDomains: "{{ capi_cluster_control_plane_failure_domains }}"
     machineRootVolume: >-
       {{-
@@ -291,6 +315,85 @@ capi_cluster_release_defaults:
       enabled: "{{ capi_cluster_addons_monitoring }}"
     # Configure the CSI Cinder storage class
     openstack:
+      cloudConfig:
+        LoadBalancer: >-
+          {{-
+            {} |
+              combine(
+                { "lb-method": capi_cluster_addons_openstack_loadbalancer_method }
+                if capi_cluster_addons_openstack_loadbalancer_method
+                else {}
+              ) |
+              combine(
+                { "lb-provider": capi_cluster_addons_openstack_loadbalancer_provider }
+                if capi_cluster_addons_openstack_loadbalancer_provider
+                else {}
+              ) |
+              combine(
+                { "create-monitor": "true" }
+                if capi_cluster_addons_openstack_loadbalancer_create_monitor
+                else {}
+              ) |
+              combine(
+                { "monitor-delay": capi_cluster_addons_openstack_loadbalancer_monitor_delay }
+                if capi_cluster_addons_openstack_loadbalancer_monitor_delay
+                else {}
+              ) |
+              combine(
+                { "monitor-max-retries": capi_cluster_addons_openstack_loadbalancer_monitor_max_retries }
+                if capi_cluster_addons_openstack_loadbalancer_monitor_max_retries
+                else {}
+              ) |
+              combine(
+                { "monitor-timeout": capi_cluster_addons_openstack_loadbalancer_monitor_timeout }
+                if capi_cluster_addons_openstack_loadbalancer_monitor_timeout
+                else {}
+              ) |
+              combine(
+                { "flavor-id": capi_cluster_addons_openstack_loadbalancer_flavor_id }
+                if capi_cluster_addons_openstack_loadbalancer_flavor_id
+                else {}
+              ) |
+              combine(
+                { "availability-zone": capi_cluster_addons_openstack_loadbalancer_availability_zone }
+                if capi_cluster_addons_openstack_loadbalancer_availability_zone
+                else {}
+              ) |
+              combine(
+                { "max-shared-lb": capi_cluster_addons_openstack_loadbalancer_max_shared_lb }
+                if capi_cluster_addons_openstack_loadbalancer_max_shared_lb
+                else {}
+              )
+          }}
+        Metadata: >-
+          {{-
+            {} |
+              combine(
+                { "search-order": capi_cluster_addons_openstack_metadata_search_order }
+                if capi_cluster_addons_openstack_metadata_search_order
+                else {}
+              )
+          }}
+        BlockStorage: >-
+          {{-
+            {
+              "ignore-volume-az": (
+                "true"
+                if capi_cluster_addons_openstack_block_storage_ignore_volume_az
+                else "false"
+              )
+            } |
+              combine(
+                { "node-volume-attach-limit": capi_cluster_addons_openstack_block_storage_node_volume_attach_limit }
+                if capi_cluster_addons_openstack_block_storage_node_volume_attach_limit
+                else {}
+              ) |
+              combine(
+                { "rescan-on-resize": "true" }
+                if capi_cluster_addons_openstack_block_storage_rescan_on_resize
+                else {}
+              )
+          }}
       csiCinder:
         storageClass: >-
           {{-
