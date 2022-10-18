@@ -319,7 +319,7 @@ azimuth_caas_stackhpc_slurm_appliance_name: StackHPC Slurm Appliance
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: ef72178edbfdc7cccb943057604f8422595a7ebc
+azimuth_caas_stackhpc_slurm_appliance_git_version: a34d00a4de7abe8fa6ca5337096be0e56aee24ef
 # The metadata root for the StackHPC Slurm appliance project
 azimuth_caas_stackhpc_slurm_appliance_metadata_root: >-
   https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta
