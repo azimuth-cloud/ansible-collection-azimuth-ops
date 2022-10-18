@@ -365,18 +365,29 @@ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name: >-
     if azimuth_caas_stackhpc_slurm_appliance_enabled
     else None
   }}
+# The size of the cluster state volume
+# Must be big enough for a reasonable amount of monitoring data
+azimuth_caas_stackhpc_slurm_appliance_state_volume_size: 40
 
 # The default extra vars for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
   login_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_login_flavor_name }}"
   control_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name }}"
+<<<<<<< HEAD
+=======
+  cluster_state_volume_size: "{{ azimuth_caas_stackhpc_slurm_appliance_state_volume_size }}"
+>>>>>>> 77d814b (Small tweaks to formatting)
 
 # extra_vars overrides for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
 
 azimuth_caas_stackhpc_slurm_appliance_extra_vars:
-  __ALL__: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults | combine(azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides) }}"
+  __ALL__: >-
+    {{-
+      azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults |
+        combine(azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides)
+    }}
 
 # The project definition for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_project:
@@ -433,7 +444,11 @@ azimuth_caas_stackhpc_workstation_extra_vars_defaults:
 azimuth_caas_stackhpc_workstation_extra_vars_overrides: {}
 
 azimuth_caas_stackhpc_workstation_extra_vars:
-  __ALL__: "{{ azimuth_caas_stackhpc_workstation_extra_vars_defaults | combine(azimuth_caas_stackhpc_workstation_extra_vars_overrides) }}"
+  __ALL__: >-
+    {{-
+      azimuth_caas_stackhpc_workstation_extra_vars_defaults |
+        combine(azimuth_caas_stackhpc_workstation_extra_vars_overrides)
+    }}
 
 # The project definition for the StackHPC workstation
 azimuth_caas_stackhpc_workstation_project:
@@ -481,7 +496,11 @@ azimuth_caas_stackhpc_repo2docker_extra_vars_defaults:
 azimuth_caas_stackhpc_repo2docker_extra_vars_overrides: {}
 
 azimuth_caas_stackhpc_repo2docker_extra_vars:
-  __ALL__: "{{ azimuth_caas_stackhpc_repo2docker_extra_vars_defaults | combine(azimuth_caas_stackhpc_repo2docker_extra_vars_overrides) }}"
+  __ALL__: >-
+    {{-
+      azimuth_caas_stackhpc_repo2docker_extra_vars_defaults |
+        combine(azimuth_caas_stackhpc_repo2docker_extra_vars_overrides)
+    }}
 
 # The project definition for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_project:
