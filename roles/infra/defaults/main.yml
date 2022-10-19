@@ -73,6 +73,13 @@ infra_image_container_format: bare
 
 # The ID of the flavor to use for the node
 infra_flavor_id: "{{ undef(hint = 'infra_flavor_id is required') }}"
+
+# Indicates whether to use a root volume for the seed node
+# This may be necessary in cases where the root volume is not large enough
+# to unpack and convert community images where necessary (40GB should be sufficient)
+infra_root_volume_enabled: no
+infra_root_volume_size: 40
+
 # The size in GB of the data volume
 infra_data_volume_size: 100
 
