@@ -319,7 +319,7 @@ azimuth_caas_stackhpc_slurm_appliance_name: StackHPC Slurm Appliance
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: a34d00a4de7abe8fa6ca5337096be0e56aee24ef
+azimuth_caas_stackhpc_slurm_appliance_git_version: f60aabd68e45e7d1f9d3265e8ec6f47d060be1c0
 # The metadata root for the StackHPC Slurm appliance project
 azimuth_caas_stackhpc_slurm_appliance_metadata_root: >-
   https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta
@@ -367,8 +367,6 @@ azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
   login_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_login_flavor_name }}"
   control_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name }}"
-  # Cluster state-volume size in GB
-  cluster_state_volume_size: "{{ azimuth_caas_stackhpc_slurm_appliance_state_volume_size | default('40') }}"
 
 # extra_vars overrides for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
