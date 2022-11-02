@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.0-dev.0.main.179
+capi_cluster_chart_version: 0.1.0-dev.0.main.191
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -187,8 +187,7 @@ capi_cluster_addons_csi_cinder_volume_type:
 
 # The values for the release
 capi_cluster_release_defaults:
-  global:
-    kubernetesVersion: "{{ capi_cluster_kubernetes_version }}"
+  kubernetesVersion: "{{ capi_cluster_kubernetes_version }}"
   machineImageId: "{{ capi_cluster_machine_image_id }}"
   machineSSHKeyName: "{{ capi_cluster_ssh_keypair }}"
   clusterNetworking: >-
@@ -297,9 +296,6 @@ capi_cluster_release_defaults:
       enabled: false
     # The Mellanox operator is only required for high-performance networking
     mellanoxNetworkOperator:
-      enabled: false
-    # cert-manager is installed as part of the Azimuth installation
-    certManager:
       enabled: false
     # The NGINX ingress controller is required
     ingress:

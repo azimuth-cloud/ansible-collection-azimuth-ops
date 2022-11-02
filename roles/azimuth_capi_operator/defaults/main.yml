@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.76
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.97
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -12,6 +12,9 @@ azimuth_capi_operator_release_name: azimuth-capi-operator
 
 # The timeout to wait for CAPI operator to become ready
 azimuth_capi_operator_wait_timeout: 10m
+
+# The timer interval to use for the CAPI operator
+azimuth_capi_operator_timer_interval: 60
 
 # The repo, name and version for the CAPI Helm charts
 # Leave blank to use the operator defaults
@@ -313,38 +316,10 @@ azimuth_capi_operator_zenith_sshd_port: >-
 azimuth_capi_operator_zenith_chart_repo:
 azimuth_capi_operator_zenith_chart_version:
 
-# The repo, chart name and version for the Kubeapps installations
-# Leave blank for the operator defaults
-azimuth_capi_operator_kubeapps_chart_repo:
-azimuth_capi_operator_kubeapps_chart_name:
-azimuth_capi_operator_kubeapps_chart_version:
-# The namespace for the kubeapps release
-# Leave blank for the operator default
-azimuth_capi_operator_kubeapps_release_namespace:
-
-# The initial Helm repositories to add to the kubeapps installations
-# By default, we use the Azimuth charts
-azimuth_capi_operator_kubeapps_initial_repos:
-  - name: azimuth-charts
-    url: https://stackhpc.github.io/azimuth-charts
-# The values to use for the release
-azimuth_capi_operator_kubeapps_release_defaults:
-  apprepository: >-
-    {{-
-      { "initialRepos": azimuth_capi_operator_kubeapps_initial_repos }
-      if azimuth_capi_operator_kubeapps_initial_repos
-      else {}
-    }}
-azimuth_capi_operator_kubeapps_release_overrides: {}
-azimuth_capi_operator_kubeapps_release_values: >-
-  {{-
-    azimuth_capi_operator_kubeapps_release_defaults |
-      combine(azimuth_capi_operator_kubeapps_release_overrides, recursive = True)
-  }}
-
 # The values for the release
 azimuth_capi_operator_release_defaults:
   config:
+    timerInterval: "{{ azimuth_capi_operator_timer_interval }}"
     capiHelm: >-
       {{-
         { "defaultValues": azimuth_capi_operator_capi_helm_values } |
@@ -384,30 +359,6 @@ azimuth_capi_operator_release_defaults:
           combine(
             { "chartVersion": azimuth_capi_operator_zenith_chart_version }
             if azimuth_capi_operator_zenith_chart_version
-            else {}
-          )
-      }}
-    kubeapps: >-
-      {{-
-        { "releaseValues": azimuth_capi_operator_kubeapps_release_values } |
-          combine(
-            { "chartRepository": azimuth_capi_operator_kubeapps_chart_repo }
-            if azimuth_capi_operator_kubeapps_chart_repo
-            else {}
-          ) |
-          combine(
-            { "chartName": azimuth_capi_operator_kubeapps_chart_name }
-            if azimuth_capi_operator_kubeapps_chart_name
-            else {}
-          ) |
-          combine(
-            { "chartVersion": azimuth_capi_operator_kubeapps_chart_version }
-            if azimuth_capi_operator_kubeapps_chart_version
-            else {}
-          ) |
-          combine(
-            { "releaseNamespace": azimuth_capi_operator_kubeapps_release_namespace }
-            if azimuth_capi_operator_kubeapps_release_namespace
             else {}
           )
       }}
@@ -459,8 +410,7 @@ azimuth_capi_operator_cluster_templates_default:
     label: v1.22.12
     description: Kubernetes 1.22.12 with HA control plane.
     values:
-      global:
-        kubernetesVersion: 1.22.12
+      kubernetesVersion: 1.22.12
       machineImageId: "{{ azimuth_capi_operator_kube_1_22_12_image }}"
       clusterNetworking:
         internalNetwork:
@@ -470,8 +420,7 @@ azimuth_capi_operator_cluster_templates_default:
     label: v1.23.9
     description: Kubernetes 1.23.9 with HA control plane.
     values:
-      global:
-        kubernetesVersion: 1.23.9
+      kubernetesVersion: 1.23.9
       machineImageId: "{{ azimuth_capi_operator_kube_1_23_9_image }}"
       clusterNetworking:
         internalNetwork:
@@ -481,8 +430,7 @@ azimuth_capi_operator_cluster_templates_default:
     label: v1.24.2
     description: Kubernetes 1.24.2 with HA control plane.
     values:
-      global:
-        kubernetesVersion: 1.24.2
+      kubernetesVersion: 1.24.2
       machineImageId: "{{ azimuth_capi_operator_kube_1_24_2_image }}"
       clusterNetworking:
         internalNetwork:
@@ -495,4 +443,128 @@ azimuth_capi_operator_cluster_templates: >-
   {{-
     azimuth_capi_operator_cluster_templates_default |
       combine(azimuth_capi_operator_cluster_templates_extra, recursive = True)
+  }}
+
+#####
+# Kubernetes app template definitions
+# azimuth-ops currently never removes app templates
+#####
+# Indicates whether the Zenith-enabled JupyterHub app template should be enabled
+azimuth_capi_operator_app_templates_jupyterhub_enabled: true
+# The Helm chart to use for the JupyterHub app template
+azimuth_capi_operator_app_templates_jupyterhub_chart_name: jupyterhub-azimuth
+# The Helm repository to use for the JupyterHub app template
+azimuth_capi_operator_app_templates_jupyterhub_chart_repo: https://stackhpc.github.io/azimuth-charts
+# The version range to use for the JupyterHub Helm chart
+azimuth_capi_operator_app_templates_jupyterhub_version_range: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+# Overrides for the label, logo and description from the JupyterHub Helm chart
+azimuth_capi_operator_app_templates_jupyterhub_label:
+azimuth_capi_operator_app_templates_jupyterhub_logo:
+azimuth_capi_operator_app_templates_jupyterhub_description:
+# The number of versions to make available for the JupyterHub app template
+azimuth_capi_operator_app_templates_jupyterhub_keep_versions: 3
+# The sync frequency for the JupyterHub app template (default 24h)
+azimuth_capi_operator_app_templates_jupyterhub_sync_frequency: 86400
+# Any defaultn values for the JupyterHub app template
+azimuth_capi_operator_app_templates_jupyterhub_default_values: {}
+# The spec for the JupyterHub app template
+azimuth_capi_operator_app_templates_jupyterhub_spec: >-
+  {{-
+    {
+      "chart": {
+        "repo": azimuth_capi_operator_app_templates_jupyterhub_chart_repo,
+        "name": azimuth_capi_operator_app_templates_jupyterhub_chart_name,
+      },
+      "versionRange": azimuth_capi_operator_app_templates_jupyterhub_version_range,
+      "keepVersions": azimuth_capi_operator_app_templates_jupyterhub_keep_versions,
+      "syncFrequency": azimuth_capi_operator_app_templates_jupyterhub_sync_frequency,
+      "defaultValues": azimuth_capi_operator_app_templates_jupyterhub_default_values,
+    } |
+      combine(
+        { "label": azimuth_capi_operator_app_templates_jupyterhub_label }
+        if azimuth_capi_operator_app_templates_jupyterhub_label
+        else {}
+      ) |
+      combine(
+        { "logo": azimuth_capi_operator_app_templates_jupyterhub_logo }
+        if azimuth_capi_operator_app_templates_jupyterhub_logo
+        else {}
+      ) |
+      combine(
+        { "description": azimuth_capi_operator_app_templates_jupyterhub_description }
+        if azimuth_capi_operator_app_templates_jupyterhub_description
+        else {}
+      )
+  }}
+
+# Indicates whether the Zenith-enabled DaskHub app template should be enabled
+azimuth_capi_operator_app_templates_daskhub_enabled: true
+# The Helm chart to use for the DaskHub app template
+azimuth_capi_operator_app_templates_daskhub_chart_name: daskhub-azimuth
+# The Helm repository to use for the DaskHub app template
+azimuth_capi_operator_app_templates_daskhub_chart_repo: https://stackhpc.github.io/azimuth-charts
+# The version range to use for the DaskHub Helm chart
+azimuth_capi_operator_app_templates_daskhub_version_range: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+# Overrides for the label, logo and description from the DaskHub Helm chart
+azimuth_capi_operator_app_templates_daskhub_label:
+azimuth_capi_operator_app_templates_daskhub_logo:
+azimuth_capi_operator_app_templates_daskhub_description:
+# The number of versions to make available for the DaskHub app template
+azimuth_capi_operator_app_templates_daskhub_keep_versions: 3
+# The sync frequency for the DaskHub app template (default 24h)
+azimuth_capi_operator_app_templates_daskhub_sync_frequency: 86400
+# Any defaultn values for the DaskHub app template
+azimuth_capi_operator_app_templates_daskhub_default_values: {}
+# The spec for the DaskHub app template
+azimuth_capi_operator_app_templates_daskhub_spec: >-
+  {{-
+    {
+      "chart": {
+        "repo": azimuth_capi_operator_app_templates_daskhub_chart_repo,
+        "name": azimuth_capi_operator_app_templates_daskhub_chart_name,
+      },
+      "versionRange": azimuth_capi_operator_app_templates_daskhub_version_range,
+      "keepVersions": azimuth_capi_operator_app_templates_daskhub_keep_versions,
+      "syncFrequency": azimuth_capi_operator_app_templates_daskhub_sync_frequency,
+      "defaultValues": azimuth_capi_operator_app_templates_daskhub_default_values,
+    } |
+      combine(
+        { "label": azimuth_capi_operator_app_templates_daskhub_label }
+        if azimuth_capi_operator_app_templates_daskhub_label
+        else {}
+      ) |
+      combine(
+        { "logo": azimuth_capi_operator_app_templates_daskhub_logo }
+        if azimuth_capi_operator_app_templates_daskhub_logo
+        else {}
+      ) |
+      combine(
+        { "description": azimuth_capi_operator_app_templates_daskhub_description }
+        if azimuth_capi_operator_app_templates_daskhub_description
+        else {}
+      )
+  }}
+
+# The default templates
+azimuth_capi_operator_app_templates_default: >-
+  {{-
+    {} |
+      combine(
+        { "jupyterhub": azimuth_capi_operator_app_templates_jupyterhub_spec }
+        if azimuth_capi_operator_app_templates_jupyterhub_enabled
+        else {}
+      ) |
+      combine(
+        { "daskhub": azimuth_capi_operator_app_templates_daskhub_spec }
+        if azimuth_capi_operator_app_templates_daskhub_enabled
+        else {}
+      )
+  }}
+# Allow extra templates to be defined using a separate variable
+azimuth_capi_operator_app_templates_extra: {}
+# The full list of Kubernetes app templates to install
+azimuth_capi_operator_app_templates: >-
+  {{-
+    azimuth_capi_operator_app_templates_default |
+      combine(azimuth_capi_operator_app_templates_extra, recursive = True)
   }}

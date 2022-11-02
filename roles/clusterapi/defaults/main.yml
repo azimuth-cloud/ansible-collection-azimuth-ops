@@ -73,3 +73,19 @@ clusterapi_watches:
     namespace: capo-system
     name: capo-controller-manager
     condition: Available
+
+# Helm chart information for the Cluster API addon provider
+clusterapi_addon_provider_chart_repo: https://stackhpc.github.io/cluster-api-addon-provider
+clusterapi_addon_provider_chart_name: cluster-api-addon-provider
+clusterapi_addon_provider_chart_version: 0.1.0-dev.0.main.21
+
+# Release information for the Cluster API addon provider release
+clusterapi_addon_provider_release_namespace: capi-addon-system
+clusterapi_addon_provider_release_name: cluster-api-addon-provider
+
+# The timeout to wait for the Cluster API addon provider to become ready
+clusterapi_addon_provider_wait_timeout: 30m
+
+# The values for the Cluster API addon provider deployment
+# The defaults are sufficient for most use cases
+clusterapi_addon_provider_release_values: {}
