@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.feature-addon-provider.95
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.97
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
