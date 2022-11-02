@@ -28,3 +28,16 @@
   loop_control:
     loop_var: watch
     label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
+
+- name: Install Cluster API addon provider
+  kubernetes.core.helm:
+    chart_ref: "{{ clusterapi_addon_provider_chart_name }}"
+    chart_repo_url: "{{ clusterapi_addon_provider_chart_repo }}"
+    chart_version: "{{ clusterapi_addon_provider_chart_version }}"
+    release_namespace: "{{ clusterapi_addon_provider_release_namespace }}"
+    release_name: "{{ clusterapi_addon_provider_release_name }}"
+    release_values: "{{ clusterapi_addon_provider_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ clusterapi_addon_provider_wait_timeout }}"
