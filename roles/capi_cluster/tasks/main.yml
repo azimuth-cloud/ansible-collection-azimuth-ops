@@ -26,10 +26,10 @@
 
     - name: Wait for addons to deploy
       command: >-
-        kubectl wait jobs --all \
-          --for=condition=Complete
+        kubectl wait {{ item }} --all
+          --for=jsonpath='{.status.phase}'=Deployed
           --namespace {{ capi_cluster_release_namespace }}
-          --selector app.kubernetes.io/name=addons,app.kubernetes.io/instance={{ capi_cluster_release_name }}
+          --selector capi.stackhpc.com/cluster={{ capi_cluster_release_name }}
           --timeout=0
       changed_when: false
       register: capi_cluster_addons_complete
@@ -37,6 +37,9 @@
       # Wait up to 60 mins for the addons to deploy
       retries: 360
       delay: 10
+      loop:
+        - manifests
+        - helmreleases
 
     - block:
         - name: Generate kubeconfig for cluster
