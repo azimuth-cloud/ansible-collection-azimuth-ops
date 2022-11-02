@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.feature-addon-provider.94
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.feature-addon-provider.95
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -410,8 +410,7 @@ azimuth_capi_operator_cluster_templates_default:
     label: v1.22.12
     description: Kubernetes 1.22.12 with HA control plane.
     values:
-      global:
-        kubernetesVersion: 1.22.12
+      kubernetesVersion: 1.22.12
       machineImageId: "{{ azimuth_capi_operator_kube_1_22_12_image }}"
       clusterNetworking:
         internalNetwork:
@@ -421,8 +420,7 @@ azimuth_capi_operator_cluster_templates_default:
     label: v1.23.9
     description: Kubernetes 1.23.9 with HA control plane.
     values:
-      global:
-        kubernetesVersion: 1.23.9
+      kubernetesVersion: 1.23.9
       machineImageId: "{{ azimuth_capi_operator_kube_1_23_9_image }}"
       clusterNetworking:
         internalNetwork:
@@ -432,8 +430,7 @@ azimuth_capi_operator_cluster_templates_default:
     label: v1.24.2
     description: Kubernetes 1.24.2 with HA control plane.
     values:
-      global:
-        kubernetesVersion: 1.24.2
+      kubernetesVersion: 1.24.2
       machineImageId: "{{ azimuth_capi_operator_kube_1_24_2_image }}"
       clusterNetworking:
         internalNetwork:
