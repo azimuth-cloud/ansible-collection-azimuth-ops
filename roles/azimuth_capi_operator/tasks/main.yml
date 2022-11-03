@@ -37,22 +37,40 @@
   command: kubectl get clustertemplates.azimuth.stackhpc.com --output json
   register: azimuth_capi_operator_templates_cmd
 
+- name: Correct Kubernetes version in template spec if required
+  command: >-
+    kubectl patch
+      --type merge
+      --patch '{"spec": {"values": {"kubernetesVersion": "{{ kubernetes_version }}"}}}'
+      clustertemplates.azimuth.stackhpc.com/{{ item.metadata.name }}
+  vars:
+    kubernetes_version: "{{ item | json_query('spec.values.global.kubernetesVersion') }}"
+  when: "not (item | json_query('spec.values.kubernetesVersion'))"
+  loop: >-
+    {{-
+      azimuth_capi_operator_templates_cmd.stdout |
+        from_json |
+        json_query('items')
+    }}
+  loop_control:
+    label: "{{ item.metadata.name }}"
+
 - name: Deprecate non-current templates
   command: >-
     kubectl patch
       --type merge
       --patch '{"spec": {"deprecated": true}}'
-      clustertemplates.azimuth.stackhpc.com/{{ template_name }}
+      clustertemplates.azimuth.stackhpc.com/{{ item.metadata.name }}
+  when: "not (item | json_query('spec.deprecated || false'))"
   loop: >-
     {{-
       azimuth_capi_operator_templates_cmd.stdout |
         from_json |
         json_query('items') |
-        map(attribute = 'metadata.name') |
-        reject('in', azimuth_capi_operator_cluster_templates.keys())
+        rejectattr('metadata.name', 'in', azimuth_capi_operator_cluster_templates.keys())
     }}
   loop_control:
-    loop_var: template_name
+    label: "{{ item.metadata.name }}"
 
 - name: Install Azimuth CAPI app templates
   command: kubectl apply -f -
