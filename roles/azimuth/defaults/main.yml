@@ -659,7 +659,7 @@ azimuth_release_defaults:
         ) |
         combine(
           { "tenantIDWhitelist": azimuth_platform_permissions_tenant_id_whitelist }
-          if azimuth_platform_permissions_tenant_id_whitelist is not None
+          if azimuth_platform_permissions_tenant_id_whitelist is not none
           else {}
         ) |
         combine(
