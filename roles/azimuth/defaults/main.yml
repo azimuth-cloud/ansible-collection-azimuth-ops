@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.master.685
+azimuth_chart_version: 0.1.0-dev.0.feature-platforms-per-tenant.688
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -216,8 +216,18 @@ azimuth_apps_sshd_host: >-
   }}
 #   The Zenith SSHD port
 azimuth_apps_sshd_port: "{{ zenith_sshd_port | default(22) }}"
-#   The URL of the post-deploy script to execute
-azimuth_apps_post_deploy_script_url:
+
+# Settings for platform permissions
+#   A regex matching tenant names that are permitted to use platforms
+#   The ID blacklist and whitelist take precedence over this, if given
+azimuth_platform_permissions_tenant_name_regex:
+#   A list of tenant IDs that are permitted to use platforms
+#   If nil is given, then all tenants are permitted
+#   If an empty list is given, no tenants are permitted
+azimuth_platform_permissions_tenant_id_whitelist:
+#   A list of tenant IDs that are not permitted to use platforms
+#   The blacklist takes precedence over the whitelist if the same tenant is in both
+azimuth_platform_permissions_tenant_id_blacklist: []
 
 # Cluster-as-a-Service settings
 # AWX settings
@@ -635,10 +645,28 @@ azimuth_release_defaults:
         "sshdPort": azimuth_apps_sshd_port,
         "registrarExternalUrl": azimuth_apps_registrar_external_url,
         "registrarAdminUrl": azimuth_apps_registrar_admin_url,
-        "postDeployScriptUrl": azimuth_apps_post_deploy_script_url,
       }
       if azimuth_apps_enabled
       else {}        
+    }}
+  platformPermissions: >-
+    {{-
+      {} |
+        combine(
+          { "tenantNameRegex": azimuth_platform_permissions_tenant_name_regex }
+          if azimuth_platform_permissions_tenant_name_regex
+          else {}
+        ) |
+        combine(
+          { "tenantIDWhitelist": azimuth_platform_permissions_tenant_id_whitelist }
+          if azimuth_platform_permissions_tenant_id_whitelist is not None
+          else {}
+        ) |
+        combine(
+          { "tenantIDBlacklist": azimuth_platform_permissions_tenant_id_blacklist }
+          if azimuth_platform_permissions_tenant_id_blacklist
+          else {}
+        )
     }}
   clusterEngine: >-
     {{-
