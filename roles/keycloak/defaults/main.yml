@@ -1,0 +1,234 @@
+---
+
+# The namespace to install Keycloak in
+keycloak_namespace: keycloak-system
+
+# The name for the Keycloak instance
+keycloak_name: keycloak
+
+# The labels for the Keycloak instance
+keycloak_labels:
+  app.kubernetes.io/managed-by: azimuth-ops
+
+# Keycloak database configuration
+#   Settings for an external database
+#     The JDBC URL for an external database
+keycloak_external_db_url:
+#     The username and password for an external database
+keycloak_external_db_username:
+keycloak_external_db_password:
+#   Settings for an internal database
+#     The chart to use to deploy postgresql
+keycloak_postgresql_chart_repo: https://charts.bitnami.com/bitnami
+keycloak_postgresql_chart_name: postgresql
+keycloak_postgresql_chart_version: 11.1.3
+#     Release information for the postgresql release
+keycloak_postgresql_release_name: "{{ keycloak_name }}-postgresql"
+#     The timeout to wait for the postgresql release to become ready
+keycloak_postgresql_wait_timeout: 10m
+#     The name of the secret containing the postgresql passwords
+keycloak_postgresql_auth_secret_name: "{{ keycloak_name }}-postgresql-auth"
+#     The storage class to use for postgresql PVC
+keycloak_postgresql_persistence_storage_class:
+#     The size of the PVC for the postgresql data
+keycloak_postgresql_persistence_size: 8Gi
+#     The values for the postgresql release
+keycloak_postgresql_release_defaults:
+  architecture: standalone
+  auth:
+    database: "{{ keycloak_name }}"
+    username: "{{ keycloak_name }}"
+    existingSecret: "{{ keycloak_postgresql_auth_secret_name }}"
+  primary:
+    persistence:
+      storageClass: "{{ keycloak_postgresql_persistence_storage_class }}"
+      size: "{{ keycloak_postgresql_persistence_size }}"
+keycloak_postgresql_release_overrides: {}
+keycloak_postgresql_release_values: >-
+  {{-
+    keycloak_postgresql_release_defaults |
+      combine(keycloak_postgresql_release_overrides, recursive = True)
+  }}
+
+# The spec for the Keycloak instance
+keycloak_spec_defaults:
+  instances: 1
+  # This is OK because we are behind an ingress that is handling TLS
+  http:
+    httpEnabled: true
+  hostname:
+    hostname: "{{ keycloak_ingress_host }}"
+    strict: false
+    strictBackchannel: false
+  db: >-
+    {{-
+      {
+        "usernameSecret": {
+          "name": keycloak_postgresql_auth_secret_name,
+          "key": "username",
+        },
+        "passwordSecret": {
+          "name": keycloak_postgresql_auth_secret_name,
+          "key": "password",
+        }
+      } |
+        combine(
+          { "url": keycloak_external_db_url }
+          if keycloak_external_db_url
+          else {}
+        ) |
+        combine(
+          {
+            "vendor": "postgres",
+            "host": keycloak_postgresql_release_name ~ "." ~ keycloak_namespace,
+          }
+          if not keycloak_external_db_url
+          else {}
+        )
+    }}
+  # We will do our own ingress with TLS annotations
+  ingress:
+    enabled: false
+keycloak_spec_overrides: {}
+keycloak_spec: "{{ keycloak_spec_defaults | combine(keycloak_spec_overrides, recursive = True) }}"
+
+# Details for the Keycloak ingress
+#   The name of the ingress
+keycloak_ingress_name: "{{ keycloak_name }}"
+#   The name of the ingress class to use
+keycloak_ingress_class: nginx
+#   The hostname to use for the ingress resource
+keycloak_ingress_host: >-
+  {{-
+    "{}.{}".format(ingress_keycloak_subdomain, ingress_base_domain)
+    if ingress_keycloak_subdomain is defined and ingress_base_domain is defined
+    else undef(hint = 'keycloak_ingress_host is required')
+  }}
+#   Any default annotations for the ingress
+keycloak_ingress_annotations_defaults: "{{ ingress_annotations | default({}) }}"
+#   Any extra annotations for the ingress
+keycloak_ingress_annotations_overrides: {}
+#   Indicates whether TLS should be enabled
+keycloak_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
+#   The TLS secret name (can be null)
+keycloak_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default('keycloak-tls', True) }}"
+#   Any TLS-specific annotations
+keycloak_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
+#   Wildcard TLS certificate, if available
+keycloak_ingress_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
+keycloak_ingress_tls_key: >-
+  {{-
+    ingress_tls_wildcard_key
+    if ingress_tls_wildcard_key is defined
+    else undef(hint = 'keycloak_ingress_tls_key is required')
+  }}
+#   The overall annotations for the the ingress
+keycloak_ingress_annotations: >-
+  {{-
+    keycloak_ingress_annotations_defaults |
+      combine(
+        keycloak_ingress_tls_annotations
+        if keycloak_ingress_tls_enabled and not keycloak_ingress_tls_certificate
+        else {}
+      ) |
+      combine(keycloak_ingress_annotations_overrides)
+  }}
+#   The spec for the Keycloak ingress
+keycloak_ingress_spec_defaults: >-
+  {{-
+    {
+      "ingressClassName": keycloak_ingress_class,
+      "rules": [
+        {
+          "host": keycloak_ingress_host,
+          "http": {
+            "paths": [
+              {
+                "path": "/",
+                "pathType": "Prefix",
+                "backend": {
+                  "service": {
+                    "name": keycloak_name ~ "-service",
+                    "port": {
+                      "number": 8080,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    } | combine(
+      {
+        "tls": [
+          {
+            "hosts": [keycloak_ingress_host],
+            "secretName": keycloak_ingress_tls_secret_name,
+          }
+        ]
+      }
+      if keycloak_ingress_tls_enabled
+      else {}
+    )
+  }}
+keycloak_ingress_spec_overrides: {}
+keycloak_ingress_spec: >-
+  {{-
+    keycloak_ingress_spec_defaults |
+      combine(keycloak_ingress_spec_overrides, recursive = True)
+  }}
+
+# The version of the Keycloak operator to install
+keycloak_operator_version: 20.0.1
+# The base URL for the Keycloak operator manifests
+keycloak_operator_base_url: https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources
+
+# The URLs of the Keycloak operator manifests
+keycloak_operator_manifests:
+  - "{{ keycloak_operator_base_url }}/{{ keycloak_operator_version }}/kubernetes/keycloaks.k8s.keycloak.org-v1.yml"
+  - "{{ keycloak_operator_base_url }}/{{ keycloak_operator_version }}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml"
+  - "{{ keycloak_operator_base_url }}/{{ keycloak_operator_version }}/kubernetes/kubernetes.yml"
+
+# List of patches to apply to the Keycloak operator manifests
+keycloak_operator_patches:
+  # Remove the version label from the deployment selector
+  # The selector is immutable, so this causes problems at upgrade time
+  # In any case, the selector should select pods at all versions
+  - patch: |-
+      - op: replace
+        path: /spec/selector/matchLabels
+        value:
+          app.kubernetes.io/name: keycloak-operator
+    target:
+      kind: Deployment
+      name: keycloak-operator
+
+# The kustomization to use for Keycloak operator resources
+keycloak_operator_kustomization:
+  namespace: "{{ keycloak_namespace }}"
+  resources: "{{ keycloak_operator_manifests }}"
+  patches: "{{ keycloak_operator_patches }}"
+
+# Use a directory in $HOME for the kustomization by default
+keycloak_operator_kustomization_directory: "{{ (ansible_env.HOME, 'keycloak-operator') | path_join }}"
+
+# List of resources to watch for completeness
+keycloak_operator_watches:
+  - kind: deployment
+    namespace: "{{ keycloak_namespace }}"
+    name: keycloak-operator
+    condition: Available
+
+# The Keycloak admin username
+keycloak_admin_username: admin
+# The Keycloak admin password
+keycloak_admin_password: "{{ undef(hint = 'keycloak_admin_password is not defined') }}"
+
+# The name of the secret that we will store the admin creds in
+keycloak_admin_creds_secret_name: "{{ keycloak_name }}-admin-creds"
+# The name of the secret containing the initial admin password
+keycloak_initial_admin_secret_name: "{{ keycloak_name }}-initial-admin"
+
+# The base URL of Keycloak
+keycloak_base_url: "https://{{ keycloak_ingress_host }}"

@@ -20,7 +20,7 @@ awx_name: awx
 
 # The labels for the AWX instance
 awx_labels:
-  app.kubernetes.io/managed-by: ansible-collection-azimuth-ops
+  app.kubernetes.io/managed-by: azimuth-ops
   app.kubernetes.io/instance: "{{ awx_name }}"
 
 # The chart to use to deploy postgresql
@@ -59,7 +59,6 @@ awx_postgresql_release_values: >-
 awx_admin_password: "{{ undef(hint = 'awx_admin_password is required') }}"
 
 # The database connection details for the postgresql database used by AWX
-# Until https://github.com/ansible/awx-operator/issues/802 is fixed we cannot use the managed db
 # If database host is not set, then a database is created using the Bitnami Helm chart
 awx_postgresql_host:
 awx_postgresql_port: 5432
