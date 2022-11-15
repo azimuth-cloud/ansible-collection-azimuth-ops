@@ -35,19 +35,24 @@ community_images_disk_format: qcow2
 community_images_default:
   # Cluster API images for the latest patch release of different Kubernetes versions
   # See https://github.com/osism/k8s-capi-images
-  kube_1_22_12:
-    name: ubuntu-2004-kube-v1.22.12
-    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.22/ubuntu-2004-kube-v1.22.12.qcow2
+  kube_1_22_15:
+    name: ubuntu-2004-kube-v1.22.15
+    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.22/ubuntu-2004-kube-v1.22.15.qcow2
     source_disk_format: qcow2
     container_format: bare
-  kube_1_23_9:
-    name: ubuntu-2004-kube-v1.23.9
-    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.23/ubuntu-2004-kube-v1.23.9.qcow2
+  kube_1_23_14:
+    name: ubuntu-2004-kube-v1.23.14
+    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.23/ubuntu-2004-kube-v1.23.14.qcow2
     source_disk_format: qcow2
     container_format: bare
-  kube_1_24_2:
-    name: ubuntu-2004-kube-v1.24.2
-    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.24/ubuntu-2004-kube-v1.24.2.qcow2
+  kube_1_24_8:
+    name: ubuntu-2004-kube-v1.24.8
+    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.24/ubuntu-2004-kube-v1.24.8.qcow2
+    source_disk_format: qcow2
+    container_format: bare
+  kube_1_25_4:
+    name: ubuntu-2004-kube-v1.25.4
+    source_url: https://minio.services.osism.tech/openstack-k8s-capi-images/ubuntu-2004-kube-v1.25/ubuntu-2004-kube-v1.25.4.qcow2
     source_disk_format: qcow2
     container_format: bare
   # Images for CaaS appliances

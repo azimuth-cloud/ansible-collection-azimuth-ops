@@ -1,0 +1,31 @@
+---
+
+- name: Install Dex TLS certificate
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ dex_ingress_tls_secret_definition | to_nice_yaml }}"
+  vars:
+    dex_ingress_tls_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ dex_ingress_tls_secret_name }}"
+        namespace: "{{ dex_release_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ dex_ingress_tls_certificate }}"
+        tls.key: "{{ dex_ingress_tls_key }}"
+  when: dex_ingress_tls_certificate
+
+- name: Install Dex
+  kubernetes.core.helm:
+    chart_ref: "{{ dex_chart_name }}"
+    chart_repo_url: "{{ dex_chart_repo }}"
+    chart_version: "{{ dex_chart_version }}"
+    release_namespace: "{{ dex_release_namespace }}"
+    release_name: "{{ dex_release_name }}"
+    release_values: "{{ dex_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ dex_wait_timeout }}"

@@ -1,7 +1,7 @@
 ---
 
 # The kustomize version to download
-kustomize_version: v4.5.4
+kustomize_version: v4.5.7
 # The OS variant and architecture to use
 # See https://github.com/kubernetes-sigs/kustomize/releases for the available options
 kustomize_os: "{{ ansible_system | lower }}"
