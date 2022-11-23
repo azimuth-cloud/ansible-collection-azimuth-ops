@@ -3,7 +3,7 @@
 # The Harbor chart to use
 harbor_chart_repo: https://helm.goharbor.io
 harbor_chart_name: harbor
-harbor_chart_version: "1.8.1"
+harbor_chart_version: 1.10.2
 
 # Release information for the Harbor release
 harbor_release_namespace: harbor
@@ -91,6 +91,8 @@ harbor_persistence_image_chart_storage_type: filesystem
 harbor_persistence_pvc_chartmuseum_size: 5Gi
 harbor_persistence_pvc_database_size: 1Gi
 harbor_persistence_pvc_jobservice_size: 1Gi
+harbor_persistence_pvc_jobservice_joblog_size: "{{ harbor_persistence_pvc_jobservice_size }}"
+harbor_persistence_pvc_jobservice_scandataexports_size: "{{ harbor_persistence_pvc_jobservice_size }}"
 harbor_persistence_pvc_redis_size: 1Gi
 harbor_persistence_pvc_registry_size: 5Gi
 harbor_persistence_pvc_trivy_size: 5Gi
@@ -130,7 +132,10 @@ harbor_release_defaults:
       database:
         size: "{{ harbor_persistence_pvc_database_size }}"
       jobservice:
-        size: "{{ harbor_persistence_pvc_jobservice_size }}"
+        jobLog:
+          size: "{{ harbor_persistence_pvc_jobservice_joblog_size }}"
+        scanDataExports:
+          size: "{{ harbor_persistence_pvc_jobservice_scandataexports_size }}"
       redis:
         size: "{{ harbor_persistence_pvc_redis_size }}"
       registry:

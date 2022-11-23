@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.100
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.109
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -377,61 +377,80 @@ azimuth_capi_operator_release_values: >-
 # azimuth-ops currently never removes templates
 #####
 # By default use the community images
-azimuth_capi_operator_kube_1_22_12_image: >-
+azimuth_capi_operator_kube_1_22_15_image: >-
   {{-
-    community_images_image_ids.kube_1_22_12
+    community_images_image_ids.kube_1_22_15
     if (
       community_images_image_ids is defined and
-      'kube_1_22_12' in community_images_image_ids
+      'kube_1_22_15' in community_images_image_ids
     )
-    else undef(hint = 'azimuth_capi_operator_kube_1_22_12_image is required')
+    else undef(hint = 'azimuth_capi_operator_kube_1_22_15_image is required')
   }}
-azimuth_capi_operator_kube_1_23_9_image: >-
+azimuth_capi_operator_kube_1_23_14_image: >-
   {{-
-    community_images_image_ids.kube_1_23_9
+    community_images_image_ids.kube_1_23_14
     if (
       community_images_image_ids is defined and
-      'kube_1_23_9' in community_images_image_ids
+      'kube_1_23_14' in community_images_image_ids
     )
-    else undef(hint = 'azimuth_capi_operator_kube_1_23_9_image is required')
+    else undef(hint = 'azimuth_capi_operator_kube_1_23_14_image is required')
   }}
-azimuth_capi_operator_kube_1_24_2_image: >-
+azimuth_capi_operator_kube_1_24_8_image: >-
   {{-
-    community_images_image_ids.kube_1_24_2
+    community_images_image_ids.kube_1_24_8
     if (
       community_images_image_ids is defined and
-      'kube_1_24_2' in community_images_image_ids
+      'kube_1_24_8' in community_images_image_ids
     )
-    else undef(hint = 'azimuth_capi_operator_kube_1_24_2_image is required')
+    else undef(hint = 'azimuth_capi_operator_kube_1_24_8_image is required')
+  }}
+azimuth_capi_operator_kube_1_25_4_image: >-
+  {{-
+    community_images_image_ids.kube_1_25_4
+    if (
+      community_images_image_ids is defined and
+      'kube_1_25_4' in community_images_image_ids
+    )
+    else undef(hint = 'azimuth_capi_operator_kube_1_25_4_image is required')
   }}
 # By default, make templates for the latest patch versions of the supported Kubernetes releases
 azimuth_capi_operator_cluster_templates_default:
-  kube-1-22-12:
-    label: v1.22.12
-    description: Kubernetes 1.22.12 with HA control plane.
+  kube-1-22-15:
+    label: v1.22.15
+    description: Kubernetes 1.22.15 with HA control plane.
     values:
-      kubernetesVersion: 1.22.12
-      machineImageId: "{{ azimuth_capi_operator_kube_1_22_12_image }}"
+      kubernetesVersion: 1.22.15
+      machineImageId: "{{ azimuth_capi_operator_kube_1_22_15_image }}"
       clusterNetworking:
         internalNetwork:
           networkFilter:
             tags: portal-internal
-  kube-1-23-9:
-    label: v1.23.9
-    description: Kubernetes 1.23.9 with HA control plane.
+  kube-1-23-14:
+    label: v1.23.14
+    description: Kubernetes 1.23.14 with HA control plane.
     values:
-      kubernetesVersion: 1.23.9
-      machineImageId: "{{ azimuth_capi_operator_kube_1_23_9_image }}"
+      kubernetesVersion: 1.23.14
+      machineImageId: "{{ azimuth_capi_operator_kube_1_23_14_image }}"
       clusterNetworking:
         internalNetwork:
           networkFilter:
             tags: portal-internal
-  kube-1-24-2:
-    label: v1.24.2
-    description: Kubernetes 1.24.2 with HA control plane.
+  kube-1-24-8:
+    label: v1.24.8
+    description: Kubernetes 1.24.8 with HA control plane.
     values:
-      kubernetesVersion: 1.24.2
-      machineImageId: "{{ azimuth_capi_operator_kube_1_24_2_image }}"
+      kubernetesVersion: 1.24.8
+      machineImageId: "{{ azimuth_capi_operator_kube_1_24_8_image }}"
+      clusterNetworking:
+        internalNetwork:
+          networkFilter:
+            tags: portal-internal
+  kube-1-25-4:
+    label: v1.25.4
+    description: Kubernetes 1.25.4 with HA control plane.
+    values:
+      kubernetesVersion: 1.25.4
+      machineImageId: "{{ azimuth_capi_operator_kube_1_25_4_image }}"
       clusterNetworking:
         internalNetwork:
           networkFilter:

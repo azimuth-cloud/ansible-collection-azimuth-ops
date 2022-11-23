@@ -1,7 +1,7 @@
 ---
 
 # The version and manifest URL for the Cluster API core components
-clusterapi_core_version: v1.2.3
+clusterapi_core_version: v1.2.5
 clusterapi_core_components: https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml
 
 # The version and manifest URL for the Cluster API OpenStack provider components
