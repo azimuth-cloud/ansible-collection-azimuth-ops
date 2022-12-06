@@ -3,7 +3,7 @@
 # The chart to use
 zenith_chart_repo: https://stackhpc.github.io/zenith
 zenith_chart_name: zenith-server
-zenith_chart_version: 0.1.0-dev.0.main.177
+zenith_chart_version: 0.1.0-dev.0.feature-oidc-callout.183
 
 # Release information for the Zenith release
 # Use the same namespace as the Azimuth release by default
@@ -54,6 +54,7 @@ zenith_registrar_reserved_subdomains: >-
       ingress_harbor_notary_subdomain | default(None),
       ingress_cloud_metrics_grafana_subdomain | default(None),
       ingress_keycloak_subdomain | default(None),
+      ingress_dex_subdomain | default(None),
     ] |
     select() |
     list
@@ -85,7 +86,7 @@ _azimuth_api_service_name: >-
       else "{}-azimuth".format(_azimuth_release_name)
     )
   }}
-zenith_auth_url: >-
+zenith_external_auth_url: >-
   {{
     "http://{}.{}.svc.cluster.local/api/session/verify/".format(
       _azimuth_api_service_name,
@@ -110,25 +111,25 @@ _azimuth_ingress_host: >-
       else None
     )
   }}
-zenith_auth_signin_url: >-
+zenith_external_auth_signin_url: >-
   {{
     "{}://{}/auth/login".format(
       'https' if _azimuth_ingress_tls_enabled else 'http',
       _azimuth_ingress_host
     )
     if _azimuth_ingress_host
-    else undef(hint = 'zenith_auth_signin_url is required')
+    else undef(hint = 'zenith_external_auth_signin_url is required')
   }}
 #   The URL parameter to contain the original URL when redirecting
-zenith_auth_next_url_param: next
+zenith_external_auth_next_url_param: next
 #   Dictionary of headers to set for authentication requests
 #   These will override headers from the incoming request, which would otherwise be forwarded
 #   In particular, you may need to override the accepts header to suit the content types served
 #   by the external authentication service
-zenith_auth_request_headers:
+zenith_external_auth_request_headers:
   accept: application/json
 #   List of headers from the authentication response to add to the upstream request
-zenith_auth_response_headers:
+zenith_external_auth_response_headers:
   - X-Remote-User
 
 # The namespace to create Zenith services in
@@ -164,12 +165,12 @@ zenith_release_defaults:
       kubernetes:
         targetNamespace: "{{ zenith_sync_target_namespace }}"
         ingress:
-          auth:
-            url: "{{ zenith_auth_url }}"
-            signinUrl: "{{ zenith_auth_signin_url }}"
-            nextUrlParam: "{{ zenith_auth_next_url_param }}"
-            requestHeaders: "{{ zenith_auth_request_headers }}"
-            responseHeaders: "{{ zenith_auth_response_headers }}"
+          externalAuth:
+            url: "{{ zenith_external_auth_url }}"
+            signinUrl: "{{ zenith_external_auth_signin_url }}"
+            nextUrlParam: "{{ zenith_external_auth_next_url_param }}"
+            requestHeaders: "{{ zenith_external_auth_request_headers }}"
+            responseHeaders: "{{ zenith_external_auth_response_headers }}"
   registrar:
     ingress:
       subdomain: "{{ zenith_ingress_registrar_subdomain }}"

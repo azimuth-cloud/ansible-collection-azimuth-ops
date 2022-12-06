@@ -1,0 +1,14 @@
+---
+
+- name: Install Azimuth identity operator on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ azimuth_identity_operator_chart_name }}"
+    chart_repo_url: "{{ azimuth_identity_operator_chart_repo }}"
+    chart_version: "{{ azimuth_identity_operator_chart_version }}"
+    release_namespace: "{{ azimuth_identity_operator_release_namespace }}"
+    release_name: "{{ azimuth_identity_operator_release_name }}"
+    release_values: "{{ azimuth_identity_operator_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ azimuth_identity_operator_wait_timeout }}"

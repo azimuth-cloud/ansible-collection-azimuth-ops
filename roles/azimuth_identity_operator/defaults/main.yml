@@ -1,0 +1,67 @@
+---
+
+# The chart to use
+azimuth_identity_operator_chart_repo: https://stackhpc.github.io/azimuth-identity-operator
+azimuth_identity_operator_chart_name: azimuth-identity-operator
+azimuth_identity_operator_chart_version: 0.1.0-dev.0.main.1
+
+# Release information for the operator release
+# Use the same namespace as Azimuth by default
+azimuth_identity_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
+azimuth_identity_operator_release_name: azimuth-identity-operator
+
+# The timeout to wait for CAPI operator to become ready
+azimuth_identity_operator_wait_timeout: 10m
+
+# The Keycloak base URL
+# By default, we use the Keycloak deployed by azimuth-ops
+_keycloak_ingress_tls_enabled: >-
+  {{-
+    keycloak_ingress_tls_enabled
+    if keycloak_ingress_tls_enabled is defined
+    else (ingress_tls_enabled | default(True))
+  }}
+_keycloak_ingress_host: >-
+  {{-
+    keycloak_ingress_host
+    if keycloak_ingress_host is defined
+    else (
+      "{}.{}".format(ingress_keycloak_subdomain, ingress_base_domain)
+      if ingress_keycloak_subdomain is defined and ingress_base_domain is defined
+      else None
+    )
+  }}
+azimuth_identity_operator_keycloak_base_url: >-
+  {{
+    "{}://{}".format(
+      'https' if _keycloak_ingress_tls_enabled else 'http',
+      _keycloak_ingress_host
+    )
+    if _keycloak_ingress_host
+    else undef(hint = 'azimuth_identity_operator_keycloak_base_url is required')
+  }}
+# The client ID to use when authenticating with Keycloak
+azimuth_identity_operator_keycloak_client_id: admin-cli
+# The username and password to use when authenticating with Keycloak
+azimuth_identity_operator_keycloak_username: "{{ keycloak_admin_username | default('admin') }}"
+azimuth_identity_operator_keycloak_password: >-
+  {{-
+    keycloak_admin_password
+    if keycloak_admin_password is defined
+    else undef(hint = 'azimuth_identity_operator_keycloak_password is not defined')
+  }}
+
+# The values for the release
+azimuth_identity_operator_release_defaults:
+  config:
+    keycloak:
+      baseUrl: "{{ azimuth_identity_operator_keycloak_base_url }}"
+      clientId: "{{ azimuth_identity_operator_keycloak_client_id }}"
+      username: "{{ azimuth_identity_operator_keycloak_username }}"
+      password: "{{ azimuth_identity_operator_keycloak_password }}"
+azimuth_identity_operator_release_overrides: {}
+azimuth_identity_operator_release_values: >-
+  {{-
+    azimuth_identity_operator_release_defaults |
+      combine(azimuth_identity_operator_release_overrides, recursive = True)
+  }}

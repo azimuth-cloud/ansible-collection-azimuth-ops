@@ -110,6 +110,23 @@
         labels: "{{ keycloak_labels }}"
       spec: "{{ keycloak_spec }}"
 
+- name: Install Keycloak TLS certificate
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_ingress_tls_secret_definition | to_nice_yaml }}"
+  vars:
+    keycloak_ingress_tls_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ keycloak_ingress_tls_secret_name }}"
+        namespace: "{{ keycloak_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ keycloak_ingress_tls_certificate }}"
+        tls.key: "{{ keycloak_ingress_tls_key }}"
+  when: keycloak_ingress_tls_certificate
+
 - name: Install Keycloak ingress
   command: kubectl apply -f -
   args:
