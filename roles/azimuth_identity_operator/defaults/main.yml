@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_identity_operator_chart_repo: https://stackhpc.github.io/azimuth-identity-operator
 azimuth_identity_operator_chart_name: azimuth-identity-operator
-azimuth_identity_operator_chart_version: 0.1.0-dev.0.main.1
+azimuth_identity_operator_chart_version: 0.1.0-dev.0.main.7
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -13,8 +13,92 @@ azimuth_identity_operator_release_name: azimuth-identity-operator
 # The timeout to wait for CAPI operator to become ready
 azimuth_identity_operator_wait_timeout: 10m
 
-# The Keycloak base URL
-# By default, we use the Keycloak deployed by azimuth-ops
+#####
+# TLS settings
+#####
+#   Indicates whether TLS should be enabled
+azimuth_identity_operator_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
+#   The TLS secret name (can be null)
+azimuth_identity_operator_tls_secret_name: "{{ ingress_tls_secret_name | default('azimuth-identity-operator-tls', True) }}"
+#   Wildcard TLS certificate, if available
+azimuth_identity_operator_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
+azimuth_identity_operator_tls_key: >-
+  {{-
+    ingress_tls_wildcard_key
+    if ingress_tls_wildcard_key is defined
+    else undef(hint = 'azimuth_identity_operator_tls_key is required')
+  }}
+#   The issuer to use for the certificate, if no wilcard cert is available
+azimuth_identity_operator_tls_issuer_group: cert-manager.io
+azimuth_identity_operator_tls_issuer_kind: ClusterIssuer
+azimuth_identity_operator_tls_issuer_name: "{{ certmanager_acmehttp01issuer_name | default('letsencrypt') }}"
+
+#####
+# Dex settings
+#####
+#   The host to use for Dex instances
+azimuth_identity_operator_dex_host: >-
+  {{-
+    "{}.{}".format(ingress_dex_subdomain, ingress_base_domain)
+    if ingress_dex_subdomain is defined and ingress_base_domain is defined
+    else undef(hint = 'azimuth_identity_operator_dex_host is required')
+  }}
+#   The ingress class to use for Dex ingress resources
+azimuth_identity_operator_dex_ingress_class: nginx
+#   The default annotations for the Dex ingress resources
+azimuth_identity_operator_ingress_default_annotations: "{{ ingress_annotations | default({}) }}"
+#   The URL for the auth callout
+_azimuth_release_name: "{{ azimuth_release_name | default('azimuth') }}"
+_azimuth_api_service_name: >-
+  {{
+    "{}-api".format(
+      _azimuth_release_name
+      if 'azimuth' in _azimuth_release_name
+      else "{}-azimuth".format(_azimuth_release_name)
+    )
+  }}
+azimuth_identity_operator_dex_ingress_auth_url: >-
+  {{
+    "http://{}.{}.svc.cluster.local/api/session/verify/".format(
+      _azimuth_api_service_name,
+      azimuth_release_namespace | default('azimuth')
+    )
+  }}
+#   The URL to redirect to when the auth URL returns a 401
+#   If not set, the 401 will just be returned
+_azimuth_ingress_tls_enabled: >-
+  {{-
+    azimuth_ingress_tls_enabled
+    if azimuth_ingress_tls_enabled is defined
+    else (ingress_tls_enabled | default(True))
+  }}
+_azimuth_ingress_host: >-
+  {{-
+    azimuth_ingress_host
+    if azimuth_ingress_host is defined
+    else (
+      "{}.{}".format(ingress_azimuth_portal_subdomain, ingress_base_domain)
+      if ingress_azimuth_portal_subdomain is defined and ingress_base_domain is defined
+      else None
+    )
+  }}
+azimuth_identity_operator_dex_ingress_auth_signin_url: >-
+  {{
+    "{}://{}/auth/login".format(
+      'https' if _azimuth_ingress_tls_enabled else 'http',
+      _azimuth_ingress_host
+    )
+    if _azimuth_ingress_host
+    else undef(hint = 'azimuth_identity_operator_dex_ingress_auth_signin_url is required')
+  }}
+#   The URL parameter to contain the original URL when redirecting
+azimuth_identity_operator_dex_ingress_auth_signin_redirect_param: next
+
+#####
+# Keycloak settings
+#####
+#   The Keycloak base URL
+#   By default, we use the Keycloak deployed by azimuth-ops
 _keycloak_ingress_tls_enabled: >-
   {{-
     keycloak_ingress_tls_enabled
@@ -40,9 +124,9 @@ azimuth_identity_operator_keycloak_base_url: >-
     if _keycloak_ingress_host
     else undef(hint = 'azimuth_identity_operator_keycloak_base_url is required')
   }}
-# The client ID to use when authenticating with Keycloak
+#   The client ID to use when authenticating with Keycloak
 azimuth_identity_operator_keycloak_client_id: admin-cli
-# The username and password to use when authenticating with Keycloak
+#   The username and password to use when authenticating with Keycloak
 azimuth_identity_operator_keycloak_username: "{{ keycloak_admin_username | default('admin') }}"
 azimuth_identity_operator_keycloak_password: >-
   {{-
@@ -53,7 +137,31 @@ azimuth_identity_operator_keycloak_password: >-
 
 # The values for the release
 azimuth_identity_operator_release_defaults:
+  tls:
+    enabled: "{{ azimuth_identity_operator_tls_enabled }}"
+    createCertificate: "{{ not azimuth_identity_operator_tls_certificate }}"
+    secretName: "{{ azimuth_identity_operator_tls_secret_name }}"
+    issuerRef: >-
+      {{-
+        {
+          "group": azimuth_identity_operator_tls_issuer_group,
+          "kind": azimuth_identity_operator_tls_issuer_kind,
+          "name": azimuth_identity_operator_tls_issuer_name,
+        }
+        if (
+          azimuth_identity_operator_tls_enabled and
+          not azimuth_identity_operator_tls_certificate
+        )
+        else None
+      }}
   config:
+    dex:
+      host: "{{ azimuth_identity_operator_dex_host }}"
+      ingressClassName: "{{ azimuth_identity_operator_dex_ingress_class }}"
+      ingressDefaultAnnotations: "{{ azimuth_identity_operator_ingress_default_annotations }}"
+      ingressAuthUrl: "{{ azimuth_identity_operator_dex_ingress_auth_url }}"
+      ingressAuthSigninUrl: "{{ azimuth_identity_operator_dex_ingress_auth_signin_url }}"
+      ingressAuthSigninRedirectParam: "{{ azimuth_identity_operator_dex_ingress_auth_signin_redirect_param }}"
     keycloak:
       baseUrl: "{{ azimuth_identity_operator_keycloak_base_url }}"
       clientId: "{{ azimuth_identity_operator_keycloak_client_id }}"

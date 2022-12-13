@@ -232,3 +232,8 @@ keycloak_initial_admin_secret_name: "{{ keycloak_name }}-initial-admin"
 
 # The base URL of Keycloak
 keycloak_base_url: "https://{{ keycloak_ingress_host }}"
+
+# Path to a CA file to use when talking to the Keycloak API
+keycloak_ca_path:
+# Whether or not to validate SSL certificates when talking to the Keycloak API
+keycloak_validate_certs: yes
