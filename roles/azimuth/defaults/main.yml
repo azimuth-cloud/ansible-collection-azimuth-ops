@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.feature-external-identity.697
+azimuth_chart_version: 0.1.0-dev.0.feature-external-identity.699
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -263,8 +263,15 @@ azimuth_apps_sshd_host: >-
   }}
 #   The Zenith SSHD port
 azimuth_apps_sshd_port: "{{ zenith_sshd_port | default(22) }}"
-#   The URL of the post-deploy script to execute
-azimuth_apps_post_deploy_script_url:
+#   The query parameters to add to Zenith URLs when redirecting
+#   This is used to indicate to Keycloak that the Azimuth IdP should be
+#   used, since we know that the user is already authenticated with Azimuth
+azimuth_apps_query_params:
+  kc_idp_hint: >-
+    {{-
+      azimuth_identity_operator_dex_keycloak_client_alias |
+        default('azimuth')
+    }}
 
 # Cluster-as-a-Service settings
 # AWX settings
@@ -674,7 +681,7 @@ azimuth_release_defaults:
         "sshdPort": azimuth_apps_sshd_port,
         "registrarExternalUrl": azimuth_apps_registrar_external_url,
         "registrarAdminUrl": azimuth_apps_registrar_admin_url,
-        "postDeployScriptUrl": azimuth_apps_post_deploy_script_url,
+        "queryParams": azimuth_apps_query_params,
       }
       if azimuth_apps_enabled
       else {}        

@@ -3,7 +3,7 @@
 # The chart to use
 zenith_chart_repo: https://stackhpc.github.io/zenith
 zenith_chart_name: zenith-server
-zenith_chart_version: 0.1.0-dev.0.feature-oidc-callout.183
+zenith_chart_version: 0.1.0-dev.0.feature-oidc-callout.184
 
 # Release information for the Zenith release
 # Use the same namespace as the Azimuth release by default
@@ -165,6 +165,14 @@ zenith_release_defaults:
       kubernetes:
         targetNamespace: "{{ zenith_sync_target_namespace }}"
         ingress:
+          oidc:
+            # Allow the Keycloak IDP hint to be forwarded
+            # This allows us to specify Azimuth auth when redirecting from Azimuth,
+            # while allowing any auth when visiting the service URL directly
+            forwardedQueryParams:
+              - name: kc_idp_hint
+                allow:
+                  - pattern: ".*"
           externalAuth:
             url: "{{ zenith_external_auth_url }}"
             signinUrl: "{{ zenith_external_auth_signin_url }}"
