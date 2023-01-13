@@ -21,7 +21,7 @@ keycloak_external_db_password:
 #     The chart to use to deploy postgresql
 keycloak_postgresql_chart_repo: https://charts.bitnami.com/bitnami
 keycloak_postgresql_chart_name: postgresql
-keycloak_postgresql_chart_version: 11.1.3
+keycloak_postgresql_chart_version: 11.9.13
 #     Release information for the postgresql release
 keycloak_postgresql_release_name: "{{ keycloak_name }}-postgresql"
 #     The timeout to wait for the postgresql release to become ready
