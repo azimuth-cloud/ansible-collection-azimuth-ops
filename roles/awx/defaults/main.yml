@@ -26,7 +26,7 @@ awx_labels:
 # The chart to use to deploy postgresql
 awx_postgresql_chart_repo: https://charts.bitnami.com/bitnami
 awx_postgresql_chart_name: postgresql
-awx_postgresql_chart_version: 11.1.3
+awx_postgresql_chart_version: 11.9.13
 # Release information for the postgresql release
 awx_postgresql_release_name: "{{ awx_name }}-postgresql"
 # The timeout to wait for the postgresql release to become ready
