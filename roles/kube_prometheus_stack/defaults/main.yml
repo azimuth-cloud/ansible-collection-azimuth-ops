@@ -1,0 +1,23 @@
+---
+
+# The chart to use
+kube_prometheus_chart_repo: https://prometheus-community.github.io/helm-charts
+kube_prometheus_chart_name: kube-prometheus-stack
+kube_prometheus_chart_version: 41.7.4
+
+# Release information for the NGINX ingress controller release
+kube_prometheus_release_namespace: monitoring-system
+kube_prometheus_release_name: kube-prometheus-stack
+
+# The timeout to wait for NGINX ingress controller to become ready
+# kube_prometheus_wait_timeout: 10m
+
+# The values for the release
+kube_prometheus_release_defaults: {}
+kube_prometheus_release_overrides: {}
+kube_prometheus_release_values: >-
+  {{-
+    kube_prometheus_release_defaults |
+      combine(kube_prometheus_release_overrides, recursive = True)
+  }}
+
