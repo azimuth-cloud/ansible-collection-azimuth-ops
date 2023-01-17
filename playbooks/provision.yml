@@ -62,6 +62,12 @@
         name: stackhpc.azimuth_ops.ingress_nginx
       when: install_mode == 'singlenode'
 
+    # Install kube-prometheus-stack on singlenode deployment 
+    # (this is handled by cluster-addons for HA deployment)
+    - include_role:
+        name: stackhpc.azimuth_ops.kube_prometheus_stack
+      when: install_mode == 'singlenode'
+
     # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
     # Configure the node as a Cluster API management cluster and use it to provision the HA cluster
     - block:
