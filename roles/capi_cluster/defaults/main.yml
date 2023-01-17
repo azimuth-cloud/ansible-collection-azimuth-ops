@@ -304,6 +304,8 @@ capi_cluster_release_defaults:
         release:
           values:
             controller:
+              service:
+                loadBalancerIP: "{{ capi_cluster_addons_ingress_load_balancer_ip }}"
               metrics:
                 enabled: true
                 serviceMonitor:
