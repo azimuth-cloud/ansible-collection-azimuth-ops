@@ -57,17 +57,16 @@
         dest: "{{ ansible_env.HOME }}/.kube/config"
         mode: u=rwx,g=,o=
 
+    # Install the monitoring stack on the K3S cluster when doing a single node installation
+    # (must be done before NGINX ingress so that the ServiceMonitor CRD is created)
+    - include_role:
+        name: stackhpc.azimuth_ops.kube_prometheus_stack
+      when: install_mode == 'singlenode'
+
     # Install the NGINX ingress controller on the K3S cluster when doing a single node installation
     - include_role:
         name: stackhpc.azimuth_ops.ingress_nginx
       when: install_mode == 'singlenode'
-
-    ### DO THIS AFTER CAPI_CLUSTER BLOCK INSTEAD ###
-    # # Install kube-prometheus-stack on singlenode deployment 
-    # # (this is handled by cluster-addons for HA deployment)
-    # - include_role:
-    #     name: stackhpc.azimuth_ops.kube_prometheus_stack
-    #   when: install_mode == 'singlenode'
 
     # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
     # Configure the node as a Cluster API management cluster and use it to provision the HA cluster
@@ -86,12 +85,6 @@
             capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
       when: install_mode == 'ha'
 
-    # Since capi_cluster role already installs vanilla kube-prometheus-stack, we can include this role AFTER the
-    # capi_cluster role so that HA deployments will simply receive an updated chart with additional chart values
-    # which include monitoring and alerting config and so that singlenode/demo deployments will also have the 
-    # same monitoring stack installed from scratch
-    - include_role:
-        name: stackhpc.azimuth_ops.kube_prometheus_stack
 
 # Install Azimuth
 - import_playbook: stackhpc.azimuth_ops.deploy
