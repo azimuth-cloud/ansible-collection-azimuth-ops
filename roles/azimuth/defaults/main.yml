@@ -383,10 +383,10 @@ azimuth_caas_stackhpc_slurm_appliance_image: >-
     if azimuth_caas_stackhpc_slurm_appliance_rocky8_image is defined
     else (
       (
-        community_images_image_ids.openhpc_230106_1107 
+        community_images_image_ids.openhpc_230110_1629
         if (
           community_images_image_ids is defined and
-          'openhpc_230106_1107' in community_images_image_ids
+          'openhpc_230110_1629' in community_images_image_ids
         )
         else undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
       )
