@@ -11,38 +11,6 @@
     atomic: yes
     create_namespace: yes
 
-# - name: Ensure ansible's kubernetes.core.k8s python dependencies are installed
-#   ansible.builtin.pip:
-#     state: present
-#     executable: pip3
-#     name:
-#     - pyyaml
-#     - jsonpatch
-#     - kubernetes
-
-# - name: Ensure AlertManagerConfig CRD is installed on target Kubernetes cluster
-#   kubernetes.core.k8s:
-#     state: present
-#     definition:
-#       apiVersion: monitoring.coreos.com/v1alpha1
-#       kind: AlertmanagerConfig
-#       metadata:
-#         name: altermanager-config
-#         namespace: monitoring-system
-#       spec:
-#         route:
-#           groupBy: ['namespace']
-#           groupWait: 30s
-#           groupInterval: 5m
-#           repeatInterval: 12h
-#           receiver: slack-notifications
-#           receivers:
-#           - name: slack-notifications
-#             slackConfigs:
-#             - apiUrl: '<secret-name-containing-slack-webhook-url>'
-#               channel: '#general'
-#               sendResolved: true
-
 
 
 

@@ -306,10 +306,11 @@ capi_cluster_release_defaults:
             controller:
               service:
                 loadBalancerIP: "{{ capi_cluster_addons_ingress_load_balancer_ip }}"
+              # Only enable metrics here if global monitoring is enabled
               metrics:
-                enabled: true
+                enabled: "{{ capi_cluster_addons_monitoring }}"
                 serviceMonitor:
-                  enabled: true
+                  enabled: "{{ capi_cluster_addons_monitoring }}"
                   namespace: monitoring-system
                   additionalLabels:
                     release: kube-prometheus-stack
@@ -318,39 +319,7 @@ capi_cluster_release_defaults:
     monitoring:
       enabled: "{{ capi_cluster_addons_monitoring }}"
       
-      # NOTE - We probably don't want alerting on platform clusters so how do we 
-      # distinguish which values are used for management vs platform clusters?
-
-      # kubePrometheusStack:
-      #   release:
-      #     values:
-      #         alertmanager:
-      #           enabled: true
-      #           config:
-      #             global:
-      #               slack_api_url: "<add-a-url-here>"
-      #             route:
-      #               receiver: 'slack-notifications'
-      #               group_by: ['namespace']
-      #             receivers:
-      #             - name: 'null'
-      #             - name: 'slack-notifications'
-      #               slack_configs:
-      #               - channel: '#general'
-      #                 send_resolved: true
-      #         prometheus:
-      #           prometheusSpec:
-      #             storageSpec:
-      #               volumeClaimTemplate:
-      #                 spec:
-      #                   --- THIS SECTION WILL NEED TO CHANGE FOR HA DEPLOYMENTS ---
-      #                   storageClassName: local-path
-      #                   accessModes: ["ReadWriteOnce"]
-      #                   resources:
-      #                     requests[]:
-      #                       storage: 2Gi 
-
-
+      
     # Configure the CSI Cinder storage class
     openstack:
       cloudConfig:
