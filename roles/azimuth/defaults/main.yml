@@ -366,7 +366,7 @@ azimuth_caas_stackhpc_slurm_appliance_name: StackHPC Slurm Appliance
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: bdcc3bd6f601b8d5686f828e548f145c0a331f3e
+azimuth_caas_stackhpc_slurm_appliance_git_version: 683f0170d4a2d579b07ec2c4a463e8319076c115
 # The metadata root for the StackHPC Slurm appliance project
 azimuth_caas_stackhpc_slurm_appliance_metadata_root: >-
   https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta
@@ -383,10 +383,10 @@ azimuth_caas_stackhpc_slurm_appliance_image: >-
     if azimuth_caas_stackhpc_slurm_appliance_rocky8_image is defined
     else (
       (
-        community_images_image_ids.openhpc_230106_1107 
+        community_images_image_ids.openhpc_230110_1629
         if (
           community_images_image_ids is defined and
-          'openhpc_230106_1107' in community_images_image_ids
+          'openhpc_230110_1629' in community_images_image_ids
         )
         else undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
       )
