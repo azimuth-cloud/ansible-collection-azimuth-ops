@@ -315,10 +315,14 @@ capi_cluster_release_defaults:
                   additionalLabels:
                     release: kube-prometheus-stack
                     
-    # Enable the monitoring if specified
+    # Configure monitoring and alerting
     monitoring:
       enabled: "{{ capi_cluster_addons_monitoring }}"
-      
+      kubePrometheusStack:
+        release:
+          values:
+            alertmanager:
+              enabled: "{{ capi_cluster_addons_monitoring }}"
       
     # Configure the CSI Cinder storage class
     openstack:
