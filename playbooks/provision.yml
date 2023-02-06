@@ -61,7 +61,7 @@
     # (must be done before NGINX ingress so that the ServiceMonitor CRD is created)
     - include_role:
         name: stackhpc.azimuth_ops.kube_prometheus_stack
-      when: install_mode == 'singlenode'
+      when: azimuth_management_cluster_monitoring_enabled and (install_mode == 'singlenode')
 
     # Install the NGINX ingress controller on the K3S cluster when doing a single node installation
     - include_role:
