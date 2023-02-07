@@ -13,7 +13,44 @@ kube_prometheus_release_name: kube-prometheus-stack
 # kube_prometheus_wait_timeout: 10m
 
 # The values for the release
-kube_prometheus_release_defaults: {}
+kube_prometheus_release_defaults:
+  alertmanager:
+    enabled: "{{ azimuth_management_cluster_monitoring_enabled }}"
+    config:
+      global:
+        # Variable should be defined in secrets file elsewhere
+        slack_api_url: "{{ kube_prometheus_stack_alertmanager_slack_url }}"
+      route:
+        receiver: 'slack-notifications'
+        group_by: ['namespace']
+      receivers:
+      - name: 'null'
+      - name: 'slack-notifications'
+        slack_configs:
+        - channel: '#general'
+          send_resolved: true
+  prometheus:
+    prometheusSpec:
+      # Should be less than storage volume size below
+      retentionSize: 9.9GB
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            # Leave storageClassName blank to use cluster's default storage class
+            # storageClassName: <name>
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+  grafana:
+    sidecar:
+      dashboards:
+        # List of namespaces in which to look for ConfigMaps with the label
+        # `grafana_dashboard: "1"` which signifies that the map contains
+        # additional dashboards to be imported into Grafana
+        searchNamespace:
+        - monitoring-system
+        - azimuth
 kube_prometheus_release_overrides: {}
 kube_prometheus_release_values: >-
   {{-

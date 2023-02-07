@@ -156,8 +156,8 @@ capi_cluster_control_plane_root_volume_availability_zone: "{{ capi_cluster_root_
 capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 
 # Configuration for addons
-#   Enable monitoring by default
-capi_cluster_addons_monitoring: true
+#   Enable kube-prometheus-stack monitoring
+capi_cluster_addons_monitoring: "{{ azimuth_management_cluster_monitoring_enabled | default(true) }}"
 #   Require the specification of a pre-allocated IP for the ingress load balancer
 #   This IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
