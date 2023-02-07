@@ -4,3 +4,4 @@
 .terraform.lock.hcl
 *.tfstate*
 backend.tf
+.vscode/
