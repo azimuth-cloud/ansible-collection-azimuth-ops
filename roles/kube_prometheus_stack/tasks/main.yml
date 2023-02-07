@@ -10,8 +10,3 @@
     release_values: "{{ kube_prometheus_release_values }}"
     atomic: yes
     create_namespace: yes
-
-
-
-
-  
