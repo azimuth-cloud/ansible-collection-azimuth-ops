@@ -13,7 +13,16 @@ ingress_nginx_release_name: ingress-nginx
 ingress_nginx_wait_timeout: 10m
 
 # The values for the release
-ingress_nginx_release_defaults: {}
+ingress_nginx_release_defaults:
+  controller:
+    metrics:
+      # Whether to export Prometheus-style metrics to be scraped by kube-prometheus-stack
+      enabled: "{{ azimuth_management_cluster_monitoring_enabled | default(true) }}"
+      serviceMonitor:
+        enabled: true
+        namespace: monitoring-system
+        additionalLabels:
+          release: kube-prometheus-stack
 ingress_nginx_release_overrides: {}
 ingress_nginx_release_values: >-
   {{-

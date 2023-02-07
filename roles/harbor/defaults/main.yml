@@ -142,6 +142,12 @@ harbor_release_defaults:
         size: "{{ harbor_persistence_pvc_registry_size }}"
       trivy:
         size: "{{ harbor_persistence_pvc_trivy_size }}"
+  metrics:
+    enabled: "{{ azimuth_management_cluster_monitoring_enabled | default(true) }}"
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: kube-prometheus-stack
 harbor_release_overrides: {}
 harbor_release_values: >-
   {{-
