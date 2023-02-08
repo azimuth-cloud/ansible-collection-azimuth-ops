@@ -5,6 +5,11 @@
       include_vars:
         file: "{{ role_path }}/../kube_prometheus_stack/defaults/main.yml"
 
+    - name: Import prechecks tasks from kube_prometheus_stack
+      import_role:
+        name: kube_prometheus_stack
+        tasks_from: prechecks.yml
+
     - name: Install or upgrade cluster
       kubernetes.core.helm:
         chart_ref: "{{ capi_cluster_chart_name }}"
