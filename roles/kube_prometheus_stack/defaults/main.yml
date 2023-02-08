@@ -106,9 +106,7 @@ kube_prometheus_stack_alertmanager_values: >-
     {
       "enabled": false,
       "config": {
-        "receivers": {
-          "name": "null"
-          }
+        "receivers": [{"name": "null"}]
         }
       } | 
         combine(
