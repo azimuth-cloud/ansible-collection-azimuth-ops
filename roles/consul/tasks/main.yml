@@ -52,37 +52,41 @@
         )
       }}
 
-- name: Ensure kubernetes python client is available
-  ansible.builtin.pip:
-    state: present
-    name: kubernetes
 
-- name: Ensure Consul ServiceMonitor is present on cluster
-  kubernetes.core.k8s:
-    kubeconfig: ~/.kube/config
-    state: present
-    definition:
-      apiVersion: monitoring.coreos.com/v1
-      kind: ServiceMonitor
-      metadata:
-        labels:
-          release: kube-prometheus-stack
-        name: consul
-        namespace: azimuth
-      spec:
-        endpoints:
-        - port: http
-          path: /v1/agent/metrics
-        namespaceSelector:
-          matchNames:
-          - azimuth
-        selector:
-          matchLabels:
-            # Labels should match cluster's consul-server service
-            app.kubernetes.io/managed-by: Helm
-            app: consul
-            chart: consul-helm
-            component: server
-            heritage: Helm
-            release: consul
+- block:
+
+  - name: Ensure kubernetes python client is available
+    ansible.builtin.pip:
+      state: present
+      name: kubernetes
+
+  - name: Ensure Consul ServiceMonitor is present on cluster
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      state: present
+      definition:
+        apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          labels:
+            release: kube-prometheus-stack
+          name: consul
+          namespace: azimuth
+        spec:
+          endpoints:
+          - port: http
+            path: /v1/agent/metrics
+          namespaceSelector:
+            matchNames:
+            - azimuth
+          selector:
+            matchLabels:
+              # Labels should match cluster's consul-server service
+              app.kubernetes.io/managed-by: Helm
+              app: consul
+              chart: consul-helm
+              component: server
+              heritage: Helm
+              release: consul
+              
   when: azimuth_management_cluster_monitoring_enabled
