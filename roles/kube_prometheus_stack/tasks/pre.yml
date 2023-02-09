@@ -12,3 +12,12 @@
   loop_control:
     index_var: idx
     label: "{{ idx }}"
+
+# Set as a fact to interpret all child vars now. This fact
+# can be used in other roles while still being overridden
+# by inventory or extra_vars, just include the tasks in this
+# file.
+- name: Set kube_prometheus_release_values fact
+  set_fact:
+    kube_prometheus_release_values_fact: "{{ kube_prometheus_release_values }}"
+
