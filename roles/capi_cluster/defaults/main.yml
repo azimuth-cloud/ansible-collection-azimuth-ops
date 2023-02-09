@@ -321,7 +321,8 @@ capi_cluster_release_defaults:
       enabled: "{{ capi_cluster_addons_monitoring }}"
       kubePrometheusStack:
         release:
-          values: "{{ kube_prometheus_release_values }}"
+          # Set by kube_prometheus_stack/tasks/pre.yml
+          values: "{{ kube_prometheus_release_values_fact }}"
       
     # Configure the CSI Cinder storage class
     openstack:
