@@ -12,46 +12,157 @@ kube_prometheus_release_name: kube-prometheus-stack
 # The timeout to wait for NGINX ingress controller to become ready
 # kube_prometheus_wait_timeout: 10m
 
-# The values for the release
-kube_prometheus_release_defaults:
-  alertmanager:
-    enabled: "{{ azimuth_management_cluster_monitoring_enabled }}"
-    config:
-      global:
-        # Variable should be defined in secrets file elsewhere
-        slack_api_url: "{{ kube_prometheus_stack_alertmanager_slack_url }}"
-      route:
-        receiver: 'slack-notifications'
-        group_by: ['namespace']
-      receivers:
-      - name: 'null'
-      - name: 'slack-notifications'
-        slack_configs:
-        - channel: '#general'
-          send_resolved: true
-  prometheus:
-    prometheusSpec:
-      # Should be less than storage volume size below
-      retentionSize: 9.9GB
-      storageSpec:
-        volumeClaimTemplate:
-          spec:
-            # Leave storageClassName blank to use cluster's default storage class
-            # storageClassName: <name>
-            accessModes: ["ReadWriteOnce"]
-            resources:
-              requests:
-                storage: 10Gi
-  grafana:
-    sidecar:
-      dashboards:
-        # List of namespaces in which to look for ConfigMaps with the label
-        # `grafana_dashboard: "1"` which signifies that the map contains
-        # additional dashboards to be imported into Grafana
-        searchNamespace:
-        - monitoring-system
-        - azimuth
+# Enable alerting on the Azimuth management cluster
+azimuth_management_cluster_alerting_enabled: false
+
+# Enable Slack alertmanager alerts
+kube_prometheus_stack_alertmanager_slack_alerts: false
+
+# Slack webhook URL for alertmanager alerts
+kube_prometheus_stack_alertmanager_slack_url: >- 
+  {{-
+    undef(hint = 'kube_prometheus_stack_alertmanager_slack_url is required')
+    if kube_prometheus_stack_alertmanager_slack_alerts
+    else None
+  }}
+
+# Slack channel for alertmanager alerts
+kube_prometheus_stack_alertmanager_slack_channel: >- 
+  {{-
+    undef(hint = 'kube_prometheus_stack_alertmanager_slack_channel is required')
+    if kube_prometheus_stack_alertmanager_slack_alerts
+    else None
+  }}
+
+# Size of the PVC for the prometheus database
+kube_prometheus_stack_prometheus_spec_volume_gb: 10
+
+# Max size of the prometheus database
+kube_prometheus_stack_prometheus_spec_retention_size: "{{ ( 0.95 * kube_prometheus_stack_prometheus_spec_volume_gb ) ~ 'GB' }}"
+
+# Spec for Prometheus pods
+kube_prometheus_stack_prometheus_spec: >-
+  {{-
+    {
+      "retentionSize": kube_prometheus_stack_prometheus_spec_retention_size,
+      "storageSpec": {
+        "volumeClaimTemplate": {
+          "spec": {
+            "accessModes": ["ReadWriteOnce"],
+            "resources": {
+              "requests": {
+                "storage": kube_prometheus_stack_prometheus_spec_volume_gb ~ 'Gi'
+                }
+              }
+            }
+          }
+        }
+      } 
+    }}
+
+# Default values for Prometheus section of kube-prometheus-stack
+kube_prometheus_stack_prometheus_values_defaults: >-
+  {{-
+    {
+    "prometheusSpec": kube_prometheus_stack_prometheus_spec
+    }
+  }}
+
+# Overrides for Prometheus section of kube-prometheus-stack
+kube_prometheus_stack_prometheus_values_overrides: {}
+
+# Values to pass to Prometheus part of kube-prometheus-stack
+kube_prometheus_stack_prometheus_values: >-
+  {{-
+      kube_prometheus_stack_prometheus_values_defaults |
+        combine(
+          kube_prometheus_stack_prometheus_values_overrides,
+          recursive = True
+        )
+  }}
+
+# List of namespaces in which to look for ConfigMaps with the label
+# `grafana_dashboard: "1"` which signifies that the map contains
+# additional dashboards to be imported into Grafana
+kube_prometheus_stack_grafana_sidecar_dashboard_search_ns:
+  - monitoring-system
+  - azimuth
+
+# Values to pass to Grafana part of kube-prometheus-stack
+kube_prometheus_stack_grafana_values: >-
+  {{-
+    {
+      "sidecar": {
+        "dashboards": {
+          "searchNamespace": kube_prometheus_stack_grafana_sidecar_dashboard_search_ns
+        }
+      }
+    }
+  }}
+
+# Values to pass to Alertmanager part of kube-prometheus-stack
+kube_prometheus_stack_alertmanager_values: >-
+  {{-
+    {
+      "enabled": false,
+      "config": {
+        "receivers": [{"name": "null"}]
+        }
+      } | 
+        combine(
+          {
+            "enabled": azimuth_management_cluster_alerting_enabled
+            }
+            if azimuth_management_cluster_alerting_enabled
+            else {},
+            recursive = True,
+            list_merge = "append",
+          ) |
+            combine(
+              {     
+                "config": {
+                  "global": {
+                    "slack_api_url": kube_prometheus_stack_alertmanager_slack_url
+                  },
+                  "route": {
+                    "receiver": 'slack-notifications',
+                    "group_by": [
+                      "namespace"
+                    ]
+                  },
+                  "receivers": [
+                      {
+                        "name": "slack-notifications",
+                        "slack_configs": [
+                          {
+                            "channel": kube_prometheus_stack_alertmanager_slack_channel,
+                            "send_resolved": true
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+                if kube_prometheus_stack_alertmanager_slack_alerts
+                and azimuth_management_cluster_alerting_enabled
+                else {},
+                recursive = True,
+                list_merge = "append",
+              )
+          }}
+
+# The default values for the release
+kube_prometheus_release_defaults: >-
+  {{-
+    {
+      "prometheus": kube_prometheus_stack_prometheus_values,
+      "alertmanager": kube_prometheus_stack_alertmanager_values,
+      "grafana": kube_prometheus_stack_grafana_values
+    }
+  }}
+
 kube_prometheus_release_overrides: {}
+
 kube_prometheus_release_values: >-
   {{-
     kube_prometheus_release_defaults |

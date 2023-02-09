@@ -1,5 +1,9 @@
 ---
 
+- name: Include precheck tasks
+  ansible.builtin.include_tasks:
+    file: prechecks.yml
+
 - name: Ensure kube-prometheus-stack is installed on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ kube_prometheus_chart_name }}"
