@@ -87,6 +87,7 @@ kube_prometheus_stack_prometheus_values: >-
 kube_prometheus_stack_grafana_sidecar_dashboard_search_ns:
   - monitoring-system
   - azimuth
+  - harbor
 
 # Values to pass to Grafana part of kube-prometheus-stack
 kube_prometheus_stack_grafana_values: >-
