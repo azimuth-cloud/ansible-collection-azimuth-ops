@@ -2,7 +2,7 @@
 
 - name: Include precheck tasks
   ansible.builtin.include_tasks:
-    file: prechecks.yml
+    file: pre.yml
 
 - name: Ensure kube-prometheus-stack is installed on target Kubernetes cluster
   kubernetes.core.helm:
@@ -11,6 +11,6 @@
     chart_version: "{{ kube_prometheus_chart_version }}"
     release_namespace: "{{ kube_prometheus_release_namespace }}"
     release_name: "{{ kube_prometheus_release_name }}"
-    release_values: "{{ kube_prometheus_release_values }}"
+    release_values: "{{ kube_prometheus_release_values_fact }}"
     atomic: yes
     create_namespace: yes
