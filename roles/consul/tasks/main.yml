@@ -62,7 +62,6 @@
 
   - name: Ensure Consul ServiceMonitor is present on cluster
     kubernetes.core.k8s:
-      kubeconfig: ~/.kube/config
       state: present
       definition:
         apiVersion: monitoring.coreos.com/v1
@@ -91,18 +90,17 @@
 
   - name: Ensure ConfigMap containing Grafana dashboard is present
     kubernetes.core.k8s:
-        kubeconfig: ~/.kube/config
-        state: present
-        definition:
-          kind: ConfigMap
-          metadata:
-            labels:
-              grafana_dashboard: "1"
-              release: kube-prometheus-stack
-            name: consul-grafana-dashboard
-            namespace: azimuth
-          data:
-            consul_dashboard.json:
-              "{{ lookup('file', 'grafana_dashboard.json' ) | from_json | to_nice_json }}"
+      state: present
+      definition:
+        kind: ConfigMap
+        metadata:
+          labels:
+            grafana_dashboard: "1"
+            release: kube-prometheus-stack
+          name: consul-grafana-dashboard
+          namespace: azimuth
+        data:
+          consul_dashboard.json:
+            "{{ lookup('file', 'grafana_dashboard.json' ) | from_json | to_nice_json }}"
 
   when: azimuth_management_cluster_monitoring_enabled
