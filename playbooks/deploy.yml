@@ -24,3 +24,5 @@
     - stackhpc.azimuth_ops.azimuth
   environment:
     KUBECONFIG: "{{ kubeconfig_path | default('') }}"
+    # Required for kubernetes.core.k8s
+    K8S_AUTH_KUBECONFIG: "{{ kubeconfig_path | default('') }}"
