@@ -448,7 +448,7 @@ azimuth_caas_stackhpc_workstation_name: StackHPC Workstation
 # The git URL for the StackHPC workstation
 azimuth_caas_stackhpc_workstation_git_url: https://github.com/stackhpc/caas-workstation.git
 # The git version for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_git_version: 9756b5ada387ca2ca6b51d6ed9a2f7a411124e56
+azimuth_caas_stackhpc_workstation_git_version: 8c86cfebb02ecd8a9ec2d4dccf806aa5989670f2
 # The metadata root for the StackHPC workstation project
 azimuth_caas_stackhpc_workstation_metadata_root: >-
   https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta
