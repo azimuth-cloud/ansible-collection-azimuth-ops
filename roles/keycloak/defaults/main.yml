@@ -75,20 +75,19 @@ keycloak_spec_defaults:
         combine(
           { "url": keycloak_external_db_url }
           if keycloak_external_db_url
-          else {}
-        ) |
-        combine(
-          {
+          else {
             "vendor": "postgres",
             "host": keycloak_postgresql_release_name ~ "." ~ keycloak_namespace,
           }
-          if not keycloak_external_db_url
-          else {}
         )
     }}
   # We will do our own ingress with TLS annotations
   ingress:
     enabled: false
+  # Use the additional options to disable strict HTTPS if TLS is disabled
+  additionalOptions:
+    - name: hostname-strict-https
+      value: "{{ 'true' if keycloak_ingress_tls_enabled else 'false' }}"
 keycloak_spec_overrides: {}
 keycloak_spec: "{{ keycloak_spec_defaults | combine(keycloak_spec_overrides, recursive = True) }}"
 
@@ -231,7 +230,13 @@ keycloak_admin_creds_secret_name: "{{ keycloak_name }}-admin-creds"
 keycloak_initial_admin_secret_name: "{{ keycloak_name }}-initial-admin"
 
 # The base URL of Keycloak
-keycloak_base_url: "https://{{ keycloak_ingress_host }}"
+keycloak_base_url: >-
+  {{-
+    "{}://{}".format(
+      'https' if keycloak_ingress_tls_enabled else 'http',
+      keycloak_ingress_host
+    )
+  }}
 
 # Path to a CA file to use when talking to the Keycloak API
 keycloak_ca_path:
