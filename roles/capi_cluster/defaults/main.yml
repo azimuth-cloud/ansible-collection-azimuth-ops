@@ -323,6 +323,8 @@ capi_cluster_release_defaults:
         release:
           # Set by kube_prometheus_stack/tasks/pre.yml
           values: "{{ kube_prometheus_release_values_fact }}"
+      # Size of persistence volume (in GB) to provision for storing loki data
+      lokiVolumeCapacity: 10
       
     # Configure the CSI Cinder storage class
     openstack:
