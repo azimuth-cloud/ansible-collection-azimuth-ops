@@ -1,0 +1,41 @@
+---
+
+# Crunchy Data do not publish Helm charts, so we use Kustomize (following the official documentation)
+# https://access.crunchydata.com/documentation/postgres-operator/latest/installation/kustomize/
+
+- name: Create PGO namespace
+  command: kubectl create namespace {{ pgo_namespace }}
+  register: pgo_create_namespace
+  changed_when: pgo_create_namespace.rc == 0
+  failed_when: >-
+    pgo_create_namespace.rc != 0 and
+    'AlreadyExists' not in pgo_create_namespace.stderr
+
+- name: Make kustomization directory
+  file:
+    path: "{{ pgo_kustomization_directory }}"
+    state: directory
+
+- name: Write kustomization file
+  copy:
+    content: "{{ pgo_kustomization | to_nice_yaml }}"
+    dest: "{{ pgo_kustomization_directory }}/kustomization.yaml"
+
+- name: Install PGO resources
+  command: kubectl apply --server-side -k {{ pgo_kustomization_directory }}
+
+- name: Wait for PGO controllers to become ready
+  command: >-
+    kubectl rollout status
+      --namespace {{ watch.namespace }}
+      --timeout 1s
+      {{ watch.kind }}/{{ watch.name }}
+  changed_when: false
+  register: pgo_controller_wait
+  until: pgo_controller_wait is succeeded
+  retries: 60
+  delay: 10
+  loop: "{{ pgo_watches }}"
+  loop_control:
+    loop_var: watch
+    label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"

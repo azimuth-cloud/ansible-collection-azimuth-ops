@@ -40,60 +40,32 @@
 - name: Ensure Keycloak database secret exists for external DB
   command: kubectl apply -f -
   args:
-    stdin: "{{ keycloak_postgresql_auth_secret_definition | to_nice_yaml }}"
+    stdin: "{{ keycloak_external_db_secret_definition | to_nice_yaml }}"
   vars:
-    keycloak_postgresql_auth_secret_definition:
+    keycloak_external_db_secret_definition:
       apiVersion: v1
       kind: Secret
       metadata:
-        name: "{{ keycloak_postgresql_auth_secret_name }}"
+        name: "{{ keycloak_external_db_secret_name }}"
         namespace: "{{ keycloak_namespace }}"
         labels: "{{ keycloak_labels }}"
       stringData:
-        username: "{{ keycloak_external_db_username }}"
+        user: "{{ keycloak_external_db_user }}"
         password: "{{ keycloak_external_db_password }}"
   when: keycloak_external_db_url
 
 - name: Deploy internal database for Keycloak
-  block:
-    - name: Create postgresql auth secret for Keycloak
-      # Use create so that we only generate passwords once
-      command: kubectl create -f -
-      args:
-        stdin: "{{ keycloak_postgresql_auth_secret_definition | to_nice_yaml }}"
-      vars:
-        keycloak_postgresql_auth_secret_definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: "{{ keycloak_postgresql_auth_secret_name }}"
-            namespace: "{{ keycloak_namespace }}"
-            labels: "{{ keycloak_labels }}"
-          stringData:
-            username: "{{ keycloak_name }}"
-            # The password for the postgres user
-            postgres-password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"
-            # The password for the keycloak user
-            password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"
-            # The password for the replication user
-            replication-password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"
-      register: keycloak_postgresql_auth_secret_create
-      failed_when: >-
-        keycloak_postgresql_auth_secret_create.rc != 0 and
-        'AlreadyExists' not in keycloak_postgresql_auth_secret_create.stderr
-
-    - name: Install Keycloak posgresql on target Kubernetes cluster
-      kubernetes.core.helm:
-        chart_ref: "{{ keycloak_postgresql_chart_name }}"
-        chart_repo_url: "{{ keycloak_postgresql_chart_repo }}"
-        chart_version: "{{ keycloak_postgresql_chart_version }}"
-        release_namespace: "{{ keycloak_namespace }}"
-        release_name: "{{ keycloak_postgresql_release_name }}"
-        release_values: "{{ keycloak_postgresql_release_values }}"
-        atomic: yes
-        create_namespace: yes
-        wait: yes
-        wait_timeout: "{{ keycloak_postgresql_wait_timeout }}"
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_database_definition | to_nice_yaml }}"
+  vars:
+    keycloak_database_definition:
+      apiVersion: postgres-operator.crunchydata.com/v1beta1
+      kind: PostgresCluster
+      metadata:
+        name: "{{ keycloak_database_name }}"
+        namespace: "{{ keycloak_namespace }}"
+      spec: "{{ keycloak_database_spec }}"
   when: not keycloak_external_db_url
 
 - name: Install Keycloak instance
