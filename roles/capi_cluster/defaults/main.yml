@@ -3,8 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-# TODO: Change version once https://github.com/stackhpc/capi-helm-charts/pull/37 has been merged
-capi_cluster_chart_version: 0.1.1-dev.0.feature-monitoring.137
+capi_cluster_chart_version: 0.1.1-dev.0.main.185
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
