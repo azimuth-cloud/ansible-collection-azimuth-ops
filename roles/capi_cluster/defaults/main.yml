@@ -3,8 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-# TODO: Change version once https://github.com/stackhpc/capi-helm-charts/pull/37 has been merged
-capi_cluster_chart_version: 0.1.1-dev.0.feature-monitoring.137
+capi_cluster_chart_version: 0.1.1-dev.0.main.185
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -158,7 +157,7 @@ capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_
 
 # Configuration for addons
 #   Enable kube-prometheus-stack monitoring
-capi_cluster_addons_monitoring: "{{ azimuth_management_cluster_monitoring_enabled | default(true) }}"
+capi_cluster_addons_monitoring: true
 #   Require the specification of a pre-allocated IP for the ingress load balancer
 #   This IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
@@ -312,17 +311,13 @@ capi_cluster_release_defaults:
                 enabled: "{{ capi_cluster_addons_monitoring }}"
                 serviceMonitor:
                   enabled: "{{ capi_cluster_addons_monitoring }}"
-                  namespace: monitoring-system
-                  additionalLabels:
-                    release: kube-prometheus-stack
-                    
     # Configure monitoring and alerting
     monitoring:
       enabled: "{{ capi_cluster_addons_monitoring }}"
       kubePrometheusStack:
         release:
           # Set by kube_prometheus_stack/tasks/pre.yml
-          values: "{{ kube_prometheus_release_values_fact }}"
+          values: "{{ kube_prometheus_stack_release_values_fact }}"
       
     # Configure the CSI Cinder storage class
     openstack:

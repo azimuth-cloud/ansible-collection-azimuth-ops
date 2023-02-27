@@ -57,19 +57,17 @@
         dest: "{{ ansible_env.HOME }}/.kube/config"
         mode: u=rwx,g=,o=
 
-    # Install the monitoring stack on the K3S cluster when doing a single node installation
-    # (must be done before NGINX ingress so that the ServiceMonitor CRD is created)
-    - include_role:
-        name: stackhpc.azimuth_ops.kube_prometheus_stack
-      when: azimuth_management_cluster_monitoring_enabled and (install_mode == 'singlenode')
+    # For a single node install, we put the monitoring and ingress controller on the K3S cluster
+    - block:
+        # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
+        - include_role:
+            name: stackhpc.azimuth_ops.kube_prometheus_stack
 
-    # Install the NGINX ingress controller on the K3S cluster when doing a single node installation
-    - include_role:
-        name: stackhpc.azimuth_ops.ingress_nginx
+        - include_role:
+            name: stackhpc.azimuth_ops.ingress_nginx
       when: install_mode == 'singlenode'
 
     # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
-    # Configure the node as a Cluster API management cluster and use it to provision the HA cluster
     - block:
         - include_role:
             name: stackhpc.azimuth_ops.certmanager

@@ -1,0 +1,71 @@
+---
+
+# The namespace to create alertmanager configs in
+alertmanager_config_namespace: >-
+  {{ kube_prometheus_stack_release_namespace | default('monitoring-system') }}
+
+# The labels to apply to alertmanager configs so they are picked up by the alert manager
+_kube_prometheus_stack_release_name: >-
+  {{ kube_prometheus_stack_release_name | default("kube-prometheus-stack") }}
+alertmanager_config_labels:
+  app.kubernetes.io/managed-by: azimuth-ops
+  alertmanager: "{{ _kube_prometheus_stack_release_name }}-alertmanager"
+
+# The Slack URL to use for the alertmanager Slack webhook
+alertmanager_config_slack_webhook_url: >-
+  {{ undef(hint = 'alertmanager_config_slack_webhook_url is required') }}
+# The name of the channel to send alerts to
+# If not given, the default channel for the webhook will be used
+alertmanager_config_slack_webhook_channel:
+
+# The name and key of the secret containing the Slack webhook URL
+alertmanager_config_slack_webhook_secret_name: alertmanager-slack-webhook
+alertmanager_config_slack_webhook_secret_key: slack-api-url
+
+# The name of the alertmanager config for the Slack webhook
+alertmanager_config_slack_name: alertmanager-slack-webhook
+
+# The Slack receiver config
+alertmanager_config_slack_receiver_defaults: >-
+  {{-
+    {
+      "apiURL": {
+        "name": alertmanager_config_slack_webhook_secret_name,
+        "key":  alertmanager_config_slack_webhook_secret_key,
+      },
+      "sendResolved": True
+    } |
+      combine(
+        { "channel": alertmanager_config_slack_webhook_channel }
+        if alertmanager_config_slack_webhook_channel
+        else {}
+      )
+  }}
+alertmanager_config_slack_receiver_overrides: {}
+alertmanager_config_slack_receiver: >-
+  {{-
+    alertmanager_config_slack_receiver_defaults |
+      combine(alertmanager_config_slack_receiver_overrides, recursive = True)
+  }}
+
+# The spec of the alertmanager config for the Slack webhook
+alertmanager_config_slack_spec_defaults:
+  route:
+    receiver: slack-notifications
+    matchers:
+      - name: alertname
+        matchType: "!~"
+        value: InfoInhibitor|Watchdog
+      - name: severity
+        matchType: "=~"
+        value: warning|critical
+  receivers:
+    - name: slack-notifications
+      slackConfigs:
+        - "{{ alertmanager_config_slack_receiver }}"
+alertmanager_config_slack_spec_overrides: {}
+alertmanager_config_slack_spec: >-
+  {{-
+    alertmanager_config_slack_spec_defaults |
+      combine(alertmanager_config_slack_spec_overrides, recursive = True)
+  }}

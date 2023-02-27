@@ -23,7 +23,7 @@ consul_release_defaults:
     replicas: "{{ consul_server_replicas }}"
   global:
     metrics:
-      enabled: "{{ azimuth_management_cluster_monitoring_enabled }}"
+      enabled: true
       enableAgentMetrics: true
       enableGatewayMetrics: false
 consul_release_overrides: {}

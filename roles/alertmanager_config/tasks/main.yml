@@ -1,0 +1,32 @@
+---
+
+- name: Install Slack webhook URL secret
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ alertmanager_config_slack_webhook_secret_definition | to_nice_yaml }}"
+  vars:
+    alertmanager_config_slack_webhook_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ alertmanager_config_slack_webhook_secret_name }}"
+        namespace: "{{ alertmanager_config_namespace }}"
+        labels: "{{ alertmanager_config_labels }}"
+      stringData: >-
+        {{-
+          { alertmanager_config_slack_webhook_secret_key: alertmanager_config_slack_webhook_url }
+        }}
+
+- name: Install alertmanager configuration for Slack alerts
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ alertmanager_config_slack_definition | to_nice_yaml }}"
+  vars:
+    alertmanager_config_slack_definition:
+      apiVersion: monitoring.coreos.com/v1alpha1
+      kind: AlertmanagerConfig
+      metadata:
+        name: "{{ alertmanager_config_slack_name }}"
+        namespace: "{{ alertmanager_config_namespace }}"
+        labels: "{{ alertmanager_config_labels }}"
+      spec: "{{ alertmanager_config_slack_spec }}"

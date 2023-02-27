@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.master.715
+azimuth_chart_version: 0.1.0-dev.0.feature-tunable-probes.722
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -19,8 +19,6 @@ azimuth_apps_enabled: yes
 azimuth_clusters_enabled: yes
 #   Indicates if Kubernetes clusters should be enabled
 azimuth_kubernetes_enabled: yes
-#   Indicates if Prometheus metrics should be exported from the api
-azimuth_monitoring_enabled: "{{ azimuth_management_cluster_monitoring_enabled | default(yes) }}"
 
 # Ingress settings
 #   The hostname to use for the ingress resource
@@ -723,6 +721,10 @@ azimuth_release_defaults:
           else {}
         )
     }}
+  # Enable the API monitoring by default
+  api:
+    monitoring:
+      enabled: true
   # Disable the internal Consul, Zenith, CAPI operator and AWX instances
   # These will be removed from the chart in future versions
   consul:
@@ -733,9 +735,6 @@ azimuth_release_defaults:
     enabled: false
   awx:
     enabled: false
-  api:
-    monitoring:
-      enabled: "{{ azimuth_monitoring_enabled }}"
 azimuth_release_overrides: {}
 azimuth_release_values: >-
   {{-

@@ -3,7 +3,7 @@
 # The chart to use
 ingress_nginx_chart_repo: https://kubernetes.github.io/ingress-nginx
 ingress_nginx_chart_name: ingress-nginx
-ingress_nginx_chart_version: 4.4.0
+ingress_nginx_chart_version: 4.4.2
 
 # Release information for the NGINX ingress controller release
 ingress_nginx_release_namespace: ingress-nginx
@@ -16,13 +16,9 @@ ingress_nginx_wait_timeout: 10m
 ingress_nginx_release_defaults:
   controller:
     metrics:
-      # Whether to export Prometheus-style metrics to be scraped by kube-prometheus-stack
-      enabled: "{{ azimuth_management_cluster_monitoring_enabled | default(true) }}"
+      enabled: true
       serviceMonitor:
         enabled: true
-        namespace: monitoring-system
-        additionalLabels:
-          release: kube-prometheus-stack
 ingress_nginx_release_overrides: {}
 ingress_nginx_release_values: >-
   {{-
