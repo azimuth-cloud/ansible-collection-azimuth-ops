@@ -72,6 +72,7 @@
         - include_role:
             name: stackhpc.azimuth_ops.certmanager
           vars:
+            certmanager_monitoring_enabled: no
             certmanager_acmehttp01issuer_enabled: no
 
         - include_role:

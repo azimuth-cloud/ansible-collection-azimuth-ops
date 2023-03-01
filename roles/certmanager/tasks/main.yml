@@ -36,6 +36,24 @@
     wait: yes
     wait_timeout: "{{ certmanager_wait_timeout }}"
 
+- name: Install Grafana dashboard for cert-manager metrics
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ certmanager_dashboard_definition | to_nice_yaml }}"
+  vars:
+    certmanager_dashboard_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: cert-manager-grafana-dashboard
+        namespace: "{{ certmanager_release_namespace }}"
+        labels:
+          grafana_dashboard: "1"
+      data:
+        certmanager_dashboard.json: >-
+          {{ lookup("file", "grafana_dashboard.json") | from_json | to_nice_json }}
+  when: certmanager_monitoring_enabled
+
 - block:
     - name: Check if EAB secret exists
       command: >-

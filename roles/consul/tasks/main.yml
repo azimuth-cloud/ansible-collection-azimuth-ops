@@ -52,16 +52,16 @@
         )
       }}
 
-- name: Install ServiceMonitor for Consul metrics
+- name: Install ServiceMonitor for Consul server metrics
   command: kubectl apply -f -
   args:
-    stdin: "{{ consul_servicemonitor_definition | to_nice_yaml }}"
+    stdin: "{{ consul_servicemonitor_server_definition | to_nice_yaml }}"
   vars:
-    consul_servicemonitor_definition:
+    consul_servicemonitor_server_definition:
       apiVersion: monitoring.coreos.com/v1
       kind: ServiceMonitor
       metadata:
-        name: "{{ consul_release_name }}"
+        name: "{{ consul_release_name }}-server"
         namespace: "{{ consul_release_namespace }}"
       spec:
         endpoints:
@@ -75,6 +75,30 @@
             app: "{{ consul_release_name }}"
             release: "{{ consul_release_name }}"
             component: server
+
+- name: Install ServiceMonitor for Consul client metrics
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ consul_servicemonitor_client_definition | to_nice_yaml }}"
+  vars:
+    consul_servicemonitor_client_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: "{{ consul_release_name }}-client"
+        namespace: "{{ consul_release_namespace }}"
+      spec:
+        endpoints:
+          - port: http
+            path: /v1/agent/metrics
+        namespaceSelector:
+          matchNames:
+            - "{{ consul_release_namespace }}"
+        selector:
+          matchLabels:
+            app: "{{ consul_release_name }}"
+            release: "{{ consul_release_name }}"
+            component: client
 
 - name: Install Grafana dashboard for Consul metrics
   command: kubectl apply -f -

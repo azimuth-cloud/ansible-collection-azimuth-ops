@@ -16,6 +16,7 @@ kube_prometheus_stack_wait_timeout: 10m
 kube_prometheus_stack_release_defaults:
   prometheus:
     prometheusSpec:
+      podMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelectorNilUsesHelmValues: false
   grafana:
     sidecar:

@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.1-dev.0.main.185
+capi_cluster_chart_version: 0.1.1-dev.0.feature-monitoring-tidy.186
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -156,14 +156,12 @@ capi_cluster_control_plane_root_volume_availability_zone: "{{ capi_cluster_root_
 capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 
 # Configuration for addons
-#   Enable kube-prometheus-stack monitoring
-capi_cluster_addons_monitoring: true
 #   Require the specification of a pre-allocated IP for the ingress load balancer
 #   This IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
   {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
-# Options for LoadBalancer services
-# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
+#   Options for LoadBalancer services
+#   https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
 capi_cluster_addons_openstack_loadbalancer_method:
 capi_cluster_addons_openstack_loadbalancer_provider:
 capi_cluster_addons_openstack_loadbalancer_create_monitor:
@@ -173,17 +171,23 @@ capi_cluster_addons_openstack_loadbalancer_monitor_timeout:
 capi_cluster_addons_openstack_loadbalancer_flavor_id:
 capi_cluster_addons_openstack_loadbalancer_availability_zone:
 capi_cluster_addons_openstack_loadbalancer_max_shared_lb:
-# The metadata search order
+#   The metadata search order
 capi_cluster_addons_openstack_metadata_search_order:
-# Options for OpenStack block storage
-# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/cinder-csi-plugin/using-cinder-csi-plugin.md#block-storage
+#   Options for OpenStack block storage
+#   https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/cinder-csi-plugin/using-cinder-csi-plugin.md#block-storage
 capi_cluster_addons_openstack_block_storage_node_volume_attach_limit:
 capi_cluster_addons_openstack_block_storage_rescan_on_resize:
 capi_cluster_addons_openstack_block_storage_ignore_volume_az: true
-# The availability zone for the default Cinder CSI storage class
+#   The availability zone for the default Cinder CSI storage class
 capi_cluster_addons_csi_cinder_availability_zone: nova
-# The Cinder volume type for the default Cinder CSI storage class
+#   The Cinder volume type for the default Cinder CSI storage class
 capi_cluster_addons_csi_cinder_volume_type:
+#   Retention settings for Prometheus metrics
+#   The metrics will be retained either for the retention time or until the volume is full
+capi_cluster_addons_monitoring_prometheus_retention: 90d
+capi_cluster_addons_monitoring_prometheus_volume_size: 10Gi
+#   The size of the volume for Loki log retention
+capi_cluster_addons_monitoring_loki_volume_size: 10Gi
 
 # The values for the release
 capi_cluster_release_defaults:
@@ -306,20 +310,28 @@ capi_cluster_release_defaults:
             controller:
               service:
                 loadBalancerIP: "{{ capi_cluster_addons_ingress_load_balancer_ip }}"
-              # Only enable metrics here if global monitoring is enabled
-              metrics:
-                enabled: "{{ capi_cluster_addons_monitoring }}"
-                serviceMonitor:
-                  enabled: "{{ capi_cluster_addons_monitoring }}"
     # Configure monitoring and alerting
     monitoring:
-      enabled: "{{ capi_cluster_addons_monitoring }}"
+      enabled: true
       kubePrometheusStack:
         release:
-          # Set by kube_prometheus_stack/tasks/pre.yml
-          values: "{{ kube_prometheus_stack_release_values_fact }}"
-      
-    # Configure the CSI Cinder storage class
+          values:
+            prometheus:
+              prometheusSpec:
+                retention: "{{ capi_cluster_addons_monitoring_prometheus_retention }}"
+                storageSpec:
+                  volumeClaimTemplate:
+                    spec:
+                      resources:
+                        requests:
+                          storage: "{{ capi_cluster_addons_monitoring_prometheus_volume_size }}"
+      lokiStack:
+        release:
+          values:
+            loki:
+              persistence:
+                size: "{{ capi_cluster_addons_monitoring_loki_volume_size }}"
+    # Configure the OpenStack integrations
     openstack:
       cloudConfig:
         LoadBalancer: >-

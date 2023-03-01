@@ -22,9 +22,17 @@ certmanager_trust_bundle: |-
   {%- endif %}
 certmanager_trust_bundle_configmap_name: "{{ trust_bundle_configmap_name | default('certmanager-trust-bundle') }}"
 
+# Indicates whether the monitoring should be enabled
+# In a HA setup, this should be false on the seed node
+certmanager_monitoring_enabled: true
+
 # The values for the release
 certmanager_release_defaults:
   installCRDs: true
+  prometheus:
+    enabled: "{{ certmanager_monitoring_enabled }}"
+    servicemonitor:
+      enabled: "{{ certmanager_monitoring_enabled }}"
   # If using a custom trust bundle, mount the configmap over /etc/ssl/certs
   volumes: >-
     {{
