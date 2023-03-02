@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.1-dev.0.main.188
+capi_cluster_chart_version: 0.1.1-dev.0.main.190
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -182,6 +182,9 @@ capi_cluster_addons_openstack_block_storage_ignore_volume_az: true
 capi_cluster_addons_csi_cinder_availability_zone: nova
 #   The Cinder volume type for the default Cinder CSI storage class
 capi_cluster_addons_csi_cinder_volume_type:
+#   Retention settings for Alert Manager
+capi_cluster_addons_monitoring_alertmanager_retention: 168h
+capi_cluster_addons_monitoring_alertmanager_volume_size: 10Gi
 #   Retention settings for Prometheus metrics
 #   The metrics will be retained either for the retention time or until the volume is full
 capi_cluster_addons_monitoring_prometheus_retention: 90d
@@ -316,6 +319,15 @@ capi_cluster_release_defaults:
       kubePrometheusStack:
         release:
           values:
+            alertmanager:
+              alertmanagerSpec:
+                retention: "{{ capi_cluster_addons_monitoring_alertmanager_retention }}"
+                storage:
+                  volumeClaimTemplate:
+                    spec:
+                      resources:
+                        requests:
+                          storage: "{{ capi_cluster_addons_monitoring_alertmanager_volume_size }}"
             prometheus:
               prometheusSpec:
                 retention: "{{ capi_cluster_addons_monitoring_prometheus_retention }}"

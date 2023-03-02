@@ -114,5 +114,5 @@
         labels:
           grafana_dashboard: "1"
       data:
-        consul_dashboard.json: >-
+        consul_dashboard.json: |-
           {{ lookup("file", "grafana_dashboard.json") | from_json | to_nice_json }}

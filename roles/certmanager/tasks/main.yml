@@ -50,7 +50,7 @@
         labels:
           grafana_dashboard: "1"
       data:
-        certmanager_dashboard.json: >-
+        certmanager_dashboard.json: |-
           {{ lookup("file", "grafana_dashboard.json") | from_json | to_nice_json }}
   when: certmanager_monitoring_enabled
 

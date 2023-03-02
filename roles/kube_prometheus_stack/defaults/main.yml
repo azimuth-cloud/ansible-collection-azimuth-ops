@@ -26,7 +26,7 @@ kube_prometheus_stack_release_defaults:
     # Don't apply the namespace grouping by default
     config:
       route:
-        group_by: []
+        group_by: ['...']
     alertmanagerSpec:
       # Make sure that alertmanager finds configurations with the alertmanager name as a label
       alertmanagerConfigSelector:

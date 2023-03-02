@@ -25,6 +25,69 @@ alertmanager_config_slack_webhook_secret_key: slack-api-url
 # The name of the alertmanager config for the Slack webhook
 alertmanager_config_slack_name: alertmanager-slack-webhook
 
+# Templates for the Slack receiver
+alertmanager_config_slack_receiver_template_color: >-
+  {%- raw -%}
+  {{- if eq .Status "firing" -}}
+    {{- if eq .GroupLabels.severity "warning" -}}
+      warning
+    {{- else if eq .GroupLabels.severity "critical" -}}
+      danger
+    {{- else -}}
+      #439FE0
+    {{- end -}}
+  {{- else -}}
+    good
+  {{- end -}}
+  {%- endraw -%}
+alertmanager_config_slack_receiver_template_title: >-
+  {%- raw -%}
+  {{- if eq .Status "firing" -}}
+    [{{ .GroupLabels.severity | toUpper }}:{{ .Alerts.Firing | len }}]
+  {{- else -}}
+    [{{ .Status | toUpper }}]
+  {{- end }}
+  {{ .GroupLabels.alertname }}
+  {%- endraw -%}
+alertmanager_config_slack_receiver_template_text: |-
+  {%- raw -%}
+  {{- if eq .Status "firing" }}
+  {{- with .CommonAnnotations.summary }}
+  *Summary:* {{ . }}
+  {{- end }}
+  {{- end }}
+  {{- with .GroupLabels.namespace }}
+  *Namespace:* {{ . }}
+  {{- end }}
+  {{- if (index .Alerts 0).Labels.pod }}
+  *Affected pods*:
+  {{- if eq .Status "firing" }}
+  {{- range .Alerts.Firing }}
+    - {{ .Labels.pod }}
+  {{- end }}
+  {{- else }}
+  {{- range .Alerts }}
+    - {{ .Labels.pod }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- if eq .Status "firing" }}
+  {{- range .Alerts.Firing }}
+  {{- if .Annotations.description }}
+  {{- "\n" }}
+  {{ .Annotations.description }}
+  {{- else if .Annotations.message }}
+  {{- "\n" }}
+  {{ .Annotations.message }}
+  {{- end }}
+  {{- end }}
+  {{- with .CommonAnnotations.runbook_url }}
+  {{- "\n" }}
+  *Runbook URL:* {{ . }}
+  {{- end }}
+  {{- end }}
+  {%- endraw -%}
+
 # The Slack receiver config
 alertmanager_config_slack_receiver_defaults: >-
   {{-
@@ -33,7 +96,10 @@ alertmanager_config_slack_receiver_defaults: >-
         "name": alertmanager_config_slack_webhook_secret_name,
         "key":  alertmanager_config_slack_webhook_secret_key,
       },
-      "sendResolved": True
+      "color": alertmanager_config_slack_receiver_template_color,
+      "title": alertmanager_config_slack_receiver_template_title,
+      "text": alertmanager_config_slack_receiver_template_text,
+      "sendResolved": True,
     } |
       combine(
         { "channel": alertmanager_config_slack_webhook_channel }
@@ -52,6 +118,10 @@ alertmanager_config_slack_receiver: >-
 alertmanager_config_slack_spec_defaults:
   route:
     receiver: slack-notifications
+    groupBy:
+      - namespace
+      - severity
+      - alertname
     matchers:
       - name: alertname
         matchType: "!~"

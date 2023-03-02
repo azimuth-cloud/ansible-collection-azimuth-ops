@@ -84,5 +84,5 @@
         labels:
           grafana_dashboard: "1"
       data:
-        harbor_dashboard.json:
-          "{{ lookup('file', 'grafana_dashboard.json' ) | from_json | to_nice_json }}"
+        harbor_dashboard.json: |-
+          {{ lookup('file', 'grafana_dashboard.json' ) | from_json | to_nice_json }}
