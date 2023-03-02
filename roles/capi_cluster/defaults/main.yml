@@ -189,7 +189,8 @@ capi_cluster_addons_monitoring_alertmanager_volume_size: 10Gi
 #   The metrics will be retained either for the retention time or until the volume is full
 capi_cluster_addons_monitoring_prometheus_retention: 90d
 capi_cluster_addons_monitoring_prometheus_volume_size: 10Gi
-#   The size of the volume for Loki log retention
+#   Retention settings for logs in Loki
+capi_cluster_addons_monitoring_loki_retention: 744h
 capi_cluster_addons_monitoring_loki_volume_size: 10Gi
 
 # The values for the release
@@ -341,6 +342,9 @@ capi_cluster_release_defaults:
         release:
           values:
             loki:
+              config:
+                limits_config:
+                  retention_period: "{{ capi_cluster_addons_monitoring_loki_retention }}"
               persistence:
                 size: "{{ capi_cluster_addons_monitoring_loki_volume_size }}"
     # Configure the OpenStack integrations
