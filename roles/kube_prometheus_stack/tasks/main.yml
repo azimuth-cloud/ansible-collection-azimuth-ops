@@ -1,0 +1,14 @@
+---
+
+- name: Install kube-prometheus-stack on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ kube_prometheus_stack_chart_name }}"
+    chart_repo_url: "{{ kube_prometheus_stack_chart_repo }}"
+    chart_version: "{{ kube_prometheus_stack_chart_version }}"
+    release_namespace: "{{ kube_prometheus_stack_release_namespace }}"
+    release_name: "{{ kube_prometheus_stack_release_name }}"
+    release_values: "{{ kube_prometheus_stack_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ kube_prometheus_stack_wait_timeout }}"

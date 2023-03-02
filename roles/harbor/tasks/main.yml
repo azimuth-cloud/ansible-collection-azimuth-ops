@@ -69,3 +69,20 @@
         "{{ registry }}": ["{{ "{}/v2/{}".format(harbor_external_url, project.name) }}"],
         {% endfor %}
       }
+
+- name: Install Grafana dashboard for Harbor metrics
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ harbor_dashboard_definition | to_nice_yaml }}"
+  vars:
+    harbor_dashboard_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: harbor-grafana-dashboard
+        namespace: "{{ harbor_release_namespace }}"
+        labels:
+          grafana_dashboard: "1"
+      data:
+        harbor_dashboard.json: |-
+          {{ lookup('file', 'grafana_dashboard.json' ) | from_json | to_nice_json }}

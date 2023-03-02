@@ -142,6 +142,10 @@ harbor_release_defaults:
         size: "{{ harbor_persistence_pvc_registry_size }}"
       trivy:
         size: "{{ harbor_persistence_pvc_trivy_size }}"
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
 harbor_release_overrides: {}
 harbor_release_values: >-
   {{-

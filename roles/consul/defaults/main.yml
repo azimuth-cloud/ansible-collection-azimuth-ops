@@ -21,6 +21,11 @@ consul_release_defaults:
   fullnameOverride: "{{ consul_release_name }}"
   server:
     replicas: "{{ consul_server_replicas }}"
+  global:
+    metrics:
+      enabled: true
+      enableAgentMetrics: true
+      enableGatewayMetrics: false
 consul_release_overrides: {}
 consul_release_values: >-
   {{-

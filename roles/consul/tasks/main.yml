@@ -51,3 +51,68 @@
             first
         )
       }}
+
+- name: Install ServiceMonitor for Consul server metrics
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ consul_servicemonitor_server_definition | to_nice_yaml }}"
+  vars:
+    consul_servicemonitor_server_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: "{{ consul_release_name }}-server"
+        namespace: "{{ consul_release_namespace }}"
+      spec:
+        endpoints:
+          - port: http
+            path: /v1/agent/metrics
+        namespaceSelector:
+          matchNames:
+            - "{{ consul_release_namespace }}"
+        selector:
+          matchLabels:
+            app: "{{ consul_release_name }}"
+            release: "{{ consul_release_name }}"
+            component: server
+
+- name: Install ServiceMonitor for Consul client metrics
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ consul_servicemonitor_client_definition | to_nice_yaml }}"
+  vars:
+    consul_servicemonitor_client_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: "{{ consul_release_name }}-client"
+        namespace: "{{ consul_release_namespace }}"
+      spec:
+        endpoints:
+          - port: http
+            path: /v1/agent/metrics
+        namespaceSelector:
+          matchNames:
+            - "{{ consul_release_namespace }}"
+        selector:
+          matchLabels:
+            app: "{{ consul_release_name }}"
+            release: "{{ consul_release_name }}"
+            component: client
+
+- name: Install Grafana dashboard for Consul metrics
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ consul_dashboard_definition | to_nice_yaml }}"
+  vars:
+    consul_dashboard_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: consul-grafana-dashboard
+        namespace: "{{ consul_release_namespace }}"
+        labels:
+          grafana_dashboard: "1"
+      data:
+        consul_dashboard.json: |-
+          {{ lookup("file", "grafana_dashboard.json") | from_json | to_nice_json }}

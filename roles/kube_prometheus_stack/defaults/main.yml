@@ -1,0 +1,43 @@
+---
+
+# The chart to use
+kube_prometheus_stack_chart_repo: https://prometheus-community.github.io/helm-charts
+kube_prometheus_stack_chart_name: kube-prometheus-stack
+kube_prometheus_stack_chart_version: 45.4.0
+
+# Release information for the release
+kube_prometheus_stack_release_namespace: monitoring-system
+kube_prometheus_stack_release_name: kube-prometheus-stack
+
+# The timeout to wait for the release to become ready
+kube_prometheus_stack_wait_timeout: 10m
+
+# The values for the kube-prometheus-stack release
+kube_prometheus_stack_release_defaults:
+  prometheus:
+    prometheusSpec:
+      podMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelectorNilUsesHelmValues: false
+  grafana:
+    sidecar:
+      dashboards:
+        searchNamespace: ALL
+  alertmanager:
+    # Don't apply the namespace grouping by default
+    config:
+      route:
+        group_by: ['...']
+    alertmanagerSpec:
+      # Make sure that alertmanager finds configurations with the alertmanager name as a label
+      alertmanagerConfigSelector:
+        matchLabels:
+          alertmanager: "{{ kube_prometheus_stack_release_name }}-alertmanager"
+      # Do NOT add the namespace matcher to routes from AlertmanagerConfig resources
+      alertmanagerConfigMatcherStrategy:
+        type: None
+kube_prometheus_stack_release_overrides: {}
+kube_prometheus_stack_release_values: >-
+  {{-
+    kube_prometheus_stack_release_defaults |
+      combine(kube_prometheus_stack_release_overrides, recursive = True)
+  }}
