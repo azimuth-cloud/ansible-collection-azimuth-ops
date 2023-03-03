@@ -21,9 +21,7 @@ keycloak_external_db_password:
 keycloak_external_db_secret_name: "{{ keycloak_name }}-postgresql-auth"
 #   Settings for an internal database
 #     The name of the database resource
-keycloak_database_name: "{{ keycloak_name }}"
-#     The Postgres version to use for the database
-keycloak_database_version: 14
+keycloak_database_name: "{{ keycloak_name }}-db"
 #     The storage class to use for the database volume
 #     If left blank, the default storage class will be used
 keycloak_database_data_volume_storage_class:
@@ -35,54 +33,6 @@ keycloak_database_data_volume_size: 8Gi
 #     The size of the backup volume for the database
 #     By default, this is the same as the data volume
 keycloak_database_backup_volume_size: "{{ keycloak_database_data_volume_size }}"
-#     The spec of the database resource
-keycloak_database_spec_defaults:
-  postgresVersion: "{{ keycloak_database_version }}"
-  instances:
-    - name: instance1
-      dataVolumeClaimSpec: >-
-        {{-
-          {
-            "accessModes": ["ReadWriteOnce"],
-            "resources": {
-              "requests": {
-                "storage": keycloak_database_data_volume_size,
-              },
-            },
-          } |
-            combine(
-              { "storageClassName": keycloak_database_data_volume_storage_class }
-              if keycloak_database_data_volume_storage_class
-              else {}
-            )
-        }}
-  backups:
-    pgbackrest:
-      repos:
-        - name: repo1
-          volume:
-            volumeClaimSpec: >-
-              {{-
-                {
-                  "accessModes": ["ReadWriteOnce"],
-                  "resources": {
-                    "requests": {
-                      "storage": keycloak_database_backup_volume_size,
-                    },
-                  },
-                } |
-                  combine(
-                    { "storageClassName": keycloak_database_backup_volume_storage_class }
-                    if keycloak_database_backup_volume_storage_class
-                    else {}
-                  )
-              }}
-keycloak_database_spec_overrides: {}
-keycloak_database_spec: >-
-  {{-
-    keycloak_database_spec_defaults |
-      combine(keycloak_database_spec_overrides, recursive = True)
-  }}
 
 # The spec for the Keycloak instance
 keycloak_spec_defaults:
@@ -130,6 +80,8 @@ keycloak_spec_defaults:
     enabled: false
   # Use the additional options to disable strict HTTPS if TLS is disabled
   additionalOptions:
+    - name: metrics-enabled
+      value: "true"
     - name: hostname-strict-https
       value: "{{ 'true' if keycloak_ingress_tls_enabled else 'false' }}"
 keycloak_spec_overrides: {}

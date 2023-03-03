@@ -39,3 +39,28 @@
   loop_control:
     loop_var: watch
     label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
+
+- name: Install monitoring dashboards
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ pgo_dashboard_definition | to_nice_yaml }}"
+  vars:
+    pgo_dashboard_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: postgres-dashboards
+        namespace: "{{ pgo_namespace }}"
+        labels:
+          grafana_dashboard: "1"
+      data:
+        pgbackrest.json: |-
+          {{ lookup("file", "grafana_dashboards/pgbackrest.json") | from_json | to_nice_json }}
+        pod_details.json: |-
+          {{ lookup("file", "grafana_dashboards/pod_details.json") | from_json | to_nice_json }}
+        postgresql_details.json: |-
+          {{ lookup("file", "grafana_dashboards/postgresql_details.json") | from_json | to_nice_json }}
+        postgresql_service_health.json: |-
+          {{ lookup("file", "grafana_dashboards/postgresql_service_health.json") | from_json | to_nice_json }}
+        query_statistics.json: |-
+          {{ lookup("file", "grafana_dashboards/query_statistics.json") | from_json | to_nice_json }}

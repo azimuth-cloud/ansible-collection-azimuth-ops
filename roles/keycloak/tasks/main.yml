@@ -55,17 +55,17 @@
   when: keycloak_external_db_url
 
 - name: Deploy internal database for Keycloak
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ keycloak_database_definition | to_nice_yaml }}"
+  include_role:
+    name: stackhpc.azimuth_ops.postgres_operator
+    tasks_from: database.yml
+    defaults_from: database.yml
   vars:
-    keycloak_database_definition:
-      apiVersion: postgres-operator.crunchydata.com/v1beta1
-      kind: PostgresCluster
-      metadata:
-        name: "{{ keycloak_database_name }}"
-        namespace: "{{ keycloak_namespace }}"
-      spec: "{{ keycloak_database_spec }}"
+    pgo_database_name: "{{ keycloak_database_name }}"
+    pgo_database_namespace: "{{ keycloak_namespace }}"
+    pgo_database_data_volume_storage_class: "{{ keycloak_database_data_volume_storage_class }}"
+    pgo_database_backup_volume_storage_class: "{{ keycloak_database_backup_volume_storage_class }}"
+    pgo_database_data_volume_size: "{{ keycloak_database_data_volume_size }}"
+    pgo_database_backup_volume_size: "{{ keycloak_database_backup_volume_size }}"
   when: not keycloak_external_db_url
 
 - name: Install Keycloak instance
@@ -125,6 +125,53 @@
   until: keycloak_statefulset_wait is succeeded
   retries: 60
   delay: 10
+
+- name: Install metrics service for Keycloak
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_servicemonitor_definition | to_nice_yaml }}"
+  vars:
+    keycloak_servicemonitor_definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ keycloak_name }}-metrics"
+        namespace: "{{ keycloak_namespace }}"
+        labels:
+          app.kubernetes.io/managed-by: azimuth-ops
+          app: keycloak
+          instance: "{{ keycloak_name }}"
+      spec:
+        clusterIP: None
+        ports:
+          - name: metrics
+            port: 8080
+        selector:
+          app.kubernetes.io/managed-by: keycloak-operator
+          app: "{{ keycloak_name }}"
+
+- name: Install ServiceMonitor for Keycloak metrics
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_servicemonitor_definition | to_nice_yaml }}"
+  vars:
+    keycloak_servicemonitor_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: "{{ keycloak_name }}"
+        namespace: "{{ keycloak_namespace }}"
+      spec:
+        endpoints:
+          - port: metrics
+        namespaceSelector:
+          matchNames:
+            - "{{ keycloak_namespace }}"
+        selector:
+          matchLabels:
+            app.kubernetes.io/managed-by: azimuth-ops
+            app: keycloak
+            instance: "{{ keycloak_name }}"
   
 # We put the known Keycloak admin password in a secret
 # We want to make sure that it matches the variable
