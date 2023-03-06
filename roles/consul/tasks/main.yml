@@ -83,12 +83,12 @@
   vars:
     consul_servicemonitor_client_definition:
       apiVersion: monitoring.coreos.com/v1
-      kind: ServiceMonitor
+      kind: PodMonitor
       metadata:
         name: "{{ consul_release_name }}-client"
         namespace: "{{ consul_release_namespace }}"
       spec:
-        endpoints:
+        podMetricsEndpoints:
           - port: http
             path: /v1/agent/metrics
         namespaceSelector:
