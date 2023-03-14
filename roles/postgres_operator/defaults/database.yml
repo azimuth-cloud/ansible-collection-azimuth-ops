@@ -17,16 +17,13 @@ pgo_database_data_volume_size: 8Gi
 # The size of the backup volume for the database
 # By default, this is the same as the data volume
 pgo_database_backup_volume_size: "{{ pgo_database_data_volume_size }}"
-# The image to use for the monitoring sidecar
-pgo_database_pgmonitor_exporter_image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres-exporter:ubi8-5.3.1-0
 # The spec of the database resource
 pgo_database_spec_defaults:
   postgresVersion: "{{ pgo_database_version }}"
   # Enable the monitoring sidecar
   monitoring:
     pgmonitor:
-      exporter:
-        image: "{{ pgo_database_pgmonitor_exporter_image }}"
+      exporter: {}
   instances:
     - name: instance1
       dataVolumeClaimSpec: >-
