@@ -12,8 +12,7 @@ alertmanager_config_labels:
   alertmanager: "{{ _kube_prometheus_stack_release_name }}-alertmanager"
 
 # The Slack URL to use for the alertmanager Slack webhook
-alertmanager_config_slack_webhook_url: >-
-  {{ undef(hint = 'alertmanager_config_slack_webhook_url is required') }}
+alertmanager_config_slack_webhook_url:
 # The name of the channel to send alerts to
 # If not given, the default channel for the webhook will be used
 alertmanager_config_slack_webhook_channel:

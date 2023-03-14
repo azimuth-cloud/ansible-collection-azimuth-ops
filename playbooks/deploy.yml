@@ -6,7 +6,9 @@
   roles:
     # Configure alerting
     - role: stackhpc.azimuth_ops.alertmanager_config
-      when: alertmanager_config_slack_webhook_url is defined
+      when: >-
+        alertmanager_config_slack_webhook_url is defined and
+        alertmanager_config_slack_webhook_url
     - role: stackhpc.azimuth_ops.certmanager
       # cert-manager is required for Cluster API
       when: certmanager_enabled or azimuth_kubernetes_enabled
