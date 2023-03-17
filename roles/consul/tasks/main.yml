@@ -76,12 +76,12 @@
             release: "{{ consul_release_name }}"
             component: server
 
-- name: Install ServiceMonitor for Consul client metrics
+- name: Install PodMonitor for Consul client metrics
   command: kubectl apply -f -
   args:
-    stdin: "{{ consul_servicemonitor_client_definition | to_nice_yaml }}"
+    stdin: "{{ consul_podmonitor_client_definition | to_nice_yaml }}"
   vars:
-    consul_servicemonitor_client_definition:
+    consul_podmonitor_client_definition:
       apiVersion: monitoring.coreos.com/v1
       kind: PodMonitor
       metadata:

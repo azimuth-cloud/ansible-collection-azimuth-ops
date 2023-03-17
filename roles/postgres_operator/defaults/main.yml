@@ -1,0 +1,37 @@
+---
+
+# The namespace in which the Postgres Operator should be deployed
+pgo_namespace: postgres-operator
+
+# The repository to install the postgres-operator from
+pgo_repository: https://github.com/CrunchyData/postgres-operator-examples.git
+
+# The version of the install repository to use
+pgo_repository_version: af88ad9c0d0a827e12115c8771dd09f1dcc8a713
+
+# List of bases to install
+pgo_kustomization_bases:
+  - "{{ pgo_repository }}//kustomize/install/default?ref={{ pgo_repository_version }}"
+
+# List of patches to apply to the resources in the manifests
+pgo_kustomization_patches: []
+
+# The kustomization to use for Cluster API
+pgo_kustomization:
+  namespace: "{{ pgo_namespace }}"
+  bases: "{{ pgo_kustomization_bases }}"
+  patches: "{{ pgo_kustomization_patches }}"
+
+# Use a directory in $HOME for the kustomization by default
+pgo_kustomization_directory: "{{ (ansible_env.HOME, 'postgres-operator') | path_join }}"
+
+# List of resources to watch for completeness
+pgo_watches:
+  - kind: deployment
+    namespace: "{{ pgo_namespace }}"
+    name: pgo
+    condition: Available
+  - kind: deployment
+    namespace: "{{ pgo_namespace }}"
+    name: pgo-upgrade
+    condition: Available

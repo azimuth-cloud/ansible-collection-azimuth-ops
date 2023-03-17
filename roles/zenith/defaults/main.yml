@@ -3,7 +3,7 @@
 # The chart to use
 zenith_chart_repo: https://stackhpc.github.io/zenith
 zenith_chart_name: zenith-server
-zenith_chart_version: 0.1.0-dev.0.main.177
+zenith_chart_version: 0.1.0-dev.0.main.206
 
 # Release information for the Zenith release
 # Use the same namespace as the Azimuth release by default
@@ -53,6 +53,7 @@ zenith_registrar_reserved_subdomains: >-
       ingress_harbor_core_subdomain | default(None),
       ingress_harbor_notary_subdomain | default(None),
       ingress_cloud_metrics_grafana_subdomain | default(None),
+      ingress_keycloak_subdomain | default(None),
     ] |
     select() |
     list
@@ -71,64 +72,6 @@ zenith_consul_server_port: >-
     if consul_server_port is defined
     else undef(hint = 'zenith_consul_server_port is required')
   }}
-
-# Settings for the auth callout
-#   The URL for the auth callout
-#   If not set, no auth callout is configured
-_azimuth_release_name: "{{ azimuth_release_name | default('azimuth') }}"
-_azimuth_api_service_name: >-
-  {{
-    "{}-api".format(
-      _azimuth_release_name
-      if 'azimuth' in _azimuth_release_name
-      else "{}-azimuth".format(_azimuth_release_name)
-    )
-  }}
-zenith_auth_url: >-
-  {{
-    "http://{}.{}.svc.cluster.local/api/session/verify/".format(
-      _azimuth_api_service_name,
-      azimuth_release_namespace | default('azimuth')
-    )
-  }}
-#   The URL to redirect to when the verify URL returns a 401
-#   If not set, the 401 will just be returned
-_azimuth_ingress_tls_enabled: >-
-  {{-
-    azimuth_ingress_tls_enabled
-    if azimuth_ingress_tls_enabled is defined
-    else (ingress_tls_enabled | default(True))
-  }}
-_azimuth_ingress_host: >-
-  {{-
-    azimuth_ingress_host
-    if azimuth_ingress_host is defined
-    else (
-      "{}.{}".format(ingress_azimuth_portal_subdomain, ingress_base_domain)
-      if ingress_azimuth_portal_subdomain is defined and ingress_base_domain is defined
-      else None
-    )
-  }}
-zenith_auth_signin_url: >-
-  {{
-    "{}://{}/auth/login".format(
-      'https' if _azimuth_ingress_tls_enabled else 'http',
-      _azimuth_ingress_host
-    )
-    if _azimuth_ingress_host
-    else undef(hint = 'zenith_auth_signin_url is required')
-  }}
-#   The URL parameter to contain the original URL when redirecting
-zenith_auth_next_url_param: next
-#   Dictionary of headers to set for authentication requests
-#   These will override headers from the incoming request, which would otherwise be forwarded
-#   In particular, you may need to override the accepts header to suit the content types served
-#   by the external authentication service
-zenith_auth_request_headers:
-  accept: application/json
-#   List of headers from the authentication response to add to the upstream request
-zenith_auth_response_headers:
-  - X-Remote-User
 
 # The namespace to create Zenith services in
 zenith_sync_target_namespace: zenith-services
@@ -163,12 +106,17 @@ zenith_release_defaults:
       kubernetes:
         targetNamespace: "{{ zenith_sync_target_namespace }}"
         ingress:
-          auth:
-            url: "{{ zenith_auth_url }}"
-            signinUrl: "{{ zenith_auth_signin_url }}"
-            nextUrlParam: "{{ zenith_auth_next_url_param }}"
-            requestHeaders: "{{ zenith_auth_request_headers }}"
-            responseHeaders: "{{ zenith_auth_response_headers }}"
+          oidc:
+            # Enable OIDC discovery
+            # The identity operator will provide the secrets
+            discoveryEnabled: true
+            # Allow the Keycloak IDP hint to be forwarded
+            # This allows us to specify Azimuth auth when redirecting from Azimuth,
+            # while allowing any auth when visiting the service URL directly
+            forwardedQueryParams:
+              - name: kc_idp_hint
+                allow:
+                  - pattern: ".*"
   registrar:
     ingress:
       subdomain: "{{ zenith_ingress_registrar_subdomain }}"

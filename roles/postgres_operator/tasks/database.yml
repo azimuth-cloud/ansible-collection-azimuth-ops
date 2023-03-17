@@ -1,0 +1,38 @@
+---
+
+- name: "Install PostgresCluster instance - {{ pgo_database_name }}"
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ pgo_database_definition | to_nice_yaml }}"
+  vars:
+    pgo_database_definition:
+      apiVersion: postgres-operator.crunchydata.com/v1beta1
+      kind: PostgresCluster
+      metadata:
+        name: "{{ pgo_database_name }}"
+        namespace: "{{ pgo_database_namespace }}"
+      spec: "{{ pgo_database_spec }}"
+
+- name: "Install PodMonitor for database metrics - {{ pgo_database_name }}"
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ pgo_database_servicemonitor_definition | to_nice_yaml }}"
+  vars:
+    pgo_database_servicemonitor_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PodMonitor
+      metadata:
+        name: "{{ pgo_database_name }}"
+        namespace: "{{ pgo_database_namespace }}"
+      spec:
+        podMetricsEndpoints:
+          - port: exporter
+            relabelings: "{{ pgo_servicemonitor_relabelings }}"
+        namespaceSelector:
+          matchNames:
+            - "{{ pgo_database_namespace }}"
+        selector:
+          matchLabels:
+            postgres-operator.crunchydata.com/data: postgres
+            postgres-operator.crunchydata.com/crunchy-postgres-exporter: "true"
+            postgres-operator.crunchydata.com/cluster: "{{ pgo_database_name }}"

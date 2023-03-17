@@ -1,0 +1,295 @@
+---
+
+- name: Create Keycloak namespace
+  command: kubectl create namespace {{ keycloak_namespace }}
+  register: keycloak_operator_create_namespace
+  changed_when: keycloak_operator_create_namespace.rc == 0
+  failed_when: >-
+    keycloak_operator_create_namespace.rc != 0 and
+    'AlreadyExists' not in keycloak_operator_create_namespace.stderr
+
+- name: Make kustomization directory
+  file:
+    path: "{{ keycloak_operator_kustomization_directory }}"
+    state: directory
+
+- name: Write kustomization file
+  copy:
+    content: "{{ keycloak_operator_kustomization | to_nice_yaml }}"
+    dest: "{{ keycloak_operator_kustomization_directory }}/kustomization.yaml"
+
+- name: Install Keycloak operator resources
+  command: kubectl apply -k {{ keycloak_operator_kustomization_directory }}
+
+- name: Wait for Keycloak operator to become ready
+  command: >-
+    kubectl rollout status
+      --namespace {{ watch.namespace }}
+      --timeout 1s
+      {{ watch.kind }}/{{ watch.name }}
+  changed_when: false
+  register: keycloak_operator_wait
+  until: keycloak_operator_wait is succeeded
+  retries: 60
+  delay: 10
+  loop: "{{ keycloak_operator_watches }}"
+  loop_control:
+    loop_var: watch
+    label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
+
+- name: Ensure Keycloak database secret exists for external DB
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_external_db_secret_definition | to_nice_yaml }}"
+  vars:
+    keycloak_external_db_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ keycloak_external_db_secret_name }}"
+        namespace: "{{ keycloak_namespace }}"
+        labels: "{{ keycloak_labels }}"
+      stringData:
+        user: "{{ keycloak_external_db_user }}"
+        password: "{{ keycloak_external_db_password }}"
+  when: keycloak_external_db_url
+
+- name: Deploy internal database for Keycloak
+  include_role:
+    name: stackhpc.azimuth_ops.postgres_operator
+    tasks_from: database.yml
+    defaults_from: database.yml
+  vars:
+    pgo_database_name: "{{ keycloak_database_name }}"
+    pgo_database_namespace: "{{ keycloak_namespace }}"
+    pgo_database_data_volume_storage_class: "{{ keycloak_database_data_volume_storage_class }}"
+    pgo_database_backup_volume_storage_class: "{{ keycloak_database_backup_volume_storage_class }}"
+    pgo_database_data_volume_size: "{{ keycloak_database_data_volume_size }}"
+    pgo_database_backup_volume_size: "{{ keycloak_database_backup_volume_size }}"
+  when: not keycloak_external_db_url
+
+- name: Install Keycloak instance
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_instance_definition | to_nice_yaml }}"
+  vars:
+    keycloak_instance_definition:
+      apiVersion: k8s.keycloak.org/v2alpha1
+      kind: Keycloak
+      metadata:
+        name: "{{ keycloak_name }}"
+        namespace: "{{ keycloak_namespace }}"
+        labels: "{{ keycloak_labels }}"
+      spec: "{{ keycloak_spec }}"
+
+- name: Install Keycloak TLS certificate
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_ingress_tls_secret_definition | to_nice_yaml }}"
+  vars:
+    keycloak_ingress_tls_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ keycloak_ingress_tls_secret_name }}"
+        namespace: "{{ keycloak_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ keycloak_ingress_tls_certificate }}"
+        tls.key: "{{ keycloak_ingress_tls_key }}"
+  when: keycloak_ingress_tls_certificate
+
+- name: Install Keycloak ingress
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_ingress_definition | to_nice_yaml }}"
+  vars:
+    keycloak_ingress_definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "{{ keycloak_ingress_name }}"
+        namespace: "{{ keycloak_namespace }}"
+        labels: "{{ keycloak_labels }}"
+        annotations: "{{ keycloak_ingress_annotations }}"
+      spec: "{{ keycloak_ingress_spec }}"
+
+- name: Wait for Keycloak to become available
+  command: >-
+    kubectl rollout status
+      --namespace {{ keycloak_namespace }}
+      --timeout 1s
+      statefulset/{{ keycloak_name }}
+  changed_when: false
+  register: keycloak_statefulset_wait
+  until: keycloak_statefulset_wait is succeeded
+  retries: 60
+  delay: 10
+
+- name: Install metrics service for Keycloak
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_servicemonitor_definition | to_nice_yaml }}"
+  vars:
+    keycloak_servicemonitor_definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ keycloak_name }}-metrics"
+        namespace: "{{ keycloak_namespace }}"
+        labels:
+          app.kubernetes.io/managed-by: azimuth-ops
+          app: keycloak
+          instance: "{{ keycloak_name }}"
+      spec:
+        clusterIP: None
+        ports:
+          - name: metrics
+            port: 8080
+        selector:
+          app.kubernetes.io/managed-by: keycloak-operator
+          app: "{{ keycloak_name }}"
+
+- name: Install ServiceMonitor for Keycloak metrics
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_servicemonitor_definition | to_nice_yaml }}"
+  vars:
+    keycloak_servicemonitor_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: "{{ keycloak_name }}"
+        namespace: "{{ keycloak_namespace }}"
+      spec:
+        endpoints:
+          - port: metrics
+        namespaceSelector:
+          matchNames:
+            - "{{ keycloak_namespace }}"
+        selector:
+          matchLabels:
+            app.kubernetes.io/managed-by: azimuth-ops
+            app: keycloak
+            instance: "{{ keycloak_name }}"
+  
+# We put the known Keycloak admin password in a secret
+# We want to make sure that it matches the variable
+- name: Get current Keycloak admin creds
+  command: >-
+    kubectl get secret {{ keycloak_admin_creds_secret_name }}
+      --namespace {{ keycloak_namespace }}
+      --output json
+  register: keycloak_admin_creds_secret_cmd
+  changed_when: false
+  failed_when: >-
+    keycloak_admin_creds_secret_cmd.rc != 0 and
+    "NotFound" not in keycloak_admin_creds_secret_cmd.stderr
+
+- name: Extract current Keycloak username and password
+  set_fact:
+    keycloak_admin_password_current: >-
+      {{-
+        keycloak_admin_creds_secret_cmd.stdout |
+          from_json |
+          json_query("data.password") |
+          b64decode
+      }}
+  when: keycloak_admin_creds_secret_cmd.rc == 0
+
+- name: Get initial Keycloak admin password
+  block:
+    - name: Get initial admin password secret
+      command: >-
+        kubectl get secret {{ keycloak_initial_admin_secret_name }}
+          --namespace {{ keycloak_namespace }}
+          --output json
+      register: keycloak_initial_admin_secret_cmd
+
+    - name: Set Keycloak admin current password fact
+      set_fact:
+        keycloak_admin_password_current: >-
+          {{-
+            keycloak_initial_admin_secret_cmd.stdout |
+              from_json |
+              json_query("data.password") |
+              b64decode
+          }}
+  when: keycloak_admin_creds_secret_cmd.rc != 0
+
+- name: Update Keycloak admin password
+  block:
+    - name: Get Keycloak admin token
+      uri:
+        url: "{{ keycloak_base_url }}/realms/master/protocol/openid-connect/token"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          grant_type: password
+          client_id: admin-cli
+          username: "{{ keycloak_admin_username }}"
+          password: "{{ keycloak_admin_password_current }}"
+        ca_path: "{{ keycloak_ca_path or omit }}"
+        validate_certs: "{{ keycloak_validate_certs }}"
+      register: keycloak_admin_token_req
+      # This is the first task that tries to access the Keycloak API, so retry when
+      # there is an SSL error (reported as -1)
+      retries: 60
+      delay: 10
+      until: keycloak_admin_token_req.status != -1
+
+    - name: Set Keycloak admin token fact
+      set_fact:
+        keycloak_admin_token: "{{ keycloak_admin_token_req.json.access_token }}"
+
+    - name: Get Keycloak master realm users
+      uri:
+        url: "{{ keycloak_base_url }}/admin/realms/master/users"
+        method: GET
+        headers:
+          authorization: "Bearer {{ keycloak_admin_token }}"
+        ca_path: "{{ keycloak_ca_path or omit }}"
+        validate_certs: "{{ keycloak_validate_certs }}"
+      register: keycloak_realm_users_req
+
+    - name: Set Keycloak admin user ID fact
+      set_fact:
+        keycloak_admin_user_id: >-
+          {{-
+            keycloak_realm_users_req.json |
+              selectattr("username", "eq", keycloak_admin_username) |
+              first |
+              json_query("id")
+          }}
+
+    - name: Set Keycloak admin password
+      uri:
+        url: "{{ keycloak_base_url }}/admin/realms/master/users/{{ keycloak_admin_user_id }}/reset-password"
+        method: PUT
+        headers:
+          authorization: "Bearer {{ keycloak_admin_token }}"
+        body_format: json
+        body:
+          type: password
+          temporary: false
+          value: "{{ keycloak_admin_password }}"
+        ca_path: "{{ keycloak_ca_path or omit }}"
+        validate_certs: "{{ keycloak_validate_certs }}"
+        status_code: [204]
+
+    - name: Update Keycloak admin credential secret
+      command: kubectl apply -f -
+      args:
+        stdin: "{{ keycloak_admin_creds_secret_definition | to_nice_yaml }}"
+      vars:
+        keycloak_admin_creds_secret_definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "{{ keycloak_admin_creds_secret_name }}"
+            namespace: "{{ keycloak_namespace }}"
+            labels: "{{ keycloak_labels }}"
+          stringData:
+            username: "{{ keycloak_admin_username }}"
+            password: "{{ keycloak_admin_password }}"
+  when: keycloak_admin_password != keycloak_admin_password_current
