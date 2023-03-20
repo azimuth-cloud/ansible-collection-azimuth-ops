@@ -1,0 +1,33 @@
+---
+- name: Install Azimuth CAPI operator on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ azimuth_caas_operator_chart_name }}"
+    chart_repo_url: "{{ azimuth_caas_operator_chart_repo }}"
+    chart_version: "{{ azimuth_caas_operator_chart_version }}"
+    release_namespace: "{{ azimuth_caas_operator_release_namespace }}"
+    release_name: "{{ azimuth_caas_operator_release_name }}"
+    release_values: "{{ azimuth_caas_operator_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ azimuth_caas_operator_wait_timeout }}"
+
+- name: Install Azimuth CAPI cluster templates
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ template_definition | to_nice_yaml }}"
+  vars:
+    template_definition:
+      apiVersion: azimuth.stackhpc.com/v1alpha1
+      kind: ClusterTemplate
+      metadata:
+        name: "{{ template.name }}"
+      spec: "{{ template.spec }}"
+  loop: >-
+    {{-
+      azimuth_caas_operator_cluster_templates |
+        dict2items(key_name = 'name', value_name = 'spec')
+    }}
+  loop_control:
+    loop_var: template
+    label: "{{ template.name }}"
