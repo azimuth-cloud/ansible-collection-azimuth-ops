@@ -20,6 +20,8 @@ azimuth_apps_enabled: yes
 azimuth_clusters_enabled: yes
 #   Indicates if Kubernetes clusters should be enabled
 azimuth_kubernetes_enabled: yes
+# TODO: this turns off awx based clusters!!
+azimuth_caas_crd_enabled: yes
 
 # Ingress settings
 #   The hostname to use for the ingress resource
@@ -702,6 +704,10 @@ azimuth_release_defaults:
           "adminPasswordSecretName": azimuth_caas_awx_admin_password_secret_name,
           "executionEnvironment": azimuth_caas_awx_ee,
           "defaultProjects": azimuth_caas_awx_projects,
+          "enabled": False if azimuth_caas_crd_enabled else True,
+        },
+        "caas_crd": {
+          "enabled": True if azimuth_caas_crd_enabled else False,
         },
         "terraformBackend": {
           "enabled": azimuth_caas_terraform_enabled,
