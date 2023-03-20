@@ -7,9 +7,9 @@
     release_namespace: "{{ azimuth_caas_operator_release_namespace }}"
     release_name: "{{ azimuth_caas_operator_release_name }}"
     release_values: "{{ azimuth_caas_operator_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ azimuth_caas_operator_wait_timeout }}"
 
 - name: Install Azimuth CAPI cluster templates
@@ -31,3 +31,6 @@
   loop_control:
     loop_var: template
     label: "{{ template.name }}"
+  tags:
+    # TODO: we should add a changed_when
+    - skip_ansible_lint
