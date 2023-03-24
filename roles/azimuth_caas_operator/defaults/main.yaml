@@ -16,4 +16,4 @@ azimuth_caas_operator_wait_timeout: 5m
 azimuth_caas_operator_release_values: {}
 
 # TODO: copy in existing awx templates somehow?
-azimuth_caas_operator_cluster_templates: []
+azimuth_caas_operator_cluster_templates: {}
