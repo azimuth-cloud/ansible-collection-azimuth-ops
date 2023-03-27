@@ -18,7 +18,7 @@
     stdin: "{{ template_definition | to_nice_yaml }}"
   vars:
     template_definition:
-      apiVersion: azimuth.stackhpc.com/v1alpha1
+      apiVersion: caas.azimuth.stackhpc.com/v1alpha1
       kind: ClusterTemplate
       metadata:
         name: "{{ template.name }}"
