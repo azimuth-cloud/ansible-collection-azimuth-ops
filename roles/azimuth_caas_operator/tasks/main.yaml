@@ -19,7 +19,7 @@
   vars:
     template_definition:
       apiVersion: caas.azimuth.stackhpc.com/v1alpha1
-      kind: ClusterTemplate
+      kind: ClusterType
       metadata:
         name: "{{ template.name }}"
       spec: "{{ template.spec }}"
