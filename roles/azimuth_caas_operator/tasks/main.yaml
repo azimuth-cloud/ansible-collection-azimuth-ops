@@ -1,5 +1,5 @@
 ---
-- name: Install Azimuth CAPI operator on target Kubernetes cluster
+- name: Install Azimuth CaaS operator on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_caas_operator_chart_name }}"
     chart_repo_url: "{{ azimuth_caas_operator_chart_repo }}"
@@ -12,7 +12,7 @@
     wait: true
     wait_timeout: "{{ azimuth_caas_operator_wait_timeout }}"
 
-- name: Install Azimuth CAPI cluster templates
+- name: Install Azimuth CaaS cluster templates
   command: kubectl apply -f -
   args:
     stdin: "{{ template_definition | to_nice_yaml }}"
