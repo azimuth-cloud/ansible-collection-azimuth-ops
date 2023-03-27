@@ -16,4 +16,12 @@ azimuth_caas_operator_wait_timeout: 5m
 azimuth_caas_operator_release_values: {}
 
 # TODO: copy in existing awx templates somehow?
-azimuth_caas_operator_cluster_templates: {}
+azimuth_caas_operator_cluster_templates:
+  - name: "quick-test"
+    spec:
+      uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/azimuth-caas-operator/d977b04df85d7492ba726daf249709731130e6cf/tools/ui_meta_quick_test.yaml"
+      gitUrl: "https://github.com/ansible/ansible-runner"
+      gitVersion: "devel"
+      playbook: "demo/project/test.yml"
+      extraVars:
+        foo: "bar"
