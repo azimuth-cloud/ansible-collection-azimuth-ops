@@ -7,7 +7,7 @@ azimuth_caas_operator_chart_version: 0.1.1
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
 azimuth_caas_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
-azimuth_caas_operator_release_name: azimuth-capi-operator
+azimuth_caas_operator_release_name: azimuth-caas-operator
 
 # The timeout to wait for CAPI operator to become ready
 azimuth_caas_operator_wait_timeout: 5m
