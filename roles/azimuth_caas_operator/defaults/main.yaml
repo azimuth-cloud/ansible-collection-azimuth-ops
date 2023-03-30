@@ -15,8 +15,38 @@ azimuth_caas_operator_wait_timeout: 5m
 # TODO: needs to configure some env vars for the operato
 azimuth_caas_operator_release_values: {}
 
+
+# TODO: this is a duplicate right now, from azimuth playbooks!
+
+# The ID of the image for use with the StackHPC workstation
+# By default, use the workstation image from community images if available
+azimuth_caas_crd_workstation_image: >-
+  {{-
+    (
+      community_images_image_ids.workstation_20221017_1036
+      if (
+        community_images_image_ids is defined and
+        'workstation_20221017_1036' in community_images_image_ids
+      )
+      else undef(hint = 'azimuth_caas_stackhpc_workstation_image is required')
+    )
+    if azimuth_caas_stackhpc_workstation_enabled
+    else None
+  }}
+# The git version for the StackHPC workstation
+# azimuth_caas_crd_workstation_git_version: 8c86cfebb02ecd8a9ec2d4dccf806aa5989670f2
+azimuth_caas_crd_workstation_git_version: d3abe67b0583e09daeed5d6b1e8686ef66d95da5
+
 # TODO: copy in existing awx templates somehow?
 azimuth_caas_operator_cluster_templates:
+  workstation:
+    gitUrl: "https://github.com/stackhpc/caas-workstation.git"
+    gitVersion: "{{ azimuth_caas_crd_workstation_git_version }}"
+    uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta/workstation.yml"
+    playbook: "workstation.yml"
+    extraVars:
+      cluster_image: "{{ azimuth_caas_crd_workstation_image }}"
+
   quicktest:
     uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/azimuth-caas-operator/d977b04df85d7492ba726daf249709731130e6cf/tools/ui_meta_quick_test.yaml"
     gitUrl: "https://github.com/ansible/ansible-runner"
