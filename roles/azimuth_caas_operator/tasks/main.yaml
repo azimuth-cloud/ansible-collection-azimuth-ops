@@ -23,6 +23,7 @@
       metadata:
         name: "{{ template.name }}"
       spec: "{{ template.spec }}"
+  when: template.spec is not None
   loop: >-
     {{-
       azimuth_caas_operator_cluster_templates |

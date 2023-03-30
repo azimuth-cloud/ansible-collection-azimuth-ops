@@ -15,9 +15,11 @@ azimuth_caas_operator_wait_timeout: 5m
 # TODO: needs to configure some env vars for the operato
 azimuth_caas_operator_release_values: {}
 
-
-# TODO: this is a duplicate right now, from azimuth playbooks!
-
+#
+# Workstation
+#
+# Gacamole based "bigger laptop"
+azimuth_caas_crd_workstation_enabled: true
 # The ID of the image for use with the StackHPC workstation
 # By default, use the workstation image from community images if available
 azimuth_caas_crd_workstation_image: >-
@@ -28,29 +30,42 @@ azimuth_caas_crd_workstation_image: >-
         community_images_image_ids is defined and
         'workstation_20221017_1036' in community_images_image_ids
       )
-      else undef(hint = 'azimuth_caas_stackhpc_workstation_image is required')
+      else undef(hint = 'azimuth_caas_crd_workstation_image is required')
     )
-    if azimuth_caas_stackhpc_workstation_enabled
+    if azimuth_caas_crd_workstation_enabled
     else None
   }}
-# The git version for the StackHPC workstation
-# azimuth_caas_crd_workstation_git_version: 8c86cfebb02ecd8a9ec2d4dccf806aa5989670f2
+
+# TODO: move to a tag, reference in the updated images!
 azimuth_caas_crd_workstation_git_version: d3abe67b0583e09daeed5d6b1e8686ef66d95da5
+azimuth_caas_crd_workstation_template:
+  gitUrl: "https://github.com/stackhpc/caas-workstation.git"
+  gitVersion: "{{ azimuth_caas_crd_workstation_git_version }}"
+  uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta/workstation.yml"
+  playbook: "workstation.yml"
+  extraVars:
+    cluster_image: "{{ azimuth_caas_crd_workstation_image }}"
 
-# TODO: copy in existing awx templates somehow?
+#
+# Quick Test
+#
+# This runs ansible that does nothing
+# except check the CRD mechanisms work,
+# including the auto delete feature.
+
+# TODO: make this false!
+azimuth_caas_crd_quicktest_enable: true
+azimuth_caas_crd_quicktest_template:
+  uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/azimuth-caas-operator/d977b04df85d7492ba726daf249709731130e6cf/tools/ui_meta_quick_test.yaml"
+  gitUrl: "https://github.com/ansible/ansible-runner"
+  gitVersion: "devel"
+  playbook: "demo/project/test.yml"
+  extraVars:
+    foo: "bar"
+
+# TODO: add more appliances in here
+
+# TODO: no support for deleting items in here right now
 azimuth_caas_operator_cluster_templates:
-  workstation:
-    gitUrl: "https://github.com/stackhpc/caas-workstation.git"
-    gitVersion: "{{ azimuth_caas_crd_workstation_git_version }}"
-    uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta/workstation.yml"
-    playbook: "workstation.yml"
-    extraVars:
-      cluster_image: "{{ azimuth_caas_crd_workstation_image }}"
-
-  quicktest:
-    uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/azimuth-caas-operator/d977b04df85d7492ba726daf249709731130e6cf/tools/ui_meta_quick_test.yaml"
-    gitUrl: "https://github.com/ansible/ansible-runner"
-    gitVersion: "devel"
-    playbook: "demo/project/test.yml"
-    extraVars:
-      foo: "bar"
+  workstation: "{{ azimuth_caas_crd_workstation_template if azimuth_caas_crd_workstation_enabled else None }}"
+  quicktest: "{{ azimuth_caas_crd_quicktest_template if azimuth_caas_crd_quicktest_enable else None }}"
