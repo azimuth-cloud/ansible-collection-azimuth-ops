@@ -66,6 +66,14 @@ azimuth_caas_crd_quicktest_template:
 # TODO: add more appliances in here
 
 # TODO: no support for deleting items in here right now
-azimuth_caas_operator_cluster_templates:
+azimuth_caas_operator_cluster_templates_default:
   workstation: "{{ azimuth_caas_crd_workstation_template if azimuth_caas_crd_workstation_enabled else None }}"
   quicktest: "{{ azimuth_caas_crd_quicktest_template if azimuth_caas_crd_quicktest_enable else None }}"
+
+azimuth_caas_operator_cluster_templates_overrides: {}
+
+azimuth_caas_operator_cluster_templates: >-
+  {{-
+    azimuth_caas_operator_cluster_templates_default |
+      combine(azimuth_caas_operator_cluster_templates_overrides, recursive = True)
+  }}
