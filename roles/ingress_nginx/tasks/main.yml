@@ -32,7 +32,7 @@
           rules:
             - alert: NginxIngressCertificateExpiresSoon
               expr: |
-                nginx_ingress_controller_ssl_expire_time_seconds < (time() + (7 * 24 * 3600))
+                nginx_ingress_controller_ssl_expire_time_seconds < (time() + (30 * 24 * 3600))
               for: 1h
               annotations:
                 message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
@@ -40,7 +40,7 @@
                 severity: warning
             - alert: NginxIngressCertificateExpiresVerySoon
               expr: |
-                nginx_ingress_controller_ssl_expire_time_seconds < (time() + (1 * 24 * 3600))
+                nginx_ingress_controller_ssl_expire_time_seconds < (time() + (7 * 24 * 3600))
               for: 1m
               annotations:
                 message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
