@@ -472,10 +472,10 @@ azimuth_caas_stackhpc_workstation_playbooks: >-
 azimuth_caas_stackhpc_workstation_image: >-
   {{-
     (
-      community_images_image_ids.workstation_20221017_1036
+      community_images_image_ids.workstation_230405_1442
       if (
         community_images_image_ids is defined and
-        'workstation_20221017_1036' in community_images_image_ids
+        'workstation_230405_1442' in community_images_image_ids
       )
       else undef(hint = 'azimuth_caas_stackhpc_workstation_image is required')
     )
@@ -524,10 +524,10 @@ azimuth_caas_stackhpc_repo2docker_playbooks: ["repo2docker.yml"]
 azimuth_caas_stackhpc_repo2docker_image: >-
   {{-
     (
-      community_images_image_ids.repo2docker_20221017_1147
+      community_images_image_ids.repo2docker_230405_1542
       if (
         community_images_image_ids is defined and
-        'repo2docker_20221017_1147' in community_images_image_ids
+        'repo2docker_230405_1542' in community_images_image_ids
       )
       else undef(hint = 'azimuth_caas_stackhpc_repo2docker_image is required')
     )
