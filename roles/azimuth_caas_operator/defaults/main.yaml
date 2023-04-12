@@ -56,7 +56,7 @@ azimuth_caas_crd_workstation_template:
 # TODO: make this false!
 azimuth_caas_crd_quicktest_enable: true
 azimuth_caas_crd_quicktest_template:
-  uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/azimuth-caas-operator/d977b04df85d7492ba726daf249709731130e6cf/tools/ui_meta_quick_test.yaml"
+  uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/azimuth-caas-operator/578d0ab845770123d06094ebec44ba99375858dc/tools/ui_meta_quick_test.yaml"
   gitUrl: "https://github.com/ansible/ansible-runner"
   gitVersion: "devel"
   playbook: "demo/project/test.yml"
