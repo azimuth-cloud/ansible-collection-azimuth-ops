@@ -37,7 +37,7 @@
     # TODO: we should add a changed_when
     - skip_ansible_lint
 
-- name: Install Azimuth CaaS cluster templates
+- name: Update secrets for Azimuth CaaS ssh key
   command: "kubectl apply -f -"
   args:
     stdin: "{{ template_definition | to_nice_yaml }}"

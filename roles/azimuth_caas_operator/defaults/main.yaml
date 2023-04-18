@@ -17,12 +17,18 @@ azimuth_caas_operator_release_values: {}
 
 azimuth_caas_operator_default_ssh_secret_name: "azimuth-caas-ssh"
 azimuth_caas_operator_default_ssh_secret_namespace: "azimuth"
-# to inject a secret, define this variable
+# To inject a secret into ~/.ssh/ define this variable
 # which is a map from files to content
 # azimuth_caas_operator_default_ssh_secret_files:
-#   id_rsa: "replace-me"
+#   id_rsa: "replace-me-with-vaulted-variable"
 #   id_rsa.pub: "replace-me"
-#   known_hosts: "replace-me"
+#   known_hosts: "replace-me-too"
+# Note you still need to set cluster templates
+# to include:
+#   sshSharedSecretName: "azimuth-caas-ssh"
+#   sshSharedSecretNamespace: "azimuth"
+# That will then inject the public key as an extra var:
+#   cluster_deploy_ssh_public_key: <public key>
 azimuth_caas_operator_default_ssh_secret_files: {}
 
 #
