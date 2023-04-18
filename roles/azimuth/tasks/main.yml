@@ -53,6 +53,32 @@
     wait: yes
     wait_timeout: "{{ azimuth_wait_timeout }}"
 
+- name: Configure custom Azimuth alerting rules
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ azimuth_alert_rules_definition | to_nice_yaml }}"
+  vars:
+    azimuth_alert_rules_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PrometheusRule
+      metadata:
+        name: azimuth-alerting-rules
+        namespace:  "{{ azimuth_release_namespace }}"
+        labels:
+          release: kube-prometheus-stack
+      spec:
+        groups:
+        - name: azimuth.rules
+          rules:
+            - alert: AzimuthHighErrorResponsePercentage
+              expr: |
+                ((count(gunicorn_response_code{app="azimuth-api", status=~"(402|40[5-9]|4[1-9][0-9]|5[0-9][0-9])"}) / count(gunicorn_response_code{app="azimuth-api"})) * 100) > 5
+              for: 1h
+              annotations:
+                message: '{% raw %}The Azimuth API is returning a high percentage ({{ printf "%.2f" $value }}%) of 4xx and 5xx response codes.{% endraw %}'
+              labels:
+                severity: warning
+
 - block:
     - debug:
         msg: "Azimuth UI available at {{ scheme }}://{{ host }}"

@@ -86,3 +86,28 @@
       data:
         harbor_dashboard.json: |-
           {{ lookup('file', 'grafana_dashboard.json' ) | from_json | to_nice_json }}
+
+- name: Configure custom alerting rules for Harbor
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ harbor_alert_rules_definition | to_nice_yaml }}"
+  vars:
+    harbor_alert_rules_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PrometheusRule
+      metadata:
+        name: harbor-alerting-rules
+        namespace:  "{{ harbor_release_namespace }}"
+        labels:
+          release: kube-prometheus-stack
+      spec:
+        groups:
+        - name: harbor.rules
+          rules:
+            - alert: HarborDeploymentUnhealthy
+              expr: harbor_health != 1
+              for: 30m
+              annotations:
+                message: "{% raw %}The Harbor deployment is reporting an unhealthy status (harbor_health = {{ $value }}){% endraw %}"
+              labels:
+                severity: warning

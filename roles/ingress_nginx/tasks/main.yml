@@ -12,3 +12,37 @@
     create_namespace: yes
     wait: yes
     wait_timeout: "{{ ingress_nginx_wait_timeout }}"
+
+- name: Configure custom alerting rules for certificate expiry
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ nginx_ingress_alert_rules_definition | to_nice_yaml }}"
+  vars:
+    nginx_ingress_alert_rules_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PrometheusRule
+      metadata:
+        name: nginx-ingress-alerting-rules
+        namespace: "{{ ingress_nginx_release_namespace }}"
+        labels:
+          release: kube-prometheus-stack
+      spec:
+        groups:
+        - name: ingress_nginx.rules
+          rules:
+            - alert: NginxIngressCertificateExpiresSoon
+              expr: |
+                nginx_ingress_controller_ssl_expire_time_seconds < (time() + (30 * 24 * 3600))
+              for: 1h
+              annotations:
+                message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
+              labels:
+                severity: warning
+            - alert: NginxIngressCertificateExpiresVerySoon
+              expr: |
+                nginx_ingress_controller_ssl_expire_time_seconds < (time() + (7 * 24 * 3600))
+              for: 1m
+              annotations:
+                message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
+              labels:
+                severity: critical
