@@ -25,14 +25,14 @@ azimuth_caas_crd_workstation_enabled: true
 azimuth_caas_crd_workstation_image: >-
   {{-
     (
-      community_images_image_ids.workstation_20221017_1036
+      community_images_image_ids.workstation
       if (
         community_images_image_ids is defined and
-        'workstation_20221017_1036' in community_images_image_ids
+        'workstation' in community_images_image_ids
       )
-      else undef(hint = 'azimuth_caas_crd_workstation_image is required')
+      else undef(hint = 'azimuth_caas_stackhpc_workstation_image is required')
     )
-    if azimuth_caas_crd_workstation_enabled
+    if azimuth_caas_stackhpc_workstation_enabled
     else None
   }}
 
