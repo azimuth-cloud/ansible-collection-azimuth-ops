@@ -36,3 +36,18 @@
   tags:
     # TODO: we should add a changed_when
     - skip_ansible_lint
+
+- name: Install Azimuth CaaS cluster templates
+  command: "kubectl apply -f -"
+  args:
+    stdin: "{{ template_definition | to_nice_yaml }}"
+  vars:
+    template_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ azimuth_caas_operator_default_ssh_secret_name }}"
+        namespace: "{{ azimuth_caas_operator_default_ssh_secret_namespace }}"
+      type: Opaque
+      data: "{{ azimuth_caas_operator_default_ssh_secret_files }}"
+  when: azimuth_caas_operator_default_ssh_secret_files

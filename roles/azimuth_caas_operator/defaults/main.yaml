@@ -15,6 +15,16 @@ azimuth_caas_operator_wait_timeout: 5m
 # TODO: needs to configure some env vars for the operato
 azimuth_caas_operator_release_values: {}
 
+azimuth_caas_operator_default_ssh_secret_name: "azimuth-caas-ssh"
+azimuth_caas_operator_default_ssh_secret_namespace: "azimuth"
+# to inject a secret, define this variable
+# which is a map from files to content
+# azimuth_caas_operator_default_ssh_secret_files:
+#   id_rsa: "replace-me"
+#   id_rsa.pub: "replace-me"
+#   known_hosts: "replace-me"
+azimuth_caas_operator_default_ssh_secret_files: {}
+
 #
 # Workstation
 #
