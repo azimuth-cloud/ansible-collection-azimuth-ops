@@ -123,6 +123,9 @@ zenith_release_defaults:
       subdomainTokenSigningKey: "{{ zenith_registrar_subdomain_token_signing_key }}"
       reservedSubdomains: "{{ zenith_registrar_reserved_subdomains }}"
   sshd:
+    config:
+      consulAddress: "{{ zenith_consul_server_host }}"
+      consulPort: "{{ zenith_consul_server_port }}"
     service: >-
       {{-
         {
