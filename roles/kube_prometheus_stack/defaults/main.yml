@@ -3,9 +3,9 @@
 # The chart to use
 kube_prometheus_stack_chart_repo: https://prometheus-community.github.io/helm-charts
 kube_prometheus_stack_chart_name: kube-prometheus-stack
-kube_prometheus_stack_chart_version: 45.17.0
+kube_prometheus_stack_chart_version: 45.4.0
 
-# Release information
+# Release information for the release
 kube_prometheus_stack_release_namespace: monitoring-system
 kube_prometheus_stack_release_name: kube-prometheus-stack
 
@@ -18,7 +18,6 @@ kube_prometheus_stack_release_defaults:
     prometheusSpec:
       podMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelectorNilUsesHelmValues: false
-      probeSelectorNilUsesHelmValues: false
   grafana:
     sidecar:
       dashboards:
