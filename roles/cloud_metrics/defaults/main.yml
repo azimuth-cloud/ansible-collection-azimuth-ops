@@ -40,7 +40,7 @@ cloud_metrics_prometheus_servicemonitor_name: "{{ cloud_metrics_prometheus_servi
 # The spec is set up for Prometheus federation
 cloud_metrics_prometheus_servicemonitor_params:
   "match[]":
-    - "{job=\"os_capacity\"}"
+    - "{job=~\"os_capacity|libvirt_exporter\"}"
 cloud_metrics_prometheus_servicemonitor_tls_config:
   serverName: "{{ cloud_metrics_prometheus_host }}"
 cloud_metrics_prometheus_servicemonitor_spec:
