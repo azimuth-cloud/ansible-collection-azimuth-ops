@@ -221,7 +221,7 @@ cloud_metrics_grafana_tenant_dashboard_uid: >-
       json_query("uid")
   }}
 # The variable name that the tenant ID should be placed in
-cloud_metrics_grafana_tenant_id_var: tenant_id
+cloud_metrics_grafana_tenant_id_var: project_id
 
 # The deployment strategy for Grafana
 # If using persistence with RWO PVCs, this must be Recreate or the deployment gets stuck
