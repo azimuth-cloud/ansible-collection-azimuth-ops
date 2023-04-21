@@ -1,17 +1,9 @@
 ---
 
 #####
-# These tasks deploy a Prometheus scrape config and a Grafana for showing
-# cloud metrics
+# These tasks deploy a Grafana for showing cloud metrics
 #
-# The Grafana is exposed externally, protected by Azimuth authentication in
-# the ingress
-#
-# The Prometheus scrape targets the Prometheus that is monitoring OpenStack,
-# and is currently only confirmed to work with Kolla-Ansible based installations
-#
-# It is separate to the Prometheus and Grafana that provides metrics for
-# the Azimuth installation itself
+# It is separate to the Grafana that provides metrics for the cluster that Azimuth is running in
 #####
 
 - name: Create Grafana release namespace
@@ -21,69 +13,6 @@
   failed_when: >-
     cloud_metrics_grafana_create_namespace.rc != 0 and
     'AlreadyExists' not in cloud_metrics_grafana_create_namespace.stderr
-
-- name: Install auth secret for remote Prometheus
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ cloud_metrics_prometheus_auth_secret_definition | to_nice_yaml }}"
-  vars:
-    cloud_metrics_prometheus_auth_secret_definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: "{{ cloud_metrics_prometheus_auth_secret_name }}"
-        namespace: "{{ cloud_metrics_grafana_release_namespace }}"
-      stringData: "{{ cloud_metrics_prometheus_auth_data }}"
-
-- name: Install headless service for remote Prometheus
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ cloud_metrics_prometheus_service_definition | to_nice_yaml }}"
-  vars:
-    cloud_metrics_prometheus_service_definition:
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: "{{ cloud_metrics_prometheus_service_name }}"
-        namespace: "{{ cloud_metrics_grafana_release_namespace }}"
-        labels: "{{ cloud_metrics_prometheus_service_labels }}"
-      spec:
-        type: ClusterIP
-        ports:
-          - name: metrics
-            port: "{{ cloud_metrics_prometheus_port }}"
-            targetPort: "{{ cloud_metrics_prometheus_port }}"
-
-- name: Install endpoints for remote Prometheus
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ cloud_metrics_prometheus_endpoints_definition | to_nice_yaml }}"
-  vars:
-    cloud_metrics_prometheus_endpoints_definition:
-      apiVersion: v1
-      kind: Endpoints
-      metadata:
-        name: "{{ cloud_metrics_prometheus_service_name }}"
-        namespace: "{{ cloud_metrics_grafana_release_namespace }}"
-      subsets:
-        - addresses:
-            - ip: "{{ cloud_metrics_prometheus_ip }}"
-          ports:
-            - name: metrics
-              port: "{{ cloud_metrics_prometheus_port }}"
-
-- name: Install servicemonitor for remote Prometheus
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ cloud_metrics_prometheus_servicemonitor_definition | to_nice_yaml }}"
-  vars:
-    cloud_metrics_prometheus_servicemonitor_definition:
-      apiVersion: monitoring.coreos.com/v1
-      kind: ServiceMonitor
-      metadata:
-        name: "{{ cloud_metrics_prometheus_servicemonitor_name }}"
-        namespace: "{{ cloud_metrics_grafana_release_namespace }}"
-      spec: "{{ cloud_metrics_prometheus_servicemonitor_spec }}"
 
 - name: Install wildcard TLS certificate
   command: kubectl apply -f -
