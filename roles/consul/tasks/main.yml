@@ -76,30 +76,6 @@
             release: "{{ consul_release_name }}"
             component: server
 
-- name: Install PodMonitor for Consul client metrics
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ consul_podmonitor_client_definition | to_nice_yaml }}"
-  vars:
-    consul_podmonitor_client_definition:
-      apiVersion: monitoring.coreos.com/v1
-      kind: PodMonitor
-      metadata:
-        name: "{{ consul_release_name }}-client"
-        namespace: "{{ consul_release_namespace }}"
-      spec:
-        podMetricsEndpoints:
-          - port: http
-            path: /v1/agent/metrics
-        namespaceSelector:
-          matchNames:
-            - "{{ consul_release_namespace }}"
-        selector:
-          matchLabels:
-            app: "{{ consul_release_name }}"
-            release: "{{ consul_release_name }}"
-            component: client
-
 - name: Install Grafana dashboard for Consul metrics
   command: kubectl apply -f -
   args:
