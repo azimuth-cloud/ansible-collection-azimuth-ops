@@ -3,7 +3,7 @@
 # The chart to use
 zenith_chart_repo: https://stackhpc.github.io/zenith
 zenith_chart_name: zenith-server
-zenith_chart_version: 0.1.0-dev.0.main.210
+zenith_chart_version: 0.1.0-dev.0.main.212
 
 # Release information for the Zenith release
 # Use the same namespace as the Azimuth release by default
