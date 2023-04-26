@@ -21,6 +21,9 @@ consul_release_defaults:
   fullnameOverride: "{{ consul_release_name }}"
   server:
     replicas: "{{ consul_server_replicas }}"
+  # The client must now be explicitly enabled
+  client:
+    enabled: true
   connectInject:
     enabled: false
   global:
