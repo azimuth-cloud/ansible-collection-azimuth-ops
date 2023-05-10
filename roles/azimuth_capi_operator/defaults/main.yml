@@ -567,6 +567,54 @@ azimuth_capi_operator_app_templates_daskhub_spec: >-
       )
   }}
 
+# Indicates whether the Zenith-enabled kubeflow app template should be enabled
+azimuth_capi_operator_app_templates_kubeflow_enabled: true
+# The Helm chart to use for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_chart_name: kubeflow-azimuth
+# The Helm repository to use for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_chart_repo: https://stackhpc.github.io/azimuth-charts
+# The version range to use for the kubeflow Helm chart
+azimuth_capi_operator_app_templates_kubeflow_version_range: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+# Overrides for the label, logo and description from the kubeflow Helm chart
+azimuth_capi_operator_app_templates_kubeflow_label:
+azimuth_capi_operator_app_templates_kubeflow_logo:
+azimuth_capi_operator_app_templates_kubeflow_description:
+# The number of versions to make available for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_keep_versions: 3
+# The sync frequency for the kubeflow app template (default 24h)
+azimuth_capi_operator_app_templates_kubeflow_sync_frequency: 86400
+# Any defaultn values for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_default_values: {}
+# The spec for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_spec: >-
+  {{-
+    {
+      "chart": {
+        "repo": azimuth_capi_operator_app_templates_kubeflow_chart_repo,
+        "name": azimuth_capi_operator_app_templates_kubeflow_chart_name,
+      },
+      "versionRange": azimuth_capi_operator_app_templates_kubeflow_version_range,
+      "keepVersions": azimuth_capi_operator_app_templates_kubeflow_keep_versions,
+      "syncFrequency": azimuth_capi_operator_app_templates_kubeflow_sync_frequency,
+      "defaultValues": azimuth_capi_operator_app_templates_kubeflow_default_values,
+    } |
+      combine(
+        { "label": azimuth_capi_operator_app_templates_kubeflow_label }
+        if azimuth_capi_operator_app_templates_kubeflow_label
+        else {}
+      ) |
+      combine(
+        { "logo": azimuth_capi_operator_app_templates_kubeflow_logo }
+        if azimuth_capi_operator_app_templates_kubeflow_logo
+        else {}
+      ) |
+      combine(
+        { "description": azimuth_capi_operator_app_templates_kubeflow_description }
+        if azimuth_capi_operator_app_templates_kubeflow_description
+        else {}
+      )
+  }}
+
 # The default templates
 azimuth_capi_operator_app_templates_default: >-
   {{-
@@ -579,6 +627,11 @@ azimuth_capi_operator_app_templates_default: >-
       combine(
         { "daskhub": azimuth_capi_operator_app_templates_daskhub_spec }
         if azimuth_capi_operator_app_templates_daskhub_enabled
+        else {}
+      ) |
+      combine(
+        { "kubeflow": azimuth_capi_operator_app_templates_kubeflow_spec }
+        if azimuth_capi_operator_app_templates_kubeflow_enabled
         else {}
       )
   }}
