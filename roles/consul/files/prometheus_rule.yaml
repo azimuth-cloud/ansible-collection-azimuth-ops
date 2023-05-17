@@ -1,0 +1,52 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: consul
+spec:
+  groups:
+    - name: consul
+      rules:
+        # Alerts are derived from the advice on this page
+        # https://developer.hashicorp.com/consul/docs/agent/telemetry
+
+        - alert: ConsulServerTooManyElectionEvents
+          expr: >-
+            sum(increase(consul_raft_state_candidate{job="consul-server"}[5m])) by(pod) > 0
+          for: 15m
+          annotations:
+            summary: >-
+              Consul member {{ $labels.pod }} has been experiencing a high number of
+              leader elections for more than 15 minutes.
+            summary: >-
+              A Consul member has been experiencing a high number of leader
+              elections for more than 15 minutes.
+          labels:
+            severity: warning
+
+        - alert: ConsulServerTooMuchTimeSpentInGC
+          expr: >-
+            sum(increase(consul_runtime_gc_pause_ns_sum{job="consul-server"}[1m])) by(pod) > 2000000000
+          for: 15m
+          annotations:
+            summary: >-
+              Consul member {{ $labels.pod }} has spent more than 2 seconds per minute
+              in garbage collection for more than 15 minutes.
+            summary: >-
+              A Consul member has been spending a long time in garbage collection
+              for more than 15 minutes.
+          labels:
+            severity: warning
+
+        - alert: ConsulClientRPCFailureRateTooHigh
+          expr: >-
+            sum(increase(consul_client_rpc_failed{job=~".*consul-client"}[1m])) by(pod) > 0
+          for: 15m
+          annotations:
+            summary: >-
+              Consul client {{ $labels.pod }} has been experiencing failed RPC
+              requests for more than 15 minutes.
+            summary: >-
+              A Consul client has been experiencing failed RPC requests for more
+              than 15 minutes.
+          labels:
+            severity: warning
