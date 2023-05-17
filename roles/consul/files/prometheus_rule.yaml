@@ -39,7 +39,7 @@ spec:
 
         - alert: ConsulClientRPCFailureRateTooHigh
           expr: >-
-            sum(increase(consul_client_rpc_failed{job=~".*consul-client"}[1m])) by(pod) > 0
+            sum(increase(consul_client_rpc_failed{job=~".*consul-client"}[5m])) by(pod) > 0
           for: 15m
           annotations:
             summary: >-
