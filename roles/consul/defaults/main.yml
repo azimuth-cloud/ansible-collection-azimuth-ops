@@ -20,6 +20,8 @@ consul_server_replicas: 3
 consul_release_defaults:
   fullnameOverride: "{{ consul_release_name }}"
   server:
+    # We don't use the service mesh
+    connect: false
     replicas: "{{ consul_server_replicas }}"
   # The client must now be explicitly enabled
   client:
@@ -29,10 +31,37 @@ consul_release_defaults:
   global:
     metrics:
       enabled: true
+      enableAgentMetrics: true
       enableGatewayMetrics: false
 consul_release_overrides: {}
 consul_release_values: >-
   {{-
     consul_release_defaults |
       combine(consul_release_overrides, recursive = True)
+  }}
+
+
+# The chart to use for the Consul exporter
+consul_exporter_chart_repo: https://prometheus-community.github.io/helm-charts
+consul_exporter_chart_name: prometheus-consul-exporter
+consul_exporter_chart_version: 1.0.0
+
+# Release information for the Consul exporter release
+# By default, deploy into the same namespace as Consul
+consul_exporter_release_namespace: "{{ consul_release_namespace }}"
+consul_exporter_release_name: consul-exporter
+
+# The timeout to wait for the Consul exporter to become ready
+consul_exporter_wait_timeout: 10m
+
+# The values for the Consul exporter release
+consul_exporter_release_defaults:
+  consulServer: "{{ consul_server_host }}:{{ consul_server_port }}"
+  serviceMonitor:
+    enabled: true
+consul_exporter_release_overrides: {}
+consul_exporter_release_values: >-
+  {{-
+    consul_exporter_release_defaults |
+      combine(consul_exporter_release_overrides, recursive = True)
   }}
