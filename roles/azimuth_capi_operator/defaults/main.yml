@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.118
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.129
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -362,6 +362,9 @@ azimuth_capi_operator_release_defaults:
             else {}
           )
       }}
+  # Enable the metrics with the service monitor by default
+  metrics:
+    enabled: true
 azimuth_capi_operator_release_overrides: {}
 azimuth_capi_operator_release_values: >-
   {{-

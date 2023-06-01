@@ -18,6 +18,7 @@ kube_prometheus_stack_release_defaults:
     prometheusSpec:
       podMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelectorNilUsesHelmValues: false
+      ruleSelectorNilUsesHelmValues: false
   grafana:
     sidecar:
       dashboards:
