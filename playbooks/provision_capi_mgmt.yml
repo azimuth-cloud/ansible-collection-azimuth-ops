@@ -1,5 +1,6 @@
 #####
-# This playbook uses Terraform and Cluster API to provision infrastructure onto which Azimuth is deployed
+# This playbook uses Terraform and Cluster API to provision a CAPI management cluster
+# The CAPI management cluster can be either single-node or HA
 #####
 
 
@@ -8,7 +9,7 @@
 
 
 # Install Azimuth
-- import_playbook: stackhpc.azimuth_ops.deploy
+- import_playbook: stackhpc.azimuth_ops.deploy_capi_mgmt
   vars:
     # In HA mode, use the kubeconfig for the HA cluster
     # In single node mode, use the default kubeconfig file
