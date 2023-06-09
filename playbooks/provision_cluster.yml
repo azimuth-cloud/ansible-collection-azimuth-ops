@@ -65,6 +65,7 @@
 
         - include_role:
             name: stackhpc.azimuth_ops.ingress_nginx
+          when: "ingress_controller_enabled | default(true)"
       when: install_mode == 'singlenode'
 
     # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
