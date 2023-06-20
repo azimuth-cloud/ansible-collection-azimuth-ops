@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_identity_operator_chart_repo: https://stackhpc.github.io/azimuth-identity-operator
 azimuth_identity_operator_chart_name: azimuth-identity-operator
-azimuth_identity_operator_chart_version: 0.1.0-dev.0.main.15
+azimuth_identity_operator_chart_version: 0.1.0-dev.0.feature-monitoring.17
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -185,6 +185,9 @@ azimuth_identity_operator_release_defaults:
       sslRequired: "{{ azimuth_identity_operator_keycloak_ssl_required }}"
       zenithRedirectUriScheme: "{{ azimuth_identity_operator_keycloak_zenith_redirect_uri_scheme }}"
       zenithDiscoveryNamespace: "{{ azimuth_identity_operator_keycloak_zenith_discovery_namespace }}"
+  # Enable the metrics with the service monitor by default
+  metrics:
+    enabled: true
 azimuth_identity_operator_release_overrides: {}
 azimuth_identity_operator_release_values: >-
   {{-
