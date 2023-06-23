@@ -193,8 +193,8 @@ capi_cluster_addons_monitoring_prometheus_volume_size: 10Gi
 capi_cluster_addons_monitoring_loki_retention: 744h
 capi_cluster_addons_monitoring_loki_volume_size: 10Gi
 
-# Options for the capi cluster control plane load balancer
-capi_cluster_loadbalancer_provider: amphora
+# Options for the capi cluster control plane load balancer. Default is amphora
+capi_cluster_loadbalancer_provider:
 
 # The values for the release
 capi_cluster_release_defaults:
