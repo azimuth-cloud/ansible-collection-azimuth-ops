@@ -193,6 +193,9 @@ capi_cluster_addons_monitoring_prometheus_volume_size: 10Gi
 capi_cluster_addons_monitoring_loki_retention: 744h
 capi_cluster_addons_monitoring_loki_volume_size: 10Gi
 
+# Options for the capi cluster control plane load balancer
+capi_cluster_loadbalancer_provider: amphora
+
 # The values for the release
 capi_cluster_release_defaults:
   kubernetesVersion: "{{ capi_cluster_kubernetes_version }}"
@@ -245,6 +248,7 @@ capi_cluster_release_defaults:
   apiServer:
     enableLoadBalancer: "{{ capi_cluster_apiserver_load_balancer }}"
     associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
+    loadBalancerProvider: "{{ capi_cluster_loadbalancer_provider }}"
   controlPlane:
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
     omitFailureDomain: "{{ capi_cluster_control_plane_omit_failure_domain }}"
