@@ -161,9 +161,12 @@ capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_
 capi_cluster_addons_ingress_load_balancer_ip: >-
   {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
 #   Options for LoadBalancer services
+
+# Provider used for all load balancers in the deployment
+capi_openstack_loadbalancer_provider:
 #   https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
 capi_cluster_addons_openstack_loadbalancer_method:
-capi_cluster_addons_openstack_loadbalancer_provider:
+capi_cluster_addons_openstack_loadbalancer_provider: "{{ capi_openstack_loadbalancer_provider | default(None) }}"
 capi_cluster_addons_openstack_loadbalancer_create_monitor:
 capi_cluster_addons_openstack_loadbalancer_monitor_delay:
 capi_cluster_addons_openstack_loadbalancer_monitor_max_retries:
@@ -193,8 +196,8 @@ capi_cluster_addons_monitoring_prometheus_volume_size: 10Gi
 capi_cluster_addons_monitoring_loki_retention: 744h
 capi_cluster_addons_monitoring_loki_volume_size: 10Gi
 
-# Options for the capi cluster control plane load balancer. Default is amphora
-capi_cluster_apiserver_loadbalancer_provider:
+# Options for the capi cluster control plane load balancer.
+capi_cluster_apiserver_loadbalancer_provider: "{{ capi_openstack_loadbalancer_provider | default(None) }}"
 
 # The values for the release
 capi_cluster_release_defaults:
