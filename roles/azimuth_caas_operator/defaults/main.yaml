@@ -249,7 +249,7 @@ azimuth_caas_stackhpc_repo2docker_template:
 #
 # This runs ansible that does nothing except check the CRD mechanisms work,
 # including the auto delete feature
-azimuth_caas_quicktest_enabled: "{{ azimuth_clusters_enabled }}"
+azimuth_caas_quicktest_enabled: false
 azimuth_caas_quicktest_template:
   uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/azimuth-caas-operator/578d0ab845770123d06094ebec44ba99375858dc/tools/ui_meta_quick_test.yaml"
   gitUrl: "https://github.com/ansible/ansible-runner"
