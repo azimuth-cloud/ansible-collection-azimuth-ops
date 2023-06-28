@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: 0.2.3-dev.0.main.7
+azimuth_caas_operator_chart_version: 0.2.3-dev.0.feature-deploy-keys.23
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -74,85 +74,74 @@ azimuth_caas_operator_default_ssh_secret_files: {}
 # Appliance configuration
 #####
 
-# # Indicates if the StackHPC Slurm appliance should be enabled
-# azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
-# # The name of the StackHPC Slurm appliance project
-# azimuth_caas_stackhpc_slurm_appliance_name: StackHPC Slurm Appliance
-# # The git URL for the StackHPC Slurm appliance
-# azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
-# # The git version for the StackHPC Slurm appliance
-# azimuth_caas_stackhpc_slurm_appliance_git_version: 7af143e6ff746f4e81e2368784a1d85a72d99bd5
-# # The metadata root for the StackHPC Slurm appliance project
-# azimuth_caas_stackhpc_slurm_appliance_metadata_root: >-
-#   https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta
-# # The playbooks to use for the StackHPC Slurm appliance
-# azimuth_caas_stackhpc_slurm_appliance_playbooks: [slurm-infra.yml]
-# # Always update the cloned StackHPC Slurm appliance repo - useful for development on a branch
-# azimuth_caas_stackhpc_slurm_appliance_always_update: false
-# # The ID of the image to use with the StackHPC Slurm appliance
-# # Support the old name for backwards compatibility
-# # By default, use the openhpc image from community images if available
-# azimuth_caas_stackhpc_slurm_appliance_image: >-
-#   {{-
-#     azimuth_caas_stackhpc_slurm_appliance_rocky8_image
-#     if azimuth_caas_stackhpc_slurm_appliance_rocky8_image is defined
-#     else (
-#       (
-#         community_images_image_ids.openhpc
-#         if (
-#           community_images_image_ids is defined and
-#           'openhpc' in community_images_image_ids
-#         )
-#         else undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
-#       )
-#       if azimuth_caas_stackhpc_slurm_appliance_enabled
-#       else None
-#     )
-#   }}
-# # The name of a flavor to use for Slurm login nodes
-# azimuth_caas_stackhpc_slurm_appliance_login_flavor_name: >-
-#   {{-
-#     undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_login_flavor_name is required')
-#     if azimuth_caas_stackhpc_slurm_appliance_enabled
-#     else None
-#   }}
-# # The name of a flavor to use for Slurm control nodes
-# azimuth_caas_stackhpc_slurm_appliance_control_flavor_name: >-
-#   {{-
-#     undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_control_flavor_name is required')
-#     if azimuth_caas_stackhpc_slurm_appliance_enabled
-#     else None
-#   }}
-# # The size of the cluster state volume
-# # Must be big enough for a reasonable amount of monitoring data
-# azimuth_caas_stackhpc_slurm_appliance_state_volume_size: 40
-
-# # The default extra vars for templates in the StackHPC Slurm appliance
-# azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
-#   cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
-#   login_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_login_flavor_name }}"
-#   control_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name }}"
-#   cluster_state_volume_size: "{{ azimuth_caas_stackhpc_slurm_appliance_state_volume_size }}"
-
-# # extra_vars overrides for templates in the StackHPC Slurm appliance
-# azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
-
-# azimuth_caas_stackhpc_slurm_appliance_extra_vars:
-#   __ALL__: >-
-#     {{-
-#       azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults |
-#         combine(azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides)
-#     }}
-
-# # The project definition for the StackHPC Slurm appliance
-# azimuth_caas_stackhpc_slurm_appliance_project:
-#   name: "{{ azimuth_caas_stackhpc_slurm_appliance_name }}"
-#   gitUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_git_url }}"
-#   gitVersion: "{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}"
-#   metadataRoot: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_root }}"
-#   playbooks: "{{ azimuth_caas_stackhpc_slurm_appliance_playbooks }}"
-#   extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
-#   alwaysUpdate: "{{ azimuth_caas_stackhpc_slurm_appliance_always_update }}"
+# Indicates if the StackHPC Slurm appliance should be enabled
+azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
+# The git URL for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
+# The git version for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_git_version: cb0d7930c6ebf2fc8e21178b5a579b3e07cc726e
+# The playbook to use for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_playbook: slurm-infra.yml
+# The metadata root for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
+  https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta/slurm-infra.yml
+# The ID of the image to use with the StackHPC Slurm appliance
+# Support the old name for backwards compatibility
+# By default, use the openhpc image from community images if available
+azimuth_caas_stackhpc_slurm_appliance_image: >-
+  {{-
+    azimuth_caas_stackhpc_slurm_appliance_rocky8_image
+    if azimuth_caas_stackhpc_slurm_appliance_rocky8_image is defined
+    else (
+      (
+        community_images_image_ids.openhpc
+        if (
+          community_images_image_ids is defined and
+          'openhpc' in community_images_image_ids
+        )
+        else undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+      )
+      if azimuth_caas_stackhpc_slurm_appliance_enabled
+      else None
+    )
+  }}
+# The name of a flavor to use for Slurm login nodes
+azimuth_caas_stackhpc_slurm_appliance_login_flavor_name: >-
+  {{-
+    undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_login_flavor_name is required')
+    if azimuth_caas_stackhpc_slurm_appliance_enabled
+    else None
+  }}
+# The name of a flavor to use for Slurm control nodes
+azimuth_caas_stackhpc_slurm_appliance_control_flavor_name: >-
+  {{-
+    undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_control_flavor_name is required')
+    if azimuth_caas_stackhpc_slurm_appliance_enabled
+    else None
+  }}
+# The size of the cluster state volume
+# Must be big enough for a reasonable amount of monitoring data
+azimuth_caas_stackhpc_slurm_appliance_state_volume_size: 40
+# The default extra vars for templates in the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
+  cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
+  login_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_login_flavor_name }}"
+  control_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name }}"
+  cluster_state_volume_size: "{{ azimuth_caas_stackhpc_slurm_appliance_state_volume_size }}"
+# extra_vars overrides for templates in the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
+azimuth_caas_stackhpc_slurm_appliance_extra_vars: >-
+  {{-
+    azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults |
+      combine(azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides)
+  }}
+# The template definition for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_template:
+  gitUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_git_url }}"
+  gitVersion: "{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}"
+  uiMetaUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_url }}"
+  playbook: "{{ azimuth_caas_stackhpc_slurm_appliance_playbook }}"
+  extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
 
 
 # Indicates if the StackHPC workstation should be enabled
@@ -191,7 +180,7 @@ azimuth_caas_stackhpc_workstation_extra_vars: >-
     azimuth_caas_stackhpc_workstation_extra_vars_defaults |
       combine(azimuth_caas_stackhpc_workstation_extra_vars_overrides)
   }}
-# The template definition for the StackHPC workstation
+# The template definition for the StackHPC workstation appliance
 azimuth_caas_stackhpc_workstation_template:
   gitUrl: "{{ azimuth_caas_stackhpc_workstation_git_url }}"
   gitVersion: "{{ azimuth_caas_stackhpc_workstation_git_version }}"
@@ -236,7 +225,7 @@ azimuth_caas_stackhpc_repo2docker_extra_vars: >-
     azimuth_caas_stackhpc_repo2docker_extra_vars_defaults |
       combine(azimuth_caas_stackhpc_repo2docker_extra_vars_overrides)
   }}
-# The project definition for the StackHPC repo2docker appliance
+# The template definition for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_template:
   gitUrl: "{{ azimuth_caas_stackhpc_repo2docker_git_url }}"
   gitVersion: "{{ azimuth_caas_stackhpc_repo2docker_git_version }}"
@@ -262,6 +251,11 @@ azimuth_caas_quicktest_template:
 azimuth_caas_cluster_templates_default: >-
   {{-
     {} |
+      combine(
+        { "slurm": azimuth_caas_stackhpc_slurm_appliance_template }
+        if azimuth_caas_stackhpc_slurm_appliance_enabled
+        else {}
+      ) |
       combine(
         { "workstation": azimuth_caas_stackhpc_workstation_template }
         if azimuth_caas_stackhpc_workstation_enabled
