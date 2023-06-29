@@ -189,6 +189,27 @@ azimuth_caas_stackhpc_workstation_template:
   extraVars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
 
 
+# Indicates if the StackHPC workstation _with SSH_ should be enabled
+azimuth_caas_stackhpc_workstation_ssh_enabled: "{{ azimuth_caas_stackhpc_workstation_enabled }}"
+# The git URL for the StackHPC workstation
+azimuth_caas_stackhpc_workstation_ssh_git_url: "{{ azimuth_caas_stackhpc_workstation_git_url }}"
+# The git version for the StackHPC workstation
+azimuth_caas_stackhpc_workstation_ssh_git_version: "{{ azimuth_caas_stackhpc_workstation_git_version }}"
+# The playbook to use for the workstation appliance
+azimuth_caas_stackhpc_workstation_ssh_playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
+# The metadata URL for the StackHPC workstation
+azimuth_caas_stackhpc_workstation_ssh_metadata_url: >-
+  https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta/workstation-external-ssh.yml
+azimuth_caas_stackhpc_workstation_ssh_extra_vars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
+# The template definition for the StackHPC workstation appliance
+azimuth_caas_stackhpc_workstation_ssh_template:
+  gitUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_git_url }}"
+  gitVersion: "{{ azimuth_caas_stackhpc_workstation_ssh_git_version }}"
+  uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_metadata_url }}"
+  playbook: "{{ azimuth_caas_stackhpc_workstation_ssh_playbook }}"
+  extraVars: "{{ azimuth_caas_stackhpc_workstation_ssh_extra_vars }}"
+
+
 # Indicates if the StackHPC repo2docker appliance should be enabled
 azimuth_caas_stackhpc_repo2docker_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC repo2docker appliance
@@ -259,6 +280,11 @@ azimuth_caas_cluster_templates_default: >-
       combine(
         { "workstation": azimuth_caas_stackhpc_workstation_template }
         if azimuth_caas_stackhpc_workstation_enabled
+        else {}
+      ) |
+      combine(
+        { "workstation": azimuth_caas_stackhpc_workstation_ssh_template }
+        if azimuth_caas_stackhpc_workstation_ssh_enabled
         else {}
       ) |
       combine(
