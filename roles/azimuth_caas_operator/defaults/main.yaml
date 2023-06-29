@@ -283,7 +283,7 @@ azimuth_caas_cluster_templates_default: >-
         else {}
       ) |
       combine(
-        { "workstation": azimuth_caas_stackhpc_workstation_ssh_template }
+        { "workstation-ssh": azimuth_caas_stackhpc_workstation_ssh_template }
         if azimuth_caas_stackhpc_workstation_ssh_enabled
         else {}
       ) |
