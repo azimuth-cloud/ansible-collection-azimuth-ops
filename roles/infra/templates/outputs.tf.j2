@@ -1,6 +1,7 @@
 output "cluster_ssh_private_key" {
   description = "The generated private key for the cluster"
   value       = openstack_compute_keypair_v2.keypair_deploy.private_key
+  sensitive   = true
 }
 
 output "cluster_gateway_ip" {
