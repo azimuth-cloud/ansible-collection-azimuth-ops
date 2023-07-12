@@ -113,6 +113,8 @@ capi_cluster_dns_nameservers:
 # By default, we use a load balancer without a floating IP so that the API is only reachable from the seed node
 capi_cluster_apiserver_load_balancer: true
 capi_cluster_apiserver_floating_ip: false
+# The provider to use for the API server load balancer
+capi_cluster_apiserver_loadbalancer_provider:
 
 # The name of the flavors to use for control plane and worker nodes respectively
 capi_cluster_control_plane_flavor: >-
@@ -162,11 +164,9 @@ capi_cluster_addons_ingress_load_balancer_ip: >-
   {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
 #   Options for LoadBalancer services
 
-# Provider used for all load balancers in the deployment
-capi_openstack_loadbalancer_provider:
 #   https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
 capi_cluster_addons_openstack_loadbalancer_method:
-capi_cluster_addons_openstack_loadbalancer_provider: "{{ capi_openstack_loadbalancer_provider | default(None) }}"
+capi_cluster_addons_openstack_loadbalancer_provider:
 capi_cluster_addons_openstack_loadbalancer_create_monitor:
 capi_cluster_addons_openstack_loadbalancer_monitor_delay:
 capi_cluster_addons_openstack_loadbalancer_monitor_max_retries:
@@ -195,9 +195,6 @@ capi_cluster_addons_monitoring_prometheus_volume_size: 10Gi
 #   Retention settings for logs in Loki
 capi_cluster_addons_monitoring_loki_retention: 744h
 capi_cluster_addons_monitoring_loki_volume_size: 10Gi
-
-# Options for the capi cluster control plane load balancer.
-capi_cluster_apiserver_loadbalancer_provider: "{{ capi_openstack_loadbalancer_provider | default(None) }}"
 
 # The values for the release
 capi_cluster_release_defaults:
@@ -248,10 +245,18 @@ capi_cluster_release_defaults:
   trustedCAs: "{{ capi_cluster_trust_bundle }}"
   registryAuth: "{{ capi_cluster_registry_auth }}"
   registryMirrors: "{{ capi_cluster_registry_mirrors }}"
-  apiServer:
-    enableLoadBalancer: "{{ capi_cluster_apiserver_load_balancer }}"
-    associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
-    loadBalancerProvider: "{{ capi_cluster_apiserver_loadbalancer_provider }}"
+  apiServer: >-
+    {{-
+      {
+        "enableLoadBalancer": capi_cluster_apiserver_load_balancer,
+        "associateFloatingIP": capi_cluster_apiserver_floating_ip
+      } |
+        combine(
+          { "loadBalancerProvider": capi_cluster_apiserver_loadbalancer_provider }
+          if capi_cluster_apiserver_loadbalancer_provider
+          else {}
+        )
+    }}
   controlPlane:
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
     omitFailureDomain: "{{ capi_cluster_control_plane_omit_failure_domain }}"
