@@ -62,11 +62,6 @@ azimuth_capi_operator_capi_helm_control_plane_failure_domains:
 # Set to null to let OpenStack select a suitable AZ based on other scheduling constraints
 azimuth_capi_operator_capi_helm_worker_failure_domain: nova
 
-# The size of the root disks if boot-from-volume is required
-# Leave blank to use the root disk from the flavor
-azimuth_capi_operator_capi_helm_root_volume_size:
-azimuth_capi_operator_capi_helm_control_plane_root_volume_size: "{{ azimuth_capi_operator_capi_helm_root_volume_size }}"
-azimuth_capi_operator_capi_helm_worker_root_volume_size: "{{ azimuth_capi_operator_capi_helm_root_volume_size }}"
 # The volume type for the root disk
 # Leave blank for the default volume type
 azimuth_capi_operator_capi_helm_root_volume_type:
@@ -146,11 +141,6 @@ azimuth_capi_operator_capi_helm_values_defaults:
       {{-
         {} |
           combine(
-            { "diskSize": azimuth_capi_operator_capi_helm_control_plane_root_volume_size }
-            if azimuth_capi_operator_capi_helm_control_plane_root_volume_size
-            else {}
-          ) |
-          combine(
             { "volumeType": azimuth_capi_operator_capi_helm_control_plane_root_volume_type }
             if azimuth_capi_operator_capi_helm_control_plane_root_volume_type
             else {}
@@ -166,11 +156,6 @@ azimuth_capi_operator_capi_helm_values_defaults:
     machineRootVolume: >-
       {{-
         {} |
-          combine(
-            { "diskSize": azimuth_capi_operator_capi_helm_worker_root_volume_size }
-            if azimuth_capi_operator_capi_helm_worker_root_volume_size
-            else {}
-          ) |
           combine(
             { "volumeType": azimuth_capi_operator_capi_helm_worker_root_volume_type }
             if azimuth_capi_operator_capi_helm_worker_root_volume_type
