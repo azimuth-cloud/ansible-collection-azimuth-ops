@@ -1,5 +1,11 @@
 ---
 
+- name: Import community_images variable
+  import_role:
+    name: stackhpc.azimuth_ops.community_images
+    tasks_from: export_community_images.yml
+  when: community_images is not defined
+
 - name: Install Azimuth CAPI operator on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_capi_operator_chart_name }}"

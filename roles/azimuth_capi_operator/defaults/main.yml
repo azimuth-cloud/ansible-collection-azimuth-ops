@@ -379,85 +379,31 @@ azimuth_capi_operator_release_values: >-
 # All other templates will be marked as DEPRECATED
 # azimuth-ops currently never removes templates
 #####
-# By default use the community images
-azimuth_capi_operator_kube_1_23_16_image: >-
-  {{-
-    community_images_image_ids.kube_1_23_16
-    if (
-      community_images_image_ids is defined and
-      'kube_1_23_16' in community_images_image_ids
-    )
-    else undef(hint = 'azimuth_capi_operator_kube_1_23_16_image is required')
-  }}
-azimuth_capi_operator_kube_1_24_12_image: >-
-  {{-
-    community_images_image_ids.kube_1_24_12
-    if (
-      community_images_image_ids is defined and
-      'kube_1_24_12' in community_images_image_ids
-    )
-    else undef(hint = 'azimuth_capi_operator_kube_1_24_12_image is required')
-  }}
-azimuth_capi_operator_kube_1_25_8_image: >-
-  {{-
-    community_images_image_ids.kube_1_25_8
-    if (
-      community_images_image_ids is defined and
-      'kube_1_25_8' in community_images_image_ids
-    )
-    else undef(hint = 'azimuth_capi_operator_kube_1_25_8_image is required')
-  }}
-azimuth_capi_operator_kube_1_26_3_image: >-
-  {{-
-    community_images_image_ids.kube_1_26_3
-    if (
-      community_images_image_ids is defined and
-      'kube_1_26_3' in community_images_image_ids
-    )
-    else undef(hint = 'azimuth_capi_operator_kube_1_26_3_image is required')
-  }}
-# By default, make templates for the latest patch versions of the supported Kubernetes releases
-azimuth_capi_operator_cluster_templates_default:
-  kube-1-23-16:
-    label: v1.23.16
-    description: Kubernetes 1.23.16 with HA control plane.
-    values:
-      kubernetesVersion: 1.23.16
-      machineImageId: "{{ azimuth_capi_operator_kube_1_23_16_image }}"
-      clusterNetworking:
-        internalNetwork:
-          networkFilter:
-            tags: portal-internal
-  kube-1-24-12:
-    label: v1.24.12
-    description: Kubernetes 1.24.12 with HA control plane.
-    values:
-      kubernetesVersion: 1.24.12
-      machineImageId: "{{ azimuth_capi_operator_kube_1_24_12_image }}"
-      clusterNetworking:
-        internalNetwork:
-          networkFilter:
-            tags: portal-internal
-  kube-1-25-8:
-    label: v1.25.8
-    description: Kubernetes 1.25.8 with HA control plane.
-    values:
-      kubernetesVersion: 1.25.8
-      machineImageId: "{{ azimuth_capi_operator_kube_1_25_8_image }}"
-      clusterNetworking:
-        internalNetwork:
-          networkFilter:
-            tags: portal-internal
-  kube-1-26-3:
-    label: v1.26.3
-    description: Kubernetes 1.26.3 with HA control plane.
-    values:
-      kubernetesVersion: 1.26.3
-      machineImageId: "{{ azimuth_capi_operator_kube_1_26_3_image }}"
-      clusterNetworking:
-        internalNetwork:
-          networkFilter:
-            tags: portal-internal
+# By default, make a template for each Kubernetes release for which we have an image
+azimuth_capi_operator_cluster_templates_default: |-
+  {
+    {% for key, image in community_images.items() %}
+    {% if "kubernetes_version" in image %}
+    {% set kube_vn_no_prefix = image.kubernetes_version.removeprefix("v") %}
+    {% set kube_vn_dash = kube_vn_no_prefix | replace('.', '-') %}
+    "kube-{{ kube_vn_dash }}": {
+      "label": "{{ image.kubernetes_version }}",
+      "description": "Kubernetes {{ kube_vn_no_prefix }} with HA control plane.",
+      "values": {
+        "kubernetesVersion": "{{ kube_vn_no_prefix }}",
+        "machineImageId": "{{ community_images_image_ids[key] }}",
+        "clusterNetworking": {
+          "internalNetwork": {
+            "networkFilter": {
+              "tags": "portal-internal",
+            },
+          },
+        },
+      },
+    },
+    {% endif %}
+    {% endfor %}
+  }
 # Allow extra templates to be defined using a separate variable
 azimuth_capi_operator_cluster_templates_extra: {}
 # The full list of Kubernetes cluster templates to install
