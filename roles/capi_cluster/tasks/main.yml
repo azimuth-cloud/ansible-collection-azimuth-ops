@@ -1,5 +1,11 @@
 ---
 
+- name: Import community_images variable
+  import_role:
+    name: stackhpc.azimuth_ops.community_images
+    tasks_from: export_community_images.yml
+  when: community_images is not defined
+
 - block:
     - name: Install or upgrade cluster
       kubernetes.core.helm:
