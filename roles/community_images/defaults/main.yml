@@ -39,51 +39,50 @@ community_images_azimuth_images_manifest_url: >-
 community_images_azimuth_images_manifest: >-
   {{ lookup('url', community_images_azimuth_images_manifest_url, split_lines = False) | from_json }}
 
-# The default community images to upload
-# By default, we upload images for Kubernetes and CaaS appliances from azimuth-images
+# Generate community image specs for the images in the manifest
+# We don't use all the images
+community_images_azimuth_images: |-
+  {
+    {% for source_key, image in community_images_azimuth_images_manifest.items() %}
+    {% if "kubernetes_version" in image and source_key.endswith("-jammy") %}
+      {% set kube_version = image.kubernetes_version.removeprefix("v") %}
+      {% set kube_series = kube_version.split(".")[:-1] | join("_") %}
+      {% set dest_key = "kube_" ~ kube_series %}
+    {% elif source_key == "jupyter-repo2docker" %}
+      {% set dest_key = "repo2docker" %}
+    {% elif source_key == "ubuntu-desktop" %}
+      {% set dest_key = "workstation" %}
+    {% else %}
+      {% set dest_key = None %}
+    {% endif %}
+    {% if dest_key %}
+    "{{ dest_key }}": {
+      "name": "{{ image.name }}",
+      "source_url": "{{ image.url }}",
+      "checksum": "{{ image.checksum }}",
+      "source_disk_format": "qcow2",
+      "container_format": "bare",
+      {% if "kubernetes_version" in image %}
+      "kubernetes_version": "{{ image.kubernetes_version }}",
+      {% endif %}
+    },
+    {% endif %}
+    {% endfor %}
+  }
+
 # Slurm images are published by the slurm_image_builder repo - https://github.com/stackhpc/slurm_image_builder
-community_images_slurm_base_url: https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_3a06571936a0424bb40bc5c672c4ccb1/openhpc-images
-community_images_default:
-  # Images for Kubernetes
-  kube_1_25:
-    name: "{{ community_images_azimuth_images_manifest['kubernetes-1-25-jammy'].name }}"
-    source_url: "{{ community_images_azimuth_images_manifest['kubernetes-1-25-jammy'].url }}"
-    checksum: "{{ community_images_azimuth_images_manifest['kubernetes-1-25-jammy'].checksum }}"
-    source_disk_format: qcow2
-    container_format: bare
-    kubernetes_version: "{{ community_images_azimuth_images_manifest['kubernetes-1-25-jammy'].kubernetes_version }}"
-  kube_1_26:
-    name: "{{ community_images_azimuth_images_manifest['kubernetes-1-26-jammy'].name }}"
-    source_url: "{{ community_images_azimuth_images_manifest['kubernetes-1-26-jammy'].url }}"
-    checksum: "{{ community_images_azimuth_images_manifest['kubernetes-1-26-jammy'].checksum }}"
-    source_disk_format: qcow2
-    container_format: bare
-    kubernetes_version: "{{ community_images_azimuth_images_manifest['kubernetes-1-26-jammy'].kubernetes_version }}"
-  kube_1_27:
-    name: "{{ community_images_azimuth_images_manifest['kubernetes-1-27-jammy'].name }}"
-    source_url: "{{ community_images_azimuth_images_manifest['kubernetes-1-27-jammy'].url }}"
-    checksum: "{{ community_images_azimuth_images_manifest['kubernetes-1-27-jammy'].checksum }}"
-    source_disk_format: qcow2
-    container_format: bare
-    kubernetes_version: "{{ community_images_azimuth_images_manifest['kubernetes-1-27-jammy'].kubernetes_version }}"
-  # Images for CaaS appliances
-  repo2docker:
-    name: "{{ community_images_azimuth_images_manifest['jupyter-repo2docker'].name }}"
-    source_url: "{{ community_images_azimuth_images_manifest['jupyter-repo2docker'].url }}"
-    checksum: "{{ community_images_azimuth_images_manifest['jupyter-repo2docker'].checksum }}"
-    source_disk_format: qcow2
-    container_format: bare
-  workstation:
-    name: "{{ community_images_azimuth_images_manifest['ubuntu-desktop'].name }}"
-    source_url: "{{ community_images_azimuth_images_manifest['ubuntu-desktop'].url }}"
-    checksum: "{{ community_images_azimuth_images_manifest['ubuntu-desktop'].checksum }}"
-    source_disk_format: qcow2
-    container_format: bare
+community_images_slurm_base_url: >-
+  https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_3a06571936a0424bb40bc5c672c4ccb1/openhpc-images
+community_images_slurm:
   openhpc:
     name: openhpc-230217-1440
     source_url: "{{ community_images_slurm_base_url }}/openhpc-230217-1440.qcow2"
     source_disk_format: qcow2
     container_format: bare
+
+# The default community images to upload
+community_images_default: >-
+  {{ community_images_azimuth_images | combine(community_images_slurm, recursive = True) }}
 
 # Any extra community images to upload as well as the defaults
 community_images_extra: {}
