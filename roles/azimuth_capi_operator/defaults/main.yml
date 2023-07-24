@@ -80,7 +80,13 @@ azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone: "{{ azimut
 
 # Options for LoadBalancer services
 # https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
-azimuth_capi_operator_capi_helm_openstack_loadbalancer_method:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_method: >-
+  {{-
+    'SOURCE_IP_PORT'
+    if azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider == 'ovn'
+    else None
+    }}
+
 azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider:
 azimuth_capi_operator_capi_helm_openstack_loadbalancer_create_monitor:
 azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_delay:
