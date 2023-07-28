@@ -76,7 +76,7 @@
             release: "{{ consul_release_name }}"
             component: server
 
-- name: Install PodMonitor for Consul client metrics
+- name: Remove PodMonitor for Consul client metrics
   command: kubectl apply -f -
   args:
     stdin: "{{ consul_podmonitor_client_definition | to_nice_yaml }}"
@@ -100,7 +100,17 @@
             release: "{{ consul_release_name }}"
             component: client
 
-- name: Install Grafana dashboard for Consul metrics
+# Remove the legacy installation of Consul exporter
+# This is now managed as part of a Zenith installation
+- name: Remove Consul exporter from prometheus-community
+  kubernetes.core.helm:
+    release_namespace: "{{ consul_exporter_release_namespace }}"
+    release_name: "{{ consul_exporter_release_name }}"
+    state: absent
+    wait: yes
+    wait_timeout: "{{ consul_exporter_wait_timeout }}"
+
+- name: Install Grafana dashboards for Consul metrics
   command: kubectl apply -f -
   args:
     stdin: "{{ consul_dashboard_definition | to_nice_yaml }}"
@@ -114,5 +124,18 @@
         labels:
           grafana_dashboard: "1"
       data:
-        consul_dashboard.json: |-
+        consul_system_dashboard.json: |-
           {{ lookup("file", "grafana_dashboard.json") | from_json | to_nice_json }}
+
+- name: Delete Prometheus rule in default namespace
+  command: kubectl delete prometheusrule consul
+  register: consul_delete_prometheus_rule_default
+  changed_when: "consul_delete_prometheus_rule_default.rc == 0"
+  failed_when: >-
+    consul_delete_prometheus_rule_default.rc != 0 and
+    "NotFound" not in consul_delete_prometheus_rule_default.stderr
+
+- name: Install Prometheus alerts rule for Consul
+  command: kubectl apply -n {{ consul_release_namespace }} -f -
+  args:
+    stdin: "{{ lookup('file', 'prometheus_rule.yaml') }}"
