@@ -44,7 +44,7 @@ community_images_azimuth_images_manifest: >-
 community_images_azimuth_images: |-
   {
     {% for source_key, image in community_images_azimuth_images_manifest.items() %}
-    {% if "kubernetes_version" in image and source_key.endswith("-jammy") %}
+    {% if "kubernetes" in image and source_key.endswith("-jammy") %}
       {% set kube_version = image.kubernetes_version.removeprefix("v") %}
       {% set kube_series = kube_version.split(".")[:-1] | join("_") %}
       {% set dest_key = "kube_" ~ kube_series %}
