@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.master.759
+azimuth_chart_version: 0.1.0-dev.0.master.760
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -210,6 +210,26 @@ azimuth_openstack_verify_ssl: true
 azimuth_openstack_create_internal_net: true
 #   The CIDR to use for auto-created tenant internal networks
 azimuth_openstack_internal_net_cidr: 192.168.3.0/24
+#   The nameservers to set on auto-created tenant internal networks
+azimuth_openstack_internal_net_dns_nameservers: []
+
+# Azimuth OpenStack provider configuration
+azimuth_openstack_provider: >-
+  {{-
+    {
+      "authUrl": azimuth_openstack_auth_url,
+      "domain": azimuth_openstack_domain,
+      "interface": azimuth_openstack_interface,
+      "verifySsl": azimuth_openstack_verify_ssl,
+      "createInternalNet": azimuth_openstack_create_internal_net,
+      "internalNetCidr": azimuth_openstack_internal_net_cidr
+    } |
+    combine(
+      { "internalNetDNSNameservers": azimuth_openstack_internal_net_dns_nameservers }
+      if azimuth_openstack_internal_net_dns_nameservers | length > 0
+      else {}
+    )
+  }}
 
 # App proxy settings
 #   The base domain for apps
@@ -322,13 +342,7 @@ azimuth_release_defaults:
     curatedSizes: "{{ azimuth_curated_sizes }}"
   authenticators: "{{ azimuth_authenticators }}"
   provider:
-    openstack:
-      authUrl: "{{ azimuth_openstack_auth_url }}"
-      domain: "{{ azimuth_openstack_domain }}"
-      interface: "{{ azimuth_openstack_interface }}"
-      verifySsl: "{{ azimuth_openstack_verify_ssl }}"
-      createInternalNet: "{{ azimuth_openstack_create_internal_net }}"
-      internalNetCidr: "{{ azimuth_openstack_internal_net_cidr }}"
+    openstack: "{{ azimuth_openstack_provider }}"
   apps: >-
     {{-
       {
