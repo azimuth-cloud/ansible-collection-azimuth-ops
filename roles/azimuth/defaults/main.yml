@@ -132,8 +132,8 @@ azimuth_authenticator_federated_protocol: >-
   }}
 #   The list of identity providers to make available
 azimuth_authenticator_federated_identity_providers:
-  - # A name to identify the identity provider within Azimuth
-    name: "{{ azimuth_authenticator_federated_provider }}_{{ azimuth_authenticator_federated_protocol }}"
+    # A name to identify the identity provider within Azimuth
+  - name: "{{ azimuth_authenticator_federated_provider }}_{{ azimuth_authenticator_federated_protocol }}"
     # A human-readble label for the identity provider, used in the selection form
     label: "{{ azimuth_authenticator_federated_label }}"
     # The Keystone identity provider and protocol to use
