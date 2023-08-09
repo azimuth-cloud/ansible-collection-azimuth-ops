@@ -18,6 +18,13 @@ jobs:
             repo_variable: certmanager_chart_repo
             chart_variable: certmanager_chart_name
             version_variable: certmanager_chart_version
+
+          - component: cluster-api
+            type: github
+            path: ./roles/clusterapi/defaults/main.yml
+            repo_variable: clusterapi_core_repo
+            version_variable: clusterapi_core_version
+
     name: ${{ matrix.component }}
     steps:
       - name: Checkout
@@ -26,7 +33,7 @@ jobs:
       - name: Install script dependencies
         run: pip install -r .github/scripts/requirements.txt
 
-      - name: Check for updates
+      - name: Check for updates (Helm)
         id: helm-update-version
         run: |
           .github/scripts/helm-update-version \
@@ -37,6 +44,15 @@ jobs:
             '${{ matrix.constraints || '>=0.0.0' }}'
         if: ${{ matrix.type == 'helm' }}
 
+      - name: Check for updates (GitHub)
+        id: github-update-version
+        run: |
+          .github/scripts/github-update-version \
+            ${{ matrix.path }} \
+            ${{ matrix.repo_variable }} \
+            ${{ matrix.version_variable }}
+        if: ${{ matrix.type == 'github' }}
+
       - name: Get next version from relevant outputs
         id: next
         run: >-
@@ -45,7 +61,8 @@ jobs:
           NEXT_VERSION: >-
             ${{
               matrix.type == 'helm' &&
-              steps.helm-update-version.outputs.next-version
+              steps.helm-update-version.outputs.next-version ||
+              steps.github-update-version.outputs.next-version
             }}
 
       - name: Propose changes via PR if required
