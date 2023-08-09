@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+
+import requests
+from ruamel.yaml import YAML
+
+import easysemver
+
+
+parser = argparse.ArgumentParser(
+    description = "Updates the version of a Helm chart to the latest release."
+)
+parser.add_argument("path", help = "The path of the file the variables are in.")
+parser.add_argument("repo_variable", help = "The variable containing the Helm repo.")
+parser.add_argument("chart_variable", help = "The variable containing the Helm chart.")
+parser.add_argument("version_variable", help = "The variable containing the version.")
+parser.add_argument(
+    "--constraints",
+    default = ">=0.0.0",
+    help = "Comma-separated list of constraints to apply when considering versions."
+)
+args = parser.parse_args()
+
+
+yaml = YAML(typ = "rt")
+yaml.explicit_start = True
+yaml.preserve_quotes = True
+yaml.width = 1000000
+yaml.mapping_indent = 2
+yaml.sequence_indent = 4
+yaml.sequence_dash_offset = 2
+
+with open(args.path) as fh:
+    data = yaml.load(fh)
+
+# Pull down the list of versions for the chart
+repo_url = data[args.repo_variable]
+chart_name = data[args.chart_variable]
+response = requests.get(f"{repo_url}/index.yaml")
+response.raise_for_status()
+entries = yaml.load(response.text)["entries"][chart_name]
+
+# Find the most recent version that matches the constraints
+version_range = easysemver.Range(args.constraints)
+next_version = None
+for entry in entries:
+    try:
+        version = easysemver.Version(entry["version"])
+    except TypeError:
+        continue
+    if version not in version_range:
+        continue
+    if next_version is None or version > next_version:
+        next_version = version
+
+# Update the version variable
+data[args.version_variable] = str(next_version)
+
+with open(args.path, "w") as fh:
+    yaml.dump(data, fh)
+
+# Output the next version so it can be consumed by later steps
+output_path = os.environ.get("GITHUB_OUTPUT", "/dev/stdout")
+with open(output_path, "a") as fh:
+    print(f"next-version={next_version}", file = fh)

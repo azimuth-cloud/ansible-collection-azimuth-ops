@@ -5,3 +5,4 @@
 *.tfstate*
 backend.tf
 .vscode/
+__pycache__

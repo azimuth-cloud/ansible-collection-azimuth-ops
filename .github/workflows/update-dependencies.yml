@@ -1,0 +1,35 @@
+name: Update dependencies
+on:
+  # Allow manual executions
+  workflow_dispatch:
+  # Run nightly
+  # schedule:
+  #   - cron: '0 0 * * *'
+
+jobs:
+  propose_update_pr:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - component: cert-manager
+            type: helm
+    name: ${{ matrix.component }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Propose changes via PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: Update ${{ matrix.component }}
+          branch: update/${{ matrix.component }}
+          delete-branch: yes
+          title: Update ${{ matrix.component }}
+          body: >
+            This PR was created automatically to update
+            ${{ matrix.component }}.
+          labels: |
+            automation
+            dependency-update
+          draft: true
