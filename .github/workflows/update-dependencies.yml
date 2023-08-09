@@ -24,7 +24,7 @@ jobs:
         with:
           commit-message: Update ${{ matrix.component }}
           branch: update/${{ matrix.component }}
-          delete-branch: yes
+          delete-branch: true
           title: Update ${{ matrix.component }}
           body: >
             This PR was created automatically to update
