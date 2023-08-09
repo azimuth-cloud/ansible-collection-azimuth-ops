@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.129
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.130
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -315,6 +315,28 @@ azimuth_capi_operator_zenith_sshd_port: >-
 # Leave blank for the operator defaults
 azimuth_capi_operator_zenith_chart_repo:
 azimuth_capi_operator_zenith_chart_version:
+# Indicates whether Zenith clients should be created in debug mode
+azimuth_capi_operator_zenith_client_debug: false
+# Default values for the Zenith apiserver chart
+azimuth_capi_operator_zenith_apiserver_defaults:
+  zenithClient:
+    debug: "{{ azimuth_capi_operator_zenith_client_debug }}"
+azimuth_capi_operator_zenith_apiserver_overrides: {}
+azimuth_capi_operator_zenith_apiserver_default_values: >-
+  {{-
+    azimuth_capi_operator_zenith_apiserver_defaults |
+      combine(azimuth_capi_operator_zenith_apiserver_overrides, recursive = True)
+  }}
+# Default values for the Zenith operator chart
+azimuth_capi_operator_zenith_operator_defaults:
+  config:
+    defaultDebug: "{{ azimuth_capi_operator_zenith_client_debug }}"
+azimuth_capi_operator_zenith_operator_overrides: {}
+azimuth_capi_operator_zenith_operator_default_values: >-
+  {{-
+    azimuth_capi_operator_zenith_operator_defaults |
+      combine(azimuth_capi_operator_zenith_operator_overrides, recursive = True)
+  }}
 
 # The values for the release
 azimuth_capi_operator_release_defaults:
@@ -360,6 +382,12 @@ azimuth_capi_operator_release_defaults:
             { "chartVersion": azimuth_capi_operator_zenith_chart_version }
             if azimuth_capi_operator_zenith_chart_version
             else {}
+          ) |
+          combine(
+            { "apiserverDefaults": azimuth_capi_operator_zenith_apiserver_default_values }
+          ) |
+          combine(
+            { "operatorDefaults": azimuth_capi_operator_zenith_operator_default_values }
           )
       }}
   # Enable the metrics with the service monitor by default
