@@ -55,11 +55,11 @@ jobs:
             Update ${{ matrix.component }} to ${{ steps.next.outputs.version }}
           branch: update/${{ matrix.component }}
           delete-branch: true
-          title: Update ${{ matrix.component }} to ${{ steps.next.outputs.version }}
+          title: >-
+            Update ${{ matrix.component }} to ${{ steps.next.outputs.version }}
           body: >
             This PR was created automatically to update
             ${{ matrix.component }} to ${{ steps.next.outputs.version }}.
           labels: |
             automation
             dependency-update
-          draft: true
