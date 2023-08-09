@@ -3,8 +3,8 @@ on:
   # Allow manual executions
   workflow_dispatch:
   # Run nightly
-  # schedule:
-  #   - cron: '0 0 * * *'
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
   propose_update_pr:
@@ -12,6 +12,62 @@ jobs:
     strategy:
       matrix:
         include:
+          - component: azimuth
+            type: helm
+            path: ./roles/azimuth/defaults/main.yml
+            repo_variable: azimuth_chart_repo
+            chart_variable: azimuth_chart_name
+            version_variable: azimuth_chart_version
+            # For now, use builds for main
+            # TODO(mkjpryor) Remove this constraint to use stable versions only
+            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+
+          - component: azimuth-caas-operator
+            type: helm
+            path: ./roles/azimuth_caas_operator/defaults/main.yml
+            repo_variable: azimuth_caas_operator_chart_repo
+            chart_variable: azimuth_caas_operator_chart_name
+            version_variable: azimuth_caas_operator_chart_version
+            # For now, use builds for main
+            # TODO(mkjpryor) Remove this constraint to use stable versions only
+            constraints: ">=0.2.3-dev.0.main.0,<0.2.3-dev.0.main.999999999"
+
+          - component: azimuth-capi-operator
+            type: helm
+            path: ./roles/azimuth_capi_operator/defaults/main.yml
+            repo_variable: azimuth_capi_operator_chart_repo
+            chart_variable: azimuth_capi_operator_chart_name
+            version_variable: azimuth_capi_operator_chart_version
+            # For now, use builds for main
+            # TODO(mkjpryor) Remove this constraint to use stable versions only
+            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+
+          - component: azimuth-identity-operator
+            type: helm
+            path: ./roles/azimuth_identity_operator/defaults/main.yml
+            repo_variable: azimuth_identity_operator_chart_repo
+            chart_variable: azimuth_identity_operator_chart_name
+            version_variable: azimuth_identity_operator_chart_version
+            # For now, use builds for main
+            # TODO(mkjpryor) Remove this constraint to use stable versions only
+            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+
+          - component: azimuth-images
+            type: github
+            path: ./roles/community_images/defaults/main.yml
+            repo_variable: community_images_azimuth_images_repo
+            version_variable: community_images_azimuth_images_version
+
+          - component: capi-helm-openstack-cluster
+            type: helm
+            path: ./roles/capi_cluster/defaults/main.yml
+            repo_variable: capi_cluster_chart_repo
+            chart_variable: capi_cluster_chart_name
+            version_variable: capi_cluster_chart_version
+            # For now, use builds for main
+            # TODO(mkjpryor) Remove this constraint to use stable versions only
+            constraints: ">=0.1.2-dev.0.main.0,<0.1.2-dev.0.main.999999999"
+
           - component: cert-manager
             type: helm
             path: ./roles/certmanager/defaults/main.yml
@@ -19,11 +75,87 @@ jobs:
             chart_variable: certmanager_chart_name
             version_variable: certmanager_chart_version
 
+          - component: cloud-metrics-grafana
+            type: helm
+            path: ./roles/cloud_metrics/defaults/main.yml
+            repo_variable: cloud_metrics_grafana_chart_repo
+            chart_variable: cloud_metrics_grafana_chart_name
+            version_variable: cloud_metrics_grafana_chart_version
+
           - component: cluster-api
             type: github
             path: ./roles/clusterapi/defaults/main.yml
             repo_variable: clusterapi_core_repo
             version_variable: clusterapi_core_version
+
+          - component: cluster-api-provider-openstack
+            type: github
+            path: ./roles/clusterapi/defaults/main.yml
+            repo_variable: clusterapi_openstack_repo
+            version_variable: clusterapi_openstack_version
+
+          - component: cluster-api-addon-provider
+            type: helm
+            path: ./roles/clusterapi/defaults/main.yml
+            repo_variable: clusterapi_addon_provider_chart_repo
+            chart_variable: clusterapi_addon_provider_chart_name
+            version_variable: clusterapi_addon_provider_chart_version
+
+          - component: consul
+            type: helm
+            path: ./roles/consul/defaults/main.yml
+            repo_variable: consul_chart_repo
+            chart_variable: consul_chart_name
+            version_variable: consul_chart_version
+
+          - component: harbor
+            type: helm
+            path: ./roles/harbor/defaults/main.yml
+            repo_variable: harbor_chart_repo
+            chart_variable: harbor_chart_name
+            version_variable: harbor_chart_version
+
+          - component: helm
+            type: github
+            path: ./roles/helm/defaults/main.yml
+            repo_variable: helm_repo
+            version_variable: helm_version
+
+          - component: ingress-nginx
+            type: helm
+            path: ./roles/ingress_nginx/defaults/main.yml
+            repo_variable: ingress_nginx_chart_repo
+            chart_variable: ingress_nginx_chart_name
+            version_variable: ingress_nginx_chart_version
+
+          - component: k3s
+            type: github
+            path: ./roles/k3s/defaults/main.yml
+            repo_variable: k3s_repo
+            version_variable: k3s_version
+
+          - component: kube-prometheus-stack
+            type: helm
+            path: ./roles/kube_prometheus_stack/defaults/main.yml
+            repo_variable: kube_prometheus_stack_chart_repo
+            chart_variable: kube_prometheus_stack_chart_name
+            version_variable: kube_prometheus_stack_chart_version
+
+          - component: kustomize
+            type: github
+            path: ./roles/kustomize/defaults/main.yml
+            repo_variable: kustomize_repo
+            version_variable: kustomize_version
+
+          - component: zenith
+            type: helm
+            path: ./roles/zenith/defaults/main.yml
+            repo_variable: zenith_chart_repo
+            chart_variable: zenith_chart_name
+            version_variable: zenith_chart_version
+            # For now, use builds for main
+            # TODO(mkjpryor) Remove this constraint to use stable versions only
+            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
 
     name: ${{ matrix.component }}
     steps:

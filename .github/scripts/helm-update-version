@@ -55,7 +55,8 @@ for entry in entries:
         next_version = version
 
 # Update the version variable
-data[args.version_variable] = str(next_version)
+if next_version:
+    data[args.version_variable] = str(next_version)
 
 with open(args.path, "w") as fh:
     yaml.dump(data, fh)
