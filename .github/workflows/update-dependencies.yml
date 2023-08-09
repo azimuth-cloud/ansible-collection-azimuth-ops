@@ -28,12 +28,12 @@ jobs:
         run: pip install -r .github/scripts/requirements.txt
 
       - name: Check for updates
-        run: >
-          .github/scripts/helm-update-version
-            ${{ matrix.path }}
-            ${{ matrix.repo_variable }}
-            ${{ matrix.chart_variable }}
-            ${{ matrix.version_variable }}
+        run: |
+          .github/scripts/helm-update-version \
+            ${{ matrix.path }} \
+            ${{ matrix.repo_variable }} \
+            ${{ matrix.chart_variable }} \
+            ${{ matrix.version_variable }} \
             '${{ matrix.constraints }}'
         if: ${{ matrix.type == 'helm' }}
       
