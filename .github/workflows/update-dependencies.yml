@@ -18,7 +18,6 @@ jobs:
             repo_variable: certmanager_chart_repo
             chart_variable: certmanager_chart_name
             version_variable: certmanager_chart_version
-            constraints: "<=v1.12.2"
     name: ${{ matrix.component }}
     steps:
       - name: Checkout
@@ -28,25 +27,38 @@ jobs:
         run: pip install -r .github/scripts/requirements.txt
 
       - name: Check for updates
+        id: helm-update-version
         run: |
           .github/scripts/helm-update-version \
             ${{ matrix.path }} \
             ${{ matrix.repo_variable }} \
             ${{ matrix.chart_variable }} \
             ${{ matrix.version_variable }} \
-            '${{ matrix.constraints }}'
+            '${{ matrix.constraints || '>=0.0.0' }}'
         if: ${{ matrix.type == 'helm' }}
-      
+
+      - name: Get next version from relevant outputs
+        id: next
+        run: >-
+          echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+        env:
+          NEXT_VERSION: >-
+            ${{
+              matrix.type == 'helm' &&
+              steps.helm-update-version.outputs.next-version
+            }}
+
       - name: Propose changes via PR if required
         uses: peter-evans/create-pull-request@v5
         with:
-          commit-message: Update ${{ matrix.component }}
+          commit-message: >-
+            Update ${{ matrix.component }} to ${{ steps.next.outputs.version }}
           branch: update/${{ matrix.component }}
           delete-branch: true
-          title: Update ${{ matrix.component }}
+          title: Update ${{ matrix.component }} to ${{ steps.next.outputs.version }}
           body: >
             This PR was created automatically to update
-            ${{ matrix.component }}.
+            ${{ matrix.component }} to ${{ steps.next.outputs.version }}.
           labels: |
             automation
             dependency-update
