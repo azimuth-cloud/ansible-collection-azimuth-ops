@@ -17,8 +17,7 @@ parser.add_argument("repo_variable", help = "The variable containing the Helm re
 parser.add_argument("chart_variable", help = "The variable containing the Helm chart.")
 parser.add_argument("version_variable", help = "The variable containing the version.")
 parser.add_argument(
-    "--constraints",
-    default = ">=0.0.0",
+    "constraints",
     help = "Comma-separated list of constraints to apply when considering versions."
 )
 args = parser.parse_args()

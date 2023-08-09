@@ -14,12 +14,30 @@ jobs:
         include:
           - component: cert-manager
             type: helm
+            path: ./roles/certmanager/defaults/main.yml
+            repo_variable: certmanager_chart_repo
+            chart_variable: certmanager_chart_name
+            version_variable: certmanager_chart_version
+            constraints: "<=v1.12.2"
     name: ${{ matrix.component }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Install script dependencies
+        run: pip install -r .github/scripts/requirements.txt
+
+      - name: Check for updates
+        run: >
+          .github/scripts/helm-update-version
+            ${{ matrix.path }}
+            ${{ matrix.repo_variable }}
+            ${{ matrix.chart_variable }}
+            ${{ matrix.version_variable }}
+            '${{ matrix.constraints }}'
+        if: ${{ matrix.type == 'helm' }}
       
-      - name: Propose changes via PR
+      - name: Propose changes via PR if required
         uses: peter-evans/create-pull-request@v5
         with:
           commit-message: Update ${{ matrix.component }}
