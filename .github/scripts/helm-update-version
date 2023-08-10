@@ -17,8 +17,7 @@ parser.add_argument("repo_variable", help = "The variable containing the Helm re
 parser.add_argument("chart_variable", help = "The variable containing the Helm chart.")
 parser.add_argument("version_variable", help = "The variable containing the version.")
 parser.add_argument(
-    "--constraints",
-    default = ">=0.0.0",
+    "constraints",
     help = "Comma-separated list of constraints to apply when considering versions."
 )
 args = parser.parse_args()
@@ -56,7 +55,8 @@ for entry in entries:
         next_version = version
 
 # Update the version variable
-data[args.version_variable] = str(next_version)
+if next_version:
+    data[args.version_variable] = str(next_version)
 
 with open(args.path, "w") as fh:
     yaml.dump(data, fh)

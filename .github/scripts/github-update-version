@@ -39,7 +39,7 @@ repo = urllib.parse.urlsplit(repo_url).path.removeprefix("/")
 api_url = f"https://api.github.com/repos/{repo}/releases/latest"
 response = requests.get(api_url)
 response.raise_for_status()
-next_version = data[args.version_variable] = response.json()["name"]
+next_version = data[args.version_variable] = response.json()["tag_name"]
 
 with open(args.path, "w") as fh:
     yaml.dump(data, fh)
