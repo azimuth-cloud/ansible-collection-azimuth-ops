@@ -22,3 +22,8 @@
     src: "{{ (helm_unpack_directory, helm_archive_subdirectory, 'helm') | path_join }}"
     dest: "{{ helm_bin_directory }}"
     mode: u=rwx,g=rw,o=rx
+
+- name: Ensure Helm shell completions are in .bashrc
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: source <(helm completion bash)
