@@ -1,3 +1,4 @@
+easysemver @ git+https://github.com/stackhpc/easysemver
+pyjwt
 requests
 ruamel.yaml
-easysemver @ git+https://github.com/stackhpc/easysemver
