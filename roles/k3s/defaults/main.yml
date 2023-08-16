@@ -1,7 +1,7 @@
 ---
 
 k3s_repo: https://github.com/k3s-io/k3s
-k3s_version: v1.24.7+k3s1
+k3s_version: v1.27.4+k3s1
 k3s_binary_url: "{{ k3s_repo }}/releases/download/{{ k3s_version }}/k3s"
 k3s_binary_checksum: sha256:ec346c909f23b32f9ab7c3ccf5bfa74c89a0515191701ede83556345b70abdca
 
