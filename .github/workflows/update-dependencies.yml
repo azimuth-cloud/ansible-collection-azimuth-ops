@@ -199,13 +199,12 @@ jobs:
             }}
 
       - name: Generate app token for PR
+        uses: stackhpc/github-actions/generate-app-token@master
         id: generate-app-token
-        run: >
-          .github/scripts/generate-app-token "$REPO" "$APP_ID" "$APP_PRIVATE_KEY"
-        env:
-          REPO: ${{ github.repository }}
-          APP_ID: ${{ secrets.APP_ID }}
-          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+        with:
+          repository: ${{ github.repository }}
+          app-id: ${{ secrets.APP_ID }}
+          app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Propose changes via PR if required
         uses: peter-evans/create-pull-request@v5
