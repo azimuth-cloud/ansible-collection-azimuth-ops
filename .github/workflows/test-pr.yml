@@ -29,22 +29,22 @@ jobs:
     steps:
       # Check out the configuration repository
       - name: Set up Azimuth environment
-        uses: stackhpc/azimuth-config/.github/actions/setup@feature/ci-external-actions
+        uses: stackhpc/azimuth-config/.github/actions/setup@main
         with:
           os-clouds: ${{ secrets.OS_CLOUDS }}
           environment-prefix: ops-ci
 
       # Provision Azimuth using the azimuth-ops version under test
       - name: Provision Azimuth
-        uses: stackhpc/azimuth-config/.github/actions/provision@feature/ci-external-actions
+        uses: stackhpc/azimuth-config/.github/actions/provision@main
         with:
           azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
 
       # # Run the tests
       - name: Run Azimuth tests
-        uses: stackhpc/azimuth-config/.github/actions/test@feature/ci-external-actions
+        uses: stackhpc/azimuth-config/.github/actions/test@main
 
       # Tear down the environment
       - name: Destroy Azimuth
-        uses: stackhpc/azimuth-config/.github/actions/destroy@feature/ci-external-actions
+        uses: stackhpc/azimuth-config/.github/actions/destroy@main
         if: ${{ always() }}
