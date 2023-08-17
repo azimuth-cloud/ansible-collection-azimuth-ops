@@ -22,15 +22,9 @@ jobs:
       - name: PR must be from a branch in the stackhpc/ansible-collection-azimuth-ops repo
         run: exit ${{ github.repository == 'stackhpc/ansible-collection-azimuth-ops' && '0' || '1' }}
 
-  # This job exists so that draft PRs see the check as failed
-  fail_on_draft:
-    runs-on: ubuntu-latest
-    steps:
-      - name: PR must be marked as ready for review before tests will run
-        run: exit ${{ github.event.pull_request.draft && '1' || '0' }}
-
   run_azimuth_tests:
-    needs: [fail_on_remote, fail_on_draft]
+    needs: [fail_on_remote]
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       # Check out the configuration repository
