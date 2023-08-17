@@ -38,7 +38,7 @@ jobs:
         uses: stackhpc/azimuth-ci-actions/setup@main
         with:
           os-clouds: ${{ secrets.OS_CLOUDS }}
-          environment-prefix: azimuth-ops-ci
+          environment-prefix: ops-ci
 
       # Provision Azimuth using the azimuth-ops version under test
       - name: Provision Azimuth
