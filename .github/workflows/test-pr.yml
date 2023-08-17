@@ -1,0 +1,56 @@
+name: Test Azimuth deployment
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+      - reopened
+    branches:
+      - main
+
+concurrency: 
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  # This job exists so that PRs from outside the main repo are rejected
+  fail_on_remote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR must be from a branch in the azimuth-images repo
+        run: exit ${{ github.repository == 'stackhpc/ansible-collection-azimuth-ops' && '0' || '1' }}
+
+  # This job exists so that draft PRs see the check as failed
+  fail_on_draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR must be marked as ready for review before tests will run
+        run: exit ${{ github.event.pull_request.draft && '1' || '0' }}
+
+  test:
+    needs: [fail_on_remote, fail_on_draft]
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the configuration repository
+      - name: Set up Azimuth environment
+        uses: stackhpc/azimuth-ci-actions/setup@main
+        with:
+          os-clouds: ${{ secrets.OS_CLOUDS }}
+          environment-prefix: azimuth-ops-ci
+
+      # Provision Azimuth using the azimuth-ops version under test
+      - name: Provision Azimuth
+        uses: stackhpc/azimuth-ci-actions/provision@main
+        with:
+          azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
+
+      # # Run the tests
+      # - name: Run Azimuth tests
+      #   uses: stackhpc/azimuth-ci-actions/test@main
+
+      # # Tear down the environment
+      # - name: Destroy Azimuth
+      #   uses: stackhpc/azimuth-ci-actions/destroy@main
+      #   if: ${{ always() }}
