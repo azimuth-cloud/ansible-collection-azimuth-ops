@@ -50,7 +50,7 @@ jobs:
       # - name: Run Azimuth tests
       #   uses: stackhpc/azimuth-ci-actions/test@main
 
-      # # Tear down the environment
-      # - name: Destroy Azimuth
-      #   uses: stackhpc/azimuth-ci-actions/destroy@main
-      #   if: ${{ always() }}
+      # Tear down the environment
+      - name: Destroy Azimuth
+        uses: stackhpc/azimuth-ci-actions/destroy@main
+        if: ${{ always() }}
