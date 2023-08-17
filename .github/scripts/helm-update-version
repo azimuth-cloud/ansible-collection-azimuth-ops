@@ -39,7 +39,7 @@ repo_url = data[args.repo_variable]
 chart_name = data[args.chart_variable]
 response = requests.get(f"{repo_url}/index.yaml")
 response.raise_for_status()
-entries = yaml.load(response.text)["entries"][chart_name]
+entries = yaml.load(response.content)["entries"][chart_name]
 
 # Find the most recent version that matches the constraints
 version_range = easysemver.Range(args.constraints)

@@ -10,6 +10,7 @@ jobs:
   propose_update_pr:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - component: azimuth
@@ -185,7 +186,7 @@ jobs:
             ${{ matrix.version_variable }}
         if: ${{ matrix.type == 'github' }}
 
-      - name: Get next version from relevant outputs
+      - name: Get next version from update
         id: next
         run: >-
           echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
@@ -197,9 +198,18 @@ jobs:
               steps.github-update-version.outputs.next-version
             }}
 
+      - name: Generate app token for PR
+        uses: stackhpc/github-actions/generate-app-token@master
+        id: generate-app-token
+        with:
+          repository: ${{ github.repository }}
+          app-id: ${{ secrets.APP_ID }}
+          app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Propose changes via PR if required
         uses: peter-evans/create-pull-request@v5
         with:
+          token: ${{ steps.generate-app-token.outputs.token }}
           commit-message: >-
             Update ${{ matrix.component }} to ${{ steps.next.outputs.version }}
           branch: update/${{ matrix.component }}
