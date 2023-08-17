@@ -29,7 +29,7 @@ jobs:
       - name: PR must be marked as ready for review before tests will run
         run: exit ${{ github.event.pull_request.draft && '1' || '0' }}
 
-  test:
+  run_azimuth_tests:
     needs: [fail_on_remote, fail_on_draft]
     runs-on: ubuntu-latest
     steps:
@@ -47,8 +47,8 @@ jobs:
           azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
 
       # # Run the tests
-      # - name: Run Azimuth tests
-      #   uses: stackhpc/azimuth-ci-actions/test@main
+      - name: Run Azimuth tests
+        uses: stackhpc/azimuth-ci-actions/test@main
 
       # Tear down the environment
       - name: Destroy Azimuth
