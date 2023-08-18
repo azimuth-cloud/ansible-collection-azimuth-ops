@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wait for an available slot
-        uses: stackhpc/github-actions/workflow-concurrency@main
+        uses: stackhpc/github-actions/workflow-concurrency@master
 
   run_azimuth_tests:
     needs: [wait_in_queue]
