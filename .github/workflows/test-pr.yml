@@ -32,8 +32,6 @@ jobs:
     steps:
       - name: Wait for an available slot
         uses: stackhpc/github-actions/workflow-concurrency@master
-        with:
-          cancel-existing: "no"
 
   run_azimuth_tests:
     needs: [wait_in_queue]
