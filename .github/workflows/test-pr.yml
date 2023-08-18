@@ -18,7 +18,7 @@ jobs:
       - name: PR must be from a branch in the stackhpc/ansible-collection-azimuth-ops repo
         run: exit ${{ github.repository == 'stackhpc/ansible-collection-azimuth-ops' && '0' || '1' }}
 
-  # Because of resource constraints, we want to impose the following concurrency behaviour:
+  # Because of resource constraints, we want to restrict concurrency:
   #
   #   * Only one active workflow run at a time across all branches, others should be queued
   #   * New workflow runs should cancel any in-progress runs for the same branch only
@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Wait for an available slot
         uses: stackhpc/github-actions/workflow-concurrency@master
+        with:
+          cancel-existing: "no"
 
   run_azimuth_tests:
     needs: [wait_in_queue]
