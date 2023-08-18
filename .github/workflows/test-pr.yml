@@ -10,10 +10,6 @@ on:
     branches:
       - main
 
-concurrency: 
-  group: ${{ github.head_ref }}
-  cancel-in-progress: true
-
 jobs:
   # This job exists so that PRs from outside the main repo are rejected
   fail_on_remote:
@@ -22,9 +18,23 @@ jobs:
       - name: PR must be from a branch in the stackhpc/ansible-collection-azimuth-ops repo
         run: exit ${{ github.repository == 'stackhpc/ansible-collection-azimuth-ops' && '0' || '1' }}
 
-  run_azimuth_tests:
+  # Because of resource constraints, we want to restrict concurrency:
+  #
+  #   * Only one active workflow run at a time across all branches, others should be queued
+  #   * New workflow runs should cancel any in-progress runs for the same branch only
+  #
+  # The GitHub native concurrency cannot express this, so we use a custom action to queue
+  # This will wait for an available slot until the action times out or is cancelled
+  wait_in_queue:
     needs: [fail_on_remote]
     if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for an available slot
+        uses: stackhpc/github-actions/workflow-concurrency@master
+
+  run_azimuth_tests:
+    needs: [wait_in_queue]
     runs-on: ubuntu-latest
     steps:
       # Check out the configuration repository
