@@ -102,6 +102,13 @@ jobs:
             chart_variable: clusterapi_addon_provider_chart_name
             version_variable: clusterapi_addon_provider_chart_version
 
+          - component: cluster-api-janitor-openstack
+            type: helm
+            path: ./roles/clusterapi/defaults/main.yml
+            repo_variable: clusterapi_janitor_openstack_chart_repo
+            chart_variable: clusterapi_janitor_openstack_chart_name
+            version_variable: clusterapi_janitor_openstack_chart_version
+
           - component: consul
             type: helm
             path: ./roles/consul/defaults/main.yml

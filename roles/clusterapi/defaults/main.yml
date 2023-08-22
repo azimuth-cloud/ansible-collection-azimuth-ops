@@ -91,3 +91,19 @@ clusterapi_addon_provider_wait_timeout: 30m
 # The values for the Cluster API addon provider deployment
 # The defaults are sufficient for most use cases
 clusterapi_addon_provider_release_values: {}
+
+# Helm chart information for the Cluster API janitor
+clusterapi_janitor_openstack_chart_repo: https://stackhpc.github.io/cluster-api-janitor-openstack
+clusterapi_janitor_openstack_chart_name: cluster-api-janitor-openstack
+clusterapi_janitor_openstack_chart_version: 0.1.0-dev.0.main.7
+
+# Release information for the Cluster API janitor release
+clusterapi_janitor_openstack_release_namespace: capi-janitor-system
+clusterapi_janitor_openstack_release_name: cluster-api-janitor-openstack
+
+# The timeout to wait for the Cluster API janitor to become ready
+clusterapi_janitor_openstack_wait_timeout: 30m
+
+# The values for the Cluster API janitor deployment
+# The defaults are sufficient for most use cases
+clusterapi_janitor_openstack_release_values: {}
