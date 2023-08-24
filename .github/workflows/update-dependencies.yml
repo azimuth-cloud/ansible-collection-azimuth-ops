@@ -108,6 +108,9 @@ jobs:
             repo_variable: clusterapi_janitor_openstack_chart_repo
             chart_variable: clusterapi_janitor_openstack_chart_name
             version_variable: clusterapi_janitor_openstack_chart_version
+            # For now, use builds for main
+            # TODO(mkjpryor) Remove this constraint to use stable versions only
+            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
 
           - component: consul
             type: helm
