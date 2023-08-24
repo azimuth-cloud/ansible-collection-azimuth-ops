@@ -41,3 +41,16 @@
     create_namespace: yes
     wait: yes
     wait_timeout: "{{ clusterapi_addon_provider_wait_timeout }}"
+
+- name: Install Cluster API janitor
+  kubernetes.core.helm:
+    chart_ref: "{{ clusterapi_janitor_openstack_chart_name }}"
+    chart_repo_url: "{{ clusterapi_janitor_openstack_chart_repo }}"
+    chart_version: "{{ clusterapi_janitor_openstack_chart_version }}"
+    release_namespace: "{{ clusterapi_janitor_openstack_release_namespace }}"
+    release_name: "{{ clusterapi_janitor_openstack_release_name }}"
+    release_values: "{{ clusterapi_janitor_openstack_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ clusterapi_janitor_openstack_wait_timeout }}"

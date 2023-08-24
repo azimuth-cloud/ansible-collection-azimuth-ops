@@ -102,6 +102,16 @@ jobs:
             chart_variable: clusterapi_addon_provider_chart_name
             version_variable: clusterapi_addon_provider_chart_version
 
+          - component: cluster-api-janitor-openstack
+            type: helm
+            path: ./roles/clusterapi/defaults/main.yml
+            repo_variable: clusterapi_janitor_openstack_chart_repo
+            chart_variable: clusterapi_janitor_openstack_chart_name
+            version_variable: clusterapi_janitor_openstack_chart_version
+            # For now, use builds for main
+            # TODO(mkjpryor) Remove this constraint to use stable versions only
+            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+
           - component: consul
             type: helm
             path: ./roles/consul/defaults/main.yml
