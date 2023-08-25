@@ -144,41 +144,43 @@ azimuth_capi_operator_capi_helm_values_defaults:
     failureDomains: "{{ azimuth_capi_operator_capi_helm_control_plane_failure_domains }}"
     machineRootVolume: >-
       {{-
-        (
-          { "diskSize": azimuth_capi_operator_capi_helm_control_plane_root_volume_size } |
-            combine(
-              { "volumeType": azimuth_capi_operator_capi_helm_control_plane_root_volume_type }
-              if azimuth_capi_operator_capi_helm_control_plane_root_volume_type
-              else {}
-            ) |
-            combine(
-              { "availabilityZone": azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone }
-              if azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone
-              else {}
-            )
-        )
-        if azimuth_capi_operator_capi_helm_control_plane_root_volume_size
-        else None
+        {} |
+          combine(
+            { "diskSize": azimuth_capi_operator_capi_helm_control_plane_root_volume_size }
+            if azimuth_capi_operator_capi_helm_control_plane_root_volume_size
+            else {}
+          ) |
+          combine(
+            { "volumeType": azimuth_capi_operator_capi_helm_control_plane_root_volume_type }
+            if azimuth_capi_operator_capi_helm_control_plane_root_volume_type
+            else {}
+          ) |
+          combine(
+            { "availabilityZone": azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone }
+            if azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone
+            else {}
+          )
       }}
   nodeGroupDefaults:
     failureDomain: "{{ azimuth_capi_operator_capi_helm_worker_failure_domain }}"
     machineRootVolume: >-
       {{-
-        (
-          { "diskSize": azimuth_capi_operator_capi_helm_worker_root_volume_size } |
-            combine(
-              { "volumeType": azimuth_capi_operator_capi_helm_worker_root_volume_type }
-              if azimuth_capi_operator_capi_helm_worker_root_volume_type
-              else {}
-            ) |
-            combine(
-              { "availabilityZone": azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone }
-              if azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone
-              else {}
-            )
-        )
-        if azimuth_capi_operator_capi_helm_worker_root_volume_size
-        else None
+        {} |
+          combine(
+            { "diskSize": azimuth_capi_operator_capi_helm_worker_root_volume_size }
+            if azimuth_capi_operator_capi_helm_worker_root_volume_size
+            else {}
+          ) |
+          combine(
+            { "volumeType": azimuth_capi_operator_capi_helm_worker_root_volume_type }
+            if azimuth_capi_operator_capi_helm_worker_root_volume_type
+            else {}
+          ) |
+          combine(
+            { "availabilityZone": azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone }
+            if azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone
+            else {}
+          )
       }}
   addons:
     openstack:
