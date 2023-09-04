@@ -255,6 +255,51 @@ azimuth_caas_stackhpc_repo2docker_template:
   extraVars: "{{ azimuth_caas_stackhpc_repo2docker_extra_vars }}"
 
 
+# Indicates if the StackHPC R-Studio appliance should be enabled
+azimuth_caas_stackhpc_rstudio_enabled: "{{ azimuth_clusters_enabled }}"
+# The git URL for the StackHPC R-Studio appliance
+azimuth_caas_stackhpc_rstudio_git_url: https://github.com/stackhpc/caas-r-studio-server
+# The git version for the StackHPC R-Studio appliance
+azimuth_caas_stackhpc_rstudio_git_version: 5a4825a6e0d840026ea8a2023b1339dcca9eabb0
+# The playbook to use for the StackHPC R-Studio appliance
+azimuth_caas_stackhpc_rstudio_playbook: rstudio.yml
+# The metadata root for the StackHPC R-Studio appliance project
+azimuth_caas_stackhpc_rstudio_metadata_url: >-
+  https://raw.githubusercontent.com/stackhpc/caas-r-studio-server/{{ azimuth_caas_stackhpc_rstudio_git_version }}/ui-meta/rstudio.yml
+# The ID of the image for use with the StackHPC R-Studio appliance
+# By default, use the R-Studio image from community images if available
+azimuth_caas_stackhpc_rstudio_image: >-
+  {{-
+    (
+      community_images_image_ids.rstudio
+      if (
+        community_images_image_ids is defined and
+        'rstudio' in community_images_image_ids
+      )
+      else undef(hint = 'azimuth_caas_stackhpc_rstudio_image is required')
+    )
+    if azimuth_caas_stackhpc_rstudio_enabled
+    else None
+  }}
+# The default extra vars for templates in the StackHPC R-Studio appliance
+azimuth_caas_stackhpc_rstudio_extra_vars_defaults:
+  cluster_image: "{{ azimuth_caas_stackhpc_rstudio_image }}"
+# extra_vars overrides for templates in the StackHPC R-Studio appliance
+azimuth_caas_stackhpc_rstudio_extra_vars_overrides: {}
+azimuth_caas_stackhpc_rstudio_extra_vars: >-
+  {{-
+    azimuth_caas_stackhpc_rstudio_extra_vars_defaults |
+      combine(azimuth_caas_stackhpc_rstudio_extra_vars_overrides)
+  }}
+# The template definition for the StackHPC R-Studio appliance  
+azimuth_caas_stackhpc_rstudio_template:
+  gitUrl: "{{ azimuth_caas_stackhpc_rstudio_git_url }}"
+  gitVersion: "{{ azimuth_caas_stackhpc_rstudio_git_version }}"
+  uiMetaUrl: "{{ azimuth_caas_stackhpc_rstudio_metadata_url }}"
+  playbook: "{{ azimuth_caas_stackhpc_rstudio_playbook }}"
+  extra_vars: "{{ azimuth_caas_stackhpc_rstudio_extra_vars }}"
+
+
 # Quick test appliance
 #
 # This runs ansible that does nothing except check the CRD mechanisms work,
@@ -290,6 +335,11 @@ azimuth_caas_cluster_templates_default: >-
       combine(
         { "repo2docker": azimuth_caas_stackhpc_repo2docker_template }
         if azimuth_caas_stackhpc_repo2docker_enabled
+        else {}
+      ) |
+      combine(
+        { "rstudio": azimuth_caas_stackhpc_rstudio_template }
+        if azimuth_caas_stackhpc_rstudio_enabled
         else {}
       ) |
       combine(

@@ -54,6 +54,8 @@ community_images_azimuth_images: |-
       {% set dest_key = "repo2docker" %}
     {% elif source_key == "ubuntu-desktop" %}
       {% set dest_key = "workstation" %}
+    {% elif source_key == "linux-rstudio" %}
+      {% set dest_key = "rstudio" %}
     {% else %}
       {% set dest_key = None %}
     {% endif %}
