@@ -33,6 +33,9 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_rule_ingress_{{ port_
 resource "openstack_networking_network_v2" "internal_net" {
   name           = "{{ infra_name }}"
   admin_state_up = "true"
+  {% if infra_network_mtu %}
+  mtu = "{{ infra_network_mtu }}"
+  {% endif %}
 }
 
 resource "openstack_networking_subnet_v2" "internal_subnet" {
