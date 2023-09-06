@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.136
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.feature-template-tags.136
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -415,6 +415,16 @@ azimuth_capi_operator_release_values: >-
 # All other templates will be marked as DEPRECATED
 # azimuth-ops currently never removes templates
 #####
+# Tags for the default Kubernetes apps
+azimuth_capi_operator_cluster_template_tags: [standard]
+# Settings for the default Kubernetes templates
+azimuth_capi_operator_cluster_template_defaults:
+  tags: "{{ azimuth_capi_operator_cluster_template_tags }}"
+  values:
+    clusterNetworking:
+      internalNetwork:
+        networkFilter:
+          tags: portal-internal
 # By default, make a template for each Kubernetes release for which we have an image
 azimuth_capi_operator_cluster_templates_default: |-
   {
@@ -422,21 +432,20 @@ azimuth_capi_operator_cluster_templates_default: |-
     {% if "kubernetes_version" in image %}
     {% set kube_vn_no_prefix = image.kubernetes_version.removeprefix("v") %}
     {% set kube_vn_dash = kube_vn_no_prefix | replace('.', '-') %}
-    "kube-{{ kube_vn_dash }}": {
-      "label": "{{ image.kubernetes_version }}",
-      "description": "Kubernetes {{ kube_vn_no_prefix }} with HA control plane.",
-      "values": {
-        "kubernetesVersion": "{{ kube_vn_no_prefix }}",
-        "machineImageId": "{{ community_images_image_ids[key] }}",
-        "clusterNetworking": {
-          "internalNetwork": {
-            "networkFilter": {
-              "tags": "portal-internal",
+    "kube-{{ kube_vn_dash }}": {{
+      azimuth_capi_operator_cluster_template_defaults |
+        combine(
+          {
+            "label": image.kubernetes_version,
+            "description": "Kubernetes " ~ kube_vn_no_prefix ~ " with HA control plane.",
+            "values": {
+              "kubernetesVersion": kube_vn_no_prefix,
+              "machineImageId": community_images_image_ids[key],
             },
           },
-        },
-      },
-    },
+          recursive = True
+        )
+    }},
     {% endif %}
     {% endfor %}
   }
