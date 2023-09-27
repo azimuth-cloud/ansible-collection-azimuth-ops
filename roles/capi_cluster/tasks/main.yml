@@ -30,6 +30,18 @@
       retries: 360
       delay: 10
 
+    - name: Wait for machine deployments to be running
+      command: >-
+        kubectl wait machinedeployments --all
+          --for=jsonpath='{.status.phase}'=Running
+          --namespace {{ capi_cluster_release_namespace }}
+          --timeout=0
+      changed_when: false
+      register: capi_cluster_mds_running
+      until: capi_cluster_mds_running is succeeded
+      retries: 360
+      delay: 10
+
     - name: Wait for addons to deploy
       command: >-
         kubectl wait {{ item }} --all
@@ -40,7 +52,6 @@
       changed_when: false
       register: capi_cluster_addons_complete
       until: capi_cluster_addons_complete is succeeded
-      # Wait up to 60 mins for the addons to deploy
       retries: 360
       delay: 10
       loop:

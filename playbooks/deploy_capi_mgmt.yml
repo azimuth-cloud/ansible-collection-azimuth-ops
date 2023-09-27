@@ -1,0 +1,14 @@
+#####
+# This playbook turns the target Kubernetes cluster into a CAPI management cluster
+#####
+
+- hosts: azimuth_deploy
+  roles:
+    - role: stackhpc.azimuth_ops.alertmanager_config
+      when: >-
+        alertmanager_config_slack_webhook_url is defined and
+        alertmanager_config_slack_webhook_url
+    - role: stackhpc.azimuth_ops.certmanager
+    - role: stackhpc.azimuth_ops.clusterapi
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path | default('') }}"
