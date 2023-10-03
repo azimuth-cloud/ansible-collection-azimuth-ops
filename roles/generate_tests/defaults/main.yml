@@ -1,0 +1,162 @@
+---
+
+# The directory to generate the test suite files in
+# Use a directory in $HOME by default
+generate_tests_suite_directory: "{{ (ansible_env.HOME, 'test-suite') | path_join }}"
+
+#####
+# The Azimuth URL of the deployment under test
+#####
+_azimuth_ingress_tls_enabled: >-
+  {{-
+    azimuth_ingress_tls_enabled
+    if azimuth_ingress_tls_enabled is defined
+    else (ingress_tls_enabled | default(True))
+  }}
+# Get the ingress_base_domain fact from the seed node if it is not defined
+# This is because in some cases the base domain is determined from the external IP
+_ingress_base_domain: >-
+  {{-
+    ingress_base_domain |
+      default(hostvars[groups['azimuth_deploy'][0]].ingress_base_domain) |
+      default(undef())
+  }}
+_azimuth_ingress_host: >-
+  {{-
+    azimuth_ingress_host
+    if azimuth_ingress_host is defined
+    else (
+      "{}.{}".format(ingress_azimuth_portal_subdomain, _ingress_base_domain)
+      if ingress_azimuth_portal_subdomain is defined and _ingress_base_domain is defined
+      else None
+    )
+  }}
+generate_tests_azimuth_url: >-
+  {{
+    "{}://{}".format(
+      'https' if _azimuth_ingress_tls_enabled else 'http',
+      _azimuth_ingress_host
+    )
+    if _azimuth_ingress_host
+    else undef(hint = 'generate_tests_azimuth_url is required')
+  }}
+
+#####
+# Settings for the tests
+#####
+# The template to use to generate the main suite file with setup and teardown
+generate_tests_suite_template: suite.robot
+
+#-----
+# Settings for the CaaS test suite
+#-----
+# Indicates whether to generate the CaaS test suite
+generate_tests_caas_suite_enabled: "{{ azimuth_clusters_enabled }}"
+
+# The template to use for the CaaS suite
+generate_tests_caas_suite_template: caas_suite.robot
+# The template to use for test cases in the suite
+generate_tests_caas_test_case_template: caas_test_case.robot
+
+# The name of the suite
+generate_tests_caas_suite_name: CaaS
+
+# The tags to apply to tests in the suite
+generate_tests_caas_default_test_tags: [caas]
+
+# The timeout to apply to tests in the suite
+generate_tests_caas_default_test_timeout: "15 minutes"
+
+# Configuration for the workstation test case
+#   Indicates if the workstation test case should be enabled
+generate_tests_caas_test_case_workstation_enabled: >-
+  {{- azimuth_caas_stackhpc_workstation_enabled | default(azimuth_clusters_enabled) }}
+#   The timeout for the workstation test case
+generate_tests_caas_test_case_workstation_test_timeout: "{{ generate_tests_caas_default_test_timeout }}"
+#   The ID of the flavor to use for the workstation test case
+generate_tests_caas_test_case_workstation_cluster_flavor: >-
+  {{-
+    lookup('pipe', 'openstack flavor list -f json') |
+      from_json |
+      selectattr('Disk', '>=', 20) |
+      selectattr('VCPUs', '>=', 2) |
+      selectattr('RAM', '>=', 4096) |
+      sort(attribute = 'RAM') |
+      first |
+      default(undef(hint = 'generate_tests_caas_test_case_workstation_cluster_flavor is required')) |
+      json_query('ID')
+  }}
+#   The full workstation test case
+generate_tests_caas_test_case_workstation:
+  tags: [workstation]
+  timeout: "{{ generate_tests_caas_test_case_workstation_test_timeout }}"
+  cluster_type: workstation
+  params:
+    cluster_flavor: "{{ generate_tests_caas_test_case_workstation_cluster_flavor }}"
+  zenith_services:
+    - name: webconsole
+      expected_title: Apache Guacamole
+    - name: monitoring
+      expected_title: Grafana
+
+# Configuration for the Slurm test case
+#   Indicates if the Slurm test case should be enabled
+generate_tests_caas_test_case_slurm_enabled: >-
+  {{- azimuth_caas_stackhpc_slurm_appliance_enabled | default(azimuth_clusters_enabled) }}
+#   The timeout for the Slurm test case
+#   By default, the Slurm test case is permitted longer
+generate_tests_caas_test_case_slurm_test_timeout: "30 minutes"
+#   The ID of the flavor to use for the Slurm test case
+generate_tests_caas_test_case_slurm_compute_flavor: >-
+  {{-
+    lookup('pipe', 'openstack flavor list -f json') |
+      from_json |
+      selectattr('Disk', '>=', 20) |
+      selectattr('VCPUs', '>=', 2) |
+      selectattr('RAM', '>=', 4096) |
+      sort(attribute = 'RAM') |
+      first |
+      default(undef(hint = 'generate_tests_caas_test_case_slurm_compute_flavor is required')) |
+      json_query('ID')
+  }}
+#   The number of compute nodes to deploy for the test
+generate_tests_caas_test_case_slurm_compute_count: 2
+#   The home directory size for the test
+generate_tests_caas_test_case_slurm_home_volume_size: 20
+#   Indicates whether to run the validation tests
+generate_tests_caas_test_case_slurm_run_validation: true
+#   The timeout for the Slurm test case
+#   The full workstation test case
+generate_tests_caas_test_case_slurm:
+  tags: [slurm, externalip, slow]
+  timeout: "{{ generate_tests_caas_test_case_slurm_test_timeout }}"
+  cluster_type: slurm
+  params:
+    compute_flavor: "{{ generate_tests_caas_test_case_slurm_compute_flavor }}"
+    compute_count: "{{ generate_tests_caas_test_case_slurm_compute_count }}"
+    home_volume_size: "{{ generate_tests_caas_test_case_slurm_home_volume_size }}"
+    cluster_run_validation: "{{ generate_tests_caas_test_case_slurm_run_validation }}"
+  zenith_services:
+    - name: ood
+      expected_title: Dashboard
+    - name: monitoring
+      expected_title: Grafana
+
+#   The test cases for the suite
+generate_tests_caas_test_cases_default: >-
+  {{-
+    [] +
+      (
+        [generate_tests_caas_test_case_workstation]
+        if generate_tests_caas_test_case_workstation_enabled
+        else []
+      ) +
+      (
+        [generate_tests_caas_test_case_slurm]
+        if generate_tests_caas_test_case_slurm_enabled
+        else []
+      )
+  }}
+generate_tests_caas_test_cases_extra: []
+generate_tests_caas_test_cases: >-
+  {{- generate_tests_caas_test_cases_default + generate_tests_caas_test_cases_extra }}

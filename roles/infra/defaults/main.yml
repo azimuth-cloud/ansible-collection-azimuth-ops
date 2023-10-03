@@ -1,6 +1,9 @@
 # The location into which the Terraform files should be templated
 terraform_project_path: "{{ inventory_dir }}/.terraform"
 
+# If true, then the outputs from the last deploy are used
+infra_readonly: false
+
 # The name of the provisioned node
 infra_name: "{{ undef(hint = 'infra_name is required') }}"
 

@@ -1,0 +1,22 @@
+---
+
+- hosts: terraform_provision
+  tasks:
+    # Get information from the Terraform outputs and use it to build the inventory
+    - name: Adopt Azimuth hosts into inventory
+      include_role:
+        name: stackhpc.azimuth_ops.infra
+      vars:
+        infra_readonly: true
+        infra_ansible_groups: [k3s, azimuth_deploy]
+
+    - name: Gather facts from seed node
+      setup:
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['azimuth_deploy'] }}"
+
+    # Generate the test suite based on the discovered information
+    - name: Generate test suite
+      include_role:
+        name: stackhpc.azimuth_ops.generate_tests

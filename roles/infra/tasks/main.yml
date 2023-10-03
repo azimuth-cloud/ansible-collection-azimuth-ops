@@ -20,20 +20,14 @@
     - name: Set infra image ID fact
       set_fact:
         infra_image_id: "{{ community_images_image_id }}"
-  when: not infra_image_id
+  when:
+    - not infra_image_id
+    - not infra_readonly
 
 - name: Make Terraform project directory
   file:
     path: "{{ terraform_project_path }}"
     state: directory
-
-- name: Write backend configuration
-  copy:
-    content: |
-      terraform {
-        backend "{{ terraform_backend_type }}" { }
-      }
-    dest: "{{ terraform_project_path }}/backend.tf"
 
 - name: Template Terraform files into project directory
   template:
@@ -43,7 +37,11 @@
     - outputs.tf
     - providers.tf
     - resources.tf
+  when:
+    - not infra_readonly
 
 - name: Provision infrastructure
   include_role:
     name: stackhpc.terraform.infra
+  vars:
+    terraform_readonly: "{{ infra_readonly }}"
