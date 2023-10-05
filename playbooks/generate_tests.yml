@@ -1,20 +1,62 @@
 ---
 
+# Get the state information for the seed and adopt it
 - hosts: terraform_provision
   tasks:
-    # Get information from the Terraform outputs and use it to build the inventory
-    - name: Adopt Azimuth hosts into inventory
+    - name: Discover k3s host and adopt it
       include_role:
         name: stackhpc.azimuth_ops.infra
       vars:
         infra_readonly: true
         infra_ansible_groups: [k3s, azimuth_deploy]
 
-    - name: Gather facts from seed node
-      setup:
-      delegate_to: "{{ item }}"
-      delegate_facts: true
-      loop: "{{ groups['azimuth_deploy'] }}"
+# Gather required facts from the seed
+- hosts: k3s
+  tasks:
+    - name: Get installed cluster types
+      command: kubectl get clustertypes -o json
+      register: generate_tests_cluster_types_cmd
+
+    - name: Get installed Kubernetes templates
+      command: kubectl get clustertemplates -o json
+      register: generate_tests_kubernetes_templates_cmd
+
+    - name: Get installed Kubernetes app templates
+      command: kubectl get apptemplates -o json
+      register: generate_tests_app_templates_cmd
+  environment:
+    # In HA mode, use the kubeconfig for the HA cluster
+    # In single node mode, use the default kubeconfig file
+    KUBECONFIG: >-
+      {{-
+        "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
+        if install_mode == 'ha'
+        else ""
+      }}
+
+# Generate the tests locally
+- hosts: terraform_provision
+  tasks:
+    - name: Copy required facts to current host
+      set_fact:
+        generate_tests_installed_cluster_types: >-
+          {{-
+            hostvars[groups.k3s.0].generate_tests_cluster_types_cmd.stdout |
+              from_json |
+              json_query('items')
+          }}
+        generate_tests_installed_kubernetes_templates: >-
+          {{-
+            hostvars[groups.k3s.0].generate_tests_kubernetes_templates_cmd.stdout |
+              from_json |
+              json_query('items')
+          }}
+        generate_tests_installed_kubernetes_app_templates: >-
+          {{-
+            hostvars[groups.k3s.0].generate_tests_app_templates_cmd.stdout |
+              from_json |
+              json_query('items')
+          }}
 
     # Generate the test suite based on the discovered information
     - name: Generate test suite

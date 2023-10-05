@@ -47,6 +47,9 @@ generate_tests_azimuth_url: >-
 # The template to use to generate the main suite file with setup and teardown
 generate_tests_suite_template: suite.robot
 
+# The name for the suite
+generate_tests_suite_name: Azimuth Tests
+
 #-----
 # Settings for the CaaS test suite
 #-----
@@ -68,95 +71,162 @@ generate_tests_caas_default_test_tags: [caas]
 generate_tests_caas_default_test_timeout: "15 minutes"
 
 # Configuration for the workstation test case
-#   Indicates if the workstation test case should be enabled
-generate_tests_caas_test_case_workstation_enabled: >-
-  {{- azimuth_caas_stackhpc_workstation_enabled | default(azimuth_clusters_enabled) }}
-#   The timeout for the workstation test case
-generate_tests_caas_test_case_workstation_test_timeout: "{{ generate_tests_caas_default_test_timeout }}"
-#   The ID of the flavor to use for the workstation test case
-generate_tests_caas_test_case_workstation_cluster_flavor: >-
-  {{-
-    lookup('pipe', 'openstack flavor list -f json') |
-      from_json |
-      selectattr('Disk', '>=', 20) |
-      selectattr('VCPUs', '>=', 2) |
-      selectattr('RAM', '>=', 4096) |
-      sort(attribute = 'RAM') |
-      first |
-      default(undef(hint = 'generate_tests_caas_test_case_workstation_cluster_flavor is required')) |
-      json_query('ID')
-  }}
-#   The full workstation test case
-generate_tests_caas_test_case_workstation:
-  tags: [workstation]
-  timeout: "{{ generate_tests_caas_test_case_workstation_test_timeout }}"
-  cluster_type: workstation
-  params:
-    cluster_flavor: "{{ generate_tests_caas_test_case_workstation_cluster_flavor }}"
-  zenith_services:
-    - name: webconsole
-      expected_title: Apache Guacamole
-    - name: monitoring
-      expected_title: Grafana
+#   Indicates whether the workstation test case should be enabled
+generate_tests_caas_test_case_workstation_enabled: true
+#   Expected titles for the workstation services
+generate_tests_caas_test_case_workstation_service_webconsole_expected_title: Apache Guacamole
+generate_tests_caas_test_case_workstation_service_monitoring_expected_title: Grafana
 
 # Configuration for the Slurm test case
 #   Indicates if the Slurm test case should be enabled
-generate_tests_caas_test_case_slurm_enabled: >-
-  {{- azimuth_caas_stackhpc_slurm_appliance_enabled | default(azimuth_clusters_enabled) }}
+generate_tests_caas_test_case_slurm_enabled: true
+#   Extra tags for the Slurm test case
+generate_tests_caas_test_case_slurm_tags: [externalip]
 #   The timeout for the Slurm test case
 #   By default, the Slurm test case is permitted longer
-generate_tests_caas_test_case_slurm_test_timeout: "30 minutes"
-#   The ID of the flavor to use for the Slurm test case
-generate_tests_caas_test_case_slurm_compute_flavor: >-
-  {{-
-    lookup('pipe', 'openstack flavor list -f json') |
-      from_json |
-      selectattr('Disk', '>=', 20) |
-      selectattr('VCPUs', '>=', 2) |
-      selectattr('RAM', '>=', 4096) |
-      sort(attribute = 'RAM') |
-      first |
-      default(undef(hint = 'generate_tests_caas_test_case_slurm_compute_flavor is required')) |
-      json_query('ID')
-  }}
-#   The number of compute nodes to deploy for the test
-generate_tests_caas_test_case_slurm_compute_count: 2
-#   The home directory size for the test
-generate_tests_caas_test_case_slurm_home_volume_size: 20
-#   Indicates whether to run the validation tests
-generate_tests_caas_test_case_slurm_run_validation: true
-#   The timeout for the Slurm test case
-#   The full workstation test case
-generate_tests_caas_test_case_slurm:
-  tags: [slurm, externalip, slow]
-  timeout: "{{ generate_tests_caas_test_case_slurm_test_timeout }}"
-  cluster_type: slurm
-  params:
-    compute_flavor: "{{ generate_tests_caas_test_case_slurm_compute_flavor }}"
-    compute_count: "{{ generate_tests_caas_test_case_slurm_compute_count }}"
-    home_volume_size: "{{ generate_tests_caas_test_case_slurm_home_volume_size }}"
-    cluster_run_validation: "{{ generate_tests_caas_test_case_slurm_run_validation }}"
-  zenith_services:
-    - name: ood
-      expected_title: Dashboard
-    - name: monitoring
-      expected_title: Grafana
+generate_tests_caas_test_case_slurm_timeout: "30 minutes"
+#   Parameter values to reduce the resource consumption
+generate_tests_caas_test_case_slurm_param_compute_count: 2
+generate_tests_caas_test_case_slurm_param_home_volume_size: 20
+#   Make sure that the post-deploy tests run
+generate_tests_caas_test_case_slurm_param_cluster_run_validation: true
+#   Expected titles for the Slurm services
+generate_tests_caas_test_case_slurm_service_ood_expected_title: Dashboard
+generate_tests_caas_test_case_slurm_service_monitoring_expected_title: Grafana
 
-#   The test cases for the suite
+# By default, we don't run tests for the repo2docker and SSH workstation appliances
+generate_tests_caas_test_case_workstation_ssh_enabled: false
+generate_tests_caas_test_case_repo2docker_enabled: false
+
+# The test cases for the suite
+# By default, we generate a test case for each installed cluster type unless it is disabled
 generate_tests_caas_test_cases_default: >-
-  {{-
-    [] +
-      (
-        [generate_tests_caas_test_case_workstation]
-        if generate_tests_caas_test_case_workstation_enabled
-        else []
-      ) +
-      (
-        [generate_tests_caas_test_case_slurm]
-        if generate_tests_caas_test_case_slurm_enabled
-        else []
-      )
-  }}
+  [
+    {% for ctype in generate_tests_installed_cluster_types %}
+    {% set ctype_var = ctype.metadata.name | replace('-', '_') %}
+    {% set var_prefix = 'generate_tests_caas_test_case_' ~ ctype_var ~ '_' %}
+    {% if lookup('vars', var_prefix ~ 'enabled', default = True) %}
+    {
+      "name": "{{ lookup('vars', var_prefix ~ 'name', default = '') }}",
+      "template": "{{ lookup('vars', var_prefix ~ 'template', default = '') }}",
+      "tags": [
+        "{{ ctype.metadata.name }}",
+        {% for tag in lookup('vars', var_prefix ~ 'tags', default = []) %}
+        "{{ tag }}",
+        {% endfor %}
+      ],
+      "timeout": "{{ lookup('vars', var_prefix ~ 'timeout', default = '') }}",
+      "cluster_type": "{{ ctype.metadata.name }}",
+      "cluster_name_prefix": "{{ lookup('vars', var_prefix ~ 'cluster_name_prefix', default = '') }}",
+      "params": {
+        {% for param in ctype.status.uiMeta.parameters %}
+        {% set param_value = lookup('vars', var_prefix ~ 'param_' ~ param.name, default = '__NOTSET__') %}
+        {% if param_value != '__NOTSET__' %}
+        "{{ param.name }}": {{ param_value | to_json }},
+        {% endif %}
+        {% endfor %}
+      },
+      "services": [
+        {% for service in ctype.status.uiMeta.services %}
+        {% set service_var = service.name | replace('-', '_') %}
+        {% set service_expected_title_var = var_prefix ~ 'service_' ~ service_var ~ '_expected_title' %}
+        {
+          "name": "{{ service.name }}",
+          "expected_title": "{{ lookup('vars', service_expected_title_var, default = '') }}",
+        },
+        {% endfor %}
+      ],
+    },
+    {% endif %}
+    {% endfor %}
+  ]
 generate_tests_caas_test_cases_extra: []
 generate_tests_caas_test_cases: >-
   {{- generate_tests_caas_test_cases_default + generate_tests_caas_test_cases_extra }}
+
+#-----
+# Settings for the Kubernetes test suite
+#-----
+# Indicates whether to generate the Kubernetes test suite
+generate_tests_kubernetes_suite_enabled: "{{ azimuth_kubernetes_enabled }}"
+
+# The template to use for the Kubernetes suite
+generate_tests_kubernetes_suite_template: kubernetes_suite.robot
+# The template to use for test cases in the suite
+generate_tests_kubernetes_test_case_template: kubernetes_test_case.robot
+
+# The name of the suite
+generate_tests_kubernetes_suite_name: Kubernetes
+
+# The tags to apply to tests in the suite
+generate_tests_kubernetes_default_test_tags: [kubernetes]
+
+# The timeout to apply to tests in the suite
+generate_tests_kubernetes_default_test_timeout: "30 minutes"
+
+# The ID of the flavors to use for control plane and worker nodes respectively
+# By default, an appropriate flavor is guessed based on the required resources
+generate_tests_kubernetes_test_case_control_plane_size:
+generate_tests_kubernetes_test_case_worker_size:
+
+# The worker count for tests
+generate_tests_kubernetes_test_case_worker_count: 2
+
+# Indicates whether the dashboard and monitoring should be enabled for tests
+generate_tests_kubernetes_test_case_dashboard_enabled: true
+generate_tests_kubernetes_test_case_monitoring_enabled: true
+
+# Indicates if test cases should be generated for the latest Kubernetes version only,
+# or all non-deprecated versions
+generate_tests_kubernetes_test_cases_latest_only: true
+
+# Work out what the latest supported Kubernetes version is
+_generate_tests_kubernetes_latest_available_version: >-
+  {{-
+    generate_tests_installed_kubernetes_templates |
+      map(attribute = 'spec.values.kubernetesVersion') |
+      community.general.version_sort(reverse = True) |
+      first
+  }}
+
+# Indicates what tags tests should be generated for
+# By default, we include all tags
+generate_tests_kubernetes_test_cases_include_tags: >-
+  {{-
+    generate_tests_installed_kubernetes_templates |
+      map(attribute = 'spec.tags') |
+      flatten |
+      unique
+  }}
+generate_tests_kubernetes_test_cases_exclude_tags: []
+
+# The test cases for the suite
+generate_tests_kubernetes_test_cases_default: >-
+  [
+    {% for tpl in generate_tests_installed_kubernetes_templates %}
+    {% set tpl_kube_version = tpl | json_query('spec.values.kubernetesVersion') %}
+    {% set tpl_is_latest = tpl_kube_version is version(_generate_tests_kubernetes_latest_available_version, '==') %}
+    {% set tpl_deprecated = tpl.spec.deprecated | default(False) %}
+    {% set tpl_tags_include = tpl.spec.tags | default([]) | intersect(generate_tests_kubernetes_test_cases_include_tags) | length > 0 %}
+    {% set tpl_tags_exclude = tpl.spec.tags | default([]) | intersect(generate_tests_kubernetes_test_cases_exclude_tags) | length > 0 %}
+    {%
+      if
+        (not generate_tests_kubernetes_test_cases_latest_only or tpl_is_latest) and
+        not tpl_deprecated and
+        tpl_tags_include and
+        not tpl_tags_exclude
+    %}
+    {
+      "kubernetes_template": "{{ tpl.metadata.name }}",
+      "control_plane_size": "{{ generate_tests_kubernetes_test_case_control_plane_size }}",
+      "worker_size": "{{ generate_tests_kubernetes_test_case_worker_size }}",
+      "worker_count": {{ generate_tests_kubernetes_test_case_worker_count }},
+      "dashboard_enabled": {{ generate_tests_kubernetes_test_case_dashboard_enabled }},
+      "monitoring_enabled": {{ generate_tests_kubernetes_test_case_monitoring_enabled }},
+    },
+    {% endif %}
+    {% endfor %}
+  ]
+generate_tests_kubernetes_test_cases_extra: []
+generate_tests_kubernetes_test_cases: >-
+  {{- generate_tests_kubernetes_test_cases_default + generate_tests_kubernetes_test_cases_extra }}

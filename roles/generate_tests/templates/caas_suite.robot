@@ -10,7 +10,7 @@ Test Timeout  {{ generate_tests_caas_default_test_timeout }}
 *** Test Cases ***
 
 {% for test_case in generate_tests_caas_test_cases %}
-{% include generate_tests_caas_test_case_template %}
+{% include (test_case.template | default(generate_tests_caas_test_case_template, True)) %}
 
 
 {% endfor %}

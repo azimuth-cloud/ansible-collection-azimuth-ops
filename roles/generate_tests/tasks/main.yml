@@ -11,6 +11,11 @@
 # This is done to avoid hiding the console output as the tests progress
 #####
 
+- name: Delete test suite directory if it exists
+  file:
+    path: "{{ generate_tests_suite_directory }}"
+    state: absent
+
 - name: Ensure test suite directory exists
   file:
     path: "{{ generate_tests_suite_directory }}"
@@ -26,3 +31,9 @@
     src: "{{ generate_tests_caas_suite_template }}"
     dest: "{{ (generate_tests_suite_directory, 'caas_suite.robot') | path_join }}"
   when: generate_tests_caas_suite_enabled
+
+- name: Generate test suite for Kubernetes templates
+  template:
+    src: "{{ generate_tests_kubernetes_suite_template }}"
+    dest: "{{ (generate_tests_suite_directory, 'kubernetes_suite.robot') | path_join }}"
+  when: generate_tests_kubernetes_suite_enabled

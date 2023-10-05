@@ -1,6 +1,6 @@
 *** Settings ***
 
-Name            Azimuth Tests
+Name            {{ generate_tests_suite_name }}
 Library         Azimuth
 Suite Setup     Setup Test Environment
 Suite Teardown  Teardown Test Environment
@@ -10,7 +10,7 @@ Suite Teardown  Teardown Test Environment
 
 Setup Test Environment
     Create Client From Environment  {{ generate_tests_azimuth_url }}
-    Open Browser  headless=False
+    Open Browser
 
 Teardown Test Environment
     Close Client
