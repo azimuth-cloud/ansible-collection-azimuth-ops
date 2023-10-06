@@ -1,0 +1,5 @@
+---
+
+- name: Export community_images variable
+  set_fact:
+    community_images: "{{ community_images }}"

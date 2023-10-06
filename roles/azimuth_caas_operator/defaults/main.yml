@@ -1,0 +1,306 @@
+---
+# The chart to use
+azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
+azimuth_caas_operator_chart_name: azimuth-caas-operator
+azimuth_caas_operator_chart_version: 0.2.3-dev.0.main.12
+
+# Release information for the operator release
+# Use the same namespace as Azimuth by default
+azimuth_caas_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
+azimuth_caas_operator_release_name: azimuth-caas-operator
+
+# The timeout to wait for operator to become ready
+azimuth_caas_operator_wait_timeout: 10m
+
+# The URL of the Consul server to use
+azimuth_caas_operator_consul_url: >-
+  {{-
+    "http://{}:{}".format(consul_server_host, consul_server_port)
+    if consul_server_host is defined and consul_server_port is defined
+    else (
+      undef(hint = 'azimuth_caas_operator_consul_address is required')
+      if azimuth_clusters_enabled
+      else None
+    )
+  }}
+# The ansible-runner image and tag to use
+# Leave blank to use the defaults
+azimuth_caas_operator_ansible_runner_image_repository:
+azimuth_caas_operator_ansible_runner_image_tag:
+
+# The values for the release
+azimuth_caas_operator_release_defaults:
+  config:
+    consulUrl: "{{ azimuth_caas_operator_consul_url }}"
+    ansibleRunnerImage: >-
+      {{-
+        {} |
+          combine(
+            { "repository": azimuth_caas_operator_ansible_runner_image_repository }
+            if azimuth_caas_operator_ansible_runner_image_repository
+            else {}
+          ) |
+          combine(
+            { "tag": azimuth_caas_operator_ansible_runner_image_tag }
+            if azimuth_caas_operator_ansible_runner_image_tag
+            else {}
+          )
+      }}
+azimuth_caas_operator_release_overrides: {}
+azimuth_caas_operator_release_values: >-
+  {{-
+    azimuth_caas_operator_release_defaults |
+      combine(azimuth_caas_operator_release_overrides, recursive = True)
+  }}
+
+azimuth_caas_operator_default_ssh_secret_name: azimuth-caas-ssh
+azimuth_caas_operator_default_ssh_secret_namespace: azimuth
+# To inject a secret into ~/.ssh/ define this variable
+# which is a map from files to base64 encoded content
+# azimuth_caas_operator_default_ssh_secret_files:
+#   id_rsa: "{{ 'replace-me-with-vaulted-variable'|b64encode }}"
+#   id_rsa.pub: "{{ 'replace-me'|b64encode }}"
+#   known_hosts: "{{ 'replace-me-too'|b64encode }}"
+# Note you still need to set cluster templates
+# to include:
+#   sshSharedSecretName: "azimuth-caas-ssh"
+#   sshSharedSecretNamespace: "azimuth"
+# That will then inject the public key as an extra var:
+#   cluster_deploy_ssh_public_key: <public key>
+azimuth_caas_operator_default_ssh_secret_files: {}
+
+
+#####
+# Appliance configuration
+#####
+
+# Indicates if the StackHPC Slurm appliance should be enabled
+azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
+# The git URL for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
+# The git version for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_git_version: 39974da77613c5d12696c53cdfde43c3255e575c
+# The playbook to use for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_playbook: slurm-infra.yml
+# The metadata root for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
+  https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta/slurm-infra.yml
+# The ID of the image to use with the StackHPC Slurm appliance
+# Support the old name for backwards compatibility
+# By default, use the openhpc image from community images if available
+azimuth_caas_stackhpc_slurm_appliance_image: >-
+  {{-
+    azimuth_caas_stackhpc_slurm_appliance_rocky8_image
+    if azimuth_caas_stackhpc_slurm_appliance_rocky8_image is defined
+    else (
+      (
+        community_images_image_ids.openhpc
+        if (
+          community_images_image_ids is defined and
+          'openhpc' in community_images_image_ids
+        )
+        else undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+      )
+      if azimuth_caas_stackhpc_slurm_appliance_enabled
+      else None
+    )
+  }}
+# The name of a flavor to use for Slurm login nodes
+azimuth_caas_stackhpc_slurm_appliance_login_flavor_name: >-
+  {{-
+    undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_login_flavor_name is required')
+    if azimuth_caas_stackhpc_slurm_appliance_enabled
+    else None
+  }}
+# The name of a flavor to use for Slurm control nodes
+azimuth_caas_stackhpc_slurm_appliance_control_flavor_name: >-
+  {{-
+    undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_control_flavor_name is required')
+    if azimuth_caas_stackhpc_slurm_appliance_enabled
+    else None
+  }}
+# The size of the cluster state volume
+# Must be big enough for a reasonable amount of monitoring data
+azimuth_caas_stackhpc_slurm_appliance_state_volume_size: 40
+# The default extra vars for templates in the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
+  cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
+  login_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_login_flavor_name }}"
+  control_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name }}"
+  cluster_state_volume_size: "{{ azimuth_caas_stackhpc_slurm_appliance_state_volume_size }}"
+# extra_vars overrides for templates in the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
+azimuth_caas_stackhpc_slurm_appliance_extra_vars: >-
+  {{-
+    azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults |
+      combine(azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides)
+  }}
+# The template definition for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_template:
+  gitUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_git_url }}"
+  gitVersion: "{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}"
+  uiMetaUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_url }}"
+  playbook: "{{ azimuth_caas_stackhpc_slurm_appliance_playbook }}"
+  extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
+
+
+# Indicates if the StackHPC workstation should be enabled
+azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
+# The git URL for the StackHPC workstation
+azimuth_caas_stackhpc_workstation_git_url: https://github.com/stackhpc/caas-workstation.git
+# The git version for the StackHPC workstation
+azimuth_caas_stackhpc_workstation_git_version: 8c86cfebb02ecd8a9ec2d4dccf806aa5989670f2
+# The playbook to use for the workstation appliance
+azimuth_caas_stackhpc_workstation_playbook: workstation.yml
+# The metadata URL for the StackHPC workstation
+azimuth_caas_stackhpc_workstation_metadata_url: >-
+  https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta/workstation.yml
+# The ID of the image for use with the StackHPC workstation
+# By default, use the workstation image from community images if available
+azimuth_caas_stackhpc_workstation_image: >-
+  {{-
+    (
+      community_images_image_ids.workstation
+      if (
+        community_images_image_ids is defined and
+        'workstation' in community_images_image_ids
+      )
+      else undef(hint = 'azimuth_caas_stackhpc_workstation_image is required')
+    )
+    if azimuth_caas_stackhpc_workstation_enabled
+    else None
+  }}
+# The default extra vars for templates in the StackHPC workstation
+azimuth_caas_stackhpc_workstation_extra_vars_defaults:
+  cluster_image: "{{ azimuth_caas_stackhpc_workstation_image }}"
+# extra_vars overrides for templates in the StackHPC workstation
+azimuth_caas_stackhpc_workstation_extra_vars_overrides: {}
+azimuth_caas_stackhpc_workstation_extra_vars: >-
+  {{-
+    azimuth_caas_stackhpc_workstation_extra_vars_defaults |
+      combine(azimuth_caas_stackhpc_workstation_extra_vars_overrides)
+  }}
+# The template definition for the StackHPC workstation appliance
+azimuth_caas_stackhpc_workstation_template:
+  gitUrl: "{{ azimuth_caas_stackhpc_workstation_git_url }}"
+  gitVersion: "{{ azimuth_caas_stackhpc_workstation_git_version }}"
+  uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_metadata_url }}"
+  playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
+  extraVars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
+
+
+# Indicates if the StackHPC workstation _with SSH_ should be enabled
+azimuth_caas_stackhpc_workstation_ssh_enabled: "{{ azimuth_caas_stackhpc_workstation_enabled }}"
+# The git URL for the StackHPC workstation
+azimuth_caas_stackhpc_workstation_ssh_git_url: "{{ azimuth_caas_stackhpc_workstation_git_url }}"
+# The git version for the StackHPC workstation
+azimuth_caas_stackhpc_workstation_ssh_git_version: "{{ azimuth_caas_stackhpc_workstation_git_version }}"
+# The playbook to use for the workstation appliance
+azimuth_caas_stackhpc_workstation_ssh_playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
+# The metadata URL for the StackHPC workstation
+azimuth_caas_stackhpc_workstation_ssh_metadata_url: >-
+  https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta/workstation-external-ssh.yml
+azimuth_caas_stackhpc_workstation_ssh_extra_vars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
+# The template definition for the StackHPC workstation appliance
+azimuth_caas_stackhpc_workstation_ssh_template:
+  gitUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_git_url }}"
+  gitVersion: "{{ azimuth_caas_stackhpc_workstation_ssh_git_version }}"
+  uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_metadata_url }}"
+  playbook: "{{ azimuth_caas_stackhpc_workstation_ssh_playbook }}"
+  extraVars: "{{ azimuth_caas_stackhpc_workstation_ssh_extra_vars }}"
+
+
+# Indicates if the StackHPC repo2docker appliance should be enabled
+azimuth_caas_stackhpc_repo2docker_enabled: "{{ azimuth_clusters_enabled }}"
+# The git URL for the StackHPC repo2docker appliance
+azimuth_caas_stackhpc_repo2docker_git_url: https://github.com/stackhpc/caas-repo2docker.git
+# The git version for the StackHPC repo2docker appliance
+azimuth_caas_stackhpc_repo2docker_git_version: 8385160f69646e615a51173e107e20e2485e2457
+# The playbook to use for the StackHPC repo2docker appliance
+azimuth_caas_stackhpc_repo2docker_playbook: repo2docker.yml
+# The metadata root for the StackHPC repo2docker appliance project
+azimuth_caas_stackhpc_repo2docker_metadata_url: >-
+  https://raw.githubusercontent.com/stackhpc/caas-repo2docker/{{ azimuth_caas_stackhpc_repo2docker_git_version }}/ui-meta/repo2docker.yml
+# The ID of the image for use with the StackHPC repo2docker appliance
+# By default, use the repo2docker image from community images if available
+azimuth_caas_stackhpc_repo2docker_image: >-
+  {{-
+    (
+      community_images_image_ids.repo2docker
+      if (
+        community_images_image_ids is defined and
+        'repo2docker' in community_images_image_ids
+      )
+      else undef(hint = 'azimuth_caas_stackhpc_repo2docker_image is required')
+    )
+    if azimuth_caas_stackhpc_repo2docker_enabled
+    else None
+  }}
+# The default extra vars for templates in the StackHPC repo2docker appliance
+azimuth_caas_stackhpc_repo2docker_extra_vars_defaults:
+  cluster_image: "{{ azimuth_caas_stackhpc_repo2docker_image }}"
+# extra_vars overrides for templates in the StackHPC repo2docker appliance
+azimuth_caas_stackhpc_repo2docker_extra_vars_overrides: {}
+azimuth_caas_stackhpc_repo2docker_extra_vars: >-
+  {{-
+    azimuth_caas_stackhpc_repo2docker_extra_vars_defaults |
+      combine(azimuth_caas_stackhpc_repo2docker_extra_vars_overrides)
+  }}
+# The template definition for the StackHPC repo2docker appliance
+azimuth_caas_stackhpc_repo2docker_template:
+  gitUrl: "{{ azimuth_caas_stackhpc_repo2docker_git_url }}"
+  gitVersion: "{{ azimuth_caas_stackhpc_repo2docker_git_version }}"
+  uiMetaUrl: "{{ azimuth_caas_stackhpc_repo2docker_metadata_url }}"
+  playbook: "{{ azimuth_caas_stackhpc_repo2docker_playbook }}"
+  extraVars: "{{ azimuth_caas_stackhpc_repo2docker_extra_vars }}"
+
+
+# Quick test appliance
+#
+# This runs ansible that does nothing except check the CRD mechanisms work,
+# including the auto delete feature
+azimuth_caas_quicktest_enabled: false
+azimuth_caas_quicktest_template:
+  uiMetaUrl: "https://raw.githubusercontent.com/stackhpc/azimuth-caas-operator/578d0ab845770123d06094ebec44ba99375858dc/tools/ui_meta_quick_test.yaml"
+  gitUrl: "https://github.com/ansible/ansible-runner"
+  gitVersion: "devel"
+  playbook: "demo/project/test.yml"
+  extraVars:
+    foo: "bar"
+
+
+azimuth_caas_cluster_templates_default: >-
+  {{-
+    {} |
+      combine(
+        { "slurm": azimuth_caas_stackhpc_slurm_appliance_template }
+        if azimuth_caas_stackhpc_slurm_appliance_enabled
+        else {}
+      ) |
+      combine(
+        { "workstation": azimuth_caas_stackhpc_workstation_template }
+        if azimuth_caas_stackhpc_workstation_enabled
+        else {}
+      ) |
+      combine(
+        { "workstation-ssh": azimuth_caas_stackhpc_workstation_ssh_template }
+        if azimuth_caas_stackhpc_workstation_ssh_enabled
+        else {}
+      ) |
+      combine(
+        { "repo2docker": azimuth_caas_stackhpc_repo2docker_template }
+        if azimuth_caas_stackhpc_repo2docker_enabled
+        else {}
+      ) |
+      combine(
+        { "quicktest": azimuth_caas_quicktest_template }
+        if azimuth_caas_quicktest_enabled
+        else {}
+      )
+  }}
+azimuth_caas_cluster_templates_overrides: {}
+azimuth_caas_cluster_templates: >-
+  {{-
+    azimuth_caas_cluster_templates_default |
+      combine(azimuth_caas_cluster_templates_overrides, recursive = True)
+  }}

@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.1-dev.0.main.221
+capi_cluster_chart_version: 0.1.3
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -38,19 +38,16 @@ capi_cluster_openstack_ca_cert: >-
 # Default, wire these up with an image from community images when available
 capi_cluster_kubernetes_version: >-
   {{-
-    '1.25.8'
-    if (
-      community_images_image_ids is defined and
-      'kube_1_25_8' in community_images_image_ids
-    )
+    community_images.kube_1_26.kubernetes_version
+    if community_images is defined and 'kube_1_26' in community_images
     else undef(hint = 'capi_cluster_kubernetes_version is required')
   }}
 capi_cluster_machine_image_id: >-
   {{-
-    community_images_image_ids.kube_1_25_8
+    community_images_image_ids.kube_1_26
     if (
       community_images_image_ids is defined and
-      'kube_1_25_8' in community_images_image_ids
+      'kube_1_26' in community_images_image_ids
     )
     else undef(hint = 'capi_cluster_machine_image_id is required')
   }}
@@ -113,6 +110,8 @@ capi_cluster_dns_nameservers:
 # By default, we use a load balancer without a floating IP so that the API is only reachable from the seed node
 capi_cluster_apiserver_load_balancer: true
 capi_cluster_apiserver_floating_ip: false
+# The provider to use for the API server load balancer
+capi_cluster_apiserver_loadbalancer_provider:
 
 # The name of the flavors to use for control plane and worker nodes respectively
 capi_cluster_control_plane_flavor: >-
@@ -120,6 +119,8 @@ capi_cluster_control_plane_flavor: >-
 capi_cluster_worker_flavor: >-
   {{ undef(hint = 'capi_cluster_worker_flavor is required') }}
 
+# The number of control plane nodes to use
+capi_cluster_control_plane_count: 3
 # The number of workers to use
 capi_cluster_worker_count: 3
 # max_unavailable and max_surge are set so that a new worker is made available to the cluster before one is deleted
@@ -156,13 +157,26 @@ capi_cluster_control_plane_root_volume_availability_zone: "{{ capi_cluster_root_
 capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 
 # Configuration for addons
+#   Determines if the ingress controller should be enabled
+capi_cluster_addons_ingress_enabled: "{{ ingress_controller_enabled | default(true) }}"
 #   Require the specification of a pre-allocated IP for the ingress load balancer
 #   This IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
-  {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
+  {{-
+    undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required')
+    if capi_cluster_addons_ingress_enabled
+    else None
+  }}
 #   Options for LoadBalancer services
+
 #   https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
-capi_cluster_addons_openstack_loadbalancer_method:
+capi_cluster_addons_openstack_loadbalancer_method: >-
+  {{-
+    'SOURCE_IP_PORT'
+    if capi_cluster_addons_openstack_loadbalancer_provider == 'ovn'
+    else None
+    }}
+
 capi_cluster_addons_openstack_loadbalancer_provider:
 capi_cluster_addons_openstack_loadbalancer_create_monitor:
 capi_cluster_addons_openstack_loadbalancer_monitor_delay:
@@ -242,51 +256,63 @@ capi_cluster_release_defaults:
   trustedCAs: "{{ capi_cluster_trust_bundle }}"
   registryAuth: "{{ capi_cluster_registry_auth }}"
   registryMirrors: "{{ capi_cluster_registry_mirrors }}"
-  apiServer:
-    enableLoadBalancer: "{{ capi_cluster_apiserver_load_balancer }}"
-    associateFloatingIP: "{{ capi_cluster_apiserver_floating_ip }}"
+  apiServer: >-
+    {{-
+      {
+        "enableLoadBalancer": capi_cluster_apiserver_load_balancer,
+        "associateFloatingIP": capi_cluster_apiserver_floating_ip
+      } |
+        combine(
+          { "loadBalancerProvider": capi_cluster_apiserver_loadbalancer_provider }
+          if capi_cluster_apiserver_loadbalancer_provider
+          else {}
+        )
+    }}
   controlPlane:
+    machineCount: "{{ capi_cluster_control_plane_count }}"
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
     omitFailureDomain: "{{ capi_cluster_control_plane_omit_failure_domain }}"
     failureDomains: "{{ capi_cluster_control_plane_failure_domains }}"
     machineRootVolume: >-
       {{-
-        (
-          { "diskSize": capi_cluster_control_plane_root_volume_size } |
-            combine(
-              { "volumeType": capi_cluster_control_plane_root_volume_type }
-              if capi_cluster_control_plane_root_volume_type
-              else {}
-            ) |
-            combine(
-              { "availabilityZone": capi_cluster_control_plane_root_volume_availability_zone }
-              if capi_cluster_control_plane_root_volume_availability_zone
-              else {}
-            )
-        )
-        if capi_cluster_control_plane_root_volume_size
-        else None
+        {} |
+          combine(
+            { "diskSize": capi_cluster_control_plane_root_volume_size }
+            if capi_cluster_control_plane_root_volume_size
+            else {}
+          ) |
+          combine(
+            { "volumeType": capi_cluster_control_plane_root_volume_type }
+            if capi_cluster_control_plane_root_volume_type
+            else {}
+          ) |
+          combine(
+            { "availabilityZone": capi_cluster_control_plane_root_volume_availability_zone }
+            if capi_cluster_control_plane_root_volume_availability_zone
+            else {}
+          )
       }}
   nodeGroupDefaults:
     failureDomain: "{{ capi_cluster_worker_failure_domain }}"
     machineFlavor: "{{ capi_cluster_worker_flavor }}"
     machineRootVolume: >-
       {{-
-        (
-          { "diskSize": capi_cluster_worker_root_volume_size } |
-            combine(
-              { "volumeType": capi_cluster_worker_root_volume_type }
-              if capi_cluster_worker_root_volume_type
-              else {}
-            ) |
-            combine(
-              { "availabilityZone": capi_cluster_worker_root_volume_availability_zone }
-              if capi_cluster_worker_root_volume_availability_zone
-              else {}
-            )
-        )
-        if capi_cluster_worker_root_volume_size
-        else None
+        {} |
+          combine(
+            { "diskSize": capi_cluster_worker_root_volume_size }
+            if capi_cluster_worker_root_volume_size
+            else {}
+          ) |
+          combine(
+            { "volumeType": capi_cluster_worker_root_volume_type }
+            if capi_cluster_worker_root_volume_type
+            else {}
+          ) |
+          combine(
+            { "availabilityZone": capi_cluster_worker_root_volume_availability_zone }
+            if capi_cluster_worker_root_volume_availability_zone
+            else {}
+          )
       }}
     rolloutStrategy:
       type: RollingUpdate
@@ -306,14 +332,27 @@ capi_cluster_release_defaults:
     mellanoxNetworkOperator:
       enabled: false
     # The NGINX ingress controller is required
-    ingress:
-      enabled: true
-      nginx:
-        release:
-          values:
-            controller:
-              service:
-                loadBalancerIP: "{{ capi_cluster_addons_ingress_load_balancer_ip }}"
+    ingress: >-
+      {{-
+        { "enabled": capi_cluster_addons_ingress_enabled } |
+          combine(
+            {
+              "nginx": {
+                "release": {
+                  "values": {
+                    "controller": {
+                      "service": {
+                        "loadBalancerIP": capi_cluster_addons_ingress_load_balancer_ip,
+                      },
+                    },
+                  },
+                },
+              },
+            }
+            if capi_cluster_addons_ingress_enabled
+            else {}
+          )
+      }}
     # Configure monitoring and alerting
     monitoring:
       enabled: true

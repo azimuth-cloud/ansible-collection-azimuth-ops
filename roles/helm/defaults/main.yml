@@ -1,5 +1,7 @@
 ---
 
+# The Helm repo
+helm_repo: https://github.com/helm/helm
 # The Helm version to download
 helm_version: v3.10.2
 # The OS variant and architecture to use

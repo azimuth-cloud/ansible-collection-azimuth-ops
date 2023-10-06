@@ -1,231 +1,98 @@
 ---
 
-- name: Clone AWX operator repository
-  git:
-    repo: "{{ awx_operator_repo_url }}"
-    dest: "{{ awx_operator_directory }}"
-    version: "{{ awx_operator_version }}"
-    force: yes
-
-- name: Set AWX operator controller image
-  command: kustomize edit set image controller={{ awx_operator_image }}
-  args:
-    chdir: "{{ awx_operator_directory }}/config/manager"
-
-- name: Set AWX operator namespace
-  command: kustomize edit set namespace {{ awx_namespace }}
-  args:
-    chdir: "{{ awx_operator_directory }}/config/default"
-
-- name: Install AWX operator
-  command: kubectl apply -k {{ awx_operator_directory }}/config/default
-
-- name: Wait for AWX operator to become ready
-  command: >-
-    kubectl rollout status
-      --namespace {{ awx_namespace }}
-      --timeout 1s
-      deployment/awx-operator-controller-manager
+- name: Check if AWX CRD exists
+  command: kubectl get crd awxs.awx.ansible.com
+  register: awx_get_crd
   changed_when: false
-  register: awx_operator_wait
-  until: awx_operator_wait is succeeded
-  retries: 60
-  delay: 10
+  failed_when: >-
+    awx_get_crd.rc != 0 and
+    "NotFound" not in awx_get_crd.stderr
 
-- block:
-    - name: Create postgresql auth secret
-      # Use create so that we only generate passwords once
-      command: kubectl create -f -
-      args:
-        stdin: "{{ awx_postgresql_auth_secret_definition | to_nice_yaml }}"
-      vars:
-        awx_postgresql_auth_secret_definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: "{{ awx_postgresql_auth_secret_name }}"
-            namespace: "{{ awx_namespace }}"
-            labels: "{{ awx_labels }}"
-          stringData:
-            # The password for the postgres user
-            postgres-password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"
-            # The password for the AWX user
-            password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"
-            # The password for the replication user
-            replication-password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits') }}"
-      register: awx_postgresql_auth_secret_create
+# We only remove AWX components if the awx_purge flag is set
+# If it is not set, we just don't touch AWX
+# In either case, Azimuth itself will be reconfigured to use the CRD
+
+- name: Remove AWX components
+  block:
+    - name: Remove AWX instance
+      command: >-
+        kubectl delete awx {{ awx_name }} --namespace {{ awx_namespace }}
+      register: awx_delete_instance
+      changed_when: "awx_delete_instance.rc == 0"
       failed_when: >-
-        awx_postgresql_auth_secret_create.rc != 0 and
-        'AlreadyExists' not in awx_postgresql_auth_secret_create.stderr
+        awx_delete_instance.rc != 0 and
+        "NotFound" not in awx_delete_instance.stderr
 
-    - name: Install AWX posgresql on target Kubernetes cluster
+    - name: Remove AWX database configuration
+      command: >-
+        kubectl delete secret {{ awx_postgresql_configuration_secret_name }} --namespace {{ awx_namespace }}
+      register: awx_delete_db_config_secret
+      changed_when: "awx_delete_db_config_secret.rc == 0"
+      failed_when: >-
+        awx_delete_db_config_secret.rc != 0 and
+        "NotFound" not in awx_delete_db_config_secret.stderr
+
+    - name: Remove AWX trust bundle
+      command: >-
+        kubectl delete secret {{ awx_trust_bundle_secret_name }} --namespace {{ awx_namespace }}
+      register: awx_delete_trust_bundle
+      changed_when: "awx_delete_trust_bundle.rc == 0"
+      failed_when: >-
+        awx_delete_trust_bundle.rc != 0 and
+        "NotFound" not in awx_delete_trust_bundle.stderr
+
+    - name: Set AWX admin password secret fact
+      set_fact:
+        awx_admin_password_secret_name: "{{ awx_name }}-admin-password"
+      when: awx_admin_password_secret_name is not defined
+
+    - name: Remove AWX admin password secret
+      command: >-
+        kubectl delete secret {{ awx_admin_password_secret_name }} --namespace {{ awx_namespace }}
+      register: awx_delete_admin_password_secret
+      changed_when: "awx_delete_admin_password_secret.rc == 0"
+      failed_when: >-
+        awx_delete_admin_password_secret.rc != 0 and
+        "NotFound" not in awx_delete_admin_password_secret.stderr
+
+    - name: Remove AWX postgresql instance
       kubernetes.core.helm:
-        chart_ref: "{{ awx_postgresql_chart_name }}"
-        chart_repo_url: "{{ awx_postgresql_chart_repo }}"
-        chart_version: "{{ awx_postgresql_chart_version }}"
         release_namespace: "{{ awx_namespace }}"
         release_name: "{{ awx_postgresql_release_name }}"
-        release_values: "{{ awx_postgresql_release_values }}"
-        atomic: yes
-        create_namespace: yes
+        state: absent
         wait: yes
-        wait_timeout: "{{ awx_postgresql_wait_timeout }}"
 
-    - name: Get postgresql auth secret information
+    - name: Remove postgresql auth secret
       command: >-
-        kubectl get secret {{ awx_postgresql_auth_secret_name }}
-          --namespace {{ awx_namespace }}
-          --output json
-      changed_when: false
-      register: awx_postgresql_auth_secret_cmd
+        kubectl delete secret {{ awx_postgresql_auth_secret_name }} --namespace {{ awx_namespace }}
+      register: awx_delete_postgresql_auth_secret
+      changed_when: "awx_delete_postgresql_auth_secret.rc == 0"
+      failed_when: >-
+        awx_delete_postgresql_auth_secret.rc != 0 and
+        "NotFound" not in awx_delete_postgresql_auth_secret.stderr
 
-    - name: Get postgresql service information
-      command: >-
-        kubectl get services {{ awx_postgresql_release_name }}
-          --namespace {{ awx_namespace }}
-          --output json
-      register: awx_postgresql_service_cmd
+    - name: Create directory to contain kustomize overlay
+      file:
+        path: "{{ awx_operator_directory }}/config/remove-ns"
+        state: directory
 
-    - name: Set posgresql service fact
-      set_fact:
-        awx_posgresql_service: "{{ awx_postgresql_service_cmd.stdout | from_yaml }}"
+    - name: Add kustomize overlay files to remove namespace from output
+      template:
+        src: "{{ item }}"
+        dest: "{{ awx_operator_directory }}/config/remove-ns/{{ item }}"
+      loop:
+        - kustomization.yaml
+        - patch-delete-ns.yaml
 
-    - name: Set postgresql connection facts
-      set_fact:
-        awx_postgresql_host: >-
-          {{
-            '{}.{}'.format(
-              awx_posgresql_service.metadata.name,
-              awx_posgresql_service.metadata.namespace
-            )
-          }}
-        awx_postgresql_port: >-
-          {{
-            awx_posgresql_service.spec.ports |
-              selectattr('name', 'equalto', 'tcp-postgresql') |
-              map(attribute = 'port') |
-              first
-          }}
-        awx_postgresql_database: "{{ awx_postgresql_release_values.auth.database }}"
-        awx_postgresql_username: "{{ awx_postgresql_release_values.auth.username }}"
-        awx_postgresql_password: "{{ (awx_postgresql_auth_secret_cmd.stdout | from_json).data.password | b64decode }}"
-  when: not awx_postgresql_host
+    - name: Remove AWX operator
+      command: kubectl delete -k {{ awx_operator_directory }}/config/remove-ns
 
-- name: Set AWX admin password secret fact
-  set_fact:
-    awx_admin_password_secret_name: "{{ awx_name }}-admin-password"
-  when: awx_admin_password_secret_name is not defined
+    - name: Delete AWX operator clone
+      file:
+        path: "{{ awx_operator_directory }}"
+        state: absent
 
-- name: Install AWX admin password secret
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ awx_admin_password_secret_definition | to_nice_yaml }}"
-  vars:
-    awx_admin_password_secret_definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: "{{ awx_admin_password_secret_name }}"
-        namespace: "{{ awx_namespace }}"
-        labels: "{{ awx_labels }}"
-      stringData:
-        password: "{{ awx_admin_password }}"
-
-- name: Install AWX trust bundle
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ awx_trust_bundle_secret_definition | to_nice_yaml }}"
-  vars:
-    awx_trust_bundle_secret_definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: "{{ awx_trust_bundle_secret_name }}"
-        namespace: "{{ awx_namespace }}"
-        labels: "{{ awx_labels }}"
-      stringData:
-        bundle-ca.crt: "{{ awx_trust_bundle }}"
-  when: awx_trust_bundle
-
-- name: Install AWX database configuration
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ awx_postgresql_configuration_secret_definition | to_nice_yaml }}"
-  vars:
-    awx_postgresql_configuration_secret_definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: "{{ awx_postgresql_configuration_secret_name }}"
-        namespace: "{{ awx_namespace }}"
-        labels: "{{ awx_labels }}"
-      stringData:
-        # This indicates to AWX that it isn't managing the database
-        type: unmanaged
-        host: "{{ awx_postgresql_host }}"
-        port: "{{ awx_postgresql_port }}"
-        database: "{{ awx_postgresql_database }}"
-        username: "{{ awx_postgresql_username }}"
-        password: "{{ awx_postgresql_password }}"
-        sslmode: "{{ awx_postgresql_sslmode }}"
-
-- name: Install AWX instance
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ awx_instance_definition | to_nice_yaml }}"
-  vars:
-    awx_instance_definition:
-      apiVersion: awx.ansible.com/v1beta1
-      kind: AWX
-      metadata:
-        name: "{{ awx_name }}"
-        namespace: "{{ awx_namespace }}"
-        labels: "{{ awx_labels }}"
-      spec: "{{ awx_spec }}"
-
-- name: Wait for AWX to become available
-  command: >-
-    kubectl rollout status
-      --namespace {{ awx_namespace }}
-      --timeout 1s
-      deployment/{{ awx_name }}
-  changed_when: false
-  register: awx_deployment_wait
-  until: awx_deployment_wait is succeeded
-  retries: 60
-  delay: 10
-
-- block:
-    - name: Get AWX service information
-      command: >-
-        kubectl get service
-          --namespace {{ awx_namespace }}
-          --selector {{ awx_service_selector }}
-          --output json
-      register: awx_services_cmd
-      vars:
-        awx_service_selectors:
-          - app.kubernetes.io/managed-by=awx-operator
-          - app.kubernetes.io/component=awx
-          - app.kubernetes.io/name={{ awx_name }}
-        awx_service_selector: "{{ awx_service_selectors | join(',') }}"
-
-    - name: Set AWX service fact
-      set_fact:
-        awx_service: "{{ (awx_services_cmd.stdout | from_json)['items'] | first }}"
-
-    - name: Set AWX server facts
-      set_fact:
-        # Use the internal URL for AWX
-        awx_url: >-
-          {{-
-            "http://{}.{}:{}".format(
-              awx_service.metadata.name,
-              awx_service.metadata.namespace,
-              awx_service.spec.ports |
-                selectattr('name', 'equalto', 'http') |
-                map(attribute = 'port') |
-                first
-            )
-          }}
-  when: awx_url is not defined
+  when:
+    # There is only anything to do if the CRD exists
+    - "awx_get_crd.rc == 0"
+    - "awx_purge | default(False)"
