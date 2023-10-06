@@ -19,8 +19,6 @@ azimuth_apps_enabled: yes
 azimuth_clusters_enabled: yes
 #   Indicates if Kubernetes clusters should be enabled
 azimuth_kubernetes_enabled: yes
-# TODO: this turns off awx based clusters!!
-azimuth_caas_crd_enabled: yes
 
 # Ingress settings
 #   The hostname to use for the ingress resource
