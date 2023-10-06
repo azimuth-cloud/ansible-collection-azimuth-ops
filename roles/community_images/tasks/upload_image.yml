@@ -80,6 +80,7 @@
       get_url:
         url: "{{ community_images_image_spec.source_url }}"
         dest: "{{ community_images_image_download_path }}"
+        checksum: "{{ community_images_image_spec.checksum | default(omit) }}"
         timeout: 600
 
     - name: "Uncompress image (bzip2) - {{ community_images_image_spec.name }}"

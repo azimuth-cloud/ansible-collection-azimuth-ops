@@ -11,7 +11,7 @@ pgo_repository_version: af88ad9c0d0a827e12115c8771dd09f1dcc8a713
 
 # List of bases to install
 pgo_kustomization_bases:
-  - "{{ pgo_repository }}//kustomize/install/default?ref={{ pgo_repository_version }}"
+  - "{{ pgo_repository }}/kustomize/install/default?ref={{ pgo_repository_version }}"
 
 # List of patches to apply to the resources in the manifests
 pgo_kustomization_patches: []

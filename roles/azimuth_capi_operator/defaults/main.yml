@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.129
+azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.136
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -80,7 +80,13 @@ azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone: "{{ azimut
 
 # Options for LoadBalancer services
 # https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
-azimuth_capi_operator_capi_helm_openstack_loadbalancer_method:
+azimuth_capi_operator_capi_helm_openstack_loadbalancer_method: >-
+  {{-
+    'SOURCE_IP_PORT'
+    if azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider == 'ovn'
+    else None
+    }}
+
 azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider:
 azimuth_capi_operator_capi_helm_openstack_loadbalancer_create_monitor:
 azimuth_capi_operator_capi_helm_openstack_loadbalancer_monitor_delay:
@@ -138,41 +144,43 @@ azimuth_capi_operator_capi_helm_values_defaults:
     failureDomains: "{{ azimuth_capi_operator_capi_helm_control_plane_failure_domains }}"
     machineRootVolume: >-
       {{-
-        (
-          { "diskSize": azimuth_capi_operator_capi_helm_control_plane_root_volume_size } |
-            combine(
-              { "volumeType": azimuth_capi_operator_capi_helm_control_plane_root_volume_type }
-              if azimuth_capi_operator_capi_helm_control_plane_root_volume_type
-              else {}
-            ) |
-            combine(
-              { "availabilityZone": azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone }
-              if azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone
-              else {}
-            )
-        )
-        if azimuth_capi_operator_capi_helm_control_plane_root_volume_size
-        else None
+        {} |
+          combine(
+            { "diskSize": azimuth_capi_operator_capi_helm_control_plane_root_volume_size }
+            if azimuth_capi_operator_capi_helm_control_plane_root_volume_size
+            else {}
+          ) |
+          combine(
+            { "volumeType": azimuth_capi_operator_capi_helm_control_plane_root_volume_type }
+            if azimuth_capi_operator_capi_helm_control_plane_root_volume_type
+            else {}
+          ) |
+          combine(
+            { "availabilityZone": azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone }
+            if azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone
+            else {}
+          )
       }}
   nodeGroupDefaults:
     failureDomain: "{{ azimuth_capi_operator_capi_helm_worker_failure_domain }}"
     machineRootVolume: >-
       {{-
-        (
-          { "diskSize": azimuth_capi_operator_capi_helm_worker_root_volume_size } |
-            combine(
-              { "volumeType": azimuth_capi_operator_capi_helm_worker_root_volume_type }
-              if azimuth_capi_operator_capi_helm_worker_root_volume_type
-              else {}
-            ) |
-            combine(
-              { "availabilityZone": azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone }
-              if azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone
-              else {}
-            )
-        )
-        if azimuth_capi_operator_capi_helm_worker_root_volume_size
-        else None
+        {} |
+          combine(
+            { "diskSize": azimuth_capi_operator_capi_helm_worker_root_volume_size }
+            if azimuth_capi_operator_capi_helm_worker_root_volume_size
+            else {}
+          ) |
+          combine(
+            { "volumeType": azimuth_capi_operator_capi_helm_worker_root_volume_type }
+            if azimuth_capi_operator_capi_helm_worker_root_volume_type
+            else {}
+          ) |
+          combine(
+            { "availabilityZone": azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone }
+            if azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone
+            else {}
+          )
       }}
   addons:
     openstack:
@@ -315,6 +323,28 @@ azimuth_capi_operator_zenith_sshd_port: >-
 # Leave blank for the operator defaults
 azimuth_capi_operator_zenith_chart_repo:
 azimuth_capi_operator_zenith_chart_version:
+# Indicates whether Zenith clients should be created in debug mode
+azimuth_capi_operator_zenith_client_debug: false
+# Default values for the Zenith apiserver chart
+azimuth_capi_operator_zenith_apiserver_defaults:
+  zenithClient:
+    debug: "{{ azimuth_capi_operator_zenith_client_debug }}"
+azimuth_capi_operator_zenith_apiserver_overrides: {}
+azimuth_capi_operator_zenith_apiserver_default_values: >-
+  {{-
+    azimuth_capi_operator_zenith_apiserver_defaults |
+      combine(azimuth_capi_operator_zenith_apiserver_overrides, recursive = True)
+  }}
+# Default values for the Zenith operator chart
+azimuth_capi_operator_zenith_operator_defaults:
+  config:
+    defaultDebug: "{{ azimuth_capi_operator_zenith_client_debug }}"
+azimuth_capi_operator_zenith_operator_overrides: {}
+azimuth_capi_operator_zenith_operator_default_values: >-
+  {{-
+    azimuth_capi_operator_zenith_operator_defaults |
+      combine(azimuth_capi_operator_zenith_operator_overrides, recursive = True)
+  }}
 
 # The values for the release
 azimuth_capi_operator_release_defaults:
@@ -360,6 +390,12 @@ azimuth_capi_operator_release_defaults:
             { "chartVersion": azimuth_capi_operator_zenith_chart_version }
             if azimuth_capi_operator_zenith_chart_version
             else {}
+          ) |
+          combine(
+            { "apiserverDefaults": azimuth_capi_operator_zenith_apiserver_default_values }
+          ) |
+          combine(
+            { "operatorDefaults": azimuth_capi_operator_zenith_operator_default_values }
           )
       }}
   # Enable the metrics with the service monitor by default
@@ -379,85 +415,31 @@ azimuth_capi_operator_release_values: >-
 # All other templates will be marked as DEPRECATED
 # azimuth-ops currently never removes templates
 #####
-# By default use the community images
-azimuth_capi_operator_kube_1_23_16_image: >-
-  {{-
-    community_images_image_ids.kube_1_23_16
-    if (
-      community_images_image_ids is defined and
-      'kube_1_23_16' in community_images_image_ids
-    )
-    else undef(hint = 'azimuth_capi_operator_kube_1_23_16_image is required')
-  }}
-azimuth_capi_operator_kube_1_24_12_image: >-
-  {{-
-    community_images_image_ids.kube_1_24_12
-    if (
-      community_images_image_ids is defined and
-      'kube_1_24_12' in community_images_image_ids
-    )
-    else undef(hint = 'azimuth_capi_operator_kube_1_24_12_image is required')
-  }}
-azimuth_capi_operator_kube_1_25_8_image: >-
-  {{-
-    community_images_image_ids.kube_1_25_8
-    if (
-      community_images_image_ids is defined and
-      'kube_1_25_8' in community_images_image_ids
-    )
-    else undef(hint = 'azimuth_capi_operator_kube_1_25_8_image is required')
-  }}
-azimuth_capi_operator_kube_1_26_3_image: >-
-  {{-
-    community_images_image_ids.kube_1_26_3
-    if (
-      community_images_image_ids is defined and
-      'kube_1_26_3' in community_images_image_ids
-    )
-    else undef(hint = 'azimuth_capi_operator_kube_1_26_3_image is required')
-  }}
-# By default, make templates for the latest patch versions of the supported Kubernetes releases
-azimuth_capi_operator_cluster_templates_default:
-  kube-1-23-16:
-    label: v1.23.16
-    description: Kubernetes 1.23.16 with HA control plane.
-    values:
-      kubernetesVersion: 1.23.16
-      machineImageId: "{{ azimuth_capi_operator_kube_1_23_16_image }}"
-      clusterNetworking:
-        internalNetwork:
-          networkFilter:
-            tags: portal-internal
-  kube-1-24-12:
-    label: v1.24.12
-    description: Kubernetes 1.24.12 with HA control plane.
-    values:
-      kubernetesVersion: 1.24.12
-      machineImageId: "{{ azimuth_capi_operator_kube_1_24_12_image }}"
-      clusterNetworking:
-        internalNetwork:
-          networkFilter:
-            tags: portal-internal
-  kube-1-25-8:
-    label: v1.25.8
-    description: Kubernetes 1.25.8 with HA control plane.
-    values:
-      kubernetesVersion: 1.25.8
-      machineImageId: "{{ azimuth_capi_operator_kube_1_25_8_image }}"
-      clusterNetworking:
-        internalNetwork:
-          networkFilter:
-            tags: portal-internal
-  kube-1-26-3:
-    label: v1.26.3
-    description: Kubernetes 1.26.3 with HA control plane.
-    values:
-      kubernetesVersion: 1.26.3
-      machineImageId: "{{ azimuth_capi_operator_kube_1_26_3_image }}"
-      clusterNetworking:
-        internalNetwork:
-          networkFilter:
-            tags: portal-internal
+# By default, make a template for each Kubernetes release for which we have an image
+azimuth_capi_operator_cluster_templates_default: |-
+  {
+    {% for key, image in community_images.items() %}
+    {% if "kubernetes_version" in image %}
+    {% set kube_vn_no_prefix = image.kubernetes_version.removeprefix("v") %}
+    {% set kube_vn_dash = kube_vn_no_prefix | replace('.', '-') %}
+    "kube-{{ kube_vn_dash }}": {
+      "label": "{{ image.kubernetes_version }}",
+      "description": "Kubernetes {{ kube_vn_no_prefix }} with HA control plane.",
+      "values": {
+        "kubernetesVersion": "{{ kube_vn_no_prefix }}",
+        "machineImageId": "{{ community_images_image_ids[key] }}",
+        "clusterNetworking": {
+          "internalNetwork": {
+            "networkFilter": {
+              "tags": "portal-internal",
+            },
+          },
+        },
+      },
+    },
+    {% endif %}
+    {% endfor %}
+  }
 # Allow extra templates to be defined using a separate variable
 azimuth_capi_operator_cluster_templates_extra: {}
 # The full list of Kubernetes cluster templates to install
@@ -567,6 +549,54 @@ azimuth_capi_operator_app_templates_daskhub_spec: >-
       )
   }}
 
+# Indicates whether the Zenith-enabled kubeflow app template should be enabled
+azimuth_capi_operator_app_templates_kubeflow_enabled: true
+# The Helm chart to use for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_chart_name: kubeflow-azimuth
+# The Helm repository to use for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_chart_repo: https://stackhpc.github.io/azimuth-charts
+# The version range to use for the kubeflow Helm chart
+azimuth_capi_operator_app_templates_kubeflow_version_range: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+# Overrides for the label, logo and description from the kubeflow Helm chart
+azimuth_capi_operator_app_templates_kubeflow_label:
+azimuth_capi_operator_app_templates_kubeflow_logo:
+azimuth_capi_operator_app_templates_kubeflow_description:
+# The number of versions to make available for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_keep_versions: 3
+# The sync frequency for the kubeflow app template (default 24h)
+azimuth_capi_operator_app_templates_kubeflow_sync_frequency: 86400
+# Any defaultn values for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_default_values: {}
+# The spec for the kubeflow app template
+azimuth_capi_operator_app_templates_kubeflow_spec: >-
+  {{-
+    {
+      "chart": {
+        "repo": azimuth_capi_operator_app_templates_kubeflow_chart_repo,
+        "name": azimuth_capi_operator_app_templates_kubeflow_chart_name,
+      },
+      "versionRange": azimuth_capi_operator_app_templates_kubeflow_version_range,
+      "keepVersions": azimuth_capi_operator_app_templates_kubeflow_keep_versions,
+      "syncFrequency": azimuth_capi_operator_app_templates_kubeflow_sync_frequency,
+      "defaultValues": azimuth_capi_operator_app_templates_kubeflow_default_values,
+    } |
+      combine(
+        { "label": azimuth_capi_operator_app_templates_kubeflow_label }
+        if azimuth_capi_operator_app_templates_kubeflow_label
+        else {}
+      ) |
+      combine(
+        { "logo": azimuth_capi_operator_app_templates_kubeflow_logo }
+        if azimuth_capi_operator_app_templates_kubeflow_logo
+        else {}
+      ) |
+      combine(
+        { "description": azimuth_capi_operator_app_templates_kubeflow_description }
+        if azimuth_capi_operator_app_templates_kubeflow_description
+        else {}
+      )
+  }}
+
 # The default templates
 azimuth_capi_operator_app_templates_default: >-
   {{-
@@ -579,6 +609,11 @@ azimuth_capi_operator_app_templates_default: >-
       combine(
         { "daskhub": azimuth_capi_operator_app_templates_daskhub_spec }
         if azimuth_capi_operator_app_templates_daskhub_enabled
+        else {}
+      ) |
+      combine(
+        { "kubeflow": azimuth_capi_operator_app_templates_kubeflow_spec }
+        if azimuth_capi_operator_app_templates_kubeflow_enabled
         else {}
       )
   }}

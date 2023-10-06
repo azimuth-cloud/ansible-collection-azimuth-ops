@@ -22,6 +22,9 @@ infra_network_id:
 # OR
 # The CIDR of the subnet that should be created
 infra_network_cidr: 192.168.100.0/24
+# The MTU of the internal network that should be created
+# (will be set to cloud default if left undefined)
+infra_network_mtu: 
 # The ID of the external network to connect to via a router
 infra_external_network_id: >-
   {{-

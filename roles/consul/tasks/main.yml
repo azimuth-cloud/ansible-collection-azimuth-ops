@@ -100,16 +100,13 @@
             release: "{{ consul_release_name }}"
             component: client
 
-- name: Install Consul exporter from prometheus-community
+# Remove the legacy installation of Consul exporter
+# This is now managed as part of a Zenith installation
+- name: Remove Consul exporter from prometheus-community
   kubernetes.core.helm:
-    chart_ref: "{{ consul_exporter_chart_name }}"
-    chart_repo_url: "{{ consul_exporter_chart_repo }}"
-    chart_version: "{{ consul_exporter_chart_version }}"
     release_namespace: "{{ consul_exporter_release_namespace }}"
     release_name: "{{ consul_exporter_release_name }}"
-    release_values: "{{ consul_exporter_release_values }}"
-    atomic: yes
-    create_namespace: yes
+    state: absent
     wait: yes
     wait_timeout: "{{ consul_exporter_wait_timeout }}"
 
@@ -130,7 +127,15 @@
         consul_system_dashboard.json: |-
           {{ lookup("file", "grafana_dashboard.json") | from_json | to_nice_json }}
 
+- name: Delete Prometheus rule in default namespace
+  command: kubectl delete prometheusrule consul
+  register: consul_delete_prometheus_rule_default
+  changed_when: "consul_delete_prometheus_rule_default.rc == 0"
+  failed_when: >-
+    consul_delete_prometheus_rule_default.rc != 0 and
+    "NotFound" not in consul_delete_prometheus_rule_default.stderr
+
 - name: Install Prometheus alerts rule for Consul
-  command: kubectl apply -f -
+  command: kubectl apply -n {{ consul_release_namespace }} -f -
   args:
     stdin: "{{ lookup('file', 'prometheus_rule.yaml') }}"

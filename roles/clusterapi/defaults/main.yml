@@ -1,12 +1,14 @@
 ---
 
-# The version and manifest URL for the Cluster API core components
-clusterapi_core_version: v1.3.3
-clusterapi_core_components: https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml
+# The repo, version and manifest URL for the Cluster API core components
+clusterapi_core_repo: https://github.com/kubernetes-sigs/cluster-api
+clusterapi_core_version: v1.5.2
+clusterapi_core_components: "{{ clusterapi_core_repo }}/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml"
 
-# The version and manifest URL for the Cluster API OpenStack provider components
-clusterapi_openstack_version: v0.7.1
-clusterapi_openstack_components: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml
+# The repo, version and manifest URL for the Cluster API OpenStack provider components
+clusterapi_openstack_repo: https://github.com/kubernetes-sigs/cluster-api-provider-openstack
+clusterapi_openstack_version: v0.8.0
+clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml"
 
 # List of Cluster API component manifests to install
 clusterapi_manifests:
@@ -77,7 +79,7 @@ clusterapi_watches:
 # Helm chart information for the Cluster API addon provider
 clusterapi_addon_provider_chart_repo: https://stackhpc.github.io/cluster-api-addon-provider
 clusterapi_addon_provider_chart_name: cluster-api-addon-provider
-clusterapi_addon_provider_chart_version: 0.1.0-dev.0.main.26
+clusterapi_addon_provider_chart_version: 0.1.0
 
 # Release information for the Cluster API addon provider release
 clusterapi_addon_provider_release_namespace: capi-addon-system
@@ -89,3 +91,19 @@ clusterapi_addon_provider_wait_timeout: 30m
 # The values for the Cluster API addon provider deployment
 # The defaults are sufficient for most use cases
 clusterapi_addon_provider_release_values: {}
+
+# Helm chart information for the Cluster API janitor
+clusterapi_janitor_openstack_chart_repo: https://stackhpc.github.io/cluster-api-janitor-openstack
+clusterapi_janitor_openstack_chart_name: cluster-api-janitor-openstack
+clusterapi_janitor_openstack_chart_version: 0.1.0
+
+# Release information for the Cluster API janitor release
+clusterapi_janitor_openstack_release_namespace: capi-janitor-system
+clusterapi_janitor_openstack_release_name: cluster-api-janitor-openstack
+
+# The timeout to wait for the Cluster API janitor to become ready
+clusterapi_janitor_openstack_wait_timeout: 30m
+
+# The values for the Cluster API janitor deployment
+# The defaults are sufficient for most use cases
+clusterapi_janitor_openstack_release_values: {}
