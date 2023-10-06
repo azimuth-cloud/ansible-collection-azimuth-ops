@@ -1,4 +1,5 @@
 ---
+
 - name: Install Azimuth CaaS operator on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_caas_operator_chart_name }}"
@@ -23,26 +24,21 @@
       metadata:
         name: "{{ template.name }}"
       spec: "{{ template.spec }}"
-  # we skip when the spec is empty
-  when: template.spec
   loop: >-
     {{-
-      azimuth_caas_operator_cluster_templates |
+      azimuth_caas_cluster_templates |
         dict2items(key_name = 'name', value_name = 'spec')
     }}
   loop_control:
     loop_var: template
     label: "{{ template.name }}"
-  tags:
-    # TODO: we should add a changed_when
-    - skip_ansible_lint
 
 - name: Update secrets for Azimuth CaaS ssh key
-  command: "kubectl apply -f -"
+  command: kubectl apply -f -
   args:
-    stdin: "{{ template_definition | to_nice_yaml }}"
+    stdin: "{{ secret_definition | to_nice_yaml }}"
   vars:
-    template_definition:
+    secret_definition:
       apiVersion: v1
       kind: Secret
       metadata:
