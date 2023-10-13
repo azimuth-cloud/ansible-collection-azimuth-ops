@@ -1,0 +1,16 @@
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: {{ velero_backup_schedule_name }}
+  namespace: velero
+spec:
+  schedule: '{{ velero_backup_schedule_timings }}'
+  template:
+    csiSnapshotTimeout: 0s
+    hooks: {}
+    includedNamespaces:
+    - '*'
+    itemOperationTimeout: 0s
+    metadata: {}
+    ttl: {{ velero_backup_schedule_ttl }}
+  useOwnerReferencesInBackup: false

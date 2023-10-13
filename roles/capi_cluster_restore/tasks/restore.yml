@@ -1,0 +1,97 @@
+
+- block: 
+  - name: Fetch existing Helm releases
+    ansible.builtin.command: helm list --all-namespaces --no-headers --filter "(kube-prometheus|loki)-stack" -o json
+    register: helm_releases_monitoring
+
+  - name: Ensure existing monitoring stack is uninstalled to allow restore
+    kubernetes.core.helm:
+      name: "{{ item.name }}"
+      namespace: "{{ item.namespace }}"
+      state: absent
+      wait: true
+    loop: "{{ helm_releases_monitoring.stdout | from_json }}"
+
+  # Helm doesn't delete associated PVs on uninstall so do that here
+  # (logic here assumes all kube-prometheus-stack & loki-stack were installed in same namespace)
+  - name: Ensure existing monitoring volumes are deleted to allow restore
+    ansible.builtin.command: >-
+      kubectl delete pvc
+      --namespace "{{ (helm_releases_monitoring.stdout | from_json | first).namespace }}"
+      --selector "{{ item }}"
+    loop:
+    - app.kubernetes.io/managed-by=prometheus-operator
+    - release=loki-stack
+    when: helm_releases_monitoring.stdout | from_json | length > 0
+
+  when: velero_restore_monitoring_data
+
+- name: Ensure Velero components are installed
+  include_tasks: install.yml
+
+- name: Check status of target backup
+  # This also acts as check that target backup exists
+  ansible.builtin.command: >-
+    kubectl get backup
+    -n "{{ velero_release_namespace }}"
+    "{{ velero_restore_backup_name }}"
+    -o jsonpath='{.status.phase}'
+  register: velero_target_backup_check
+
+- name: Fail if target backup is incomplete and strict mode is enabled
+  ansible.builtin.fail: 
+    msg: "Aborting restore of backup in state '{{ velero_target_backup_check.stdout }}'"
+  when: velero_restore_strict and velero_target_backup_check.stdout != "Completed"
+
+- name: Warn if target backup has status 'PartiallyFailed'
+  debug:
+    msg: "WARNING: Target backup as status 'PartiallyFailed' - restore may be ineffective"
+  when: velero_target_backup_check.stdout == "PartiallyFailed"
+
+- name: Perform Velero restore
+  include_tasks: restore_loop.yml
+  loop: "{{ range(1, velero_max_restore_passes+1) | list }}"
+
+# Annotating cluster resources triggers a new watch event and 
+# causes the addon provider to re-adopt the restored addons
+- name: Annotate {{ item }} resources to trigger capi addon status update
+  ansible.builtin.command: >-
+    kubectl annotate "{{ item }}"
+    velero.io/restore-time={{ '%Y-%m-%d--T%H:%M:%S' | strftime(ansible_date_time.epoch) }}
+    -A --all --overwrite
+  loop:
+  - helmrelease
+  - manifests
+
+# TODO: Remove this workaround once CaaS operator stops using resource uid as tf state key
+
+- name: Fetch restored CaaS appliance resources
+  ansible.builtin.shell: kubectl get clusters.caas.azimuth.stackhpc.com -A -o jsonpath='{.items}'
+  register: restored_caas_clusters
+
+- name: Store new CaaS cluster UIDs in Consul
+  ansible.builtin.shell: >-
+    kubectl exec -n azimuth consul-server-0
+    -- consul kv put
+    restore/"{{ item.metadata.namespace }}--{{ item.metadata.name }}"/new-uid
+    "{{ item.metadata.uid }}" 
+  loop: "{{ restored_caas_clusters.stdout | from_json }}"
+
+- name: Create new tfstate KV pair for restored CaaS appliances
+  ansible.builtin.shell: |
+    old_uid=$(kubectl exec -n azimuth consul-server-0 -- consul kv get restore/"{{ item.metadata.namespace }}"--"{{ item.metadata.name }}"/old-uid)
+    echo Old UID: $old_uid
+    tf_state=$(kubectl exec -n azimuth consul-server-0 -- consul kv get --base64 cluster/$old_uid/tfstate)
+    echo State: $tf_state
+    # Create new cluster/<uid> key with value set as old tf state
+    kubectl exec -n azimuth consul-server-0 -- consul kv put --base64 cluster/"{{ item.metadata.uid }}"/tfstate $tf_state
+  # Delete old key?
+  # kubectl exec -n azimuth consul-server-0 -- consul kv delete test/"{{ item.metadata.uid }}"/tfstate $tf_state
+  loop: "{{ restored_caas_clusters.stdout | from_json }}"
+
+# Minus sign suffix at end of annotation name in kubectl means delete annotation
+- name: Remove kopf annotation so that the CaaS operator re-adopts appliances
+  ansible.builtin.command: >-
+    kubectl annotate clusters.caas.azimuth.stackhpc.com
+    kopf.zalando.org/last-handled-configuration-
+    -A --all

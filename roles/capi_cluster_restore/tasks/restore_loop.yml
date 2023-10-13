@@ -1,0 +1,39 @@
+
+- name: Wait for backups to sync
+  ansible.builtin.command: kubectl -n "{{ velero_release_namespace }}" get backup "{{ velero_restore_backup_name }}"
+  register: velero_backup_check
+  until: velero_backup_check.rc == 0
+  # Wait up to 5 minutes for backups to sync after install
+  retries: 30
+  delay: 10
+
+- block:
+
+  - name: Begin Velero restore (attempt {{ item }}/{{ velero_max_restore_passes }})
+    ansible.builtin.command: >-
+      velero restore create
+      "{{ velero_restore_name }}--attempt-{{ item }}"
+      --from-backup "{{ velero_restore_backup_name }}"
+
+  - name: Wait for restore attempt {{ item }} to finish
+    ansible.builtin.command: >-
+      kubectl get restore 
+      -n "{{ velero_release_namespace }}" 
+      "{{ velero_restore_name }}--attempt-{{ item }}"
+      -o jsonpath='{.status.phase}'
+    register: velero_restore_attempt_status
+    until: velero_restore_attempt_status.stdout != "InProgress"
+    retries: "{{ (velero_restore_attempt_timeout / 10) | round(0, 'ceil') | int }}" # Round up to nearest number divisible by 10
+    delay: 10
+
+  - name: Display status of this restore pass
+    debug:
+      msg: "Restore status: {{ velero_restore_attempt_status.stdout }}"
+
+  # item == 1 condition ensures we always attempt at least 1 restore
+  # also, 'and' has higher priotiry than 'or' in operator precedence
+  when: >-
+    item == 1
+    or velero_restore_attempt_status is defined
+    and 'stdout' in velero_restore_attempt_status.keys()
+    and velero_restore_attempt_status.stdout != "Completed"

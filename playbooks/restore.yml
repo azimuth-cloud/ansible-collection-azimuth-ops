@@ -1,0 +1,16 @@
+#####
+# This playbook uses Terraform and Cluster API to restore an Azimuth management cluster from and existing backup source
+#####
+
+# Ensure CAPI management cluster is provisioned
+- import_playbook: stackhpc.azimuth_ops.provision_cluster
+
+# Initiate restore process
+- hosts: k3s
+  environment:
+    # TODO: Is this a reliable way to construct the kubeconfig file name?
+    KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+  tasks:
+    - include_role:
+        name: stackhpc.azimuth_ops.capi_cluster_restore
+        tasks_from: restore.yml

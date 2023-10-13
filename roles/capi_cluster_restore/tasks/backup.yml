@@ -1,0 +1,34 @@
+
+- name: Ensure Velero components are installed
+  include_tasks: install.yml
+
+- name: Create Velero backup object
+  ansible.builtin.command: "velero backup create {{ velero_backup_name }}"
+
+- name: Wait for backup to finish
+  ansible.builtin.command: >-
+    kubectl get backup 
+    -n "{{ velero_release_namespace }}" 
+    "{{ velero_backup_name }}"
+    -o jsonpath='{.status.phase}'
+  register: velero_backup_status
+  until: velero_backup_status.stdout not in ["InProgress", "Finalizing"]
+  retries: "{{ (velero_backup_creation_timeout / 10) | round(0, 'ceil') | int }}" # Round up to nearest number divisible by 10
+  delay: 10
+
+- name: Fail if backup was unsuccessful
+  ansible.builtin.fail:
+    msg: Backup status was "{{ velero_backup_status.stdout }}" - see Velero logs for details
+  when: velero_backup_status.stdout != "Completed"
+
+- name: Fetch existing CaaS appliance resources
+  ansible.builtin.shell: kubectl get clusters.caas.azimuth.stackhpc.com -A -o json --ignore-not-found
+  register: caas_clusters
+
+- name: Store cluster namespace + name -> UID mapping in Consul
+  ansible.builtin.shell: >-
+    kubectl exec -n azimuth consul-server-0 
+    -- consul kv put restore/"{{ item.metadata.namespace }}--{{ item.metadata.name }}"/old-uid
+    "{{ item.metadata.uid }}" 
+  loop: "{{ (caas_clusters.stdout | from_json)['items'] }}"
+  # loop: "{{ caas_clusters.stdout | from_json | community.general.json_query('items') }}"

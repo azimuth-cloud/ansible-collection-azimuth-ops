@@ -1,0 +1,12 @@
+
+# Need to run provision playbook so that k3s inventory group is populated
+- import_playbook: stackhpc.azimuth_ops.provision_cluster
+
+- hosts: k3s
+  environment:
+    # TODO: Is this a reliable way to construct the kubeconfig file name?
+    KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+  tasks:
+    - include_role:
+        name: stackhpc.azimuth_ops.capi_cluster_restore
+        tasks_from: backup.yml

@@ -43,7 +43,7 @@
           slurp:
             src: /etc/rancher/k3s/k3s.yaml
           register: k3s_kubeconfig
-      become: yes
+      become: true
 
     - name: Ensure kube config directory exists
       file:
@@ -83,4 +83,14 @@
             name: stackhpc.azimuth_ops.capi_cluster
           vars:
             capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+
+        # Install the Velero components on the capi cluster and configure the backup schedule
+        # (Need to use block so that we can set `environment` variables)
+        - block:
+          - include_role:
+              name: stackhpc.azimuth_ops.capi_cluster_restore
+              tasks_from: schedule.yml
+          environment:
+            KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+  
       when: install_mode == 'ha'

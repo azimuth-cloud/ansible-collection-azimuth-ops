@@ -1,0 +1,65 @@
+
+- name: Check if Velero release namespace exists
+  ansible.builtin.command: kubectl get namespace "{{ velero_release_namespace }}"
+  register: velero_namespace_check
+  failed_when: false
+
+- name: Create Velero release namespace
+  ansible.builtin.command: kubectl create namespace "{{ velero_release_namespace }}"
+  when: velero_namespace_check.rc == 1
+
+- name: Check if Velero credentials secret exists
+  ansible.builtin.command: "kubectl -n {{ velero_release_namespace }} get secret {{ velero_openstack_secret_name }}"
+  register: velero_creds_check
+  failed_when: false
+
+- name: Ensure clouds.yaml secret is copied to Velero namespace
+  ansible.builtin.shell: >-
+    kubectl get secret -n "{{ velero_openstack_existing_secret_namespace }}" "{{ velero_openstack_secret_name }}" -o yaml 
+    | grep -v '^\s*\(namespace\|uid\|cloud.conf\):\s'
+    | kubectl apply -n "{{ velero_release_namespace }}" -f -
+  when: velero_creds_check.rc == 1 and velero_openstack_use_existing_secret
+  no_log: true
+
+- name: Ensure Velero credentials secret exists
+  ansible.builtin.command: >-
+    kubectl -n "{{ velero_release_namespace }}" create secret generic "{{ velero_os_creds_secret_name }}"
+    --from-literal=OS_AUTH_URL="{{ velero_openstack_auth_url }}"
+    --from-literal=OS_APPLICATION_CREDENTIAL_ID="{{ velero_openstack_app_cred_id }}" 
+    --from-literal=OS_APPLICATION_CREDENTIAL_SECRET="{{ velero_openstack_app_cred_secret }}"
+  when: velero_creds_check.rc == 1 and not velero_openstack_use_existing_secret
+  no_log: true
+
+- name: Ensure Velero Helm chart is installed
+  kubernetes.core.helm:
+    chart_ref: "{{ velero_chart_name }}"
+    chart_repo_url: "{{ velero_chart_repo }}"
+    chart_version: "{{ velero_chart_version }}"
+    release_namespace: "{{ velero_release_namespace }}"
+    release_name: "{{ velero_release_name }}"
+    release_values: "{{ velero_release_values }}"
+    atomic: yes
+    wait: yes
+    wait_timeout: "{{ velero_wait_timeout }}"
+
+- name: Check Velero CLI version
+  ansible.builtin.command: velero version --client-only
+  register: velero_cli_version_check
+  failed_when: false
+
+- block:
+  - name: Ensure Velero CLI is downloaded
+    ansible.builtin.shell: |-
+      wget "{{ velero_cli_download_url }}"
+      tar -xzf "velero-v{{ velero_cli_version }}-{{ velero_cli_arch }}.tar.gz"
+      
+  - name: Ensure Velero CLI is in path
+    ansible.builtin.command: cp velero-v{{ velero_cli_version }}-{{ velero_cli_arch }}/velero /usr/local/bin/
+    become: true
+
+  when: velero_cli_version_check.rc != 0 or velero_cli_version not in velero_cli_version_check.stdout
+
+- name: Ensure Velero shell completions are in bashrc file
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: source <(velero completion bash)
