@@ -34,3 +34,7 @@
   loop: "{{ community_images | dict2items | list }}"
   loop_control:
     label: "{{ item.value.name }}"
+
+- name: Export community_images fact so it can be consumed from other roles
+  set_fact:
+    community_images: "{{ community_images }}"
