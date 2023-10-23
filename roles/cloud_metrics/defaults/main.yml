@@ -13,6 +13,57 @@ cloud_metrics_grafana_release_name: cloud-metrics
 # The timeout to wait for Grafana to become ready
 cloud_metrics_grafana_wait_timeout: 10m
 
+# Configuration for the external Prometheus
+cloud_metrics_prometheus_host: >-
+  {{ undef(hint = 'cloud_metrics_prometheus_host is required') }}
+cloud_metrics_prometheus_ip: >-
+  {{ undef(hint = 'cloud_metrics_prometheus_ip is required') }}
+cloud_metrics_prometheus_port: >-
+  {{ undef(hint = 'cloud_metrics_prometheus_port is required') }}
+cloud_metrics_prometheus_basic_auth_username: >-
+  {{ undef(hint = 'cloud_metrics_prometheus_basic_auth_username is required') }}
+cloud_metrics_prometheus_basic_auth_password: >-
+  {{ undef(hint = 'cloud_metrics_prometheus_basic_auth_password is required') }}
+
+# Configuration for the Prometheus scrape
+cloud_metrics_prometheus_auth_secret_name: cloud-metrics-os-capacity-auth
+cloud_metrics_prometheus_auth_data:
+  username: "{{ cloud_metrics_prometheus_basic_auth_username }}"
+  password: "{{ cloud_metrics_prometheus_basic_auth_password }}"
+
+cloud_metrics_prometheus_service_name: cloud-metrics-os-capacity
+cloud_metrics_prometheus_service_labels:
+  app: cloud-metrics
+  component: remote-prometheus
+
+cloud_metrics_prometheus_servicemonitor_name: "{{ cloud_metrics_prometheus_service_name }}"
+# The spec is set up for Prometheus federation
+cloud_metrics_prometheus_servicemonitor_params:
+  "match[]":
+    - "{job=~\"os_capacity|libvirt_exporter\"}"
+cloud_metrics_prometheus_servicemonitor_tls_config:
+  serverName: "{{ cloud_metrics_prometheus_host }}"
+cloud_metrics_prometheus_servicemonitor_spec:
+  endpoints:
+    - port: metrics
+      path: /federate
+      scheme: https
+      params: "{{ cloud_metrics_prometheus_servicemonitor_params }}"
+      basicAuth:
+        username:
+          name: "{{ cloud_metrics_prometheus_auth_secret_name }}"
+          key: username
+        password:
+          name: "{{ cloud_metrics_prometheus_auth_secret_name }}"
+          key: password
+      honorLabels: true
+      tlsConfig: "{{ cloud_metrics_prometheus_servicemonitor_tls_config }}"
+  namespaceSelector:
+    matchNames:
+      - "{{ cloud_metrics_grafana_release_namespace }}"
+  selector:
+    matchLabels: "{{ cloud_metrics_prometheus_service_labels }}"
+
 # Azimuth properties that are used to infer default values for the cloud metrics
 _azimuth_release_name: "{{ azimuth_release_name | default('azimuth') }}"
 _azimuth_api_service_name: >-
@@ -170,7 +221,7 @@ cloud_metrics_grafana_tenant_dashboard_uid: >-
       json_query("uid")
   }}
 # The variable name that the tenant ID should be placed in
-cloud_metrics_grafana_tenant_id_var: tenant_id
+cloud_metrics_grafana_tenant_id_var: project_id
 
 # The deployment strategy for Grafana
 # If using persistence with RWO PVCs, this must be Recreate or the deployment gets stuck

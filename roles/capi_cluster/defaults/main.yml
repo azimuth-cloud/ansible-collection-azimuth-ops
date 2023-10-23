@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.2-dev.0.main.55
+capi_cluster_chart_version: 0.1.3
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -119,6 +119,8 @@ capi_cluster_control_plane_flavor: >-
 capi_cluster_worker_flavor: >-
   {{ undef(hint = 'capi_cluster_worker_flavor is required') }}
 
+# The number of control plane nodes to use
+capi_cluster_control_plane_count: 3
 # The number of workers to use
 capi_cluster_worker_count: 3
 # max_unavailable and max_surge are set so that a new worker is made available to the cluster before one is deleted
@@ -155,10 +157,16 @@ capi_cluster_control_plane_root_volume_availability_zone: "{{ capi_cluster_root_
 capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 
 # Configuration for addons
+#   Determines if the ingress controller should be enabled
+capi_cluster_addons_ingress_enabled: "{{ ingress_controller_enabled | default(true) }}"
 #   Require the specification of a pre-allocated IP for the ingress load balancer
 #   This IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
-  {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
+  {{-
+    undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required')
+    if capi_cluster_addons_ingress_enabled
+    else None
+  }}
 #   Options for LoadBalancer services
 
 #   https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
@@ -261,6 +269,7 @@ capi_cluster_release_defaults:
         )
     }}
   controlPlane:
+    machineCount: "{{ capi_cluster_control_plane_count }}"
     machineFlavor: "{{ capi_cluster_control_plane_flavor }}"
     omitFailureDomain: "{{ capi_cluster_control_plane_omit_failure_domain }}"
     failureDomains: "{{ capi_cluster_control_plane_failure_domains }}"
@@ -323,14 +332,27 @@ capi_cluster_release_defaults:
     mellanoxNetworkOperator:
       enabled: false
     # The NGINX ingress controller is required
-    ingress:
-      enabled: true
-      nginx:
-        release:
-          values:
-            controller:
-              service:
-                loadBalancerIP: "{{ capi_cluster_addons_ingress_load_balancer_ip }}"
+    ingress: >-
+      {{-
+        { "enabled": capi_cluster_addons_ingress_enabled } |
+          combine(
+            {
+              "nginx": {
+                "release": {
+                  "values": {
+                    "controller": {
+                      "service": {
+                        "loadBalancerIP": capi_cluster_addons_ingress_load_balancer_ip,
+                      },
+                    },
+                  },
+                },
+              },
+            }
+            if capi_cluster_addons_ingress_enabled
+            else {}
+          )
+      }}
     # Configure monitoring and alerting
     monitoring:
       enabled: true
