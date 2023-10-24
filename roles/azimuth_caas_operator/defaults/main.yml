@@ -77,7 +77,7 @@ azimuth_caas_operator_default_ssh_secret_files: {}
 # Indicates if the StackHPC Slurm appliance should be enabled
 azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
+azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git # TODO: fix URL
 # The git version for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_version: fix/slurm-cve-2023-41914
 # The playbook to use for the StackHPC Slurm appliance
