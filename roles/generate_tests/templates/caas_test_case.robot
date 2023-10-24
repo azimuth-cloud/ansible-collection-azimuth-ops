@@ -22,8 +22,8 @@
     ${cluster} =  Wait For Cluster Ready  ${cluster.id}
 {% if test_case.services is defined and test_case.services %}
 {% for service in test_case.services %}
-    ${service} =  Get Cluster Service URL  ${cluster}  {{ service.name }}
-    Open Zenith Service  ${service}
+    ${url} =  Get Cluster Service URL  ${cluster}  {{ service.name }}
+    Open Zenith Service  ${url}
 {% if service.expected_title is defined and service.expected_title %}
     Wait Until Page Title Contains  {{ service.expected_title }}
 {% endif %}

@@ -6,7 +6,7 @@
     [Timeout]  {{ test_case.timeout }}
 {% endif %}
     ${template} =  Fetch Kubernetes Cluster Template  {{ test_case.kubernetes_template }}
-    ${name} =  Generate Name  {{ test_case.cluster_name_prefix | default('test', True) }}
+    ${name} =  Generate Name  {{ test_case.cluster_name_prefix | default('testk8s', True) }}
 {% if test_case.control_plane_size is defined and test_case.control_plane_size %}
     ${cp_size} =  Fetch Size  {{ test_case.control_plane_size }}
 {% else %}

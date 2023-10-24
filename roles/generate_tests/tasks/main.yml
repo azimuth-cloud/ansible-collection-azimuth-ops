@@ -37,3 +37,9 @@
     src: "{{ generate_tests_kubernetes_suite_template }}"
     dest: "{{ (generate_tests_suite_directory, 'kubernetes_suite.robot') | path_join }}"
   when: generate_tests_kubernetes_suite_enabled
+
+- name: Generate test suite for Kubernetes apps
+  template:
+    src: "{{ generate_tests_kubernetes_apps_suite_template }}"
+    dest: "{{ (generate_tests_suite_directory, 'kubernetes_apps_suite.robot') | path_join }}"
+  when: generate_tests_kubernetes_apps_suite_enabled

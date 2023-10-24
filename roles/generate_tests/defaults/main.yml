@@ -50,6 +50,7 @@ generate_tests_suite_template: suite.robot
 # The name for the suite
 generate_tests_suite_name: Azimuth Tests
 
+
 #-----
 # Settings for the CaaS test suite
 #-----
@@ -144,6 +145,7 @@ generate_tests_caas_test_cases_extra: []
 generate_tests_caas_test_cases: >-
   {{- generate_tests_caas_test_cases_default + generate_tests_caas_test_cases_extra }}
 
+
 #-----
 # Settings for the Kubernetes test suite
 #-----
@@ -230,3 +232,97 @@ generate_tests_kubernetes_test_cases_default: >-
 generate_tests_kubernetes_test_cases_extra: []
 generate_tests_kubernetes_test_cases: >-
   {{- generate_tests_kubernetes_test_cases_default + generate_tests_kubernetes_test_cases_extra }}
+
+
+#-----
+# Settings for the Kubernetes apps test suite
+#-----
+# Indicates whether to generate the suite
+generate_tests_kubernetes_apps_suite_enabled: "{{ azimuth_kubernetes_enabled }}"
+
+# The template to use for the suite
+generate_tests_kubernetes_apps_suite_template: kubernetes_apps_suite.robot
+# The template to use for test cases in the suite
+generate_tests_kubernetes_apps_test_case_template: kubernetes_apps_test_case.robot
+
+# The name of the suite
+generate_tests_kubernetes_apps_suite_name: Kubernetes Apps
+
+# The tags to apply to tests in the suite
+generate_tests_kubernetes_apps_default_test_tags: [kubernetes, kubeapps]
+
+# The timeout to apply to tests in the suite
+generate_tests_kubernetes_apps_default_test_timeout: "15 minutes"
+
+# Configuration options for the cluster that apps will be deployed on
+#   The name prefix to use for the cluster
+generate_tests_kubernetes_apps_k8s_name_prefix: testapps
+#   The name of the Kubernetes template
+#   By default the latest template matching the tags specified below will be used
+generate_tests_kubernetes_apps_k8s_template:
+#   If no template is given, use the latest template that matches these tags
+#   By default, we only consider the standard templates
+generate_tests_kubernetes_apps_k8s_template_tags: [standard]
+#   The ID of the flavors to use for control plane and worker nodes respectively
+#   By default, an appropriate flavor is guessed based on the required resources
+generate_tests_kubernetes_apps_k8s_control_plane_size:
+generate_tests_kubernetes_apps_k8s_worker_size:
+#   The worker count for the cluster
+generate_tests_kubernetes_apps_k8s_worker_count: 2
+
+# Configuration for the JupyterHub test case
+#   Indicates if the JupyterHub test case should be enabled
+generate_tests_kubernetes_apps_test_case_jupyterhub_enabled: true
+#   The services that will be produced by the JupyterHub app
+generate_tests_kubernetes_apps_test_case_jupyterhub_services: [jupyterhub-azimuth]
+#   The expected title for the JupyterHub app
+generate_tests_kubernetes_apps_test_case_jupyterhub_service_jupyterhub_azimuth_expected_title: JupyterLab
+
+# Configuration for the DaskHub test case
+#   Indicates if the DaskHub test case should be enabled
+generate_tests_kubernetes_apps_test_case_daskhub_enabled: true
+#   The services that will be produced by the DaskHub app
+generate_tests_kubernetes_apps_test_case_daskhub_services: [daskhub-azimuth]
+#   The expected title for the DaskHub app
+generate_tests_kubernetes_apps_test_case_daskhub_service_daskhub_azimuth_expected_title: JupyterLab
+
+# Configuration for the Kubeflow test case
+#   Indicates if the Kubeflow test case should be enabled
+generate_tests_kubernetes_apps_test_case_kubeflow_enabled: false
+
+# The test cases for the suite
+generate_tests_kubernetes_apps_test_cases_default: >-
+  [
+    {% for app_tpl in generate_tests_installed_kubernetes_app_templates %}
+    {% set tpl_var = app_tpl.metadata.name | replace('-', '_') %}
+    {% set var_prefix = 'generate_tests_kubernetes_apps_test_case_' ~ tpl_var ~ '_' %}
+    {% if lookup('vars', var_prefix ~ 'enabled', default = True) %}
+    {
+      "name": "{{ lookup('vars', var_prefix ~ 'name', default = '') }}",
+      "template": "{{ lookup('vars', var_prefix ~ 'template', default = '') }}",
+      "tags": [
+        "{{ app_tpl.metadata.name }}",
+        {% for tag in lookup('vars', var_prefix ~ 'tags', default = []) %}
+        "{{ tag }}",
+        {% endfor %}
+      ],
+      "timeout": "{{ lookup('vars', var_prefix ~ 'timeout', default = '') }}",
+      "app_template": "{{ app_tpl.metadata.name }}",
+      "app_name_prefix": "{{ lookup('vars', var_prefix ~ 'app_name_prefix', default = '') }}",
+      "services": [
+        {% for service_name in lookup('vars', var_prefix ~ 'services', default = []) %}
+        {% set service_var = service_name | replace('-', '_') %}
+        {% set service_expected_title_var = var_prefix ~ 'service_' ~ service_var ~ '_expected_title' %}
+        {
+          "name": "{{ service_name }}",
+          "expected_title": "{{ lookup('vars', service_expected_title_var, default = '') }}",
+        },
+        {% endfor %}
+      ],
+    },
+    {% endif %}
+    {% endfor %}
+  ]
+generate_tests_kubernetes_apps_test_cases_extra: []
+generate_tests_kubernetes_apps_test_cases: >-
+  {{- generate_tests_kubernetes_apps_test_cases_default + generate_tests_kubernetes_apps_test_cases_extra }}
