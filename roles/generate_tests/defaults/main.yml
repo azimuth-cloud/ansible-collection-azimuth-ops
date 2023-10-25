@@ -71,8 +71,14 @@ generate_tests_caas_default_test_tags: [caas]
 # The timeout to apply to tests in the suite
 generate_tests_caas_default_test_timeout: "15 minutes"
 
+# Indicates whether a test case should be generated for all cluster types by default
+#   If true, a test case will be generated unless explicitly disabled
+#   If false, a test case will not be generated unless explicitly enabled
+generate_tests_caas_default_test_case_enabled: false
+
 # Configuration for the workstation test case
 #   Indicates whether the workstation test case should be enabled
+#   Only applies if the workstation appliance is enabled
 generate_tests_caas_test_case_workstation_enabled: true
 #   Expected titles for the workstation services
 generate_tests_caas_test_case_workstation_service_webconsole_expected_title: Apache Guacamole
@@ -80,6 +86,7 @@ generate_tests_caas_test_case_workstation_service_monitoring_expected_title: Gra
 
 # Configuration for the Slurm test case
 #   Indicates if the Slurm test case should be enabled
+#   Only applies if the Slurm appliance is enabled
 generate_tests_caas_test_case_slurm_enabled: true
 #   Extra tags for the Slurm test case
 generate_tests_caas_test_case_slurm_tags: [externalip]
@@ -106,7 +113,7 @@ generate_tests_caas_test_cases_default: >-
     {% for ctype in generate_tests_installed_cluster_types %}
     {% set ctype_var = ctype.metadata.name | replace('-', '_') %}
     {% set var_prefix = 'generate_tests_caas_test_case_' ~ ctype_var ~ '_' %}
-    {% if lookup('vars', var_prefix ~ 'enabled', default = True) %}
+    {% if lookup('vars', var_prefix ~ 'enabled', default = generate_tests_caas_default_test_case_enabled) %}
     {
       "name": "{{ lookup('vars', var_prefix ~ 'name', default = '') }}",
       "template": "{{ lookup('vars', var_prefix ~ 'template', default = '') }}",
@@ -270,8 +277,14 @@ generate_tests_kubernetes_apps_k8s_worker_size:
 #   The worker count for the cluster
 generate_tests_kubernetes_apps_k8s_worker_count: 2
 
+# Indicates whether a test case should be generated for all app templates by default
+#   If true, a test case will be generated unless explicitly disabled
+#   If false, a test case will not be generated unless explicitly enabled
+generate_tests_kubernetes_apps_default_test_case_enabled: false
+
 # Configuration for the JupyterHub test case
 #   Indicates if the JupyterHub test case should be enabled
+#   Only applies if the JupyterHub app is enabled
 generate_tests_kubernetes_apps_test_case_jupyterhub_enabled: true
 #   The services that will be produced by the JupyterHub app
 generate_tests_kubernetes_apps_test_case_jupyterhub_services: [jupyterhub-azimuth]
@@ -280,14 +293,14 @@ generate_tests_kubernetes_apps_test_case_jupyterhub_service_jupyterhub_azimuth_e
 
 # Configuration for the DaskHub test case
 #   Indicates if the DaskHub test case should be enabled
+#   Only applies if the DaskHub app is enabled
 generate_tests_kubernetes_apps_test_case_daskhub_enabled: true
 #   The services that will be produced by the DaskHub app
 generate_tests_kubernetes_apps_test_case_daskhub_services: [daskhub-azimuth]
 #   The expected title for the DaskHub app
 generate_tests_kubernetes_apps_test_case_daskhub_service_daskhub_azimuth_expected_title: JupyterLab
 
-# Configuration for the Kubeflow test case
-#   Indicates if the Kubeflow test case should be enabled
+# By default, we don't run tests for Kubeflow (for now)
 generate_tests_kubernetes_apps_test_case_kubeflow_enabled: false
 
 # The test cases for the suite
@@ -296,7 +309,7 @@ generate_tests_kubernetes_apps_test_cases_default: >-
     {% for app_tpl in generate_tests_installed_kubernetes_app_templates %}
     {% set tpl_var = app_tpl.metadata.name | replace('-', '_') %}
     {% set var_prefix = 'generate_tests_kubernetes_apps_test_case_' ~ tpl_var ~ '_' %}
-    {% if lookup('vars', var_prefix ~ 'enabled', default = True) %}
+    {% if lookup('vars', var_prefix ~ 'enabled', default = generate_tests_kubernetes_apps_default_test_case_enabled) %}
     {
       "name": "{{ lookup('vars', var_prefix ~ 'name', default = '') }}",
       "template": "{{ lookup('vars', var_prefix ~ 'template', default = '') }}",
