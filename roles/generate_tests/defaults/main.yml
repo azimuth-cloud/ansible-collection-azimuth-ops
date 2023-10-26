@@ -102,7 +102,8 @@ generate_tests_caas_test_case_slurm_param_cluster_run_validation: true
 generate_tests_caas_test_case_slurm_service_ood_expected_title: Dashboard
 generate_tests_caas_test_case_slurm_service_monitoring_expected_title: Grafana
 
-# By default, we don't run tests for the repo2docker and SSH workstation appliances
+# By default, we don't run tests for the rstudio, repo2docker and SSH workstation appliances
+generate_tests_caas_test_case_rstudio_enabled: false
 generate_tests_caas_test_case_workstation_ssh_enabled: false
 generate_tests_caas_test_case_repo2docker_enabled: false
 
