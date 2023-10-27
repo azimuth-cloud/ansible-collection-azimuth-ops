@@ -10,7 +10,7 @@ license:
 repository: "https://github.com/stackhpc/ansible-collection-azimuth-ops"
 
 dependencies:
-  ansible.posix: "1.3.0"
-  community.general: "4.5.0"
-  kubernetes.core: "2.2.3"
-  "git+https://github.com/stackhpc/ansible-collection-terraform.git": "8c7acce4538aab8c0e928972155a2ccb5cb1b2a1"
+  ansible.posix: "1.5.4"
+  community.general: "7.4.0"
+  kubernetes.core: "2.4.0"
+  "git+https://github.com/stackhpc/ansible-collection-terraform.git": "71c998a0fd274519d37df5202af5b9f53eca1482"

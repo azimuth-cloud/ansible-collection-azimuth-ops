@@ -1,0 +1,45 @@
+---
+
+#####
+# This role generates a Robot Framework test suite for the current configuration
+#   https://robotframework.org/
+#
+# It utilises the keyword library for Azimuth
+#   https://github.com/stackhpc/azimuth-robotframework
+#
+# This test suite should then be executed _outside_ of Ansible
+# This is done to avoid hiding the console output as the tests progress
+#####
+
+- name: Delete test suite directory if it exists
+  file:
+    path: "{{ generate_tests_suite_directory }}"
+    state: absent
+
+- name: Ensure test suite directory exists
+  file:
+    path: "{{ generate_tests_suite_directory }}"
+    state: directory
+
+- name: Template test suite file
+  template:
+    src: "{{ generate_tests_suite_template }}"
+    dest: "{{ (generate_tests_suite_directory, '__init__.robot') | path_join }}"
+
+- name: Generate test suite for CaaS appliances
+  template:
+    src: "{{ generate_tests_caas_suite_template }}"
+    dest: "{{ (generate_tests_suite_directory, 'caas_suite.robot') | path_join }}"
+  when: generate_tests_caas_suite_enabled
+
+- name: Generate test suite for Kubernetes templates
+  template:
+    src: "{{ generate_tests_kubernetes_suite_template }}"
+    dest: "{{ (generate_tests_suite_directory, 'kubernetes_suite.robot') | path_join }}"
+  when: generate_tests_kubernetes_suite_enabled
+
+- name: Generate test suite for Kubernetes apps
+  template:
+    src: "{{ generate_tests_kubernetes_apps_suite_template }}"
+    dest: "{{ (generate_tests_suite_directory, 'kubernetes_apps_suite.robot') | path_join }}"
+  when: generate_tests_kubernetes_apps_suite_enabled

@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://stackhpc.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.1.0-dev.0.master.761
+azimuth_chart_version: 0.1.0-dev.0.master.762
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -104,16 +104,22 @@ azimuth_curated_sizes: []
 #   Configuration for the password authenticator
 azimuth_authenticator_password_enabled: true
 azimuth_authenticator_password_label: "Username + Password"
+azimuth_authenticator_password_hidden: false
 azimuth_authenticator_password_auth_url: "{{ azimuth_openstack_auth_url }}"
 azimuth_authenticator_password_domain: "{{ azimuth_openstack_domain }}"
 azimuth_authenticator_password_verify_ssl: "{{ azimuth_openstack_verify_ssl }}"
 #   Configuration for the appcred authenticator
-azimuth_authenticator_appcred_enabled: false
+#     By default, the appcred authenticator is enabled but hidden
+#     This is useful when using the SDK as automation can be given an appcred
+#     but the option is not presented to users in the choice form
+azimuth_authenticator_appcred_enabled: true
 azimuth_authenticator_appcred_label: "Application Credential"
+azimuth_authenticator_appcred_hidden: true
 azimuth_authenticator_appcred_auth_url: "{{ azimuth_openstack_auth_url }}"
 azimuth_authenticator_appcred_verify_ssl: "{{ azimuth_openstack_verify_ssl }}"
 #   Configuration for the federated authenticator
 azimuth_authenticator_federated_enabled: false
+azimuth_authenticator_federated_hidden: false
 azimuth_authenticator_federated_auth_url: "{{ azimuth_openstack_auth_url }}"
 #   Simplified configuration for a single IDP
 #   These variables are not used if azimuth_authenticator_federated_identity_providers is specified
@@ -154,6 +160,7 @@ azimuth_authenticators: >-
           {
             "name": "federated",
             "type": "openstack-federation",
+            "hidden": azimuth_authenticator_federated_hidden,
             "openstackFederation": {
               "authUrl": azimuth_authenticator_federated_auth_url,
               "identityProviders": azimuth_authenticator_federated_identity_providers,
@@ -168,6 +175,7 @@ azimuth_authenticators: >-
           {
             "name": "password",
             "label": azimuth_authenticator_password_label,
+            "hidden": azimuth_authenticator_password_hidden,
             "type": "openstack-password",
             "openstackPassword": {
               "authUrl": azimuth_authenticator_password_auth_url,
@@ -184,6 +192,7 @@ azimuth_authenticators: >-
           {
             "name": "appcred",
             "label": azimuth_authenticator_appcred_label,
+            "hidden": azimuth_authenticator_appcred_hidden,
             "type": "openstack-application-credential",
             "openstackApplicationCredential": {
               "authUrl": azimuth_authenticator_appcred_auth_url,
