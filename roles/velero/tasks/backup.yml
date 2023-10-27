@@ -21,14 +21,14 @@
     msg: Backup status was "{{ velero_backup_status.stdout }}" - see Velero logs for details
   when: velero_backup_status.stdout != "Completed"
 
-- name: Fetch existing CaaS appliance resources
-  ansible.builtin.shell: kubectl get clusters.caas.azimuth.stackhpc.com -A -o json --ignore-not-found
-  register: caas_clusters
+# - name: Fetch existing CaaS appliance resources
+#   ansible.builtin.shell: kubectl get clusters.caas.azimuth.stackhpc.com -A -o json --ignore-not-found
+#   register: caas_clusters
 
-- name: Store cluster namespace + name -> UID mapping in Consul
-  ansible.builtin.shell: >-
-    kubectl exec -n azimuth consul-server-0 
-    -- consul kv put restore/"{{ item.metadata.namespace }}--{{ item.metadata.name }}"/old-uid
-    "{{ item.metadata.uid }}" 
-  loop: "{{ (caas_clusters.stdout | from_json)['items'] }}"
-  # loop: "{{ caas_clusters.stdout | from_json | community.general.json_query('items') }}"
+# - name: Store cluster namespace + name -> UID mapping in Consul
+#   ansible.builtin.shell: >-
+#     kubectl exec -n azimuth consul-server-0 
+#     -- consul kv put restore/"{{ item.metadata.namespace }}--{{ item.metadata.name }}"/old-uid
+#     "{{ item.metadata.uid }}" 
+#   loop: "{{ (caas_clusters.stdout | from_json)['items'] }}"
+#   # loop: "{{ caas_clusters.stdout | from_json | community.general.json_query('items') }}"

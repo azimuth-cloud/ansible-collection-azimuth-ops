@@ -2,7 +2,7 @@
 # TODO: Document somewhere which variables need to be defined by end user
 
 # Disable by default so that existing deployments don't break when bucket isn't configured
-velero_enabled: false
+velero_enabled: true
 
 #####
 # Velero ad-hoc backup config (applies to stackhpc.azimuth_ops.backup playbook)
@@ -45,7 +45,7 @@ velero_restore_monitoring_data: true
 #####
 
 # Whether or not to create a regular backup schedule
-velero_backup_schedule_enabled: false
+velero_backup_schedule_enabled: true
 
 # Name for backup schedule kubernetes resource
 velero_backup_schedule_name: default
@@ -54,9 +54,9 @@ velero_backup_schedule_name: default
 # See https://en.wikipedia.org/wiki/Cron for format options
 velero_backup_schedule_timings: "0 0 * * *"
 
-# Time-to-live for existing backups (defaults to 2 week)
+# Time-to-live for existing backups (defaults to 7 days)
 # See https://pkg.go.dev/time#ParseDuration for duration format options
-velero_backup_schedule_ttl: "336h"
+velero_backup_schedule_ttl: "168h"
 
 # TODO: Configure alerts for failed backups
 # See https://github.com/vmware-tanzu/helm-charts/blob/1e6a5b46a59d2dae8153fa8c0794bad84e1d63e1/charts/velero/values.yaml#L239

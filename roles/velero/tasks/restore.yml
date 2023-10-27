@@ -54,7 +54,7 @@
 
 # Annotating cluster resources triggers a new watch event and 
 # causes the addon provider to re-adopt the restored addons
-- name: Annotate {{ item }} resources to trigger capi addon status update
+- name: Annotate helmrelease and manifest resources to trigger capi addon readoption
   ansible.builtin.command: >-
     kubectl annotate "{{ item }}"
     velero.io/restore-time={{ '%Y-%m-%d--T%H:%M:%S' | strftime(ansible_date_time.epoch) }}
@@ -65,33 +65,33 @@
 
 # TODO: Remove this workaround once CaaS operator stops using resource uid as tf state key
 
-- name: Fetch restored CaaS appliance resources
-  ansible.builtin.shell: kubectl get clusters.caas.azimuth.stackhpc.com -A -o jsonpath='{.items}'
-  register: restored_caas_clusters
+# - name: Fetch restored CaaS appliance resources
+#   ansible.builtin.shell: kubectl get clusters.caas.azimuth.stackhpc.com -A -o jsonpath='{.items}'
+#   register: restored_caas_clusters
 
-- name: Store new CaaS cluster UIDs in Consul
-  ansible.builtin.shell: >-
-    kubectl exec -n azimuth consul-server-0
-    -- consul kv put
-    restore/"{{ item.metadata.namespace }}--{{ item.metadata.name }}"/new-uid
-    "{{ item.metadata.uid }}" 
-  loop: "{{ restored_caas_clusters.stdout | from_json }}"
+# - name: Store new CaaS cluster UIDs in Consul
+#   ansible.builtin.shell: >-
+#     kubectl exec -n azimuth consul-server-0
+#     -- consul kv put
+#     restore/"{{ item.metadata.namespace }}--{{ item.metadata.name }}"/new-uid
+#     "{{ item.metadata.uid }}" 
+#   loop: "{{ restored_caas_clusters.stdout | from_json }}"
 
-- name: Create new tfstate KV pair for restored CaaS appliances
-  ansible.builtin.shell: |
-    old_uid=$(kubectl exec -n azimuth consul-server-0 -- consul kv get restore/"{{ item.metadata.namespace }}"--"{{ item.metadata.name }}"/old-uid)
-    echo Old UID: $old_uid
-    tf_state=$(kubectl exec -n azimuth consul-server-0 -- consul kv get --base64 cluster/$old_uid/tfstate)
-    echo State: $tf_state
-    # Create new cluster/<uid> key with value set as old tf state
-    kubectl exec -n azimuth consul-server-0 -- consul kv put --base64 cluster/"{{ item.metadata.uid }}"/tfstate $tf_state
-  # Delete old key?
-  # kubectl exec -n azimuth consul-server-0 -- consul kv delete test/"{{ item.metadata.uid }}"/tfstate $tf_state
-  loop: "{{ restored_caas_clusters.stdout | from_json }}"
+# - name: Create new tfstate KV pair for restored CaaS appliances
+#   ansible.builtin.shell: |
+#     old_uid=$(kubectl exec -n azimuth consul-server-0 -- consul kv get restore/"{{ item.metadata.namespace }}"--"{{ item.metadata.name }}"/old-uid)
+#     echo Old UID: $old_uid
+#     tf_state=$(kubectl exec -n azimuth consul-server-0 -- consul kv get --base64 cluster/$old_uid/tfstate)
+#     echo State: $tf_state
+#     # Create new cluster/<uid> key with value set as old tf state
+#     kubectl exec -n azimuth consul-server-0 -- consul kv put --base64 cluster/"{{ item.metadata.uid }}"/tfstate $tf_state
+#   # Delete old key?
+#   # kubectl exec -n azimuth consul-server-0 -- consul kv delete test/"{{ item.metadata.uid }}"/tfstate $tf_state
+#   loop: "{{ restored_caas_clusters.stdout | from_json }}"
 
-# Minus sign suffix at end of annotation name in kubectl means delete annotation
-- name: Remove kopf annotation so that the CaaS operator re-adopts appliances
-  ansible.builtin.command: >-
-    kubectl annotate clusters.caas.azimuth.stackhpc.com
-    kopf.zalando.org/last-handled-configuration-
-    -A --all
+# # Minus sign suffix at end of annotation name in kubectl means delete annotation
+# - name: Remove kopf annotation so that the CaaS operator re-adopts appliances
+#   ansible.builtin.command: >-
+#     kubectl annotate clusters.caas.azimuth.stackhpc.com
+#     kopf.zalando.org/last-handled-configuration-
+#     -A --all
