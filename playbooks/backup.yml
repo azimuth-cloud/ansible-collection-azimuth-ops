@@ -8,5 +8,5 @@
     KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
   tasks:
     - include_role:
-        name: stackhpc.azimuth_ops.capi_cluster_restore
+        name: stackhpc.azimuth_ops.velero
         tasks_from: backup.yml
