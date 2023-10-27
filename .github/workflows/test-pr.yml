@@ -43,16 +43,11 @@ jobs:
         with:
           os-clouds: ${{ secrets.OS_CLOUDS }}
           environment-prefix: ops-ci
-          # https://github.com/stackhpc/azimuth-config/pull/55 modifies the setup
-          # and provision actions so that this becomes a setup parameter
-          # Until the PR has merged, we pass it in both places
           azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
 
       # Provision Azimuth using the azimuth-ops version under test
       - name: Provision Azimuth
         uses: stackhpc/azimuth-config/.github/actions/provision@main
-        with:
-          azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
 
       # # Run the tests
       - name: Run Azimuth tests
