@@ -297,7 +297,7 @@ azimuth_caas_stackhpc_rstudio_template:
   gitVersion: "{{ azimuth_caas_stackhpc_rstudio_git_version }}"
   uiMetaUrl: "{{ azimuth_caas_stackhpc_rstudio_metadata_url }}"
   playbook: "{{ azimuth_caas_stackhpc_rstudio_playbook }}"
-  extra_vars: "{{ azimuth_caas_stackhpc_rstudio_extra_vars }}"
+  extraVars: "{{ azimuth_caas_stackhpc_rstudio_extra_vars }}"
 
 
 # Quick test appliance

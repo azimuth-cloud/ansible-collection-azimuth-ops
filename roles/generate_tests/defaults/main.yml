@@ -84,6 +84,9 @@ generate_tests_caas_test_case_workstation_enabled: true
 generate_tests_caas_test_case_workstation_service_webconsole_expected_title: Apache Guacamole
 generate_tests_caas_test_case_workstation_service_monitoring_expected_title: Grafana
 
+# Disable the tests for the SSH workstation variant
+generate_tests_caas_test_case_workstation_ssh_enabled: false
+
 # Configuration for the Slurm test case
 #   Indicates if the Slurm test case should be enabled
 #   Only applies if the Slurm appliance is enabled
@@ -102,10 +105,24 @@ generate_tests_caas_test_case_slurm_param_cluster_run_validation: true
 generate_tests_caas_test_case_slurm_service_ood_expected_title: Dashboard
 generate_tests_caas_test_case_slurm_service_monitoring_expected_title: Grafana
 
-# By default, we don't run tests for the rstudio, repo2docker and SSH workstation appliances
-generate_tests_caas_test_case_rstudio_enabled: false
-generate_tests_caas_test_case_workstation_ssh_enabled: false
-generate_tests_caas_test_case_repo2docker_enabled: false
+# Configuration for the repo2docker test case
+#   Indicates if the repo2docker test case should be enabled
+#   Only applies if the repo2docker appliance is enabled
+generate_tests_caas_test_case_repo2docker_enabled: true
+#   The repository to use to build the image
+#   We pick a repository that has some meat but is relatively quick to build
+generate_tests_caas_test_case_repo2docker_param_cluster_repository: https://github.com/binder-examples/bokeh.git
+#   Expected titles for the repo2docker services
+generate_tests_caas_test_case_repo2docker_service_repo2docker_expected_title: JupyterLab
+generate_tests_caas_test_case_repo2docker_service_monitoring_expected_title: Grafana
+
+# Configuration for the R-Studio test case
+#   Indicates if the rstudio test case should be enabled
+#   Only applies if the rstudio appliance is enabled
+generate_tests_caas_test_case_rstudio_enabled: true
+#   Expected titles for the rstudio services
+generate_tests_caas_test_case_rstudio_service_rstudio_expected_title: RStudio Server
+generate_tests_caas_test_case_rstudio_service_monitoring_expected_title: Grafana
 
 # The test cases for the suite
 # By default, we generate a test case for each installed cluster type unless it is disabled
