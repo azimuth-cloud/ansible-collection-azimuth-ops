@@ -332,27 +332,22 @@ capi_cluster_release_defaults:
     mellanoxNetworkOperator:
       enabled: false
     # The NGINX ingress controller is required
-    ingress: >-
-      {{-
-        { "enabled": capi_cluster_addons_ingress_enabled } |
-          combine(
-            {
-              "nginx": {
-                "release": {
-                  "values": {
-                    "controller": {
-                      "service": {
-                        "loadBalancerIP": capi_cluster_addons_ingress_load_balancer_ip,
-                      },
-                    },
-                  },
-                },
-              },
-            }
-            if capi_cluster_addons_ingress_enabled
-            else {}
-          )
-      }}
+    ingress:
+      enabled: "{{ capi_cluster_addons_ingress_enabled }}"
+      nginx:
+        release:
+          values:
+            controller:
+              # We need to be able to use snippet annotations
+              allowSnippetAnnotations: true
+              service: >-
+                {{-
+                  {
+                    "loadBalancerIP": capi_cluster_addons_ingress_load_balancer_ip,
+                  }
+                  if capi_cluster_addons_ingress_enabled
+                  else {}
+                }}
     # Configure monitoring and alerting
     monitoring:
       enabled: true
