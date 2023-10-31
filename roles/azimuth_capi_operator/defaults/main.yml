@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://stackhpc.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.1.0-dev.0.main.138
+azimuth_capi_operator_chart_version: 0.1.0
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -469,7 +469,7 @@ azimuth_capi_operator_app_templates_jupyterhub_chart_name: jupyterhub-azimuth
 # The Helm repository to use for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_chart_repo: https://stackhpc.github.io/azimuth-charts
 # The version range to use for the JupyterHub Helm chart
-azimuth_capi_operator_app_templates_jupyterhub_version_range: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+azimuth_capi_operator_app_templates_jupyterhub_version_range: ">=0.0.0"
 # Overrides for the label, logo and description from the JupyterHub Helm chart
 azimuth_capi_operator_app_templates_jupyterhub_label:
 azimuth_capi_operator_app_templates_jupyterhub_logo:
@@ -517,7 +517,7 @@ azimuth_capi_operator_app_templates_daskhub_chart_name: daskhub-azimuth
 # The Helm repository to use for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_chart_repo: https://stackhpc.github.io/azimuth-charts
 # The version range to use for the DaskHub Helm chart
-azimuth_capi_operator_app_templates_daskhub_version_range: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+azimuth_capi_operator_app_templates_daskhub_version_range: ">=0.0.0"
 # Overrides for the label, logo and description from the DaskHub Helm chart
 azimuth_capi_operator_app_templates_daskhub_label:
 azimuth_capi_operator_app_templates_daskhub_logo:
@@ -565,7 +565,7 @@ azimuth_capi_operator_app_templates_kubeflow_chart_name: kubeflow-azimuth
 # The Helm repository to use for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_chart_repo: https://stackhpc.github.io/azimuth-charts
 # The version range to use for the kubeflow Helm chart
-azimuth_capi_operator_app_templates_kubeflow_version_range: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+azimuth_capi_operator_app_templates_kubeflow_version_range: ">=0.0.0"
 # Overrides for the label, logo and description from the kubeflow Helm chart
 azimuth_capi_operator_app_templates_kubeflow_label:
 azimuth_capi_operator_app_templates_kubeflow_logo:

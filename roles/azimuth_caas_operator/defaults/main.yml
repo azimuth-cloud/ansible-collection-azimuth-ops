@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: 0.4.0
+azimuth_caas_operator_chart_version: 0.4.1
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -79,7 +79,7 @@ azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: 59d1b299f47404ca50283b31bf2508830052c3bf # merged https://github.com/stackhpc/caas-slurm-appliance/pull/42
+azimuth_caas_stackhpc_slurm_appliance_git_version: 0.1.0
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: slurm-infra.yml
 # The metadata root for the StackHPC Slurm appliance
@@ -149,7 +149,7 @@ azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC workstation
 azimuth_caas_stackhpc_workstation_git_url: https://github.com/stackhpc/caas-workstation.git
 # The git version for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_git_version: 8c86cfebb02ecd8a9ec2d4dccf806aa5989670f2
+azimuth_caas_stackhpc_workstation_git_version: 0.1.0
 # The playbook to use for the workstation appliance
 azimuth_caas_stackhpc_workstation_playbook: workstation.yml
 # The metadata URL for the StackHPC workstation
@@ -215,7 +215,7 @@ azimuth_caas_stackhpc_repo2docker_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_git_url: https://github.com/stackhpc/caas-repo2docker.git
 # The git version for the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_git_version: 8385160f69646e615a51173e107e20e2485e2457
+azimuth_caas_stackhpc_repo2docker_git_version: 0.1.0
 # The playbook to use for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_playbook: repo2docker.yml
 # The metadata root for the StackHPC repo2docker appliance project
@@ -260,7 +260,7 @@ azimuth_caas_stackhpc_rstudio_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC R-Studio appliance
 azimuth_caas_stackhpc_rstudio_git_url: https://github.com/stackhpc/caas-r-studio-server
 # The git version for the StackHPC R-Studio appliance
-azimuth_caas_stackhpc_rstudio_git_version: d7f6362708dd275a54f839fd2c2833b0dc5a33ad
+azimuth_caas_stackhpc_rstudio_git_version: 0.1.0
 # The playbook to use for the StackHPC R-Studio appliance
 azimuth_caas_stackhpc_rstudio_playbook: rstudio.yml
 # The metadata root for the StackHPC R-Studio appliance project

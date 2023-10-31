@@ -19,9 +19,6 @@ jobs:
             repo_variable: azimuth_chart_repo
             chart_variable: azimuth_chart_name
             version_variable: azimuth_chart_version
-            # For now, use builds for main
-            # TODO(mkjpryor) Remove this constraint to use stable versions only
-            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
 
           - component: azimuth-caas-operator
             type: helm
@@ -29,9 +26,6 @@ jobs:
             repo_variable: azimuth_caas_operator_chart_repo
             chart_variable: azimuth_caas_operator_chart_name
             version_variable: azimuth_caas_operator_chart_version
-            # For now, use builds for main
-            # TODO(mkjpryor) Remove this constraint to use stable versions only
-            constraints: ">=0.2.3-dev.0.main.0,<0.2.3-dev.0.main.999999999"
 
           - component: azimuth-capi-operator
             type: helm
@@ -39,9 +33,6 @@ jobs:
             repo_variable: azimuth_capi_operator_chart_repo
             chart_variable: azimuth_capi_operator_chart_name
             version_variable: azimuth_capi_operator_chart_version
-            # For now, use builds for main
-            # TODO(mkjpryor) Remove this constraint to use stable versions only
-            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
 
           - component: azimuth-identity-operator
             type: helm
@@ -49,9 +40,6 @@ jobs:
             repo_variable: azimuth_identity_operator_chart_repo
             chart_variable: azimuth_identity_operator_chart_name
             version_variable: azimuth_identity_operator_chart_version
-            # For now, use builds for main
-            # TODO(mkjpryor) Remove this constraint to use stable versions only
-            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
 
           - component: azimuth-images
             type: github
@@ -59,15 +47,36 @@ jobs:
             repo_variable: community_images_azimuth_images_repo
             version_variable: community_images_azimuth_images_version
 
+          - component: caas-slurm-appliance
+            type: github
+            path: ./roles/azimuth_caas_operator/defaults/main.yml
+            repo_variable: azimuth_caas_stackhpc_slurm_appliance_git_url
+            version_variable: azimuth_caas_stackhpc_slurm_appliance_git_version
+
+          - component: caas-workstation
+            type: github
+            path: ./roles/azimuth_caas_operator/defaults/main.yml
+            repo_variable: azimuth_caas_stackhpc_workstation_git_url
+            version_variable: azimuth_caas_stackhpc_workstation_git_version
+
+          - component: caas-repo2docker
+            type: github
+            path: ./roles/azimuth_caas_operator/defaults/main.yml
+            repo_variable: azimuth_caas_stackhpc_repo2docker_git_url
+            version_variable: azimuth_caas_stackhpc_repo2docker_git_version
+
+          - component: caas-rstudio
+            type: github
+            path: ./roles/azimuth_caas_operator/defaults/main.yml
+            repo_variable: azimuth_caas_stackhpc_rstudio_git_url
+            version_variable: azimuth_caas_stackhpc_rstudio_git_version
+
           - component: capi-helm-openstack-cluster
             type: helm
             path: ./roles/capi_cluster/defaults/main.yml
             repo_variable: capi_cluster_chart_repo
             chart_variable: capi_cluster_chart_name
             version_variable: capi_cluster_chart_version
-            # For now, use builds for main
-            # TODO(mkjpryor) Remove this constraint to use stable versions only
-            constraints: ">=0.1.2-dev.0.main.0,<0.1.2-dev.0.main.999999999"
 
           - component: cert-manager
             type: helm
@@ -108,9 +117,6 @@ jobs:
             repo_variable: clusterapi_janitor_openstack_chart_repo
             chart_variable: clusterapi_janitor_openstack_chart_name
             version_variable: clusterapi_janitor_openstack_chart_version
-            # For now, use builds for main
-            # TODO(mkjpryor) Remove this constraint to use stable versions only
-            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
 
           - component: consul
             type: helm
@@ -164,9 +170,6 @@ jobs:
             repo_variable: zenith_chart_repo
             chart_variable: zenith_chart_name
             version_variable: zenith_chart_version
-            # For now, use builds for main
-            # TODO(mkjpryor) Remove this constraint to use stable versions only
-            constraints: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
 
     name: ${{ matrix.component }}
     steps:
