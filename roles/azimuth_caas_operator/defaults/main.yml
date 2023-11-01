@@ -77,14 +77,14 @@ azimuth_caas_operator_default_ssh_secret_files: {}
 # Indicates if the StackHPC Slurm appliance should be enabled
 azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/caas-slurm-appliance.git
+azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/ansible-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: 0.1.0
+azimuth_caas_stackhpc_slurm_appliance_git_version: feat/caas
 # The playbook to use for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_playbook: slurm-infra.yml
+azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/slurm-infra.yml
 # The metadata root for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
-  https://raw.githubusercontent.com/stackhpc/caas-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta/slurm-infra.yml
+  https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta/slurm-infra.yml
 # The ID of the image to use with the StackHPC Slurm appliance
 # Support the old name for backwards compatibility
 # By default, use the openhpc image from community images if available
