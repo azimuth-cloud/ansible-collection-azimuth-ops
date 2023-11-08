@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: '0.4.2-dev.0.feat-inventory.3'
+azimuth_caas_operator_chart_version: '0.4.2-dev.0.feat-inventory.9'
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -142,7 +142,16 @@ azimuth_caas_stackhpc_slurm_appliance_template:
   uiMetaUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_url }}"
   playbook: "{{ azimuth_caas_stackhpc_slurm_appliance_playbook }}"
   extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
-  inventory: environments/common/inventory,environments/.caas/inventory
+  envVars:
+    # These normally set (directly or indirectly) through environment's activate script>:
+    ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # this is relative to project dir, are others?
+    APPLIANCES_ENVIRONMENT_ROOT: environments/.caas/inventory
+    #APPLIANCES_ENVIRONMENT_NAME: ".caas"  only used for openondemand_scrape_configs?
+    #APPLIANCES_REPO_ROOT: required?
+
+
+
+
 
 # Indicates if the StackHPC workstation should be enabled
 azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
