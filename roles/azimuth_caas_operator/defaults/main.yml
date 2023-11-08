@@ -145,7 +145,7 @@ azimuth_caas_stackhpc_slurm_appliance_template:
   envVars:
     # These are normally set (directly or indirectly) through environment's activate script:
     ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to project dir
-    APPLIANCES_ENVIRONMENT_ROOT: environments/.caas
+    APPLIANCES_ENVIRONMENT_ROOT: /runner/project/environments/.caas
     #APPLIANCES_ENVIRONMENT_NAME: ".caas"  only used for openondemand_scrape_configs?
     #APPLIANCES_REPO_ROOT: required?
 
