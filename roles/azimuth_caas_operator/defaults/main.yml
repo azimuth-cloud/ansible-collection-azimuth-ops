@@ -81,7 +81,7 @@ azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/ansib
 # The git version for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_version: feat/caas
 # The playbook to use for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/slurm-infra.yml
+azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 # The metadata root for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
   https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta/slurm-infra.yml
