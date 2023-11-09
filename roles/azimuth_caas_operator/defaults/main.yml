@@ -84,7 +84,7 @@ azimuth_caas_stackhpc_slurm_appliance_git_version: feat/caas
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 # The metadata root for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
-  https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/ui-meta/slurm-infra.yml
+  https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/environments/.caas/ui-meta/slurm-infra.yml
 # The ID of the image to use with the StackHPC Slurm appliance
 # Support the old name for backwards compatibility
 # By default, use the openhpc image from community images if available
