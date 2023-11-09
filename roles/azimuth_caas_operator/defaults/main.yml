@@ -143,14 +143,8 @@ azimuth_caas_stackhpc_slurm_appliance_template:
   playbook: "{{ azimuth_caas_stackhpc_slurm_appliance_playbook }}"
   extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
   envVars:
-    # These are normally set (directly or indirectly) through environment's activate script:
-    ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to project dir
-    APPLIANCES_ENVIRONMENT_ROOT: /runner/project/environments/.caas
-    #APPLIANCES_ENVIRONMENT_NAME: ".caas"  only used for openondemand_scrape_configs?
-    #APPLIANCES_REPO_ROOT: required?
-
-
-
+    # Normally set through environment's activate script:
+    ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to runner project dir
 
 
 # Indicates if the StackHPC workstation should be enabled
