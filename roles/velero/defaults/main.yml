@@ -73,6 +73,8 @@ velero_cli_version: 1.12.0
 velero_cli_arch: linux-amd64
 velero_cli_download_url: "https://github.com/vmware-tanzu/velero/releases/download/v{{ velero_cli_version }}/velero-v{{ velero_cli_version }}-{{ velero_cli_arch }}.tar.gz"
 
+velero_s3_creds_secret_name: velero-s3-config
+
 # Method to use for backing up Cinder volumes
 # 'backup' might be better option than 'snapshot' in some cases
 # but is consider experimental in OpenStack Velero plugin:
@@ -103,6 +105,13 @@ velero_openstack_app_cred_id: "{{ undef(hint='velero_openstack_app_cred_id & vel
 # The OpenStack app cred secret
 velero_openstack_app_cred_secret: "{{ undef(hint='velero_openstack_app_cred_id & velero_openstack_app_cred_secret must be set') }}"
 
+# List of resources for which the status field of the k8s object
+# should be restored. These are directly passed to the `--status-include-resources` 
+# restore option of the `velero restore create` command
+velero_restore_include_resource_status:
+  - clusters.caas.azimuth.stackhpc.com
+  - clusters.azimuth.stackhpc.com
+  - realms.identity.azimuth.stackhpc.com
 
 # Helm values snippets for credentials config
 _velero_secrets_volume:
@@ -131,6 +140,8 @@ velero_release_defaults:
     useSecret: true
     extraEnvVars:
       OS_CLOUD: openstack
+      AWS_ACCESS_KEY_ID: "{{ velero_aws_access_key_id }}"
+      AWS_SECRET_ACCESS_KEY: "{{ velero_aws_secret_access_key }}"
     extraSecretRef: "{{ velero_openstack_secret_name if not velero_openstack_use_existing_secret }}"
   extraVolumes: "{{ _velero_secrets_volume if velero_openstack_use_existing_secret }}"
   extraVolumeMounts: "{{ _velero_secrets_volume_mount if velero_openstack_use_existing_secret }}"
@@ -140,7 +151,18 @@ velero_release_defaults:
     - name: swift
       provider: community.openstack.org/openstack
       bucket: "{{ velero_bucket_name }}"
+    - name: s3
       default: true
+      provider: aws
+      bucket: "{{ velero_bucket_name }}"
+      credential:
+        name: "{{ velero_s3_creds_secret_name }}"
+        key: s3-creds
+      config:
+        region: required-but-not-used
+        s3ForcePathStyle: true
+        s3Url: "{{ velero_s3_url }}"
+
     volumeSnapshotLocation:
     - name: cinder
       provider: community.openstack.org/openstack-cinder
@@ -166,6 +188,12 @@ velero_release_defaults:
         name: plugins
       - mountPath: /etc/openstack
         name: openstack-cloud-config
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.8.0
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
 
 velero_release_overrides: {}
 velero_release_values: >-

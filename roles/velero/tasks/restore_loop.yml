@@ -15,7 +15,7 @@
       velero restore create
       "{{ velero_restore_name }}--attempt-{{ item }}"
       --from-backup "{{ velero_restore_backup_name }}"
-      --status-include-resources clusters.caas.azimuth.stackhpc.com,clusters.azimuth.stackhpc.com
+      --status-include-resources "{{ ','.join(velero_restore_include_resource_status) }}"
 
   - name: Wait for restore attempt {{ item }} to finish
     ansible.builtin.command: >-
