@@ -26,9 +26,6 @@
 
   when: velero_restore_monitoring_data
 
-- name: Ensure Velero components are installed
-  include_tasks: install.yml
-
 - name: Check status of target backup
   # This also acts as check that target backup exists
   ansible.builtin.command: >-
