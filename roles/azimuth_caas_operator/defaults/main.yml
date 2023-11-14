@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: '0.4.2-dev.0.feat-inventory.10'
+azimuth_caas_operator_chart_version: '0.4.2-dev.0.feat-inventory.17'
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -147,6 +147,7 @@ azimuth_caas_stackhpc_slurm_appliance_template:
     ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to runner project dir
 
 
+
 # Indicates if the StackHPC workstation should be enabled
 azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC workstation
@@ -190,7 +191,6 @@ azimuth_caas_stackhpc_workstation_template:
   uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_metadata_url }}"
   playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
   extraVars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
-
 
 # Indicates if the StackHPC workstation _with SSH_ should be enabled
 azimuth_caas_stackhpc_workstation_ssh_enabled: "{{ azimuth_caas_stackhpc_workstation_enabled }}"
