@@ -60,35 +60,18 @@
   - helmrelease
   - manifests
 
-# TODO: Remove this workaround once CaaS operator stops using resource uid as tf state key
-
-# - name: Fetch restored CaaS appliance resources
-#   ansible.builtin.shell: kubectl get clusters.caas.azimuth.stackhpc.com -A -o jsonpath='{.items}'
-#   register: restored_caas_clusters
-
-# - name: Store new CaaS cluster UIDs in Consul
-#   ansible.builtin.shell: >-
-#     kubectl exec -n azimuth consul-server-0
-#     -- consul kv put
-#     restore/"{{ item.metadata.namespace }}--{{ item.metadata.name }}"/new-uid
-#     "{{ item.metadata.uid }}" 
-#   loop: "{{ restored_caas_clusters.stdout | from_json }}"
-
-# - name: Create new tfstate KV pair for restored CaaS appliances
-#   ansible.builtin.shell: |
-#     old_uid=$(kubectl exec -n azimuth consul-server-0 -- consul kv get restore/"{{ item.metadata.namespace }}"--"{{ item.metadata.name }}"/old-uid)
-#     echo Old UID: $old_uid
-#     tf_state=$(kubectl exec -n azimuth consul-server-0 -- consul kv get --base64 cluster/$old_uid/tfstate)
-#     echo State: $tf_state
-#     # Create new cluster/<uid> key with value set as old tf state
-#     kubectl exec -n azimuth consul-server-0 -- consul kv put --base64 cluster/"{{ item.metadata.uid }}"/tfstate $tf_state
-#   # Delete old key?
-#   # kubectl exec -n azimuth consul-server-0 -- consul kv delete test/"{{ item.metadata.uid }}"/tfstate $tf_state
-#   loop: "{{ restored_caas_clusters.stdout | from_json }}"
-
-# # Minus sign suffix at end of annotation name in kubectl means delete annotation
-# - name: Remove kopf annotation so that the CaaS operator re-adopts appliances
-#   ansible.builtin.command: >-
-#     kubectl annotate clusters.caas.azimuth.stackhpc.com
-#     kopf.zalando.org/last-handled-configuration-
-#     -A --all
+# This step is adapted from Consul restore docs here
+# https://developer.hashicorp.com/consul/tutorials/kubernetes-production/kubernetes-disaster-recovery#recovery-steps
+- name: Perform rolling restart of Consul cluster
+  # TODO: Can we template in Consul release namespace here?
+  ansible.builtin.shell: |
+    NAMESPACE=azimuth
+    kubectl -n $NAMESPACE exec consul-server-0 -- consul leave
+    sleep 2
+    kubectl -n $NAMESPACE rollout status statefulset/consul-server --watch
+    kubectl -n $NAMESPACE exec consul-server-1 -- consul leave
+    sleep 2
+    kubectl -n $NAMESPACE rollout status statefulset/consul-server --watch
+    kubectl -n $NAMESPACE exec consul-server-2 -- consul leave
+    sleep 2
+    kubectl -n $NAMESPACE rollout status statefulset/consul-server --watch
