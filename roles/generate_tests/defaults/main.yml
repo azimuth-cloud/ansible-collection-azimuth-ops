@@ -276,6 +276,10 @@ generate_tests_kubernetes_apps_suite_name: Kubernetes Apps
 # The tags to apply to tests in the suite
 generate_tests_kubernetes_apps_default_test_tags: [kubernetes, kubeapps]
 
+# The timeouts to apply to the suite setup and teardown
+generate_tests_kubernetes_apps_setup_timeout: "30 minutes"
+generate_tests_kubernetes_apps_teardown_timeout: "30 minutes"
+
 # The timeout to apply to tests in the suite
 generate_tests_kubernetes_apps_default_test_timeout: "15 minutes"
 
