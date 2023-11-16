@@ -19,7 +19,7 @@
     | grep -v '^\s*\(namespace\|uid\|cloud.conf\):\s'
     | kubectl apply -n "{{ velero_release_namespace }}" -f -
   when: velero_openstack_creds_check.rc == 1 and velero_openstack_use_existing_secret
-  no_log: true
+  no_log: "{{ velero_no_log | bool }}"
 
 - name: Ensure Velero openstack credentials secret exists
   ansible.builtin.command: >-
@@ -28,7 +28,7 @@
     --from-literal=OS_APPLICATION_CREDENTIAL_ID="{{ velero_openstack_app_cred_id }}" 
     --from-literal=OS_APPLICATION_CREDENTIAL_SECRET="{{ velero_openstack_app_cred_secret }}"
   when: velero_openstack_creds_check.rc == 1 and not velero_openstack_use_existing_secret
-  no_log: true
+  no_log: "{{ velero_no_log | bool }}"
 
 - name: Check if Velero s3 credentials secret exists
   ansible.builtin.command: "kubectl -n {{ velero_release_namespace }} get secret {{ velero_s3_creds_secret_name }}"
@@ -46,7 +46,7 @@
     kubectl -n "{{ velero_release_namespace }}" create secret generic "{{ velero_s3_creds_secret_name }}"
     --from-file /tmp/s3-creds
   when: velero_s3_creds_check.rc == 1
-  # no_log: true
+  no_log: "{{ velero_no_log | bool }}"
 
 - name: Ensure Velero Helm chart is installed
   kubernetes.core.helm:

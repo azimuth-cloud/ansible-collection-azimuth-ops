@@ -4,6 +4,10 @@
 # Disable by default so that existing deployments don't break when bucket isn't configured
 velero_enabled: true
 
+# Whether or not to set the ansible no_log parameter on tasks in the role involving credentials
+# This should only ever be set false for temporary debugging purposes
+velero_no_log: true
+
 #####
 # Velero ad-hoc backup config (applies to stackhpc.azimuth_ops.backup playbook)
 #####
