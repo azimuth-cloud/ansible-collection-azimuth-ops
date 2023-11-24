@@ -9,13 +9,17 @@
 
 - block:
 
-  # TODO: Make status-include-resources configurable
+  # NOTE: Need to explicitly include cluster resources here as default is to exclude 
+  # if namespace include/exclude lists are provided
   - name: Begin Velero restore (attempt {{ item }}/{{ velero_max_restore_passes }})
     ansible.builtin.command: >-
       velero restore create
       "{{ velero_restore_name }}--attempt-{{ item }}"
       --from-backup "{{ velero_restore_backup_name }}"
+      --exclude-namespaces "{{ ','.join(velero_restore_exclude_namespaces) }}"
       --status-include-resources "{{ ','.join(velero_restore_include_resource_status) }}"
+      --exclude-resources "{{ ','.join(velero_restore_exclude_resources)}}"
+      --include-cluster-resources
 
   - name: Wait for restore attempt {{ item }} to finish
     ansible.builtin.command: >-
@@ -33,7 +37,7 @@
       msg: "Restore status: {{ velero_restore_attempt_status.stdout }}"
 
   # item == 1 condition ensures we always attempt at least 1 restore
-  # also, 'and' has higher priotiry than 'or' in operator precedence
+  # NOTE: 'and' > 'or' in operator priority/precedence
   when: >-
     item == 1
     or velero_restore_attempt_status is defined

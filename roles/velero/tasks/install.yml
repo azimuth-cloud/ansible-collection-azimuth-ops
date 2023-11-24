@@ -1,4 +1,29 @@
 
+- name: Check if CSI snapshot controller checkout exists
+  stat:
+    path: ~/external-snapshotter
+  register: external_snapshotter_checkout
+
+- name: Clone CSI snapshot controller repo
+  ansible.builtin.command: git clone "{{ velero_k8s_snapshot_controller_repo }}" external-snapshotter
+  when: not external_snapshotter_checkout.stat.exists
+
+- name: Ensure CSI snapshot controller is deployed
+  # Adapted from https://kubernetes-csi.github.io/docs/snapshot-controller.html
+  ansible.builtin.shell: |
+    cd ./external-snapshotter
+    git checkout "{{ velero_k8s_snapshot_controller_git_version }}"
+    kubectl kustomize client/config/crd | kubectl apply -f -
+    kubectl -n kube-system kustomize deploy/kubernetes/snapshot-controller | kubectl apply -f -
+
+- name: Template Cinder VolumeSnapshotClass definition onto host
+  ansible.builtin.template:
+    src: cinder-csi-snapshot-class.yml.j2
+    dest: /tmp/cinder-csi-snapshot-class.yml
+
+- name: Ensure Cinder VolumeSnapshotClass is installed
+  ansible.builtin.command: kubectl apply -f /tmp/cinder-csi-snapshot-class.yml
+
 - name: Check if Velero release namespace exists
   ansible.builtin.command: kubectl get namespace "{{ velero_release_namespace }}"
   register: velero_namespace_check
@@ -7,28 +32,6 @@
 - name: Create Velero release namespace
   ansible.builtin.command: kubectl create namespace "{{ velero_release_namespace }}"
   when: velero_namespace_check.rc == 1
-
-- name: Check if Velero openstack credentials secret exists
-  ansible.builtin.command: "kubectl -n {{ velero_release_namespace }} get secret {{ velero_openstack_secret_name }}"
-  register: velero_openstack_creds_check
-  failed_when: false
-
-- name: Ensure clouds.yaml secret is copied to Velero namespace
-  ansible.builtin.shell: >-
-    kubectl get secret -n "{{ velero_openstack_existing_secret_namespace }}" "{{ velero_openstack_secret_name }}" -o yaml 
-    | grep -v '^\s*\(namespace\|uid\|cloud.conf\):\s'
-    | kubectl apply -n "{{ velero_release_namespace }}" -f -
-  when: velero_openstack_creds_check.rc == 1 and velero_openstack_use_existing_secret
-  no_log: "{{ velero_no_log | bool }}"
-
-- name: Ensure Velero openstack credentials secret exists
-  ansible.builtin.command: >-
-    kubectl -n "{{ velero_release_namespace }}" create secret generic "{{ velero_openstack_secret_name }}"
-    --from-literal=OS_AUTH_URL="{{ velero_openstack_auth_url }}"
-    --from-literal=OS_APPLICATION_CREDENTIAL_ID="{{ velero_openstack_app_cred_id }}" 
-    --from-literal=OS_APPLICATION_CREDENTIAL_SECRET="{{ velero_openstack_app_cred_secret }}"
-  when: velero_openstack_creds_check.rc == 1 and not velero_openstack_use_existing_secret
-  no_log: "{{ velero_no_log | bool }}"
 
 - name: Check if Velero s3 credentials secret exists
   ansible.builtin.command: "kubectl -n {{ velero_release_namespace }} get secret {{ velero_s3_creds_secret_name }}"

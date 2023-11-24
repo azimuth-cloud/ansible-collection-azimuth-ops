@@ -85,7 +85,7 @@
             capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
 
         # Install the Velero components on the capi cluster and configure the backup schedule
-        # (Need to use block so that we can set `environment` variables)
+        # NOTE(sd109): Need to use block so that we can set `environment` variables
         - block:
           - include_role:
               name: stackhpc.azimuth_ops.velero

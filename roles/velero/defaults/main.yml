@@ -4,51 +4,110 @@
 # Disable by default so that existing deployments don't break when bucket isn't configured
 velero_enabled: true
 
-# Whether or not to set the ansible no_log parameter on tasks in the role involving credentials
-# This should only ever be set false for temporary debugging purposes
+# Whether or not to set the ansible no_log parameter on tasks in the role involving credentials.
+# This should only ever be set false for temporary debugging purposes.
 velero_no_log: true
 
 #####
-# Velero ad-hoc backup config (applies to stackhpc.azimuth_ops.backup playbook)
+# Velero installation and setup config
 #####
 
-# Name to use for newly created ad-hoc backup
-velero_backup_name: "{{ capi_cluster_release_name }}--{{ '%Y-%m-%d--%H-%M-%S' | strftime(ansible_date_time.epoch) }}"
+# Velero CLI installation config
+velero_cli_version: 1.12.0
+velero_cli_arch: linux-amd64
+velero_cli_download_url: "https://github.com/vmware-tanzu/velero/releases/download/v{{ velero_cli_version }}/velero-v{{ velero_cli_version }}-{{ velero_cli_arch }}.tar.gz"
 
-# Time to wait (in seconds) for ad-hoc backup creation to complete
-velero_backup_creation_timeout: 1800
+# The url endpoint for the target object store
+velero_s3_url: "{{ undef(hint='velero_s3_url must be set to the url of your target object store') }}"
+
+# The name of a pre-existing bucket in the target object store
+velero_bucket_name: "{{ undef(hint='velero_bucket_name must be set to an existing bucket in the target object store') }}"
+
+# The name to use for the created cluster secret containing the object store credentials
+velero_s3_creds_secret_name: velero-s3-config
+
+# S3 credentials (should be set in a git-crypt encrypted secrets file!)
+velero_aws_access_key_id: "{{ undef(hint='velero_aws_access_key_id and velero_aws_secret_access_key must be set to provide credentials for the target object store') }}"
+velero_aws_secret_access_key: "{{ undef(hint='velero_aws_access_key_id and velero_aws_secret_access_key must be set to provide credentials for the target object store') }}"
+
+
+# Kubernetes CSI Snapshot controller config
+
+# The source repo for the k8s snapshot controller
+velero_k8s_snapshot_controller_repo: https://github.com/kubernetes-csi/external-snapshotter/
+
+# The version of the snapshot controller to install
+velero_k8s_snapshot_controller_git_version: release-6.2
+
+# The name to give to the installed volume snapshot class
+velero_k8s_cinder_snapshot_class_name: cinder-csi-snapshot
+
+# Velero Helm chart config
+velero_chart_name: velero
+velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
+velero_chart_version: 5.0.2
+velero_release_namespace: velero
+velero_release_name: velero
+velero_wait_timeout: 10m
+velero_release_defaults:
+  configuration:
+    backupsEnabled: true
+    backupStorageLocation:
+    - name: s3
+      default: true
+      provider: aws
+      bucket: "{{ velero_bucket_name }}"
+      credential:
+        name: "{{ velero_s3_creds_secret_name }}"
+        key: s3-creds
+      config:
+        region: required-but-not-used
+        s3ForcePathStyle: true
+        s3Url: "{{ velero_s3_url }}"
+
+    # Use CSI snapshotter instead
+    volumeSnapshotLocation: []
+
+  # TODO: Make images + versions top-level role vars
+  initContainers:
+  - name: velero-plugin-for-csi
+    image: velero/velero-plugin-for-csi:v0.6.0
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.8.0
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+velero_release_overrides: {}
+velero_release_values: >-
+  {{-
+    velero_release_defaults |
+      combine(velero_release_overrides, recursive = True)
+  }}
+
 
 
 #####
-# Velero ad-hoc restore config (applies to stackhpc.azimuth_ops.restore playbook)
+# Velero backup config
 #####
 
-# Name of restore object to create
-velero_restore_name: "velero-backup-restore--{{ '%Y-%m-%d--%H-%M-%S' | strftime(ansible_date_time.epoch) }}"
+# List of additional namespaces to exclude from backup
+velero_backup_exclude_namespaces: []
 
-# Name of backup to use for restore process
-velero_restore_backup_name: "{{ undef(hint='velero_restore_backup_name must be set to the name of an existing backup in your configured object store') }}"
-
-# Maximum number of restore passes to attempt
-velero_max_restore_passes: 3
-
-# Timeout in seconds
-velero_restore_attempt_timeout: 1800
-
-# Only allow restores from backups with status 'Completed'
-# and bail if status is 'PartiallyFailed' (or anything else)
-velero_restore_strict: true
-
-# Whether or not to uninstall the kube-prometheus-stack during restore
-# to allow for monitoring data persistent volume backups to be re-attached
-velero_restore_monitoring_data: true
-
-
-##### 
+#####
 # Velero backup schedule config
 #####
 
-# Whether or not to create a regular backup schedule
+# Whether or not to enable the regular backup schedule
+# Note: Setting this to false will still install the 
+# BackupSchedule resource onto the cluster to allow adhoc
+# backups using `velero backup create --from-schedule <name>`
+# This option simply controls the schedule's spec.paused field.
 velero_backup_schedule_enabled: true
 
 # Name for backup schedule kubernetes resource
@@ -66,142 +125,67 @@ velero_backup_schedule_ttl: "168h"
 # See https://github.com/vmware-tanzu/helm-charts/blob/1e6a5b46a59d2dae8153fa8c0794bad84e1d63e1/charts/velero/values.yaml#L239
 
 
+
 #####
-# Velero installation and setup config
+# Velero restore config (applies to stackhpc.azimuth_ops.restore playbook)
 #####
 
-velero_bucket_name: "{{ undef(hint='velero_bucket_name must be set to an existing bucket in the target object store') }}"
+# Name of restore object to create
+velero_restore_name: "velero-backup-restore--{{ '%Y-%m-%d--%H-%M-%S' | strftime(ansible_date_time.epoch) }}"
 
-# Remove these if creating restore object directly from yaml
-velero_cli_version: 1.12.0
-velero_cli_arch: linux-amd64
-velero_cli_download_url: "https://github.com/vmware-tanzu/velero/releases/download/v{{ velero_cli_version }}/velero-v{{ velero_cli_version }}-{{ velero_cli_arch }}.tar.gz"
+# Name of backup to use for restore process
+velero_restore_backup_name: "{{ undef(hint='velero_restore_backup_name must be set to the name of an existing backup in your configured object store') }}"
 
-velero_s3_creds_secret_name: velero-s3-config
-
-# Method to use for backing up Cinder volumes
-# 'backup' might be better option than 'snapshot' in some cases
-# but is consider experimental in OpenStack Velero plugin:
-# https://github.com/Lirt/velero-plugin-for-openstack/blob/master/docs/installation-using-helm.md
-velero_cinder_volume_backup_method: snapshot
-
-# The name of the k8s secret to store the openstack credentials in
-# This must either be:
-# - An existing clouds.yaml secret to be copied into the velero namespace (when velero_openstack_use_existing_secret = true
-#   and velero_openstack_existing_secret_namespace is defined). Defaults to using the CAPO clouds.yaml
-# OR
-# - a secret to be created during the Velero install process (when velero_openstack_use_existing_secret = false). In this
-#   case the velero_openstack_{auth_url,app_cred_id,app_cred_secret} variables must also be set.
-velero_openstack_secret_name: cloud-config
-
-# Whether or not to use an existing secret on the cluster for cloud creds
-velero_openstack_use_existing_secret: true
-# The namespace that an existing clouds.yaml secret can be found in
-# (this is copied to Velero namespace and mounted into Velero controller pod)
-velero_openstack_existing_secret_namespace: openstack-system
-
-# OR explicitly provide credentials from a separate pre-existing app cred
-
-# The auth url for the target OpenStack cloud (MUST end in /v3)
-velero_openstack_auth_url: "{{ undef(hint='velero_openstack_auth_url must be set and must end in /v3') }}"
-# The OpenStack app cred ID
-velero_openstack_app_cred_id: "{{ undef(hint='velero_openstack_app_cred_id & velero_openstack_app_cred_secret must be set') }}"
-# The OpenStack app cred secret
-velero_openstack_app_cred_secret: "{{ undef(hint='velero_openstack_app_cred_id & velero_openstack_app_cred_secret must be set') }}"
-
-# List of resources for which the status field of the k8s object
-# should be restored. These are directly passed to the `--status-include-resources` 
-# restore option of the `velero restore create` command
+# List of resources for which the status field of the k8s object 
+# should be restored. These are directly passed to the 
+# `--status-include-resources` arg of `velero restore create` command
 velero_restore_include_resource_status:
-  - clusters.caas.azimuth.stackhpc.com
-  - clusters.azimuth.stackhpc.com
+  # Identity operator resources
   - realms.identity.azimuth.stackhpc.com
+  # CaaS platform resources
+  - clusters.caas.azimuth.stackhpc.com
+  # CAPI platform resources
+  - clusters.azimuth.stackhpc.com
+  - kubeadmconfigs.bootstrap.cluster.x-k8s.io
+  - kubeadmcontrolplanes.controlplane.cluster.x-k8s.io
+  - machinedeployments.cluster.x-k8s.io
+  - machinehealthchecks.cluster.x-k8s.io
+  - machinepools.cluster.x-k8s.io
+  - machines.cluster.x-k8s.io
+  - machinesets.cluster.x-k8s.io
+  - openstackclusters.infrastructure.cluster.x-k8s.io
+  - openstackmachines.infrastructure.cluster.x-k8s.io
 
-# Helm values snippets for credentials config
-_velero_secrets_volume:
-  - name: openstack-cloud-config
-    secret: 
-      secretName: "{{ velero_openstack_secret_name }}"
-      defaultMode: 420
+# List of namespaces to exclude from backup
+# NOTE: This list should only contain items that are not listed
+# in velero_backup_exclude_namespaces since namespaces excluded
+# from the backup will, by definition, also be excluded from the 
+# restore. This list is primarily useful for development purposes
+# to test whether a namespace is actually required for a restore
+# to complete successfully.
+velero_restore_exclude_namespaces: []
+  # System namespaces
+  # - kube-system
+  # Namespaces created by CAPI Helm charts
+  # - calico-apiserver
+  # - calico-system
+  # - ingress-nginx
+  # - monitoring-system
+  # - openstack-system
+  # - tigera-operator
 
-_velero_secrets_volume_mount:
-  - name: openstack-cloud-config
-    mountPath: /etc/openstack
+# List of resource types to exclude from restore process
+velero_restore_exclude_resources:
+  # Profiles cannot be explicitly created via k8s api
+  # and get recreated automatically by calico anyway
+  - profiles.projectcalico.org
 
-# Velero Helm chart config
-velero_chart_name: velero
-velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
-velero_chart_version: 5.0.2
-velero_release_namespace: velero
-velero_release_name: velero
-velero_wait_timeout: 10m
-velero_release_defaults:
-  # Based on Velero chart values here: 
-  # https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/values.yaml
-  # and recommended OpenStack plugin additions here: 
-  # https://github.com/Lirt/velero-plugin-for-openstack/blob/master/docs/installation-using-helm.md
-  credentials:
-    useSecret: true
-    extraEnvVars:
-      OS_CLOUD: openstack
-      AWS_ACCESS_KEY_ID: "{{ velero_aws_access_key_id }}"
-      AWS_SECRET_ACCESS_KEY: "{{ velero_aws_secret_access_key }}"
-    extraSecretRef: "{{ velero_openstack_secret_name if not velero_openstack_use_existing_secret }}"
-  extraVolumes: "{{ _velero_secrets_volume if velero_openstack_use_existing_secret }}"
-  extraVolumeMounts: "{{ _velero_secrets_volume_mount if velero_openstack_use_existing_secret }}"
-  configuration:
-    backupsEnabled: true
-    backupStorageLocation:
-    - name: swift
-      provider: community.openstack.org/openstack
-      bucket: "{{ velero_bucket_name }}"
-    - name: s3
-      default: true
-      provider: aws
-      bucket: "{{ velero_bucket_name }}"
-      credential:
-        name: "{{ velero_s3_creds_secret_name }}"
-        key: s3-creds
-      config:
-        region: required-but-not-used
-        s3ForcePathStyle: true
-        s3Url: "{{ velero_s3_url }}"
+# Maximum number of restore passes to attempt
+velero_max_restore_passes: 3
 
-    volumeSnapshotLocation:
-    - name: cinder
-      provider: community.openstack.org/openstack-cinder
-      config:
-        method: "{{ velero_cinder_volume_backup_method }}"
-        volumeTimeout: 5m
-        snapshotTimeout: 5m
-        cloneTimeout: 5m
-        backupTimeout: 5m
-        imageTimeout: 5m
-        ensureDeleted: "true"
-        ensureDeletedDelay: 10s
-        cascadeDelete: "true"
+# Timeout in seconds for each restore pass
+velero_restore_attempt_timeout: 1800
 
-  # Ensure Velero OpenStack plugin is installed
-  initContainers:
-  - name: velero-plugin-openstack
-    # TODO: Make image + version top-level role vars
-    image: lirt/velero-plugin-for-openstack:v0.6.0
-    imagePullPolicy: IfNotPresent
-    volumeMounts:
-      - mountPath: /target
-        name: plugins
-      - mountPath: /etc/openstack
-        name: openstack-cloud-config
-  - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.8.0
-    imagePullPolicy: IfNotPresent
-    volumeMounts:
-      - mountPath: /target
-        name: plugins
-
-velero_release_overrides: {}
-velero_release_values: >-
-  {{-
-    velero_release_defaults |
-      combine(velero_release_overrides, recursive = True)
-  }}
+# Only allow restores from backups with status 'Completed'
+# and bail if status is 'PartiallyFailed' (or anything else)
+velero_restore_strict: true

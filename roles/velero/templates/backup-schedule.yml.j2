@@ -5,12 +5,17 @@ metadata:
   namespace: velero
 spec:
   schedule: '{{ velero_backup_schedule_timings }}'
+  paused: {{ not velero_backup_schedule_enabled }}
   template:
-    csiSnapshotTimeout: 0s
     hooks: {}
-    includedNamespaces:
-    - '*'
-    itemOperationTimeout: 0s
+    excludedNamespaces:
+{% for namespace in velero_backup_exclude_namespaces %}
+    - {{ namespace }}
+{% endfor %}
+    # NOTE(sd109): This defaults to false when
+    # `excludedNamespaces` key is present so 
+    # need to be explicit here.
+    includeClusterResources: true
     metadata: {}
     ttl: {{ velero_backup_schedule_ttl }}
   useOwnerReferencesInBackup: false

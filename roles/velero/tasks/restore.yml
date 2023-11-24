@@ -1,31 +1,4 @@
 
-- block: 
-  - name: Fetch existing Helm releases
-    ansible.builtin.command: helm list --all-namespaces --no-headers --filter "(kube-prometheus|loki)-stack" -o json
-    register: helm_releases_monitoring
-
-  - name: Ensure existing monitoring stack is uninstalled to allow restore
-    kubernetes.core.helm:
-      name: "{{ item.name }}"
-      namespace: "{{ item.namespace }}"
-      state: absent
-      wait: true
-    loop: "{{ helm_releases_monitoring.stdout | from_json }}"
-
-  # Helm doesn't delete associated PVs on uninstall so do that here
-  # (logic here assumes all kube-prometheus-stack & loki-stack were installed in same namespace)
-  - name: Ensure existing monitoring volumes are deleted to allow restore
-    ansible.builtin.command: >-
-      kubectl delete pvc
-      --namespace "{{ (helm_releases_monitoring.stdout | from_json | first).namespace }}"
-      --selector "{{ item }}"
-    loop:
-    - app.kubernetes.io/managed-by=prometheus-operator
-    - release=loki-stack
-    when: helm_releases_monitoring.stdout | from_json | length > 0
-
-  when: velero_restore_monitoring_data
-
 - name: Check status of target backup
   # This also acts as check that target backup exists
   ansible.builtin.command: >-
@@ -49,21 +22,9 @@
   include_tasks: restore_loop.yml
   loop: "{{ range(1, velero_max_restore_passes+1) | list }}"
 
-# Annotating cluster resources triggers a new watch event and 
-# causes the addon provider to re-adopt the restored addons
-- name: Annotate helmrelease and manifest resources to trigger capi addon readoption
-  ansible.builtin.command: >-
-    kubectl annotate "{{ item }}"
-    velero.io/restore-time={{ '%Y-%m-%d--T%H:%M:%S' | strftime(ansible_date_time.epoch) }}
-    -A --all --overwrite
-  loop:
-  - helmrelease
-  - manifests
-
 # This step is adapted from Consul restore docs here
 # https://developer.hashicorp.com/consul/tutorials/kubernetes-production/kubernetes-disaster-recovery#recovery-steps
 - name: Perform rolling restart of Consul cluster
-  # TODO: Can we template in Consul release namespace here?
   ansible.builtin.shell: |
     NAMESPACE=azimuth
     kubectl -n $NAMESPACE exec consul-server-0 -- consul leave
@@ -75,3 +36,26 @@
     kubectl -n $NAMESPACE exec consul-server-2 -- consul leave
     sleep 2
     kubectl -n $NAMESPACE rollout status statefulset/consul-server --watch
+
+# Trigger service re-sync after fixing Consul cluster state
+- name: Restart Zenith sync process
+  ansible.builtin.shell: |
+    kubectl -n azimuth rollout restart deployment/zenith-server-sync
+    sleep 10
+
+# Annotate cluster resources triggers a new watch event and 
+# causes the addon provider to re-adopt the restored addons
+- name: Annotate helmrelease and manifest resources to trigger capi addon readoption
+  ansible.builtin.command: >-
+    kubectl annotate "{{ item }}"
+    velero.io/restore-time={{ '%Y-%m-%d--T%H:%M:%S' | strftime(ansible_date_time.epoch) }}
+    -A --all --overwrite
+  loop:
+  - helmrelease
+  - manifests
+
+# Without this step, deleting tenant CAPI clusters after a restore fails because the CAPI Janitor
+# doesn't think it's service account has permission to watch openstackcluster resources.
+- name: Restart CAPI janitor to pick up restored ServiceAccount permissions
+  ansible.builtin.command: >-
+    kubectl -n capi-janitor-system rollout restart deployment/cluster-api-janitor-openstack
