@@ -8,7 +8,6 @@
 # Initiate restore process
 - hosts: k3s
   environment:
-    # TODO: Is this a reliable way to construct the kubeconfig file name?
     KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
   tasks:
     - include_role:
