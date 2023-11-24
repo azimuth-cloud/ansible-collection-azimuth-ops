@@ -42,6 +42,12 @@ velero_k8s_snapshot_controller_git_version: release-6.2
 # The name to give to the installed volume snapshot class
 velero_k8s_cinder_snapshot_class_name: cinder-csi-snapshot
 
+# Velero plugin config
+velero_s3_plugin_image_source: velero/velero-plugin-for-aws
+velero_s3_plugin_image_version: v1.8.0
+velero_csi_plugin_image_source: velero/velero-plugin-for-csi
+velero_csi_plugin_image_version: v0.6.0
+
 # Velero Helm chart config
 velero_chart_name: velero
 velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
@@ -68,16 +74,15 @@ velero_release_defaults:
     # Use CSI snapshotter instead
     volumeSnapshotLocation: []
 
-  # TODO: Make images + versions top-level role vars
   initContainers:
-  - name: velero-plugin-for-csi
-    image: velero/velero-plugin-for-csi:v0.6.0
+  - name: velero-plugin-for-aws
+    image: "{{ velero_s3_plugin_image_source }}:{{ velero_s3_plugin_image_version }}"
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
         name: plugins
-  - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.8.0
+  - name: velero-plugin-for-csi
+    image: "{{ velero_csi_plugin_image_source }}:{{ velero_csi_plugin_image_version }}"
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
