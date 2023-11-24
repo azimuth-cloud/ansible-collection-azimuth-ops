@@ -1,6 +1,6 @@
 
 # Disable by default so that existing deployments don't break when bucket isn't configured
-# Can be over-written in azimuth-config as needed
+# Can be overwritten in azimuth-config as needed
 velero_enabled: false
 
 # Whether or not to set the ansible no_log parameter on tasks in the role involving credentials.
@@ -16,7 +16,7 @@ velero_cli_version: 1.12.0
 velero_cli_arch: linux-amd64
 velero_cli_download_url: "https://github.com/vmware-tanzu/velero/releases/download/v{{ velero_cli_version }}/velero-v{{ velero_cli_version }}-{{ velero_cli_arch }}.tar.gz"
 
-# The url endpoint for the target object store
+# The URL endpoint for the target object store
 velero_s3_url: "{{ undef(hint='velero_s3_url must be set to the url of your target object store') }}"
 
 # The name of a pre-existing bucket in the target object store
@@ -174,15 +174,6 @@ velero_restore_include_resource_status: "{{ [velero_restore_include_resource_sta
 # to test whether a namespace is actually required for a restore
 # to complete successfully.
 velero_restore_exclude_namespaces_default: []
-  # System namespaces
-  # - kube-system
-  # Namespaces created by CAPI Helm charts
-  # - calico-apiserver
-  # - calico-system
-  # - ingress-nginx
-  # - monitoring-system
-  # - openstack-system
-  # - tigera-operator
 velero_restore_exclude_namespaces_extra: []
 velero_restore_exclude_namespaces: "{{ [velero_restore_exclude_namespaces_default, velero_restore_exclude_namespaces_extra] | flatten }}"
 
