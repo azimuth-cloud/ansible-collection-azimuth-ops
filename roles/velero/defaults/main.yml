@@ -102,7 +102,11 @@ velero_release_values: >-
 #####
 
 # List of additional namespaces to exclude from backup
-velero_backup_exclude_namespaces: []
+velero_backup_exclude_namespaces_default: []
+velero_backup_exclude_namespaces_extra: []
+velero_backup_exclude_namespaces: "{{ [velero_backup_exclude_namespaces_default, velero_backup_exclude_namespaces_extra] | flatten }}"
+
+
 
 #####
 # Velero backup schedule config
@@ -144,7 +148,7 @@ velero_restore_backup_name: "{{ undef(hint='velero_restore_backup_name must be s
 # List of resources for which the status field of the k8s object 
 # should be restored. These are directly passed to the 
 # `--status-include-resources` arg of `velero restore create` command
-velero_restore_include_resource_status:
+velero_restore_include_resource_status_defaults:
   # Identity operator resources
   - realms.identity.azimuth.stackhpc.com
   # CaaS platform resources
@@ -160,6 +164,8 @@ velero_restore_include_resource_status:
   - machinesets.cluster.x-k8s.io
   - openstackclusters.infrastructure.cluster.x-k8s.io
   - openstackmachines.infrastructure.cluster.x-k8s.io
+velero_restore_include_resource_status_extra: []
+velero_restore_include_resource_status: "{{ [velero_restore_include_resource_status_defaults, velero_restore_include_resource_status_extra] | flatten }}"
 
 # List of namespaces to exclude from backup
 # NOTE: This list should only contain items that are not listed
@@ -168,7 +174,7 @@ velero_restore_include_resource_status:
 # restore. This list is primarily useful for development purposes
 # to test whether a namespace is actually required for a restore
 # to complete successfully.
-velero_restore_exclude_namespaces: []
+velero_restore_exclude_namespaces_default: []
   # System namespaces
   # - kube-system
   # Namespaces created by CAPI Helm charts
@@ -178,12 +184,16 @@ velero_restore_exclude_namespaces: []
   # - monitoring-system
   # - openstack-system
   # - tigera-operator
+velero_restore_exclude_namespaces_extra: []
+velero_restore_exclude_namespaces: "{{ [velero_restore_exclude_namespaces_default, velero_restore_exclude_namespaces_extra] | flatten }}"
 
 # List of resource types to exclude from restore process
-velero_restore_exclude_resources:
+velero_restore_exclude_resources_defaults:
   # Profiles cannot be explicitly created via k8s api
   # and get recreated automatically by calico anyway
   - profiles.projectcalico.org
+velero_restore_exclude_resources_extra: []
+velero_restore_exclude_resources: "{{ [velero_restore_exclude_resources_defaults, velero_restore_exclude_resources_extra] | flatten }}"
 
 # Maximum number of restore passes to attempt
 velero_max_restore_passes: 3
