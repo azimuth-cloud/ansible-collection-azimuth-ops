@@ -12,6 +12,7 @@ Suite Teardown  Teardown Kubernetes Cluster
 *** Keywords ***
 
 Setup Kubernetes Cluster
+    [Timeout]  {{ generate_tests_kubernetes_apps_setup_timeout }}
 {% if generate_tests_kubernetes_apps_k8s_template %}
     ${template} =  Fetch Kubernetes Cluster Template  {{ generate_tests_kubernetes_apps_k8s_template }}
 {% else %}
@@ -43,6 +44,7 @@ Setup Kubernetes Cluster
 
 
 Teardown Kubernetes Cluster
+    [Timeout]  {{ generate_tests_kubernetes_apps_teardown_timeout }}
     Delete Kubernetes Cluster  ${clusterid}
 
 
