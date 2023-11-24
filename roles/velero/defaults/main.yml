@@ -1,6 +1,4 @@
 
-# TODO: Document somewhere which variables need to be defined by end user
-
 # Disable by default so that existing deployments don't break when bucket isn't configured
 velero_enabled: true
 
