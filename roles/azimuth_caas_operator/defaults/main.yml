@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: '0.4.2-dev.0.feat-inventory.17'
+azimuth_caas_operator_chart_version: '0.5.1-dev.0.main.21' # TODO: replace with release
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -79,7 +79,7 @@ azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/ansible-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: feat/caas
+azimuth_caas_stackhpc_slurm_appliance_git_version: v1.135
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 # The metadata root for the StackHPC Slurm appliance
