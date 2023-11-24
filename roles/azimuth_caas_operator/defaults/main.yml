@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: '0.5.1-dev.0.main.21' # TODO: replace with release
+azimuth_caas_operator_chart_version: '0.6.0'
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -145,7 +145,6 @@ azimuth_caas_stackhpc_slurm_appliance_template:
   envVars:
     # Normally set through environment's activate script:
     ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to runner project dir
-
 
 
 # Indicates if the StackHPC workstation should be enabled
