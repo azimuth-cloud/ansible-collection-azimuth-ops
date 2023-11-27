@@ -1,4 +1,6 @@
+# This workflow proposes updates to the dependencies that dependabot cannot
 name: Update dependencies
+
 on:
   # Allow manual executions
   workflow_dispatch:
@@ -7,209 +9,134 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  propose_update_pr:
+  # Note that although the Azimuth components all have Helm charts, we use the
+  # GitHub releases to discover new versions, so that we only get tagged versions
+  # For Azimuth components, we also allow pre-releases so we can easily cut release candidates
+  propose_github_release_updates:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         include:
-          - component: azimuth
-            type: helm
+          - key: azimuth
             path: ./roles/azimuth/defaults/main.yml
-            repo_variable: azimuth_chart_repo
-            chart_variable: azimuth_chart_name
-            version_variable: azimuth_chart_version
+            repository: stackhpc/azimuth
+            prereleases: "yes"
+            version_jsonpath: azimuth_chart_version
 
-          - component: azimuth-caas-operator
-            type: helm
+          - key: azimuth-caas-operator
             path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repo_variable: azimuth_caas_operator_chart_repo
-            chart_variable: azimuth_caas_operator_chart_name
-            version_variable: azimuth_caas_operator_chart_version
+            repository: stackhpc/azimuth-caas-operator
+            prereleases: "yes"
+            version_jsonpath: azimuth_caas_operator_chart_version
 
-          - component: azimuth-capi-operator
-            type: helm
+          - key: azimuth-capi-operator
             path: ./roles/azimuth_capi_operator/defaults/main.yml
-            repo_variable: azimuth_capi_operator_chart_repo
-            chart_variable: azimuth_capi_operator_chart_name
-            version_variable: azimuth_capi_operator_chart_version
+            repository: stackhpc/azimuth-capi-operator
+            prereleases: "yes"
+            version_jsonpath: azimuth_capi_operator_chart_version
 
-          - component: azimuth-identity-operator
-            type: helm
+          - key: azimuth-identity-operator
             path: ./roles/azimuth_identity_operator/defaults/main.yml
-            repo_variable: azimuth_identity_operator_chart_repo
-            chart_variable: azimuth_identity_operator_chart_name
-            version_variable: azimuth_identity_operator_chart_version
+            repository: stackhpc/azimuth-identity-operator
+            prereleases: "yes"
+            version_jsonpath: azimuth_identity_operator_chart_version
 
-          - component: azimuth-images
-            type: github
+          - key: azimuth-images
             path: ./roles/community_images/defaults/main.yml
-            repo_variable: community_images_azimuth_images_repo
-            version_variable: community_images_azimuth_images_version
+            repository: stackhpc/azimuth-images
+            prereleases: "yes"
+            version_jsonpath: community_images_azimuth_images_version
 
-          - component: caas-slurm-appliance
-            type: github
+          - key: caas-slurm-appliance
             path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repo_variable: azimuth_caas_stackhpc_slurm_appliance_git_url
-            version_variable: azimuth_caas_stackhpc_slurm_appliance_git_version
+            repository: stackhpc/ansible-slurm-appliance
+            prereleases: "yes"
+            version_jsonpath: azimuth_caas_stackhpc_slurm_appliance_git_version
 
-          - component: caas-workstation
-            type: github
+          - key: caas-workstation
             path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repo_variable: azimuth_caas_stackhpc_workstation_git_url
-            version_variable: azimuth_caas_stackhpc_workstation_git_version
+            repository: stackhpc/caas-workstation
+            prereleases: "yes"
+            version_jsonpath: azimuth_caas_stackhpc_workstation_git_version
 
-          - component: caas-repo2docker
-            type: github
+          - key: caas-repo2docker
             path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repo_variable: azimuth_caas_stackhpc_repo2docker_git_url
-            version_variable: azimuth_caas_stackhpc_repo2docker_git_version
+            repository: stackhpc/caas-repo2docker
+            prereleases: "yes"
+            version_jsonpath: azimuth_caas_stackhpc_repo2docker_git_version
 
-          - component: caas-rstudio
-            type: github
+          - key: caas-rstudio
             path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repo_variable: azimuth_caas_stackhpc_rstudio_git_url
-            version_variable: azimuth_caas_stackhpc_rstudio_git_version
+            repository: stackhpc/caas-r-studio-server
+            prereleases: "yes"
+            version_jsonpath: azimuth_caas_stackhpc_rstudio_git_version
 
-          - component: capi-helm-openstack-cluster
-            type: helm
+          - key: capi-helm-openstack-cluster
             path: ./roles/capi_cluster/defaults/main.yml
-            repo_variable: capi_cluster_chart_repo
-            chart_variable: capi_cluster_chart_name
-            version_variable: capi_cluster_chart_version
+            repository: stackhpc/capi-helm-charts
+            version_jsonpath: capi_cluster_chart_version
 
-          - component: cert-manager
-            type: helm
-            path: ./roles/certmanager/defaults/main.yml
-            repo_variable: certmanager_chart_repo
-            chart_variable: certmanager_chart_name
-            version_variable: certmanager_chart_version
-
-          - component: cloud-metrics-grafana
-            type: helm
-            path: ./roles/cloud_metrics/defaults/main.yml
-            repo_variable: cloud_metrics_grafana_chart_repo
-            chart_variable: cloud_metrics_grafana_chart_name
-            version_variable: cloud_metrics_grafana_chart_version
-
-          - component: cluster-api
-            type: github
+          - key: cluster-api
             path: ./roles/clusterapi/defaults/main.yml
-            repo_variable: clusterapi_core_repo
-            version_variable: clusterapi_core_version
+            repository: kubernetes-sigs/cluster-api
+            version_jsonpath: clusterapi_core_version
 
-          - component: cluster-api-provider-openstack
-            type: github
+          - key: cluster-api-provider-openstack
             path: ./roles/clusterapi/defaults/main.yml
-            repo_variable: clusterapi_openstack_repo
-            version_variable: clusterapi_openstack_version
+            repository: kubernetes-sigs/cluster-api-provider-openstack
+            version_jsonpath: clusterapi_openstack_version
 
-          - component: cluster-api-addon-provider
-            type: helm
+          - key: cluster-api-addon-provider
             path: ./roles/clusterapi/defaults/main.yml
-            repo_variable: clusterapi_addon_provider_chart_repo
-            chart_variable: clusterapi_addon_provider_chart_name
-            version_variable: clusterapi_addon_provider_chart_version
+            repository: stackhpc/cluster-api-addon-provider
+            prereleases: "yes"
+            version_jsonpath: clusterapi_addon_provider_chart_version
 
-          - component: cluster-api-janitor-openstack
-            type: helm
+          - key: cluster-api-janitor-openstack
             path: ./roles/clusterapi/defaults/main.yml
-            repo_variable: clusterapi_janitor_openstack_chart_repo
-            chart_variable: clusterapi_janitor_openstack_chart_name
-            version_variable: clusterapi_janitor_openstack_chart_version
+            repository: stackhpc/cluster-api-janitor-openstack
+            prereleases: "yes"
+            version_jsonpath: clusterapi_janitor_openstack_chart_version
 
-          - component: consul
-            type: helm
-            path: ./roles/consul/defaults/main.yml
-            repo_variable: consul_chart_repo
-            chart_variable: consul_chart_name
-            version_variable: consul_chart_version
-
-          - component: harbor
-            type: helm
-            path: ./roles/harbor/defaults/main.yml
-            repo_variable: harbor_chart_repo
-            chart_variable: harbor_chart_name
-            version_variable: harbor_chart_version
-
-          - component: helm
-            type: github
+          - key: helm
             path: ./roles/helm/defaults/main.yml
-            repo_variable: helm_repo
-            version_variable: helm_version
+            repository: helm/helm
+            version_jsonpath: helm_version
 
-          - component: ingress-nginx
-            type: helm
-            path: ./roles/ingress_nginx/defaults/main.yml
-            repo_variable: ingress_nginx_chart_repo
-            chart_variable: ingress_nginx_chart_name
-            version_variable: ingress_nginx_chart_version
-
-          - component: k3s
-            type: github
+          - key: k3s
             path: ./roles/k3s/defaults/main.yml
-            repo_variable: k3s_repo
-            version_variable: k3s_version
+            repository: k3s-io/k3s
+            version_jsonpath: k3s_version
 
-          - component: kube-prometheus-stack
-            type: helm
-            path: ./roles/kube_prometheus_stack/defaults/main.yml
-            repo_variable: kube_prometheus_stack_chart_repo
-            chart_variable: kube_prometheus_stack_chart_name
-            version_variable: kube_prometheus_stack_chart_version
-
-          - component: kustomize
-            type: github
+          - key: kustomize
             path: ./roles/kustomize/defaults/main.yml
-            repo_variable: kustomize_repo
-            version_variable: kustomize_version
+            repository: kubernetes-sigs/kustomize
+            version_jsonpath: kustomize_version
 
-          - component: zenith
-            type: helm
+          - key: zenith
             path: ./roles/zenith/defaults/main.yml
-            repo_variable: zenith_chart_repo
-            chart_variable: zenith_chart_name
-            version_variable: zenith_chart_version
+            repository: stackhpc/zenith
+            prereleases: "yes"
+            version_jsonpath: zenith_chart_version
 
-    name: ${{ matrix.component }}
+    name: ${{ matrix.key }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Install script dependencies
-        run: pip install -r .github/scripts/requirements.txt
-
-      - name: Check for updates (Helm)
-        id: helm-update-version
-        run: |
-          .github/scripts/helm-update-version \
-            ${{ matrix.path }} \
-            ${{ matrix.repo_variable }} \
-            ${{ matrix.chart_variable }} \
-            ${{ matrix.version_variable }} \
-            '${{ matrix.constraints || '>=0.0.0' }}'
-        if: ${{ matrix.type == 'helm' }}
-
-      - name: Check for updates (GitHub)
-        id: github-update-version
-        run: |
-          .github/scripts/github-update-version \
-            ${{ matrix.path }} \
-            ${{ matrix.repo_variable }} \
-            ${{ matrix.version_variable }}
-        if: ${{ matrix.type == 'github' }}
-
-      - name: Get next version from update
+      - name: Check for most recent GitHub release
         id: next
-        run: >-
-          echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
-        env:
-          NEXT_VERSION: >-
-            ${{
-              matrix.type == 'helm' &&
-              steps.helm-update-version.outputs.next-version ||
-              steps.github-update-version.outputs.next-version
-            }}
+        uses: stackhpc/github-actions/github-latest-release@master
+        with:
+          repository: ${{ matrix.repository }}
+          tags: ${{ matrix.tags || 'no' }}
+
+      - name: Update dependency key
+        uses: stackhpc/github-actions/config-update@master
+        with:
+          path: ${{ matrix.path }}
+          updates: |
+            ${{ matrix.version_jsonpath }}=${{ steps.next.outputs.version }}
 
       - name: Generate app token for PR
         uses: stackhpc/github-actions/generate-app-token@master
@@ -224,14 +151,105 @@ jobs:
         with:
           token: ${{ steps.generate-app-token.outputs.token }}
           commit-message: >-
-            Update ${{ matrix.component }} to ${{ steps.next.outputs.version }}
-          branch: update/${{ matrix.component }}
+            Update ${{ matrix.key }} to ${{ steps.next.outputs.version }}
+          branch: update-dependency/${{ matrix.key }}
           delete-branch: true
           title: >-
-            Update ${{ matrix.component }} to ${{ steps.next.outputs.version }}
+            Update ${{ matrix.key }} to ${{ steps.next.outputs.version }}
           body: >
             This PR was created automatically to update
-            ${{ matrix.component }} to ${{ steps.next.outputs.version }}.
+            ${{ matrix.key }} to ${{ steps.next.outputs.version }}.
           labels: |
             automation
             dependency-update
+            ${{ matrix.component }}
+
+
+  propose_helm_chart_updates:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - key: cert-manager
+            path: ./roles/certmanager/defaults/main.yml
+            chart_repo_jsonpath: certmanager_chart_repo
+            chart_name_jsonpath: certmanager_chart_name
+            chart_version_jsonpath: certmanager_chart_version
+
+          - key: cloud-metrics-grafana
+            path: ./roles/cloud_metrics/defaults/main.yml
+            chart_repo_jsonpath: cloud_metrics_grafana_chart_repo
+            chart_name_jsonpath: cloud_metrics_grafana_chart_name
+            chart_version_jsonpath: cloud_metrics_grafana_chart_version
+
+          - key: harbor
+            path: ./roles/harbor/defaults/main.yml
+            chart_repo_jsonpath: harbor_chart_repo
+            chart_name_jsonpath: harbor_chart_name
+            chart_version_jsonpath: harbor_chart_version
+
+          - key: ingress-nginx
+            path: ./roles/ingress_nginx/defaults/main.yml
+            chart_repo_jsonpath: ingress_nginx_chart_repo
+            chart_name_jsonpath: ingress_nginx_chart_name
+            chart_version_jsonpath: ingress_nginx_chart_version
+
+          - component: kube-prometheus-stack
+            path: ./roles/kube_prometheus_stack/defaults/main.yml
+            chart_repo_jsonpath: kube_prometheus_stack_chart_repo
+            chart_name_jsonpath: kube_prometheus_stack_chart_name
+            chart_version_jsonpath: kube_prometheus_stack_chart_version
+
+    name: ${{ matrix.key }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract repo and chart
+        id: chart-info
+        uses: stackhpc/github-actions/config-extract@master
+        with:
+          path: ${{ matrix.path }}
+          outputs: |
+            repo=${{ matrix.chart_repo_jsonpath }}
+            name=${{ matrix.chart_name_jsonpath }}
+
+      - name: Check for updates
+        id: next
+        uses: stackhpc/github-actions/helm-latest-version@master
+        with:
+          repository: ${{ steps.chart-info.outputs.repo }}
+          chart: ${{ steps.chart-info.outputs.name }}
+
+      - name: Update chart version
+        uses: stackhpc/github-actions/config-update@master
+        with:
+          path: ${{ matrix.path }}
+          updates: |
+            ${{ matrix.chart_version_jsonpath }}=${{ steps.next.outputs.version }}
+
+      - name: Generate app token for PR
+        uses: stackhpc/github-actions/generate-app-token@master
+        id: generate-app-token
+        with:
+          repository: ${{ github.repository }}
+          app-id: ${{ secrets.APP_ID }}
+          app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Propose changes via PR if required
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ steps.generate-app-token.outputs.token }}
+          commit-message: >-
+            Update ${{ matrix.key }} to ${{ steps.next.outputs.version }}
+          branch: update-dependency/${{ matrix.key }}
+          delete-branch: true
+          title: >-
+            Update ${{ matrix.key }} to ${{ steps.next.outputs.version }}
+          body: >
+            This PR was created automatically to update
+            ${{ matrix.key }} to ${{ steps.next.outputs.version }}.
+          labels: |
+            automation
+            dependency-update
+            ${{ matrix.component }}

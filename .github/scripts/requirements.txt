@@ -1,4 +1,0 @@
-easysemver
-pyjwt
-requests
-ruamel.yaml
