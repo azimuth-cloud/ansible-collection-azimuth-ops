@@ -162,7 +162,6 @@ jobs:
           labels: |
             automation
             dependency-update
-            ${{ matrix.component }}
 
 
   propose_helm_chart_updates:
@@ -194,7 +193,7 @@ jobs:
             chart_name_jsonpath: ingress_nginx_chart_name
             chart_version_jsonpath: ingress_nginx_chart_version
 
-          - component: kube-prometheus-stack
+          - key: kube-prometheus-stack
             path: ./roles/kube_prometheus_stack/defaults/main.yml
             chart_repo_jsonpath: kube_prometheus_stack_chart_repo
             chart_name_jsonpath: kube_prometheus_stack_chart_name
@@ -252,4 +251,3 @@ jobs:
           labels: |
             automation
             dependency-update
-            ${{ matrix.component }}
