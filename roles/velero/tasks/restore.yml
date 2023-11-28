@@ -25,17 +25,18 @@
 # This step is adapted from Consul restore docs here
 # https://developer.hashicorp.com/consul/tutorials/kubernetes-production/kubernetes-disaster-recovery#recovery-steps
 - name: Perform rolling restart of Consul cluster
-  ansible.builtin.shell: |
-    NAMESPACE=azimuth
-    kubectl -n $NAMESPACE exec consul-server-0 -- consul leave
-    sleep 2
-    kubectl -n $NAMESPACE rollout status statefulset/consul-server --watch
-    kubectl -n $NAMESPACE exec consul-server-1 -- consul leave
-    sleep 2
-    kubectl -n $NAMESPACE rollout status statefulset/consul-server --watch
-    kubectl -n $NAMESPACE exec consul-server-2 -- consul leave
-    sleep 2
-    kubectl -n $NAMESPACE rollout status statefulset/consul-server --watch
+  ansible.builtin.shell:
+    cmd: |
+      set -xe
+      NAMESPACE=azimuth
+      NAME_PATTERN=consul-server
+      NODE_COUNT=$(kubectl -n $NAMESPACE get pods | grep $NAME_PATTERN- | wc -l)
+      for (( i = 0; i < $NODE_COUNT; i++ )); do
+        kubectl -n $NAMESPACE exec $NAME_PATTERN-$i -- consul leave
+        sleep 2
+        kubectl -n $NAMESPACE rollout status statefulset/$NAME_PATTERN --watch
+      done
+    executable: /usr/bin/bash # Loop syntax doesn't work with /bin/sh  
 
 # Trigger service re-sync after fixing Consul cluster state
 - name: Restart Zenith sync process
