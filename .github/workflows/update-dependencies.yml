@@ -74,6 +74,7 @@ jobs:
           - key: capi-helm-openstack-cluster
             path: ./roles/capi_cluster/defaults/main.yml
             repository: stackhpc/capi-helm-charts
+            prereleases: "yes"
             version_jsonpath: capi_cluster_chart_version
 
           - key: cluster-api
@@ -129,7 +130,7 @@ jobs:
         uses: stackhpc/github-actions/github-latest-release@master
         with:
           repository: ${{ matrix.repository }}
-          tags: ${{ matrix.tags || 'no' }}
+          prereleases: ${{ matrix.prereleases || 'no' }}
 
       - name: Update dependency key
         uses: stackhpc/github-actions/config-update@master
