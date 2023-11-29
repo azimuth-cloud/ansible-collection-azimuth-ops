@@ -1,20 +1,15 @@
 
-- name: Check if CSI snapshot controller checkout exists
-  stat:
-    path: ~/external-snapshotter
-  register: external_snapshotter_checkout
-
-- name: Clone CSI snapshot controller repo
-  ansible.builtin.command: git clone "{{ velero_k8s_snapshot_controller_repo }}" external-snapshotter
-  when: not external_snapshotter_checkout.stat.exists
-
-- name: Ensure CSI snapshot controller is deployed
-  # Adapted from https://kubernetes-csi.github.io/docs/snapshot-controller.html
-  ansible.builtin.shell: |
-    cd ./external-snapshotter
-    git checkout "{{ velero_k8s_snapshot_controller_git_version }}"
-    kubectl kustomize client/config/crd | kubectl apply -f -
-    kubectl -n kube-system kustomize deploy/kubernetes/snapshot-controller | kubectl apply -f -
+- name: Ensure CSI-snapshot-controller Helm chart is installed
+  kubernetes.core.helm:
+    chart_ref: "{{ velero_csi_snapshot_controller_chart_name }}"
+    chart_repo_url: "{{ velero_csi_snapshot_controller_chart_repo }}"
+    chart_version: "{{ velero_csi_snapshot_controller_chart_version }}"
+    release_namespace: "{{ velero_csi_snapshot_controller_release_namespace }}"
+    release_name: "{{ velero_csi_snapshot_controller_release_name }}"
+    release_values: "{{ velero_csi_snapshot_controller_release_values }}"
+    atomic: yes
+    wait: yes
+    wait_timeout: "{{ velero_csi_snapshot_controller_wait_timeout }}"
 
 - name: Template Cinder VolumeSnapshotClass definition onto host
   ansible.builtin.template:

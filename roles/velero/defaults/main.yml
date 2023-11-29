@@ -29,14 +29,20 @@ velero_s3_creds_secret_name: velero-s3-config
 velero_aws_access_key_id: "{{ undef(hint='velero_aws_access_key_id and velero_aws_secret_access_key must be set to provide credentials for the target object store') }}"
 velero_aws_secret_access_key: "{{ undef(hint='velero_aws_access_key_id and velero_aws_secret_access_key must be set to provide credentials for the target object store') }}"
 
-
-# Kubernetes CSI Snapshot controller config
-
-# The source repo for the k8s snapshot controller
-velero_k8s_snapshot_controller_repo: https://github.com/kubernetes-csi/external-snapshotter/
-
-# The version of the snapshot controller to install
-velero_k8s_snapshot_controller_git_version: release-6.2
+# Kubernetes CSI Snapshot Controller config
+velero_csi_snapshot_controller_chart_name: snapshot-controller
+velero_csi_snapshot_controller_chart_repo: https://piraeus.io/helm-charts/
+velero_csi_snapshot_controller_chart_version: 2.0.3
+velero_csi_snapshot_controller_release_namespace: kube-system
+velero_csi_snapshot_controller_release_name: csi-snapshot-controller
+velero_csi_snapshot_controller_wait_timeout: 10m
+velero_csi_snapshot_controller_release_defaults: {}
+velero_csi_snapshot_controller_release_overrides: {}
+velero_csi_snapshot_controller_release_values: >-
+  {{-
+    velero_csi_snapshot_controller_release_defaults |
+      combine(velero_csi_snapshot_controller_release_overrides, recursive = True)
+  }}
 
 # The name to give to the installed volume snapshot class
 velero_k8s_cinder_snapshot_class_name: cinder-csi-snapshot
