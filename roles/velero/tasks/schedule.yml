@@ -1,0 +1,11 @@
+
+- name: Ensure Velero components are installed
+  include_tasks: install.yml
+
+- name: Template Backup Schedule file onto host
+  ansible.builtin.template:
+    src: backup-schedule.yml.j2
+    dest: /tmp/velero-backup-schedule.yml
+
+- name: Submit backup schedule to management cluster
+  ansible.builtin.command: kubectl apply -f /tmp/velero-backup-schedule.yml
