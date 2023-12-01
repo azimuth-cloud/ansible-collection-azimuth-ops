@@ -114,6 +114,21 @@ jobs:
             repository: kubernetes-sigs/kustomize
             version_jsonpath: kustomize_version
 
+          - key: velero-cli
+            path: ./roles/velero/defaults/main.yml
+            repository: vmware-tanzu/velero
+            version_jsonpath: velero_cli_version
+
+          - key: velero-plugin-for-aws
+            path: ./roles/velero/defaults/main.yml
+            repository: vmware-tanzu/velero-plugin-for-aws
+            version_jsonpath: velero_s3_plugin_image_version
+
+          - key: velero-plugin-for-csi
+            path: ./roles/velero/defaults/main.yml
+            repository: vmware-tanzu/velero-plugin-for-csi
+            version_jsonpath: velero_csi_plugin_image_version
+
           - key: zenith
             path: ./roles/zenith/defaults/main.yml
             repository: stackhpc/zenith
@@ -199,6 +214,18 @@ jobs:
             chart_repo_jsonpath: kube_prometheus_stack_chart_repo
             chart_name_jsonpath: kube_prometheus_stack_chart_name
             chart_version_jsonpath: kube_prometheus_stack_chart_version
+
+          - key: snapshot-controller
+            path: ./roles/velero/defaults/main.yml
+            chart_repo_jsonpath: velero_csi_snapshot_controller_chart_repo
+            chart_name_jsonpath: velero_csi_snapshot_controller_chart_name
+            chart_version_jsonpath: velero_csi_snapshot_controller_chart_version
+
+          - key: velero
+            path: ./roles/velero/defaults/main.yml
+            chart_repo_jsonpath: velero_chart_repo
+            chart_name_jsonpath: velero_chart_name
+            chart_version_jsonpath: velero_chart_version
 
     name: ${{ matrix.key }}
     steps:
