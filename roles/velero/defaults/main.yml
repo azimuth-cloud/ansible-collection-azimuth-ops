@@ -1,4 +1,4 @@
-
+---
 # Disable by default so that existing deployments don't break when bucket isn't configured
 # Can be overwritten in azimuth-config as needed
 velero_enabled: false
@@ -64,34 +64,34 @@ velero_release_defaults:
   configuration:
     backupsEnabled: true
     backupStorageLocation:
-    - name: s3
-      default: true
-      provider: aws
-      bucket: "{{ velero_bucket_name }}"
-      credential:
-        name: "{{ velero_s3_creds_secret_name }}"
-        key: s3-creds
-      config:
-        region: required-but-not-used
-        s3ForcePathStyle: true
-        s3Url: "{{ velero_s3_url }}"
+      - name: s3
+        default: true
+        provider: aws
+        bucket: "{{ velero_bucket_name }}"
+        credential:
+          name: "{{ velero_s3_creds_secret_name }}"
+          key: s3-creds
+        config:
+          region: required-but-not-used
+          s3ForcePathStyle: true
+          s3Url: "{{ velero_s3_url }}"
 
     # Use CSI snapshotter instead
     volumeSnapshotLocation: []
 
   initContainers:
-  - name: velero-plugin-for-aws
-    image: "{{ velero_s3_plugin_image_source }}:{{ velero_s3_plugin_image_version }}"
-    imagePullPolicy: IfNotPresent
-    volumeMounts:
-      - mountPath: /target
-        name: plugins
-  - name: velero-plugin-for-csi
-    image: "{{ velero_csi_plugin_image_source }}:{{ velero_csi_plugin_image_version }}"
-    imagePullPolicy: IfNotPresent
-    volumeMounts:
-      - mountPath: /target
-        name: plugins
+    - name: velero-plugin-for-aws
+      image: "{{ velero_s3_plugin_image_source }}:{{ velero_s3_plugin_image_version }}"
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
+    - name: velero-plugin-for-csi
+      image: "{{ velero_csi_plugin_image_source }}:{{ velero_csi_plugin_image_version }}"
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
 
 velero_release_overrides: {}
 velero_release_values: >-
