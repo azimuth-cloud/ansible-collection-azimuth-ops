@@ -17,6 +17,12 @@ jobs:
     strategy:
       matrix:
         include:
+          # - key: ansible-slurm-appliance
+          #   path: ./roles/azimuth_caas_operator/defaults/main.yml
+          #   repository: stackhpc/ansible-slurm-appliance
+          #   prereleases: "yes"
+          #   version_jsonpath: azimuth_caas_stackhpc_slurm_appliance_git_version
+
           - key: azimuth
             path: ./roles/azimuth/defaults/main.yml
             repository: stackhpc/azimuth
@@ -46,12 +52,6 @@ jobs:
             repository: stackhpc/azimuth-images
             prereleases: "yes"
             version_jsonpath: community_images_azimuth_images_version
-
-          - key: caas-slurm-appliance
-            path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repository: stackhpc/ansible-slurm-appliance
-            prereleases: "yes"
-            version_jsonpath: azimuth_caas_stackhpc_slurm_appliance_git_version
 
           - key: caas-workstation
             path: ./roles/azimuth_caas_operator/defaults/main.yml
