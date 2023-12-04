@@ -12,9 +12,9 @@ velero_no_log: true
 #####
 
 # Velero CLI installation config
-velero_cli_version: 1.12.0
+velero_cli_version: v1.12.2
 velero_cli_arch: linux-amd64
-velero_cli_download_url: "https://github.com/vmware-tanzu/velero/releases/download/v{{ velero_cli_version }}/velero-v{{ velero_cli_version }}-{{ velero_cli_arch }}.tar.gz"
+velero_cli_download_url: "https://github.com/vmware-tanzu/velero/releases/download/{{ velero_cli_version }}/velero-{{ velero_cli_version }}-{{ velero_cli_arch }}.tar.gz"
 
 # The URL endpoint for the target object store
 velero_s3_url: "{{ undef(hint='velero_s3_url must be set to the url of your target object store') }}"
