@@ -67,10 +67,10 @@
   - name: Ensure Velero CLI is downloaded
     ansible.builtin.shell: |-
       wget "{{ velero_cli_download_url }}"
-      tar -xzf "velero-v{{ velero_cli_version }}-{{ velero_cli_arch }}.tar.gz"
+      tar -xzf "velero-{{ velero_cli_version }}-{{ velero_cli_arch }}.tar.gz"
       
   - name: Ensure Velero CLI is in path
-    ansible.builtin.command: cp velero-v{{ velero_cli_version }}-{{ velero_cli_arch }}/velero /usr/local/bin/
+    ansible.builtin.command: cp velero-{{ velero_cli_version }}-{{ velero_cli_arch }}/velero /usr/local/bin/
     become: true
 
   when: velero_cli_version_check.rc != 0 or velero_cli_version not in velero_cli_version_check.stdout
