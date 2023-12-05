@@ -159,24 +159,17 @@ capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_
 # Configuration for addons
 #   Determines if the ingress controller should be enabled
 capi_cluster_addons_ingress_enabled: "{{ ingress_controller_enabled | default(true) }}"
-#   Require the specification of a pre-allocated IP for the ingress load balancer
-#   This IP should have the wildcard domain assigned to it
-capi_cluster_addons_ingress_load_balancer_ip: >-
-  {{-
-    undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required')
-    if capi_cluster_addons_ingress_enabled
-    else None
-  }}
+#   A pre-allocated IP for the ingress load balancer
+#   If given, this IP should have the wildcard domain assigned to it
+capi_cluster_addons_ingress_load_balancer_ip:
 #   Options for LoadBalancer services
-
 #   https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
 capi_cluster_addons_openstack_loadbalancer_method: >-
   {{-
     'SOURCE_IP_PORT'
     if capi_cluster_addons_openstack_loadbalancer_provider == 'ovn'
     else None
-    }}
-
+  }}
 capi_cluster_addons_openstack_loadbalancer_provider:
 capi_cluster_addons_openstack_loadbalancer_create_monitor:
 capi_cluster_addons_openstack_loadbalancer_monitor_delay:
@@ -342,11 +335,12 @@ capi_cluster_release_defaults:
               allowSnippetAnnotations: true
               service: >-
                 {{-
-                  {
-                    "loadBalancerIP": capi_cluster_addons_ingress_load_balancer_ip,
-                  }
-                  if capi_cluster_addons_ingress_enabled
-                  else {}
+                  {} |
+                    combine(
+                      { "loadBalancerIP": capi_cluster_addons_ingress_load_balancer_ip }
+                      if capi_cluster_addons_ingress_load_balancer_ip
+                      else {}
+                    )
                 }}
     # Configure monitoring and alerting
     monitoring:
@@ -492,5 +486,4 @@ capi_cluster_release_values: >-
   }}
 
 # The name of the file into which the kubeconfig of the cluster should be output
-# If not given, the kubeconfig is not output
-capi_cluster_kubeconfig_path:
+capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig"

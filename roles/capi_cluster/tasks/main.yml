@@ -11,6 +11,23 @@
         release_state: present
         release_values: "{{ capi_cluster_release_values }}"
         create_namespace: yes
+      register: capi_cluster_helm_release
+
+    # The CAPI and CAPO controllers take some time to react and update the Ready condition
+    # However some kinds of update, e.g. only addons, do not affect the cluster conditions,
+    # so we only allow up to two minutes for that to happen
+    - name: Wait for cluster to become unready
+      command: >-
+        kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
+          --for=condition=Ready=false
+          --namespace {{ capi_cluster_release_namespace }}
+          --timeout 0s
+      changed_when: false
+      register: capi_cluster_not_ready
+      until: capi_cluster_not_ready is succeeded
+      retries: 12
+      delay: 10
+      when: capi_cluster_helm_release is changed
 
     - name: Wait for cluster to become ready
       command: >-
@@ -52,21 +69,42 @@
         - manifests
         - helmreleases
 
-    - block:
-        - name: Generate kubeconfig for cluster
-          command: >-
-            kubectl get secret {{ capi_cluster_release_name }}-kubeconfig
-              --namespace {{ capi_cluster_release_namespace }}
-              --output jsonpath='{.data.value}'
-          changed_when: false
-          register: capi_cluster_kubeconfig_cmd
+    - name: Generate kubeconfig for cluster
+      command: >-
+        kubectl get secret {{ capi_cluster_release_name }}-kubeconfig
+          --namespace {{ capi_cluster_release_namespace }}
+          --output jsonpath='{.data.value}'
+      changed_when: false
+      register: capi_cluster_kubeconfig_cmd
 
-        - name: Write kubeconfig file for cluster
-          copy:
-            content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
-            dest: "{{ capi_cluster_kubeconfig_path }}"
-            mode: u=rw,g=,o=
-      when: capi_cluster_kubeconfig_path is defined
+    - name: Write kubeconfig file for cluster
+      copy:
+        content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
+        dest: "{{ capi_cluster_kubeconfig_path }}"
+        mode: u=rw,g=,o=
+
+    # When the ingress controller is enabled, get the IP
+    - block:
+        - name: Get ingress controller service info
+          command: >-
+            kubectl get service ingress-nginx-controller
+              --namespace ingress-nginx
+              --output json
+          environment:
+            KUBECONFIG: "{{ capi_cluster_kubeconfig_path }}"
+          register: capi_cluster_ingress_controller_svc_cmd
+
+        - name: Set ingress controller load balancer IP fact
+          set_fact:
+            capi_cluster_addons_ingress_load_balancer_ip: >-
+              {{-
+                capi_cluster_ingress_controller_svc_cmd.stdout |
+                  from_json |
+                  json_query('status.loadBalancer.ingress[0].ip')
+              }}
+      when:
+        - capi_cluster_addons_ingress_enabled
+        - not capi_cluster_addons_ingress_load_balancer_ip
   when: capi_cluster_release_state == 'present'
 
 - block:

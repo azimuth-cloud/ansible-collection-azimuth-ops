@@ -13,6 +13,28 @@
 # Gather required facts from the seed
 - hosts: k3s
   tasks:
+    # If running in HA mode with no explicit base domain or explicit ingress load balancer IP,
+    # we need to discover it
+    - block:
+        - name: Get ingress controller service info
+          command: >-
+            kubectl get service ingress-nginx-controller
+              --namespace ingress-nginx
+              --output json
+          register: capi_cluster_ingress_controller_svc_cmd
+
+        - name: Set ingress controller load balancer IP fact
+          set_fact:
+            capi_cluster_addons_ingress_load_balancer_ip: >-
+              {{-
+                capi_cluster_ingress_controller_svc_cmd.stdout |
+                  from_json |
+                  json_query('status.loadBalancer.ingress[0].ip')
+              }}
+      when:
+        - install_mode == 'ha'
+        - capi_cluster_addons_ingress_load_balancer_ip is not defined
+
     - name: Get installed cluster types
       command: kubectl get clustertypes -o json
       register: generate_tests_cluster_types_cmd
