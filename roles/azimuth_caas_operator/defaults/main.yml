@@ -152,7 +152,7 @@ azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC workstation
 azimuth_caas_stackhpc_workstation_git_url: https://github.com/stackhpc/caas-workstation.git
 # The git version for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_git_version: 0.1.0
+azimuth_caas_stackhpc_workstation_git_version: 0.2.0-rc.2
 # The playbook to use for the workstation appliance
 azimuth_caas_stackhpc_workstation_playbook: workstation.yml
 # The metadata URL for the StackHPC workstation
@@ -262,7 +262,7 @@ azimuth_caas_stackhpc_rstudio_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC R-Studio appliance
 azimuth_caas_stackhpc_rstudio_git_url: https://github.com/stackhpc/caas-r-studio-server
 # The git version for the StackHPC R-Studio appliance
-azimuth_caas_stackhpc_rstudio_git_version: 0.1.0
+azimuth_caas_stackhpc_rstudio_git_version: 0.2.0-rc.1
 # The playbook to use for the StackHPC R-Studio appliance
 azimuth_caas_stackhpc_rstudio_playbook: rstudio.yml
 # The metadata root for the StackHPC R-Studio appliance project
