@@ -606,6 +606,58 @@ azimuth_capi_operator_app_templates_kubeflow_spec: >-
       )
   }}
 
+# Indicates whether the Zenith-enabled binderhub app template should be enabled
+azimuth_capi_operator_app_templates_binderhub_enabled: true
+# The Helm chart to use for the binderhub app template
+azimuth_capi_operator_app_templates_binderhub_chart_name: binderhub-azimuth
+# The Helm repository to use for the binderhub app template
+azimuth_capi_operator_app_templates_binderhub_chart_repo: https://stackhpc.github.io/azimuth-charts
+# The version range to use for the binderhub Helm chart
+azimuth_capi_operator_app_templates_binderhub_version_range: ">=0.0.0"
+# Overrides for the label, logo and description from the binderhub Helm chart
+azimuth_capi_operator_app_templates_binderhub_label:
+azimuth_capi_operator_app_templates_binderhub_logo:
+azimuth_capi_operator_app_templates_binderhub_description:
+# The number of versions to make available for the binderhub app template
+azimuth_capi_operator_app_templates_binderhub_keep_versions: 3
+# The sync frequency for the binderhub app template (default 24h)
+azimuth_capi_operator_app_templates_binderhub_sync_frequency: 86400
+# Indicates whether binderhub should use http or https prefix in redirect urls
+azimuth_capi_operator_app_templates_binderhub_use_https_redirects: "{{ ingress_tls_enabled | default(True) }}"
+# Any default values for the binderhub app template
+azimuth_capi_operator_app_templates_binderhub_default_values:
+  binderhub_oauth_use_https: "{{ azimuth_capi_operator_app_templates_binderhub_use_https_redirects }}"
+# The spec for the binderhub app template
+azimuth_capi_operator_app_templates_binderhub_spec: >-
+  {{-
+    {
+      "chart": {
+        "repo": azimuth_capi_operator_app_templates_binderhub_chart_repo,
+        "name": azimuth_capi_operator_app_templates_binderhub_chart_name,
+      },
+      "versionRange": azimuth_capi_operator_app_templates_binderhub_version_range,
+      "keepVersions": azimuth_capi_operator_app_templates_binderhub_keep_versions,
+      "syncFrequency": azimuth_capi_operator_app_templates_binderhub_sync_frequency,
+      "defaultValues": azimuth_capi_operator_app_templates_binderhub_default_values,
+    } |
+      combine(
+        { "label": azimuth_capi_operator_app_templates_binderhub_label }
+        if azimuth_capi_operator_app_templates_binderhub_label
+        else {}
+      ) |
+      combine(
+        { "logo": azimuth_capi_operator_app_templates_binderhub_logo }
+        if azimuth_capi_operator_app_templates_binderhub_logo
+        else {}
+      ) |
+      combine(
+        { "description": azimuth_capi_operator_app_templates_binderhub_description }
+        if azimuth_capi_operator_app_templates_binderhub_description
+        else {}
+      )
+  }}
+
+
 # The default templates
 azimuth_capi_operator_app_templates_default: >-
   {{-
@@ -623,6 +675,11 @@ azimuth_capi_operator_app_templates_default: >-
       combine(
         { "kubeflow": azimuth_capi_operator_app_templates_kubeflow_spec }
         if azimuth_capi_operator_app_templates_kubeflow_enabled
+        else {}
+      ) |
+      combine(
+        { "binderhub": azimuth_capi_operator_app_templates_binderhub_spec }
+        if azimuth_capi_operator_app_templates_binderhub_enabled
         else {}
       )
   }}
