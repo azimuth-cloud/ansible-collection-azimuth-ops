@@ -623,12 +623,10 @@ azimuth_capi_operator_app_templates_binderhub_keep_versions: 3
 # The sync frequency for the binderhub app template (default 24h)
 azimuth_capi_operator_app_templates_binderhub_sync_frequency: 86400
 # Indicates whether binderhub should use http or https prefix in redirect urls
-# NOTE(sd109): This should be overwritten in azimuth-config based on ingress_tls_enabled
-azimuth_capi_operator_app_templates_binderhub_use_https_redirects: true
+azimuth_capi_operator_app_templates_binderhub_use_https_redirects: "{{ ingress_tls_enabled | default(True) }}"
 # Any default values for the binderhub app template
-azimuth_capi_operator_app_templates_binderhub_default_values: {
-  "binderhub_oauth_use_https": "{{ azimuth_capi_operator_app_templates_binderhub_use_https_redirects }}"
-}
+azimuth_capi_operator_app_templates_binderhub_default_values:
+  binderhub_oauth_use_https: "{{ azimuth_capi_operator_app_templates_binderhub_use_https_redirects }}"
 # The spec for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_spec: >-
   {{-
