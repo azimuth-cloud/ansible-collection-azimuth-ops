@@ -120,8 +120,12 @@
           --for=delete
           --namespace {{ capi_cluster_release_namespace }}
           --timeout 0s
-      changed_when: false
       register: capi_cluster_delete
+      changed_when: false
+      # Allow for the case where we never got as far as installing the CAPI controllers
+      failed_when: >-
+        capi_cluster_delete.rc != 0 and
+        "the server doesn't have a resource type" not in capi_cluster_delete.stderr
       until: capi_cluster_delete is succeeded
       # Wait up to 60 mins for the cluster to delete
       retries: 360
