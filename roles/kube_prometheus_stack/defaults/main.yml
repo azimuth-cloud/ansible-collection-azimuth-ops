@@ -14,6 +14,12 @@ kube_prometheus_stack_wait_timeout: 10m
 
 # The values for the kube-prometheus-stack release
 kube_prometheus_stack_release_defaults:
+  defaultRules:
+    disabled:
+      # None of these are relevant in k3s context
+      KubeSchedulerDown: true
+      KubeProxyDown: true
+      KubeControllerManagerDown: true
   prometheus:
     prometheusSpec:
       podMonitorSelectorNilUsesHelmValues: false
@@ -37,7 +43,9 @@ kube_prometheus_stack_release_defaults:
       # Do NOT add the namespace matcher to routes from AlertmanagerConfig resources
       alertmanagerConfigMatcherStrategy:
         type: None
+
 kube_prometheus_stack_release_overrides: {}
+
 kube_prometheus_stack_release_values: >-
   {{-
     kube_prometheus_stack_release_defaults |
