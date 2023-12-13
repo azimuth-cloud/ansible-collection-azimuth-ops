@@ -215,6 +215,16 @@ azimuth_openstack_domain: default
 azimuth_openstack_interface: public
 #   Whether or not to verify SSL
 azimuth_openstack_verify_ssl: true
+#   The template to use when searching for the internal network
+#   Only used if the internal network is not tagged
+#   If given, network auto-creation is disabled
+#   The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-internal"
+azimuth_openstack_internal_net_template:
+#   The template to use when searching for the external network
+#   Only used if the external network is not tagged
+#   If not given, there must be exactly one external network available to tenants
+#   The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-external"
+azimuth_openstack_external_net_template:
 #   Indicates whether tenant internal networks should be auto-created if not present
 azimuth_openstack_create_internal_net: true
 #   The CIDR to use for auto-created tenant internal networks
@@ -233,11 +243,21 @@ azimuth_openstack_provider: >-
       "createInternalNet": azimuth_openstack_create_internal_net,
       "internalNetCidr": azimuth_openstack_internal_net_cidr
     } |
-    combine(
-      { "internalNetDNSNameservers": azimuth_openstack_internal_net_dns_nameservers }
-      if azimuth_openstack_internal_net_dns_nameservers | length > 0
-      else {}
-    )
+      combine(
+        { "internalNetTemplate": azimuth_openstack_internal_net_template }
+        if azimuth_openstack_internal_net_template
+        else {}
+      ) |
+      combine(
+        { "externalNetTemplate": azimuth_openstack_external_net_template }
+        if azimuth_openstack_external_net_template
+        else {}
+      ) |
+      combine(
+        { "internalNetDNSNameservers": azimuth_openstack_internal_net_dns_nameservers }
+        if azimuth_openstack_internal_net_dns_nameservers | length > 0
+        else {}
+      )
   }}
 
 # App proxy settings
