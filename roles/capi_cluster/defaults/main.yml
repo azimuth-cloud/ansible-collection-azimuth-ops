@@ -457,7 +457,7 @@ capi_cluster_release_defaults:
               )
           }}
       csiCinder:
-        storageClass: >-
+        defaultStorageClass: >-
           {{-
             { "availabilityZone": capi_cluster_addons_csi_cinder_availability_zone } |
               combine(
