@@ -266,7 +266,7 @@ azimuth_capi_operator_capi_helm_values_defaults:
           }}
       # Configure the CSI Cinder storage class
       csiCinder:
-        storageClass: >-
+        defaultStorageClass: >-
           {{-
             { "availabilityZone": azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone } |
               combine(
