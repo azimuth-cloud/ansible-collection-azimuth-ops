@@ -187,9 +187,12 @@ azimuth_caas_stackhpc_workstation_image: >-
     if azimuth_caas_stackhpc_workstation_enabled
     else None
   }}
+# Whether to mount an "external" project manila share
+azimuth_caas_stackhpc_workstation_project_manila_share: true
 # The default extra vars for templates in the StackHPC workstation
 azimuth_caas_stackhpc_workstation_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_stackhpc_workstation_image }}"
+  cluster_project_manila_share: "{{ azimuth_caas_stackhpc_workstation_project_manila_share }}"
 # extra_vars overrides for templates in the StackHPC workstation
 azimuth_caas_stackhpc_workstation_extra_vars_overrides: {}
 azimuth_caas_stackhpc_workstation_extra_vars: >-
