@@ -122,12 +122,26 @@ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name: >-
 # The size of the cluster state volume
 # Must be big enough for a reasonable amount of monitoring data
 azimuth_caas_stackhpc_slurm_appliance_state_volume_size: 40
+# Whether to use Manila for home directories (or volume + NFS)
+azimuth_caas_stackhpc_slurm_appliance_home_manila_share: true
+# The type of the Manila home share
+azimuth_caas_stackhpc_slurm_appliance_home_manila_share_type: >-
+  {{-
+    undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_home_manila_share_type is required')
+    if azimuth_caas_stackhpc_slurm_appliance_home_manila_share | bool
+    else None
+  }}
+# Whether to mount an "external" project manila share
+azimuth_caas_stackhpc_slurm_appliance_project_manila_share: true
 # The default extra vars for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
   login_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_login_flavor_name }}"
   control_flavor_name: "{{ azimuth_caas_stackhpc_slurm_appliance_control_flavor_name }}"
   cluster_state_volume_size: "{{ azimuth_caas_stackhpc_slurm_appliance_state_volume_size }}"
+  cluster_home_manila_share: "{{ azimuth_caas_stackhpc_slurm_appliance_home_manila_share }}"
+  cluster_home_manila_share_type: "{{ azimuth_caas_stackhpc_slurm_appliance_home_manila_share_type }}"
+  cluster_project_manila_share: "{{ azimuth_caas_stackhpc_slurm_appliance_project_manila_share }}"
 # extra_vars overrides for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
 azimuth_caas_stackhpc_slurm_appliance_extra_vars: >-
