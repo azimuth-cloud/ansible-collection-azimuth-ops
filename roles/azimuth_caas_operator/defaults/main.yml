@@ -82,6 +82,8 @@ azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/ansib
 azimuth_caas_stackhpc_slurm_appliance_git_version: v1.138
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
+# The timeout to apply to the k8s jobs which create, update & delete Slurm clusters
+azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds: 1800
 # The metadata root for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
   https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/environments/.caas/ui-meta/slurm-infra.yml
@@ -142,6 +144,7 @@ azimuth_caas_stackhpc_slurm_appliance_template:
   uiMetaUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_url }}"
   playbook: "{{ azimuth_caas_stackhpc_slurm_appliance_playbook }}"
   extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
+  jobTimeout: "{{ azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds }}"
   envVars:
     # Normally set through environment's activate script:
     ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to runner project dir
