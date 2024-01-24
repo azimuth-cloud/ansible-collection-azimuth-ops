@@ -466,6 +466,28 @@ capi_cluster_release_defaults:
                 else {}
               )
           }}
+  etcd: >-
+    {{-
+      { "blockDevice": { "size": etcd_blockdevice_size | default(etcd_volume_size, 'true') } } |
+        combine(
+          { "blockDevice": { "type": "Local" } }
+          if etcd_blockdevice_type | default(etcd_volume_type, 'true') | capitalize  == "Local"
+          else 
+          { "blockDevice": { "type": "Volume" } }
+        ) |
+        combine(
+          { "blockDevice": { "volumeType": etcd_blockdevice_volume_type | default(etcd_volume_type, 'true') } }
+          if etcd_blockdevice_volume_type | default(etcd_volume_type, 'true') | len > 0
+          else {}
+        ) |
+        combine(
+          { "blockDevice": { "availabilityZone": etcd_blockdevice_volume_az } }
+          if etcd_blockdevice_volume_az | len > 0
+          else {}
+        )
+      if etcd_blockdevice_size | default(etcd_volume_size,'true') > 0
+      else {}
+    }}
 
 capi_cluster_release_overrides: {}
 capi_cluster_release_values: >-
