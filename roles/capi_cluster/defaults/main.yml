@@ -157,14 +157,14 @@ capi_cluster_control_plane_root_volume_availability_zone: "{{ capi_cluster_root_
 capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 
 # etcd configuration for the management cluster (if required)
-# The size of the etcd block device
-capi_cluster_etcd_blockdevice_size: 
-# The type of the etcd block device (Local or Volume)
-capi_cluster_etcd_blockdevice_type:
-# The volume type for the etcd volume (if Volume type is used)
-capi_cluster_etcd_blockdevice_volume_type:
-# The availability zone for the etcd volume (if Volume type is used)
-capi_cluster_etcd_blockdevice_volume_az:
+# Default size of the etcd block device for management clusters (in GB)
+capi_cluster_etcd_blockdevice_size: # e.g., 20
+# Default block device type for etcd in management clusters ('Local' or 'Volume')
+capi_cluster_etcd_blockdevice_type: # e.g., 'Local'
+# Default volume type for the etcd block device if 'Volume' type is used in management clusters
+capi_cluster_etcd_blockdevice_volume_type: # e.g., 'SSD'
+# Default availability zone for the etcd block device if 'Volume' type is used in management clusters
+capi_cluster_etcd_blockdevice_volume_az: # e.g., 'us-west-2b'
 
 # Configuration for addons
 #   Determines if the ingress controller should be enabled
