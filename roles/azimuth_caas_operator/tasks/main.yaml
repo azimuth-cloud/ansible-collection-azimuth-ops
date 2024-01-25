@@ -31,7 +31,7 @@
   loop_control:
     loop_var: template
     label: "{{ template.name }}"
-  tag: only_install_caas_templates
+  tags: only_install_caas_templates
 
 - name: Update secrets for Azimuth CaaS ssh key
   command: kubectl apply -f -
