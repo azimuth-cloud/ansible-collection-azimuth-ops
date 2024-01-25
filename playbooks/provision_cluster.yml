@@ -9,6 +9,7 @@
     - stackhpc.azimuth_ops.infra
   vars:
     infra_ansible_groups: [k3s, azimuth_deploy]
+  tags: only_install_caas_templates
 
 
 # Configure the node as a K3S cluster
@@ -87,11 +88,11 @@
         # Install the Velero components on the capi cluster and configure the backup schedule
         # NOTE(sd109): Need to use block so that we can set `environment` variables
         - block:
-          - include_role:
-              name: stackhpc.azimuth_ops.velero
-              tasks_from: schedule.yml
+            - include_role:
+                name: stackhpc.azimuth_ops.velero
+                tasks_from: schedule.yml
           environment:
             KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
           when: velero_enabled
-  
+
       when: install_mode == 'ha'
