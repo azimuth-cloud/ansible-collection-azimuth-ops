@@ -285,28 +285,28 @@ azimuth_capi_operator_capi_helm_values_defaults:
               )
           }}
   etcd: >-
-  {{-
-    {
-      "blockDevice": (
-        {
-          "size": azimuth_capi_operator_capi_helm_etcd_blockdevice_size,
-          "type": azimuth_capi_operator_capi_helm_etcd_blockdevice_type
-        } |
-          combine(
-            { "volumeType": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type }
-            if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type
-            else {}
-          ) |
-          combine(
-            { "availabilityZone": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az }
-            if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az
-            else {}
-          )
-      )
-    }
-    if azimuth_capi_operator_capi_helm_etcd_blockdevice_size > 0
-    else {}
-  }}
+    {{-
+      {
+        "blockDevice": (
+          {
+            "size": azimuth_capi_operator_capi_helm_etcd_blockdevice_size,
+            "type": azimuth_capi_operator_capi_helm_etcd_blockdevice_type
+          } |
+            combine(
+              { "volumeType": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type }
+              if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type
+              else {}
+            ) |
+            combine(
+              { "availabilityZone": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az }
+              if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az
+              else {}
+            )
+        )
+      }
+      if azimuth_capi_operator_capi_helm_etcd_blockdevice_size > 0
+      else {}
+    }}
 
 # Overrides for the CAPI Helm chart releases for all clusters
 azimuth_capi_operator_capi_helm_values_overrides: {}

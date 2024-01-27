@@ -477,28 +477,28 @@ capi_cluster_release_defaults:
               )
           }}
   etcd: >-
-  {{-
-    {
-      "blockDevice": (
-        {
-          "size": capi_cluster_etcd_blockdevice_size,
-          "type": capi_cluster_etcd_blockdevice_type
-        } |
-          combine(
-            { "volumeType": capi_cluster_etcd_blockdevice_volume_type }
-            if capi_cluster_etcd_blockdevice_volume_type
-            else {}
-          ) |
-          combine(
-            { "availabilityZone": capi_cluster_etcd_blockdevice_volume_az }
-            if capi_cluster_etcd_blockdevice_volume_az
-            else {}
-          )
-      )
-    }
-    if capi_cluster_etcd_blockdevice_size > 0
-    else {}
-  }}
+    {{-
+      {
+        "blockDevice": (
+          {
+            "size": capi_cluster_etcd_blockdevice_size,
+            "type": capi_cluster_etcd_blockdevice_type
+          } |
+            combine(
+              { "volumeType": capi_cluster_etcd_blockdevice_volume_type }
+              if capi_cluster_etcd_blockdevice_volume_type
+              else {}
+            ) |
+            combine(
+              { "availabilityZone": capi_cluster_etcd_blockdevice_volume_az }
+              if capi_cluster_etcd_blockdevice_volume_az
+              else {}
+            )
+        )
+      }
+      if capi_cluster_etcd_blockdevice_size > 0
+      else {}
+    }}
 
 capi_cluster_release_overrides: {}
 capi_cluster_release_values: >-
