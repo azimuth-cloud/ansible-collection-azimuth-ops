@@ -79,13 +79,13 @@ azimuth_capi_operator_capi_helm_control_plane_root_volume_availability_zone: "{{
 azimuth_capi_operator_capi_helm_worker_root_volume_availability_zone: "{{ azimuth_capi_operator_capi_helm_root_volume_availability_zone }}"
 
 # Default size of the etcd block device for tenant clusters (in GB)
-azimuth_capi_operator_etcd_blockdevice_size: # e.g., 10
+azimuth_capi_operator_capi_helm_etcd_blockdevice_size: 0
 # Default block device type for etcd in tenant clusters ('Local' or 'Volume')
-azimuth_capi_operator_etcd_blockdevice_type: # e.g., 'Volume'
+azimuth_capi_operator_capi_helm_etcd_blockdevice_type: "Volume"
 # Default volume type for the etcd block device if 'Volume' type is used
-azimuth_capi_operator_etcd_blockdevice_volume_type: # e.g., 'SSD'
+azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type: # e.g., 'SSD'
 # Default availability zone for the etcd block device if 'Volume' type is used
-azimuth_capi_operator_etcd_blockdevice_volume_az: # e.g., 'us-east-1a'
+azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az: "nova"
 
 # Options for LoadBalancer services
 # https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
@@ -286,24 +286,25 @@ azimuth_capi_operator_capi_helm_values_defaults:
           }}
   etcd: >-
   {{-
-    { "blockDevice": { "size": azimuth_capi_operator_etcd_blockdevice_size } } |
-      combine(
-        { "blockDevice": { "type": "Local" } }
-        if azimuth_capi_operator_etcd_blockdevice_type | capitalize  == "Local"
-        else 
-        { "blockDevice": { "type": "Volume" } }
-      ) |
-      combine(
-        { "blockDevice": { "volumeType": azimuth_capi_operator_etcd_blockdevice_volume_type } }
-        if azimuth_capi_operator_etcd_blockdevice_volume_type | len > 0
-        else {}
-      ) |
-      combine(
-        { "blockDevice": { "availabilityZone": azimuth_capi_operator_etcd_blockdevice_volume_az } }
-        if azimuth_capi_operator_etcd_blockdevice_volume_az | len > 0
-        else {}
+    {
+      "blockDevice": (
+        {
+          "size": azimuth_capi_operator_capi_helm_etcd_blockdevice_size,
+          "type": azimuth_capi_operator_capi_helm_etcd_blockdevice_type
+        } |
+          combine(
+            { "volumeType": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type }
+            if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type
+            else {}
+          ) |
+          combine(
+            { "availabilityZone": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az }
+            if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az
+            else {}
+          )
       )
-    if azimuth_capi_operator_etcd_blockdevice_size > 0
+    }
+    if azimuth_capi_operator_capi_helm_etcd_blockdevice_size > 0
     else {}
   }}
 

@@ -158,13 +158,13 @@ capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_
 
 # etcd configuration for the management cluster (if required)
 # Default size of the etcd block device for management clusters (in GB)
-capi_cluster_etcd_blockdevice_size: # e.g., 20
+capi_cluster_etcd_blockdevice_size: 0
 # Default block device type for etcd in management clusters ('Local' or 'Volume')
-capi_cluster_etcd_blockdevice_type: # e.g., 'Local'
+capi_cluster_etcd_blockdevice_type: "Volume"
 # Default volume type for the etcd block device if 'Volume' type is used in management clusters
 capi_cluster_etcd_blockdevice_volume_type: # e.g., 'SSD'
 # Default availability zone for the etcd block device if 'Volume' type is used in management clusters
-capi_cluster_etcd_blockdevice_volume_az: # e.g., 'us-west-2b'
+capi_cluster_etcd_blockdevice_volume_az: "nova"
 
 # Configuration for addons
 #   Determines if the ingress controller should be enabled
@@ -477,27 +477,28 @@ capi_cluster_release_defaults:
               )
           }}
   etcd: >-
-    {{-
-      { "blockDevice": { "size": capi_cluster_etcd_blockdevice_size } } |
-        combine(
-          { "blockDevice": { "type": "Local" } }
-          if capi_cluster_etcd_blockdevice_type | capitalize  == "Local"
-          else 
-          { "blockDevice": { "type": "Volume" } }
-        ) |
-        combine(
-          { "blockDevice": { "volumeType": capi_cluster_etcd_blockdevice_volume_type } }
-          if capi_cluster_etcd_blockdevice_volume_type | len > 0
-          else {}
-        ) |
-        combine(
-          { "blockDevice": { "availabilityZone": capi_cluster_etcd_blockdevice_volume_az } }
-          if capi_cluster_etcd_blockdevice_volume_az | len > 0
-          else {}
-        )
-      if capi_cluster_etcd_blockdevice_size > 0
-      else {}
-    }}
+  {{-
+    {
+      "blockDevice": (
+        {
+          "size": capi_cluster_etcd_blockdevice_size,
+          "type": capi_cluster_etcd_blockdevice_type
+        } |
+          combine(
+            { "volumeType": capi_cluster_etcd_blockdevice_volume_type }
+            if capi_cluster_etcd_blockdevice_volume_type
+            else {}
+          ) |
+          combine(
+            { "availabilityZone": capi_cluster_etcd_blockdevice_volume_az }
+            if capi_cluster_etcd_blockdevice_volume_az
+            else {}
+          )
+      )
+    }
+    if capi_cluster_etcd_blockdevice_size > 0
+    else {}
+  }}
 
 capi_cluster_release_overrides: {}
 capi_cluster_release_values: >-
