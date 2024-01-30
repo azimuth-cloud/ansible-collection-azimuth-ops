@@ -30,6 +30,9 @@ azimuth_caas_operator_ansible_runner_image_tag:
 
 # The values for the release
 azimuth_caas_operator_release_defaults:
+  # Enable the metrics with the service monitor by default
+  metrics:
+    enabled: true
   config:
     consulUrl: "{{ azimuth_caas_operator_consul_url }}"
     ansibleRunnerImage: >-
