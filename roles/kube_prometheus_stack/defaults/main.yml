@@ -30,6 +30,9 @@ kube_prometheus_stack_release_defaults:
     sidecar:
       dashboards:
         searchNamespace: ALL
+    grafana.ini:
+      auth.anonymous:
+        enabled: true
   alertmanager:
     # Don't apply the namespace grouping by default
     config:

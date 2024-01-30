@@ -358,6 +358,11 @@ capi_cluster_release_defaults:
       kubePrometheusStack:
         release:
           values:
+            # Enable anonymous auth in Grafana
+            grafana:
+              grafana.ini:
+                auth.anonymous:
+                  enabled: true
             alertmanager:
               alertmanagerSpec:
                 retention: "{{ capi_cluster_addons_monitoring_alertmanager_retention }}"
