@@ -225,7 +225,7 @@ azimuth_openstack_internal_net_template:
 #   If not given, there must be exactly one external network available to tenants
 #   The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-external"
 azimuth_openstack_external_net_template:
-#   If larger that zero, project specific manila share should be auto-created
+#   If larger than zero, project specific manila share should be auto-created
 azimuth_openstack_manila_project_share_gb: 0
 #   Indicates whether tenant internal networks should be auto-created if not present
 azimuth_openstack_create_internal_net: true
