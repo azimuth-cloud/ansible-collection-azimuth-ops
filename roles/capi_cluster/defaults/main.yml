@@ -210,6 +210,51 @@ capi_cluster_addons_monitoring_prometheus_volume_size: 10Gi
 capi_cluster_addons_monitoring_loki_retention: 744h
 capi_cluster_addons_monitoring_loki_volume_size: 10Gi
 
+# Calculate the external URLs for Prometheus and Alertmanager
+_capi_cluster_addons_monitoring_external_url_tls_enabled: >-
+  {{-
+    admin_dashboard_ingress_tls_enabled |
+      default(ingress_tls_enabled | default(True))
+  }}
+_capi_cluster_addons_monitoring_external_url_scheme: >-
+  {{- "https" if _capi_cluster_addons_monitoring_external_url_tls_enabled else "http" }}
+_capi_cluster_addons_monitoring_alertmanager_host: >-
+  {{-
+    admin_dashboard_ingress_alertmanager_host |
+      default(
+        "{}.{}".format(ingress_alertmanager_subdomain, ingress_base_domain)
+        if ingress_alertmanager_subdomain is defined and ingress_base_domain is defined
+        else ""
+      )
+  }}
+capi_cluster_addons_monitoring_alertmanager_external_url: >-
+  {{-
+    "{}://{}".format(
+      _capi_cluster_addons_monitoring_external_url_scheme,
+      _capi_cluster_addons_monitoring_alertmanager_host
+    )
+    if _capi_cluster_addons_monitoring_alertmanager_host
+    else ""
+  }}
+_capi_cluster_addons_monitoring_prometheus_host: >-
+  {{-
+    admin_dashboard_ingress_prometheus_host |
+      default(
+        "{}.{}".format(ingress_prometheus_subdomain, ingress_base_domain)
+        if ingress_prometheus_subdomain is defined and ingress_base_domain is defined
+        else ""
+      )
+  }}
+capi_cluster_addons_monitoring_prometheus_external_url: >-
+  {{-
+    "{}://{}".format(
+      _capi_cluster_addons_monitoring_external_url_scheme,
+      _capi_cluster_addons_monitoring_prometheus_host
+    )
+    if _capi_cluster_addons_monitoring_prometheus_host
+    else ""
+  }}
+
 # The values for the release
 capi_cluster_release_defaults:
   kubernetesVersion: "{{ capi_cluster_kubernetes_version }}"
@@ -365,6 +410,7 @@ capi_cluster_release_defaults:
                   enabled: true
             alertmanager:
               alertmanagerSpec:
+                externalUrl: "{{ capi_cluster_addons_monitoring_alertmanager_external_url }}"
                 retention: "{{ capi_cluster_addons_monitoring_alertmanager_retention }}"
                 storage:
                   volumeClaimTemplate:
@@ -374,6 +420,7 @@ capi_cluster_release_defaults:
                           storage: "{{ capi_cluster_addons_monitoring_alertmanager_volume_size }}"
             prometheus:
               prometheusSpec:
+                externalUrl: "{{ capi_cluster_addons_monitoring_prometheus_external_url }}"
                 retention: "{{ capi_cluster_addons_monitoring_prometheus_retention }}"
                 storageSpec:
                   volumeClaimTemplate:
