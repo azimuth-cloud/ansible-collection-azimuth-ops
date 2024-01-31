@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: '0.8.0'
+azimuth_caas_operator_chart_version: '0.10.0'
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -30,6 +30,9 @@ azimuth_caas_operator_ansible_runner_image_tag:
 
 # The values for the release
 azimuth_caas_operator_release_defaults:
+  # Enable the metrics with the service monitor by default
+  metrics:
+    enabled: true
   config:
     consulUrl: "{{ azimuth_caas_operator_consul_url }}"
     ansibleRunnerImage: >-
@@ -79,9 +82,11 @@ azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/ansible-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: v1.138
+azimuth_caas_stackhpc_slurm_appliance_git_version: v1.139 # podman images in fat image, and fix podman
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
+# The timeout to apply to the k8s jobs which create, update & delete platform instances
+azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds: 1800
 # The metadata root for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
   https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/environments/.caas/ui-meta/slurm-infra.yml
@@ -142,6 +147,7 @@ azimuth_caas_stackhpc_slurm_appliance_template:
   uiMetaUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_url }}"
   playbook: "{{ azimuth_caas_stackhpc_slurm_appliance_playbook }}"
   extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
+  jobTimeout: "{{ azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds }}"
   envVars:
     # Normally set through environment's activate script:
     ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to runner project dir
@@ -155,6 +161,8 @@ azimuth_caas_stackhpc_workstation_git_url: https://github.com/stackhpc/caas-work
 azimuth_caas_stackhpc_workstation_git_version: 0.2.0-rc.2
 # The playbook to use for the workstation appliance
 azimuth_caas_stackhpc_workstation_playbook: workstation.yml
+# The timeout to apply to the k8s jobs which create, update & delete platform instances
+azimuth_caas_stackhpc_workstation_job_timeout_seconds: 900
 # The metadata URL for the StackHPC workstation
 azimuth_caas_stackhpc_workstation_metadata_url: >-
   https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta/workstation.yml
@@ -189,6 +197,7 @@ azimuth_caas_stackhpc_workstation_template:
   gitVersion: "{{ azimuth_caas_stackhpc_workstation_git_version }}"
   uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_metadata_url }}"
   playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
+  jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
   extraVars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
 
 # Indicates if the StackHPC workstation _with SSH_ should be enabled
@@ -209,6 +218,7 @@ azimuth_caas_stackhpc_workstation_ssh_template:
   gitVersion: "{{ azimuth_caas_stackhpc_workstation_ssh_git_version }}"
   uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_metadata_url }}"
   playbook: "{{ azimuth_caas_stackhpc_workstation_ssh_playbook }}"
+  jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
   extraVars: "{{ azimuth_caas_stackhpc_workstation_ssh_extra_vars }}"
 
 
@@ -220,6 +230,8 @@ azimuth_caas_stackhpc_repo2docker_git_url: https://github.com/stackhpc/caas-repo
 azimuth_caas_stackhpc_repo2docker_git_version: 0.2.0-rc.1
 # The playbook to use for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_playbook: repo2docker.yml
+# The timeout to apply to the k8s jobs which create, update & delete platform instances
+azimuth_caas_stackhpc_repo2docker_job_timeout_seconds: 1200
 # The metadata root for the StackHPC repo2docker appliance project
 azimuth_caas_stackhpc_repo2docker_metadata_url: >-
   https://raw.githubusercontent.com/stackhpc/caas-repo2docker/{{ azimuth_caas_stackhpc_repo2docker_git_version }}/ui-meta/repo2docker.yml
@@ -254,6 +266,7 @@ azimuth_caas_stackhpc_repo2docker_template:
   gitVersion: "{{ azimuth_caas_stackhpc_repo2docker_git_version }}"
   uiMetaUrl: "{{ azimuth_caas_stackhpc_repo2docker_metadata_url }}"
   playbook: "{{ azimuth_caas_stackhpc_repo2docker_playbook }}"
+  jobTimeout: "{{ azimuth_caas_stackhpc_repo2docker_job_timeout_seconds }}"
   extraVars: "{{ azimuth_caas_stackhpc_repo2docker_extra_vars }}"
 
 
@@ -265,6 +278,8 @@ azimuth_caas_stackhpc_rstudio_git_url: https://github.com/stackhpc/caas-r-studio
 azimuth_caas_stackhpc_rstudio_git_version: 0.2.0-rc.1
 # The playbook to use for the StackHPC R-Studio appliance
 azimuth_caas_stackhpc_rstudio_playbook: rstudio.yml
+# The timeout to apply to the k8s jobs which create, update & delete platform instances
+azimuth_caas_stackhpc_rstudio_job_timeout_seconds: 900
 # The metadata root for the StackHPC R-Studio appliance project
 azimuth_caas_stackhpc_rstudio_metadata_url: >-
   https://raw.githubusercontent.com/stackhpc/caas-r-studio-server/{{ azimuth_caas_stackhpc_rstudio_git_version }}/ui-meta/rstudio.yml
@@ -299,6 +314,7 @@ azimuth_caas_stackhpc_rstudio_template:
   gitVersion: "{{ azimuth_caas_stackhpc_rstudio_git_version }}"
   uiMetaUrl: "{{ azimuth_caas_stackhpc_rstudio_metadata_url }}"
   playbook: "{{ azimuth_caas_stackhpc_rstudio_playbook }}"
+  jobTimeout: "{{ azimuth_caas_stackhpc_rstudio_job_timeout_seconds }}"
   extraVars: "{{ azimuth_caas_stackhpc_rstudio_extra_vars }}"
 
 

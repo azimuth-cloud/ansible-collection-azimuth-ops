@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.1.8
+capi_cluster_chart_version: 0.2.0
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -155,6 +155,16 @@ capi_cluster_worker_root_volume_type: "{{ capi_cluster_root_volume_type }}"
 capi_cluster_root_volume_availability_zone:
 capi_cluster_control_plane_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
 capi_cluster_worker_root_volume_availability_zone: "{{ capi_cluster_root_volume_availability_zone }}"
+
+# etcd configuration for the management cluster (if required)
+# Default size of the etcd block device for management clusters (in GB)
+capi_cluster_etcd_blockdevice_size: 0
+# Default block device type for etcd in management clusters ('Local' or 'Volume')
+capi_cluster_etcd_blockdevice_type: "Volume"
+# Default volume type for the etcd block device if 'Volume' type is used in management clusters
+capi_cluster_etcd_blockdevice_volume_type: # e.g., 'SSD'
+# Default availability zone for the etcd block device if 'Volume' type is used in management clusters
+capi_cluster_etcd_blockdevice_volume_az: "nova"
 
 # Configuration for addons
 #   Determines if the ingress controller should be enabled
@@ -466,6 +476,29 @@ capi_cluster_release_defaults:
                 else {}
               )
           }}
+  etcd: >-
+    {{-
+      {
+        "blockDevice": (
+          {
+            "size": capi_cluster_etcd_blockdevice_size,
+            "type": capi_cluster_etcd_blockdevice_type
+          } |
+            combine(
+              { "volumeType": capi_cluster_etcd_blockdevice_volume_type }
+              if capi_cluster_etcd_blockdevice_volume_type
+              else {}
+            ) |
+            combine(
+              { "availabilityZone": capi_cluster_etcd_blockdevice_volume_az }
+              if capi_cluster_etcd_blockdevice_volume_az
+              else {}
+            )
+        )
+      }
+      if capi_cluster_etcd_blockdevice_size > 0
+      else {}
+    }}
 
 capi_cluster_release_overrides: {}
 capi_cluster_release_values: >-
