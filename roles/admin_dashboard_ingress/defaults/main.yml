@@ -164,6 +164,82 @@ admin_dashboard_ingress_alertmanager:
   port: "{{ admin_dashboard_ingress_alertmanager_port }}"
   tls_secret_name: "{{ admin_dashboard_ingress_alertmanager_tls_secret_name }}"
 
+# Settings for the Consul ingress
+#   The namespace for the ingress
+admin_dashboard_ingress_consul_namespace: azimuth
+#   The name for the ingress
+admin_dashboard_ingress_consul_name: consul
+#   The host for the ingress
+admin_dashboard_ingress_consul_host: >-
+  {{-
+    "{}.{}".format(ingress_consul_subdomain, ingress_base_domain)
+    if ingress_consul_subdomain is defined and ingress_base_domain is defined
+    else undef(hint = 'admin_dashboard_ingress_consul_host is required')
+  }}
+#   The name of the service for the ingress
+admin_dashboard_ingress_consul_service: consul-ui
+#   The name of the service port for the ingress
+admin_dashboard_ingress_consul_port: http
+#   The name of the secret containing the certificate for the ingress
+admin_dashboard_ingress_consul_tls_secret_name: >-
+  {{-
+    admin_dashboard_ingress_tls_wildcard_secret_name
+    if admin_dashboard_ingress_tls_wildcard_certificate
+    else admin_dashboard_ingress_consul_name ~ '-tls'
+  }}
+#   The ingress definition
+admin_dashboard_ingress_consul: >-
+  {{-
+    {
+      "name": admin_dashboard_ingress_consul_name,
+      "namespace": admin_dashboard_ingress_consul_namespace,
+      "host": admin_dashboard_ingress_consul_host,
+      "service": admin_dashboard_ingress_consul_service,
+      "port": admin_dashboard_ingress_consul_port,
+      "tls_secret_name": admin_dashboard_ingress_consul_tls_secret_name,
+    }
+    if azimuth_apps_enabled or azimuth_clusters_enabled
+    else None
+  }}
+
+# Settings for the ARA ingress
+#   The namespace for the ingress
+admin_dashboard_ingress_ara_namespace: azimuth
+#   The name for the ingress
+admin_dashboard_ingress_ara_name: ara
+#   The host for the ingress
+admin_dashboard_ingress_ara_host: >-
+  {{-
+    "{}.{}".format(ingress_ara_subdomain, ingress_base_domain)
+    if ingress_ara_subdomain is defined and ingress_base_domain is defined
+    else undef(hint = 'admin_dashboard_ingress_ara_host is required')
+  }}
+#   The name of the service for the ingress
+admin_dashboard_ingress_ara_service: azimuth-caas-operator-ara
+#   The name of the service port for the ingress
+admin_dashboard_ingress_ara_port: http
+#   The name of the secret containing the certificate for the ingress
+admin_dashboard_ingress_ara_tls_secret_name: >-
+  {{-
+    admin_dashboard_ingress_tls_wildcard_secret_name
+    if admin_dashboard_ingress_tls_wildcard_certificate
+    else admin_dashboard_ingress_ara_name ~ '-tls'
+  }}
+#   The ingress definition
+admin_dashboard_ingress_ara: >-
+  {{-
+    {
+      "name": admin_dashboard_ingress_ara_name,
+      "namespace": admin_dashboard_ingress_ara_namespace,
+      "host": admin_dashboard_ingress_ara_host,
+      "service": admin_dashboard_ingress_ara_service,
+      "port": admin_dashboard_ingress_ara_port,
+      "tls_secret_name": admin_dashboard_ingress_ara_tls_secret_name,
+    }
+    if azimuth_clusters_enabled
+    else None
+  }}
+
 # The list of ingresses to create
 admin_dashboard_ingresses: >-
   {{-
@@ -171,6 +247,8 @@ admin_dashboard_ingresses: >-
       admin_dashboard_ingress_grafana,
       admin_dashboard_ingress_prometheus,
       admin_dashboard_ingress_alertmanager,
+      admin_dashboard_ingress_consul,
+      admin_dashboard_ingress_ara,
     ] |
       select() |
       list
