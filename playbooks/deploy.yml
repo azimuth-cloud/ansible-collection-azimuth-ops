@@ -11,6 +11,7 @@
         alertmanager_config_slack_webhook_url
     - role: stackhpc.azimuth_ops.certmanager
       when: certmanager_enabled or azimuth_kubernetes_enabled
+    - role: stackhpc.azimuth_ops.admin_dashboard_ingress
     - role: stackhpc.azimuth_ops.harbor
       when: harbor_enabled
     - role: stackhpc.azimuth_ops.cloud_metrics
