@@ -82,29 +82,6 @@
         content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
         dest: "{{ capi_cluster_kubeconfig_path }}"
         mode: u=rw,g=,o=
-
-    # When the ingress controller is enabled, get the IP
-    - block:
-        - name: Get ingress controller service info
-          command: >-
-            kubectl get service ingress-nginx-controller
-              --namespace ingress-nginx
-              --output json
-          environment:
-            KUBECONFIG: "{{ capi_cluster_kubeconfig_path }}"
-          register: capi_cluster_ingress_controller_svc_cmd
-
-        - name: Set ingress controller load balancer IP fact
-          set_fact:
-            capi_cluster_addons_ingress_load_balancer_ip: >-
-              {{-
-                capi_cluster_ingress_controller_svc_cmd.stdout |
-                  from_json |
-                  json_query('status.loadBalancer.ingress[0].ip')
-              }}
-      when:
-        - capi_cluster_addons_ingress_enabled
-        - not capi_cluster_addons_ingress_load_balancer_ip
   when: capi_cluster_release_state == 'present'
 
 - block:

@@ -171,7 +171,8 @@ capi_cluster_etcd_blockdevice_volume_az: "nova"
 capi_cluster_addons_ingress_enabled: "{{ ingress_controller_enabled | default(true) }}"
 #   A pre-allocated IP for the ingress load balancer
 #   If given, this IP should have the wildcard domain assigned to it
-capi_cluster_addons_ingress_load_balancer_ip:
+capi_cluster_addons_ingress_load_balancer_ip: >-
+  {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
 #   Options for LoadBalancer services
 #   https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
 capi_cluster_addons_openstack_loadbalancer_method: >-
@@ -393,7 +394,7 @@ capi_cluster_release_defaults:
                   {} |
                     combine(
                       { "loadBalancerIP": capi_cluster_addons_ingress_load_balancer_ip }
-                      if capi_cluster_addons_ingress_load_balancer_ip
+                      if capi_cluster_addons_ingress_enabled
                       else {}
                     )
                 }}
