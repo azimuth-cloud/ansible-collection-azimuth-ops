@@ -53,6 +53,11 @@ zenith_registrar_reserved_subdomains: >-
       ingress_harbor_core_subdomain | default(None),
       ingress_harbor_notary_subdomain | default(None),
       ingress_keycloak_subdomain | default(None),
+      ingress_grafana_subdomain | default(None),
+      ingress_prometheus_subdomain | default(None),
+      ingress_alertmanager_subdomain | default(None),
+      ingress_consul_subdomain | default(None),
+      ingress_ara_subdomain | default(None),
     ] |
     select() |
     list
