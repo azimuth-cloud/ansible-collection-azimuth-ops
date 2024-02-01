@@ -1,0 +1,35 @@
+---
+
+kubernetes_dashboard_chart_repo: https://kubernetes.github.io/dashboard
+kubernetes_dashboard_chart_name: kubernetes-dashboard
+kubernetes_dashboard_chart_version: 6.0.8
+
+kubernetes_dashboard_release_namespace: kubernetes-dashboard
+kubernetes_dashboard_release_name: kubernetes-dashboard
+
+# The timeout to wait for the dashboard to become ready
+kubernetes_dashboard_wait_timeout: 10m
+
+# The values for the release
+kubernetes_dashboard_release_defaults:
+  protocolHttp: true
+  metricsScraper:
+    enabled: true
+  rbac:
+    # Create a readonly role for the dashboard that can see all the resources
+    clusterReadOnlyRole: true
+    clusterReadOnlyRoleAdditionalRules:
+      - apiGroups:
+          - "*"
+        resources:
+          - "*"
+        verbs:
+          - get
+          - list
+          - watch
+kubernetes_dashboard_release_overrides: {}
+kubernetes_dashboard_release_values: >-
+  {{-
+    kubernetes_dashboard_release_defaults |
+      combine(kubernetes_dashboard_release_overrides, recursive = True)
+  }}
