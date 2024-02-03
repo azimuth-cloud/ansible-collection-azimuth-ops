@@ -1,0 +1,14 @@
+---
+
+- name: Install Helm dashboard on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ helm_dashboard_chart_name }}"
+    chart_repo_url: "{{ helm_dashboard_chart_repo }}"
+    chart_version: "{{ helm_dashboard_chart_version }}"
+    release_namespace: "{{ helm_dashboard_release_namespace }}"
+    release_name: "{{ helm_dashboard_release_name }}"
+    release_values: "{{ helm_dashboard_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ helm_dashboard_wait_timeout }}"
