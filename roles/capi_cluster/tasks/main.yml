@@ -28,6 +28,7 @@
       retries: 12
       delay: 10
       when: capi_cluster_helm_release is changed
+      ignore_errors: true
 
     - name: Wait for cluster to become ready
       command: >-
