@@ -48,24 +48,6 @@ jobs:
           os-clouds: ${{ secrets.OS_CLOUDS }}
           environment-prefix: ops-ci
           azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
-          # TODO(mkjpryor) remove these once the relevant azimuth-config PRs are merged
-          extra-vars: |
-            ingress_grafana_subdomain: grafana
-            ingress_prometheus_subdomain: prometheus
-            ingress_alertmanager_subdomain: alertmanager
-            ingress_consul_subdomain: consul
-            ingress_ara_subdomain: ara
-            ingress_helm_dashboard_subdomain: helm
-            ingress_kubernetes_dashboard_subdomain: kubernetes
-            admin_dashboard_ingress_basic_auth_password: admin
-
-      # TODO(mkjpryor) remove this once https://github.com/stackhpc/azimuth-config/pull/86 merges
-      - name: Install additional Python dependencies
-        run: |
-          set -e
-          source ./ci.env
-          source ./bin/activate "$AZIMUTH_CONFIG_ENVIRONMENT" "$AZIMUTH_ENVIRONMENT"
-          python -m pip install 'bcrypt==4.0.1' passlib
 
       # Provision Azimuth using the azimuth-ops version under test
       - name: Provision Azimuth
