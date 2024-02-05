@@ -689,6 +689,56 @@ azimuth_capi_operator_app_templates_binderhub_spec: >-
       )
   }}
 
+# Indicates whether the Zenith-enabled huggingface_llm app template should be enabled
+azimuth_capi_operator_app_templates_huggingface_llm_enabled: true
+# The Helm chart to use for the huggingface_llm app template
+azimuth_capi_operator_app_templates_huggingface_llm_chart_name: azimuth-llm
+# The Helm repository to use for the huggingface_llm app template
+azimuth_capi_operator_app_templates_huggingface_llm_chart_repo: https://stackhpc.github.io/azimuth-llm
+# The version range to use for the huggingface_llm Helm chart
+# TODO: Make this a SemVer tag in the future
+azimuth_capi_operator_app_templates_huggingface_llm_version_range: ">=0.0.0"
+# Overrides for the label, logo and description from the huggingface_llm Helm chart
+azimuth_capi_operator_app_templates_huggingface_llm_label:
+azimuth_capi_operator_app_templates_huggingface_llm_logo: https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo.svg
+azimuth_capi_operator_app_templates_huggingface_llm_description: |
+    A generative AI chatbot service backed by a HuggingFace large language model
+    (requires a GPU node group on the target cluster).
+# The number of versions to make available for the huggingface_llm app template
+azimuth_capi_operator_app_templates_huggingface_llm_keep_versions: 3
+# The sync frequency for the huggingface_llm app template (default 24h)
+azimuth_capi_operator_app_templates_huggingface_llm_sync_frequency: 86400
+# Any default values for the huggingface_llm app template
+azimuth_capi_operator_app_templates_huggingface_llm_default_values: {}
+# The spec for the huggingface_llm app template
+azimuth_capi_operator_app_templates_huggingface_llm_spec: >-
+  {{-
+    {
+      "chart": {
+        "repo": azimuth_capi_operator_app_templates_huggingface_llm_chart_repo,
+        "name": azimuth_capi_operator_app_templates_huggingface_llm_chart_name,
+      },
+      "versionRange": azimuth_capi_operator_app_templates_huggingface_llm_version_range,
+      "keepVersions": azimuth_capi_operator_app_templates_huggingface_llm_keep_versions,
+      "syncFrequency": azimuth_capi_operator_app_templates_huggingface_llm_sync_frequency,
+      "defaultValues": azimuth_capi_operator_app_templates_huggingface_llm_default_values,
+    } |
+      combine(
+        { "label": azimuth_capi_operator_app_templates_huggingface_llm_label }
+        if azimuth_capi_operator_app_templates_huggingface_llm_label
+        else {}
+      ) |
+      combine(
+        { "logo": azimuth_capi_operator_app_templates_huggingface_llm_logo }
+        if azimuth_capi_operator_app_templates_huggingface_llm_logo
+        else {}
+      ) |
+      combine(
+        { "description": azimuth_capi_operator_app_templates_huggingface_llm_description }
+        if azimuth_capi_operator_app_templates_huggingface_llm_description
+        else {}
+      )
+  }}
 
 # The default templates
 azimuth_capi_operator_app_templates_default: >-
@@ -712,6 +762,11 @@ azimuth_capi_operator_app_templates_default: >-
       combine(
         { "binderhub": azimuth_capi_operator_app_templates_binderhub_spec }
         if azimuth_capi_operator_app_templates_binderhub_enabled
+        else {}
+      ) |
+      combine(
+        { "huggingface-llm": azimuth_capi_operator_app_templates_huggingface_llm_spec }
+        if azimuth_capi_operator_app_templates_huggingface_llm_enabled
         else {}
       )
   }}
