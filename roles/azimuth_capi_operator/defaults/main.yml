@@ -697,7 +697,7 @@ azimuth_capi_operator_app_templates_huggingface_llm_chart_name: azimuth-llm
 azimuth_capi_operator_app_templates_huggingface_llm_chart_repo: https://stackhpc.github.io/azimuth-llm
 # The version range to use for the huggingface_llm Helm chart
 # TODO: Make this a SemVer tag in the future
-azimuth_capi_operator_app_templates_huggingface_llm_version_range: ">=0.1.0-dev.0.main.0,<0.1.0-dev.0.main.999999999"
+azimuth_capi_operator_app_templates_huggingface_llm_version_range: ">=0.0.0"
 # Overrides for the label, logo and description from the huggingface_llm Helm chart
 azimuth_capi_operator_app_templates_huggingface_llm_label:
 azimuth_capi_operator_app_templates_huggingface_llm_logo: https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo.svg
