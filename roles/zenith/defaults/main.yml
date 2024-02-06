@@ -3,7 +3,7 @@
 # The chart to use
 zenith_chart_repo: https://stackhpc.github.io/zenith
 zenith_chart_name: zenith-server
-zenith_chart_version: 0.3.3
+zenith_chart_version: 0.4.0
 
 # Release information for the Zenith release
 # Use the same namespace as the Azimuth release by default
@@ -53,6 +53,11 @@ zenith_registrar_reserved_subdomains: >-
       ingress_harbor_core_subdomain | default(None),
       ingress_harbor_notary_subdomain | default(None),
       ingress_keycloak_subdomain | default(None),
+      ingress_grafana_subdomain | default(None),
+      ingress_prometheus_subdomain | default(None),
+      ingress_alertmanager_subdomain | default(None),
+      ingress_consul_subdomain | default(None),
+      ingress_ara_subdomain | default(None),
     ] |
     select() |
     list

@@ -32,7 +32,7 @@ velero_aws_secret_access_key: "{{ undef(hint='velero_aws_access_key_id and veler
 # Kubernetes CSI Snapshot Controller config
 velero_csi_snapshot_controller_chart_name: snapshot-controller
 velero_csi_snapshot_controller_chart_repo: https://piraeus.io/helm-charts/
-velero_csi_snapshot_controller_chart_version: 2.0.4
+velero_csi_snapshot_controller_chart_version: 2.1.0
 velero_csi_snapshot_controller_release_namespace: kube-system
 velero_csi_snapshot_controller_release_name: csi-snapshot-controller
 velero_csi_snapshot_controller_wait_timeout: 10m
@@ -49,14 +49,14 @@ velero_k8s_cinder_snapshot_class_name: cinder-csi-snapshot
 
 # Velero plugin config
 velero_s3_plugin_image_source: velero/velero-plugin-for-aws
-velero_s3_plugin_image_version: v1.8.2
+velero_s3_plugin_image_version: v1.9.0
 velero_csi_plugin_image_source: velero/velero-plugin-for-csi
-velero_csi_plugin_image_version: v0.6.3
+velero_csi_plugin_image_version: v0.7.0
 
 # Velero Helm chart config
 velero_chart_name: velero
 velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
-velero_chart_version: 5.2.0
+velero_chart_version: 5.3.0
 velero_release_namespace: velero
 velero_release_name: velero
 velero_wait_timeout: 10m

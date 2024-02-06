@@ -3,7 +3,7 @@
 # The chart to use
 kube_prometheus_stack_chart_repo: https://prometheus-community.github.io/helm-charts
 kube_prometheus_stack_chart_name: kube-prometheus-stack
-kube_prometheus_stack_chart_version: 56.2.1
+kube_prometheus_stack_chart_version: 56.6.2
 
 # Release information
 kube_prometheus_stack_release_namespace: monitoring-system
@@ -11,6 +11,51 @@ kube_prometheus_stack_release_name: kube-prometheus-stack
 
 # The timeout to wait for the release to become ready
 kube_prometheus_stack_wait_timeout: 10m
+
+# The external URLs for Prometheus and Alertmanager
+_kube_prometheus_stack_external_url_tls_enabled: >-
+  {{-
+    admin_dashboard_ingress_tls_enabled |
+      default(ingress_tls_enabled | default(True))
+  }}
+_kube_prometheus_stack_external_url_scheme: >-
+  {{- "https" if _kube_prometheus_stack_external_url_tls_enabled else "http" }}
+_kube_prometheus_stack_alertmanager_host: >-
+  {{-
+    admin_dashboard_ingress_alertmanager_host |
+      default(
+        "{}.{}".format(ingress_alertmanager_subdomain, ingress_base_domain)
+        if ingress_alertmanager_subdomain is defined and ingress_base_domain is defined
+        else ""
+      )
+  }}
+kube_prometheus_stack_alertmanager_external_url: >-
+  {{-
+    "{}://{}".format(
+      _kube_prometheus_stack_external_url_scheme,
+      _kube_prometheus_stack_alertmanager_host
+    )
+    if _kube_prometheus_stack_alertmanager_host
+    else ""
+  }}
+_kube_prometheus_stack_prometheus_host: >-
+  {{-
+    admin_dashboard_ingress_prometheus_host |
+      default(
+        "{}.{}".format(ingress_prometheus_subdomain, ingress_base_domain)
+        if ingress_prometheus_subdomain is defined and ingress_base_domain is defined
+        else ""
+      )
+  }}
+kube_prometheus_stack_prometheus_external_url: >-
+  {{-
+    "{}://{}".format(
+      _kube_prometheus_stack_external_url_scheme,
+      _kube_prometheus_stack_prometheus_host
+    )
+    if _kube_prometheus_stack_prometheus_host
+    else ""
+  }}
 
 # The values for the kube-prometheus-stack release
 kube_prometheus_stack_release_defaults:
@@ -22,6 +67,7 @@ kube_prometheus_stack_release_defaults:
       KubeControllerManagerDown: true
   prometheus:
     prometheusSpec:
+      externalUrl: "{{ kube_prometheus_stack_prometheus_external_url }}"
       podMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelectorNilUsesHelmValues: false
       probeSelectorNilUsesHelmValues: false
@@ -30,12 +76,16 @@ kube_prometheus_stack_release_defaults:
     sidecar:
       dashboards:
         searchNamespace: ALL
+    grafana.ini:
+      auth.anonymous:
+        enabled: true
   alertmanager:
     # Don't apply the namespace grouping by default
     config:
       route:
         group_by: ['...']
     alertmanagerSpec:
+      externalUrl: "{{ kube_prometheus_stack_alertmanager_external_url }}"
       # Make sure that alertmanager finds configurations with the alertmanager name as a label
       alertmanagerConfigSelector:
         matchLabels:

@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://stackhpc.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.2.0
+capi_cluster_chart_version: 0.3.0
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -171,7 +171,8 @@ capi_cluster_etcd_blockdevice_volume_az: "nova"
 capi_cluster_addons_ingress_enabled: "{{ ingress_controller_enabled | default(true) }}"
 #   A pre-allocated IP for the ingress load balancer
 #   If given, this IP should have the wildcard domain assigned to it
-capi_cluster_addons_ingress_load_balancer_ip:
+capi_cluster_addons_ingress_load_balancer_ip: >-
+  {{ undef(hint = 'capi_cluster_addons_ingress_load_balancer_ip is required') }}
 #   Options for LoadBalancer services
 #   https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
 capi_cluster_addons_openstack_loadbalancer_method: >-
@@ -209,6 +210,51 @@ capi_cluster_addons_monitoring_prometheus_volume_size: 10Gi
 #   Retention settings for logs in Loki
 capi_cluster_addons_monitoring_loki_retention: 744h
 capi_cluster_addons_monitoring_loki_volume_size: 10Gi
+
+# Calculate the external URLs for Prometheus and Alertmanager
+_capi_cluster_addons_monitoring_external_url_tls_enabled: >-
+  {{-
+    admin_dashboard_ingress_tls_enabled |
+      default(ingress_tls_enabled | default(True))
+  }}
+_capi_cluster_addons_monitoring_external_url_scheme: >-
+  {{- "https" if _capi_cluster_addons_monitoring_external_url_tls_enabled else "http" }}
+_capi_cluster_addons_monitoring_alertmanager_host: >-
+  {{-
+    admin_dashboard_ingress_alertmanager_host |
+      default(
+        "{}.{}".format(ingress_alertmanager_subdomain, ingress_base_domain)
+        if ingress_alertmanager_subdomain is defined and ingress_base_domain is defined
+        else ""
+      )
+  }}
+capi_cluster_addons_monitoring_alertmanager_external_url: >-
+  {{-
+    "{}://{}".format(
+      _capi_cluster_addons_monitoring_external_url_scheme,
+      _capi_cluster_addons_monitoring_alertmanager_host
+    )
+    if capi_cluster_addons_ingress_enabled and _capi_cluster_addons_monitoring_alertmanager_host
+    else ""
+  }}
+_capi_cluster_addons_monitoring_prometheus_host: >-
+  {{-
+    admin_dashboard_ingress_prometheus_host |
+      default(
+        "{}.{}".format(ingress_prometheus_subdomain, ingress_base_domain)
+        if ingress_prometheus_subdomain is defined and ingress_base_domain is defined
+        else ""
+      )
+  }}
+capi_cluster_addons_monitoring_prometheus_external_url: >-
+  {{-
+    "{}://{}".format(
+      _capi_cluster_addons_monitoring_external_url_scheme,
+      _capi_cluster_addons_monitoring_prometheus_host
+    )
+    if capi_cluster_addons_ingress_enabled and _capi_cluster_addons_monitoring_prometheus_host
+    else ""
+  }}
 
 # The values for the release
 capi_cluster_release_defaults:
@@ -348,7 +394,7 @@ capi_cluster_release_defaults:
                   {} |
                     combine(
                       { "loadBalancerIP": capi_cluster_addons_ingress_load_balancer_ip }
-                      if capi_cluster_addons_ingress_load_balancer_ip
+                      if capi_cluster_addons_ingress_enabled
                       else {}
                     )
                 }}
@@ -358,8 +404,14 @@ capi_cluster_release_defaults:
       kubePrometheusStack:
         release:
           values:
+            # Enable anonymous auth in Grafana
+            grafana:
+              grafana.ini:
+                auth.anonymous:
+                  enabled: true
             alertmanager:
               alertmanagerSpec:
+                externalUrl: "{{ capi_cluster_addons_monitoring_alertmanager_external_url }}"
                 retention: "{{ capi_cluster_addons_monitoring_alertmanager_retention }}"
                 storage:
                   volumeClaimTemplate:
@@ -369,6 +421,7 @@ capi_cluster_release_defaults:
                           storage: "{{ capi_cluster_addons_monitoring_alertmanager_volume_size }}"
             prometheus:
               prometheusSpec:
+                externalUrl: "{{ capi_cluster_addons_monitoring_prometheus_external_url }}"
                 retention: "{{ capi_cluster_addons_monitoring_prometheus_retention }}"
                 storageSpec:
                   volumeClaimTemplate:
