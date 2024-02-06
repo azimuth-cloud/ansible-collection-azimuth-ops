@@ -702,8 +702,8 @@ azimuth_capi_operator_app_templates_huggingface_llm_version_range: ">=0.0.0"
 azimuth_capi_operator_app_templates_huggingface_llm_label:
 azimuth_capi_operator_app_templates_huggingface_llm_logo: https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo.svg
 azimuth_capi_operator_app_templates_huggingface_llm_description: |
-    A generative AI chatbot service backed by a HuggingFace large language model
-    (requires a GPU node group on the target cluster).
+  A generative AI chatbot service backed by a HuggingFace large language model
+  (requires a GPU node group on the target cluster).
 # The number of versions to make available for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_keep_versions: 3
 # The sync frequency for the huggingface_llm app template (default 24h)
