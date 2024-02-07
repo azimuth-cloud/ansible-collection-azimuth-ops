@@ -91,6 +91,15 @@
         release_namespace: "{{ capi_cluster_release_namespace }}"
         release_name: "{{ capi_cluster_release_name }}"
         release_state: absent
+      register: capi_cluster_helm_delete
+      # There are some failure conditions that also represent the desired state
+      #   * Helm is not available
+      #   * The cluster is not reachable
+      changed_when: capi_cluster_helm_delete.rc == 0
+      failed_when: >-
+        capi_cluster_helm_delete.rc != 0 and
+        'Failed to find required executable' not in capi_cluster_helm_delete.stderr and
+        'Kubernetes cluster unreachable' not in capi_cluster_helm_delete.stderr
 
     - name: Wait for cluster to be deleted
       command: >-
@@ -100,12 +109,10 @@
           --timeout 0s
       register: capi_cluster_delete
       changed_when: false
-      # Allow for the case where we never got as far as installing the CAPI controllers
-      failed_when: >-
-        capi_cluster_delete.rc != 0 and
-        "the server doesn't have a resource type" not in capi_cluster_delete.stderr
       until: capi_cluster_delete is succeeded
       # Wait up to 60 mins for the cluster to delete
       retries: 360
       delay: 10
+      # We only need to do this if the Helm delete did something
+      when: capi_cluster_helm_delete is changed
   when: capi_cluster_release_state == 'absent'
