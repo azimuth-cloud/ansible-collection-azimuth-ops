@@ -2,20 +2,22 @@
 # This playbook tears down infrastructure created by the provision playbook
 #####
 
-
-# In order to populate the inventory in order to tear down a Cluster API cluster,
-# we must first run the infrastructure provisioning in forward mode
+# Get the state information for the seed and adopt it
 - hosts: terraform_provision
-  roles:
-    - role: stackhpc.azimuth_ops.infra
-      when: install_mode == 'ha'
-  vars:
-    infra_ansible_groups: [k3s]
-
+  ignore_errors: "{{ force_destroy | default(False) }}"
+  tasks:
+    - name: Discover k3s host and adopt it
+      include_role:
+        name: stackhpc.azimuth_ops.infra
+      vars:
+        infra_readonly: true
+        infra_ansible_groups: [k3s]
 
 # Tear down the Cluster API cluster
 # The k3s group will be empty if the install_mode is not 'ha'
 - hosts: k3s
+  ignore_unreachable: "{{ force_destroy | default(False) }}"
+  ignore_errors: "{{ force_destroy | default(False) }}"
   roles:
     - role: stackhpc.azimuth_ops.capi_cluster
       vars:
