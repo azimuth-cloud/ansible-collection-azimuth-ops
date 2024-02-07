@@ -284,6 +284,10 @@ azimuth_capi_operator_capi_helm_values_defaults:
                 else {}
               )
           }}
+    # Disable blackbox exporter (for now)
+    monitoring:
+      blackboxExporter:
+        enabled: false
   etcd: >-
     {{-
       {
