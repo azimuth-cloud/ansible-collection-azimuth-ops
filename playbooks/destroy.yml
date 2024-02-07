@@ -12,6 +12,7 @@
       vars:
         infra_readonly: true
         infra_ansible_groups: [k3s]
+      when: install_mode == 'ha'
 
 # Tear down the Cluster API cluster
 # The k3s group will be empty if the install_mode is not 'ha'
