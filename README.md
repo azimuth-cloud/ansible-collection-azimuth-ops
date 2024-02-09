@@ -8,9 +8,9 @@ It can function in three modes:
 
   1. Deploy Azimuth onto a pre-existing Kubernetes cluster.
   2. Provision a single-node [K3S](https://k3s.io/) cluster into an
-     [OpenStack](https://www.openstack.org/) project using [Terraform](https://www.terraform.io/)
+     [OpenStack](https://www.openstack.org/) project using [OpenTofu](https://opentofu.org/)
      and deploy Azimuth onto it.
-  3. Provision a single-node K3S cluster into an OpenStack project using Terraform, configure
+  3. Provision a single-node K3S cluster into an OpenStack project using OpenTofu, configure
      it as a [Cluster API](https://cluster-api.sigs.k8s.io/) management cluster, use it
      to deploy a high-availability Kubernetes cluster into the same OpenStack project using
      Cluster API and finally deploy Azimuth onto the high-availability cluster.
