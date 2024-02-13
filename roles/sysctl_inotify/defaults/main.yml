@@ -1,0 +1,7 @@
+---
+
+# We set higher numbers for inotify watches, because Kubernetes uses a lot of watches
+# These values are 8x the defaults in Ubuntu 22.04
+sysctl_inotify_max_queued_events: 131072
+sysctl_inotify_max_user_instances: 1024
+sysctl_inotify_max_user_watches: 1308496
