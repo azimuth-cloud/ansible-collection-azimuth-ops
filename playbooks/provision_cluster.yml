@@ -19,6 +19,9 @@
 
     - block:
         - include_role:
+            name: stackhpc.azimuth_ops.sysctl_inotify
+
+        - include_role:
             name: stackhpc.azimuth_ops.k3s
 
         - name: Get installed Kubernetes version

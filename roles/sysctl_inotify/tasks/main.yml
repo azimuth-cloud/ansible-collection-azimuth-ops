@@ -1,0 +1,14 @@
+---
+
+- name: Set inotify sysctl options
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    reload: yes
+  loop:
+    - name: fs.inotify.max_queued_events
+      value: "{{ sysctl_inotify_max_queued_events }}"
+    - name: fs.inotify.max_user_instances
+      value: "{{ sysctl_inotify_max_user_instances }}"
+    - name: fs.inotify.max_user_watches
+      value: "{{ sysctl_inotify_max_user_watches }}"
