@@ -17,21 +17,10 @@
 
 - name: Update variables for workstation appliances
   command: >-
-    kubectl patch clusters.caas {{ azimuth_caas_operator_cluster_name }}
-      --namespace {{ azimuth_caas_operator_cluster_namespace }}
+    kubectl patch clusters.caas {{ cluster.metadata.name }}
+      --namespace {{ cluster.metadata.namespace }}
       --type merge
-      --patch {{ azimuth_caas_operator_cluster_patch | quote }}
-  vars:
-    azimuth_caas_operator_cluster_name: "{{ cluster.metadata.name }}"
-    azimuth_caas_operator_cluster_namespace: "{{ cluster.metadata.namespace }}"
-    azimuth_caas_operator_cluster_patch: |
-      {
-        "spec": {
-          "extraVars": {
-            "zenith_volume_size": 1
-          }
-        }
-      }
+      --patch '{"spec": {"extraVars": {"zenith_volume_size": 1}}}'
   loop: >-
     [
       {% for cluster in azimuth_caas_operator_clusters %}
@@ -48,13 +37,11 @@
 
 - name: Update variables for Slurm appliances
   command: >-
-    kubectl patch clusters.caas {{ azimuth_caas_operator_cluster_name }}
-      --namespace {{ azimuth_caas_operator_cluster_namespace }}
+    kubectl patch clusters.caas {{ cluster.metadata.name }}
+      --namespace {{ cluster.metadata.namespace }}
       --type merge
-      --patch {{ azimuth_caas_operator_cluster_patch | quote }}
+      --patch {{ azimuth_caas_operator_cluster_patch | to_json | quote }}
   vars:
-    azimuth_caas_operator_cluster_name: "{{ cluster.metadata.name }}"
-    azimuth_caas_operator_cluster_namespace: "{{ cluster.metadata.namespace }}"
     azimuth_caas_operator_extravars_login_flavor: >-
       {{-
         lookup(
