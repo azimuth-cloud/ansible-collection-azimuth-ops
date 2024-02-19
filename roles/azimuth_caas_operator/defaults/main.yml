@@ -77,6 +77,13 @@ azimuth_caas_operator_default_ssh_secret_files: {}
 # Appliance configuration
 #####
 
+# The tenancy access control keys recognised by Azimuth
+azimuth_tenancy_access_control_deny_ids_key: "acl.azimuth.stackhpc.com/deny-list"
+azimuth_tenancy_access_control_allow_ids_key: "acl.azimuth.stackhpc.com/allow-list"
+azimuth_tenancy_access_control_deny_regex_key: "acl.azimuth.stackhpc.com/deny-regex"
+azimuth_tenancy_access_control_allow_regex_key: "acl.azimuth.stackhpc.com/allow-regex"
+
+
 # Indicates if the StackHPC Slurm appliance should be enabled
 azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC Slurm appliance
@@ -176,6 +183,37 @@ azimuth_caas_stackhpc_workstation_extra_vars: >-
     azimuth_caas_stackhpc_workstation_extra_vars_defaults |
       combine(azimuth_caas_stackhpc_workstation_extra_vars_overrides)
   }}
+# The tenancy-based access controls for the StackHPC workstation
+# List of allowed tenancy IDs
+azimuth_caas_stackhpc_workstation_allow_list: "{{ platforms_allow_list | default(None) }}"
+# List of denied tenancy IDs
+azimuth_caas_stackhpc_workstation_deny_list: "{{ platforms_deny_list | default(None) }}"
+# Regex pattern to allow tenancies by name
+azimuth_caas_stackhpc_workstation_allow_regex: "{{ platforms_allow_regex | default(None) }}"
+# Regex pattern to block tenancies by name
+azimuth_caas_stackhpc_workstation_deny_regex: "{{ platforms_deny_regex | default(None) }}"
+# The set of key-value annotations to apply to the template
+azimuth_caas_stackhpc_workstation_access_control_annotations: >-
+  {{-
+    {} |
+    combine(
+      { azimuth_tenancy_access_control_allow_ids_key: ",".join(azimuth_caas_stackhpc_workstation_allow_list) }
+      if azimuth_caas_stackhpc_workstation_allow_list | length > 0
+      else {}
+    ) | combine(
+      { azimuth_tenancy_access_control_deny_ids_key: ",".join(azimuth_caas_stackhpc_workstation_deny_list) }
+      if azimuth_caas_stackhpc_workstation_deny_list | length > 0
+      else {}
+    ) | combine(
+      { azimuth_tenancy_access_control_allow_regex_key: azimuth_caas_stackhpc_workstation_allow_regex }
+      if azimuth_caas_stackhpc_workstation_allow_regex is defined
+      else {}
+    ) | combine(
+      { azimuth_tenancy_access_control_deny_regex_key: azimuth_caas_stackhpc_workstation_deny_regex }
+      if azimuth_caas_stackhpc_workstation_deny_regex is defined
+      else {}
+    )
+  }}
 # The template definition for the StackHPC workstation appliance
 azimuth_caas_stackhpc_workstation_template:
   gitUrl: "{{ azimuth_caas_stackhpc_workstation_git_url }}"
@@ -184,6 +222,7 @@ azimuth_caas_stackhpc_workstation_template:
   playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
   jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
   extraVars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
+  annotations: "{{ azimuth_caas_stackhpc_workstation_access_control_annotations }}"
 
 # Indicates if the StackHPC workstation _with SSH_ should be enabled
 azimuth_caas_stackhpc_workstation_ssh_enabled: "{{ azimuth_caas_stackhpc_workstation_enabled }}"
