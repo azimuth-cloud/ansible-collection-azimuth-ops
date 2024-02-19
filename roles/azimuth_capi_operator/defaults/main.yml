@@ -514,8 +514,39 @@ azimuth_capi_operator_app_templates_jupyterhub_description:
 azimuth_capi_operator_app_templates_jupyterhub_keep_versions: 3
 # The sync frequency for the JupyterHub app template (default 24h)
 azimuth_capi_operator_app_templates_jupyterhub_sync_frequency: 86400
-# Any defaultn values for the JupyterHub app template
+# Any default values for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_default_values: {}
+# The tenancy-based access controls for the JupyterHub app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default(None) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default(None) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default(None) }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default(None) }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_jupyterhub_tenancy_access_control_annotations: >-
+  {{-
+    {} |
+    combine(
+      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_list) }
+      if azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_list | length > 0
+      else {}
+    ) | combine(
+      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_list) }
+      if azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_list | length > 0
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/allow-regex": azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_regex }
+      if azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_regex
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/deny-regex": azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_regex }
+      if azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_regex
+      else {}
+    )
+  }}
 # The spec for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_spec: >-
   {{-
@@ -528,6 +559,7 @@ azimuth_capi_operator_app_templates_jupyterhub_spec: >-
       "keepVersions": azimuth_capi_operator_app_templates_jupyterhub_keep_versions,
       "syncFrequency": azimuth_capi_operator_app_templates_jupyterhub_sync_frequency,
       "defaultValues": azimuth_capi_operator_app_templates_jupyterhub_default_values,
+      "annotations": azimuth_capi_operator_app_templates_jupyterhub_tenancy_access_control_annotations,
     } |
       combine(
         { "label": azimuth_capi_operator_app_templates_jupyterhub_label }
