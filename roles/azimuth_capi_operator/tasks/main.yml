@@ -72,6 +72,20 @@
   loop_control:
     label: "{{ item.metadata.name }}"
 
+- name: Ensure cluster template tenancy access controls are up to date
+  command: >-
+    kubectl annotate --all --overwrite
+    clustertemplates.azimuth.stackhpc.com
+    {{ item.key }}={{ item.value }}
+  loop: >-
+    {{-
+      azimuth_capi_operator_cluster_templates_tenancy_access_controls |
+        dict2items(key_name = 'key', value_name = 'value')
+    }}
+  loop_control:
+    loop_var: template
+    label: "{{ template.name }}"
+
 - name: Install Azimuth CAPI app templates
   command: kubectl apply -f -
   args:
