@@ -498,7 +498,7 @@ azimuth_capi_operator_cluster_templates_tenancy_allow_regex: "{{ platforms_tenan
 # Regex pattern to block tenancies by name
 azimuth_capi_operator_cluster_templates_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default(None) }}"
 # The set of key-value annotations to apply to the template
-azimuth_capi_operator_cluster_templates_tenancy_access_control_annotations: >-
+azimuth_capi_operator_cluster_templates_tenancy_access_controls: >-
   {{-
     {} |
     combine(
