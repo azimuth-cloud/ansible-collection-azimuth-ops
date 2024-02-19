@@ -72,7 +72,18 @@
   loop_control:
     label: "{{ item.metadata.name }}"
 
-- name: Ensure cluster template tenancy access controls are up to date
+- name: Remove existing access control annotations on cluster templates
+  command: >-
+    kubectl annotate --all --overwrite
+    clustertemplates.azimuth.stackhpc.com
+    {{ item.key }}-
+  loop:
+    - "acl.azimuth.stackhpc.com/allow-list"
+    - "acl.azimuth.stackhpc.com/deny-list"
+    - "acl.azimuth.stackhpc.com/allow-regex"
+    - "acl.azimuth.stackhpc.com/deny-regex"
+
+- name: Ensure cluster template tenancy access controls are applied
   command: >-
     kubectl annotate --all --overwrite
     clustertemplates.azimuth.stackhpc.com
