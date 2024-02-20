@@ -76,7 +76,7 @@
   command: >-
     kubectl annotate --all --overwrite
     clustertemplates.azimuth.stackhpc.com
-    {{ item.key }}-
+    {{ item }}-
   loop:
     - "acl.azimuth.stackhpc.com/allow-list"
     - "acl.azimuth.stackhpc.com/deny-list"
@@ -88,14 +88,9 @@
     kubectl annotate --all --overwrite
     clustertemplates.azimuth.stackhpc.com
     {{ item.key }}={{ item.value }}
-  loop: >-
-    {{-
-      azimuth_capi_operator_cluster_templates_tenancy_access_controls |
-        dict2items(key_name = 'key', value_name = 'value')
-    }}
+  loop: "{{ azimuth_capi_operator_cluster_templates_tenancy_access_controls | dict2items }}"
   loop_control:
-    loop_var: template
-    label: "{{ template.name }}"
+    label: "{{ item.key }}"
 
 - name: Install Azimuth CAPI app templates
   command: kubectl apply -f -
