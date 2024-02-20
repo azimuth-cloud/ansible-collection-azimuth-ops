@@ -630,6 +630,37 @@ azimuth_capi_operator_app_templates_daskhub_keep_versions: 3
 azimuth_capi_operator_app_templates_daskhub_sync_frequency: 86400
 # Any defaultn values for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_default_values: {}
+# The tenancy-based access controls for the DaskHub app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_daskhub_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default(None) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_daskhub_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default(None) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_daskhub_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default(None) }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_daskhub_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default(None) }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_daskhub_tenancy_access_control_annotations: >-
+  {{-
+    {} |
+    combine(
+      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_capi_operator_app_templates_daskhub_tenancy_allow_list) }
+      if azimuth_capi_operator_app_templates_daskhub_tenancy_allow_list | length > 0
+      else {}
+    ) | combine(
+      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_capi_operator_app_templates_daskhub_tenancy_deny_list) }
+      if azimuth_capi_operator_app_templates_daskhub_tenancy_deny_list | length > 0
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/allow-regex": azimuth_capi_operator_app_templates_daskhub_tenancy_allow_regex }
+      if azimuth_capi_operator_app_templates_daskhub_tenancy_allow_regex
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/deny-regex": azimuth_capi_operator_app_templates_daskhub_tenancy_deny_regex }
+      if azimuth_capi_operator_app_templates_daskhub_tenancy_deny_regex
+      else {}
+    )
+  }}
 # The spec for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_spec: >-
   {{-
@@ -642,6 +673,7 @@ azimuth_capi_operator_app_templates_daskhub_spec: >-
       "keepVersions": azimuth_capi_operator_app_templates_daskhub_keep_versions,
       "syncFrequency": azimuth_capi_operator_app_templates_daskhub_sync_frequency,
       "defaultValues": azimuth_capi_operator_app_templates_daskhub_default_values,
+      "access_controls": azimuth_capi_operator_app_templates_daskhub_tenancy_access_control_annotations,
     } |
       combine(
         { "label": azimuth_capi_operator_app_templates_daskhub_label }
@@ -678,6 +710,37 @@ azimuth_capi_operator_app_templates_kubeflow_keep_versions: 3
 azimuth_capi_operator_app_templates_kubeflow_sync_frequency: 86400
 # Any defaultn values for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_default_values: {}
+# The tenancy-based access controls for the KubeFlow app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default(None) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default(None) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default(None) }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default(None) }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_kubeflow_tenancy_access_control_annotations: >-
+  {{-
+    {} |
+    combine(
+      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_list) }
+      if azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_list | length > 0
+      else {}
+    ) | combine(
+      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_list) }
+      if azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_list | length > 0
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/allow-regex": azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_regex }
+      if azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_regex
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/deny-regex": azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_regex }
+      if azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_regex
+      else {}
+    )
+  }}
 # The spec for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_spec: >-
   {{-
@@ -690,6 +753,7 @@ azimuth_capi_operator_app_templates_kubeflow_spec: >-
       "keepVersions": azimuth_capi_operator_app_templates_kubeflow_keep_versions,
       "syncFrequency": azimuth_capi_operator_app_templates_kubeflow_sync_frequency,
       "defaultValues": azimuth_capi_operator_app_templates_kubeflow_default_values,
+      "access_controls": azimuth_capi_operator_app_templates_kubeflow_tenancy_access_control_annotations,
     } |
       combine(
         { "label": azimuth_capi_operator_app_templates_kubeflow_label }
@@ -729,6 +793,37 @@ azimuth_capi_operator_app_templates_binderhub_use_https_redirects: "{{ ingress_t
 # Any default values for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_default_values:
   binderhub_oauth_use_https: "{{ azimuth_capi_operator_app_templates_binderhub_use_https_redirects }}"
+# The tenancy-based access controls for the BinderHub app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_binderhub_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default(None) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_binderhub_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default(None) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_binderhub_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default(None) }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_binderhub_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default(None) }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_binderhub_tenancy_access_control_annotations: >-
+  {{-
+    {} |
+    combine(
+      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_capi_operator_app_templates_binderhub_tenancy_allow_list) }
+      if azimuth_capi_operator_app_templates_binderhub_tenancy_allow_list | length > 0
+      else {}
+    ) | combine(
+      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_capi_operator_app_templates_binderhub_tenancy_deny_list) }
+      if azimuth_capi_operator_app_templates_binderhub_tenancy_deny_list | length > 0
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/allow-regex": azimuth_capi_operator_app_templates_binderhub_tenancy_allow_regex }
+      if azimuth_capi_operator_app_templates_binderhub_tenancy_allow_regex
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/deny-regex": azimuth_capi_operator_app_templates_binderhub_tenancy_deny_regex }
+      if azimuth_capi_operator_app_templates_binderhub_tenancy_deny_regex
+      else {}
+    )
+  }}
 # The spec for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_spec: >-
   {{-
@@ -741,6 +836,7 @@ azimuth_capi_operator_app_templates_binderhub_spec: >-
       "keepVersions": azimuth_capi_operator_app_templates_binderhub_keep_versions,
       "syncFrequency": azimuth_capi_operator_app_templates_binderhub_sync_frequency,
       "defaultValues": azimuth_capi_operator_app_templates_binderhub_default_values,
+      "access_controls": azimuth_capi_operator_app_templates_binderhub_tenancy_access_control_annotations,
     } |
       combine(
         { "label": azimuth_capi_operator_app_templates_binderhub_label }
@@ -780,6 +876,37 @@ azimuth_capi_operator_app_templates_huggingface_llm_keep_versions: 3
 azimuth_capi_operator_app_templates_huggingface_llm_sync_frequency: 86400
 # Any default values for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_default_values: {}
+# The tenancy-based access controls for the JupyterHub app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default(None) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default(None) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default(None) }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default(None) }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_huggingface_llm_tenancy_access_control_annotations: >-
+  {{-
+    {} |
+    combine(
+      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_list) }
+      if azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_list | length > 0
+      else {}
+    ) | combine(
+      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_list) }
+      if azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_list | length > 0
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/allow-regex": azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_regex }
+      if azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_regex
+      else {}
+    ) | combine(
+      { "acl.azimuth.stackhpc.com/deny-regex": azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_regex }
+      if azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_regex
+      else {}
+    )
+  }}
 # The spec for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_spec: >-
   {{-
@@ -792,6 +919,7 @@ azimuth_capi_operator_app_templates_huggingface_llm_spec: >-
       "keepVersions": azimuth_capi_operator_app_templates_huggingface_llm_keep_versions,
       "syncFrequency": azimuth_capi_operator_app_templates_huggingface_llm_sync_frequency,
       "defaultValues": azimuth_capi_operator_app_templates_huggingface_llm_default_values,
+      "access_controls": azimuth_capi_operator_app_templates_huggingface_llm_tenancy_access_control_annotations,
     } |
       combine(
         { "label": azimuth_capi_operator_app_templates_huggingface_llm_label }
