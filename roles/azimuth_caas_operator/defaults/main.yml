@@ -279,7 +279,7 @@ azimuth_caas_stackhpc_workstation_ssh_tenancy_access_control_annotations: >-
       if azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list | length > 0
       else {}
     ) | combine(
-      {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list | join(","")) }
+      {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list | join(",")) }
       if azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list | length > 0
       else {}
     ) | combine(
