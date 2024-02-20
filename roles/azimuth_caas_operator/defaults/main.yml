@@ -139,11 +139,11 @@ azimuth_caas_stackhpc_slurm_appliance_tenancy_access_control_annotations: >-
   {{-
     {} |
     combine(
-      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_list) }
+      { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_list | join(",")) }
       if azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_list | length > 0
       else {}
     ) | combine(
-      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_list) }
+      {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_list | join(",")) }
       if azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_list | length > 0
       else {}
     ) | combine(
@@ -222,11 +222,11 @@ azimuth_caas_stackhpc_workstation_tenancy_access_control_annotations: >-
   {{-
     {} |
     combine(
-      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_caas_stackhpc_workstation_tenancy_allow_list) }
+      { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_workstation_tenancy_allow_list | join(",")) }
       if azimuth_caas_stackhpc_workstation_tenancy_allow_list | length > 0
       else {}
     ) | combine(
-      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_caas_stackhpc_workstation_tenancy_deny_list) }
+      {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_workstation_tenancy_deny_list | join(",")) }
       if azimuth_caas_stackhpc_workstation_tenancy_deny_list | length > 0
       else {}
     ) | combine(
@@ -275,11 +275,11 @@ azimuth_caas_stackhpc_workstation_ssh_tenancy_access_control_annotations: >-
   {{-
     {} |
     combine(
-      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list) }
+      { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list | join(",")) }
       if azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list | length > 0
       else {}
     ) | combine(
-      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list) }
+      {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list | join(","")) }
       if azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list | length > 0
       else {}
     ) | combine(
@@ -355,11 +355,11 @@ azimuth_caas_stackhpc_repo2docker_tenancy_access_control_annotations: >-
   {{-
     {} |
     combine(
-      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_caas_stackhpc_repo2docker_tenancy_allow_list) }
+      { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_repo2docker_tenancy_allow_list | join(",")) }
       if azimuth_caas_stackhpc_repo2docker_tenancy_allow_list | length > 0
       else {}
     ) | combine(
-      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_caas_stackhpc_repo2docker_tenancy_deny_list) }
+      {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_repo2docker_tenancy_deny_list | join(",")) }
       if azimuth_caas_stackhpc_repo2docker_tenancy_deny_list | length > 0
       else {}
     ) | combine(
@@ -435,11 +435,11 @@ azimuth_caas_stackhpc_rstudio_tenancy_access_control_annotations: >-
   {{-
     {} |
     combine(
-      { "acl.azimuth.stackhpc.com/allow-list": ",".join(azimuth_caas_stackhpc_rstudio_tenancy_allow_list) }
+      { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_rstudio_tenancy_allow_list | join(",")) }
       if azimuth_caas_stackhpc_rstudio_tenancy_allow_list | length > 0
       else {}
     ) | combine(
-      {  "acl.azimuth.stackhpc.com/deny-list": ",".join(azimuth_caas_stackhpc_rstudio_tenancy_deny_list) }
+      {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_rstudio_tenancy_deny_list | join(",")) }
       if azimuth_caas_stackhpc_rstudio_tenancy_deny_list | length > 0
       else {}
     ) | combine(
