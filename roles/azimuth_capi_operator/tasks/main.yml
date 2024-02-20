@@ -107,8 +107,8 @@
       kind: AppTemplate
       metadata:
         name: "{{ template.name }}"
-        annotations: "{{ template.spec.annotations | default({}) }}"
-      spec: "{{ template.spec | ansible.utils.remove_keys('annotations') }}"
+        annotations: "{{ template.spec.access_controls | default({}) }}"
+      spec: "{{ template.spec | ansible.utils.remove_keys('access_controls') }}"
   loop: >-
     {{-
       azimuth_capi_operator_app_templates |

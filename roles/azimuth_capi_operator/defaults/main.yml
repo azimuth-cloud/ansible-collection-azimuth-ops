@@ -593,7 +593,7 @@ azimuth_capi_operator_app_templates_jupyterhub_spec: >-
       "keepVersions": azimuth_capi_operator_app_templates_jupyterhub_keep_versions,
       "syncFrequency": azimuth_capi_operator_app_templates_jupyterhub_sync_frequency,
       "defaultValues": azimuth_capi_operator_app_templates_jupyterhub_default_values,
-      "annotations": azimuth_capi_operator_app_templates_jupyterhub_tenancy_access_control_annotations,
+      "access_controls": azimuth_capi_operator_app_templates_jupyterhub_tenancy_access_control_annotations,
     } |
       combine(
         { "label": azimuth_capi_operator_app_templates_jupyterhub_label }

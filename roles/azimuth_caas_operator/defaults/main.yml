@@ -215,7 +215,7 @@ azimuth_caas_stackhpc_workstation_template:
   playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
   jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
   extraVars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
-  annotations: "{{ azimuth_caas_stackhpc_workstation_tenancy_access_control_annotations }}"
+  access_controls: "{{ azimuth_caas_stackhpc_workstation_tenancy_access_control_annotations }}"
 
 # Indicates if the StackHPC workstation _with SSH_ should be enabled
 azimuth_caas_stackhpc_workstation_ssh_enabled: "{{ azimuth_caas_stackhpc_workstation_enabled }}"
