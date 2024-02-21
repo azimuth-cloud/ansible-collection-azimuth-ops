@@ -82,11 +82,13 @@ azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/ansible-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: v1.141
+azimuth_caas_stackhpc_slurm_appliance_git_version: fix/caas-cinder-home # TODO: bump on release
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
 azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds: 1800
+# Whether to use manila shares for home directories:
+azimuth_caas_stackhpc_slurm_appliance_home_manila_share: false
 # The metadata root for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
   https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/environments/.caas/ui-meta/slurm-infra.yml
@@ -113,6 +115,7 @@ azimuth_caas_stackhpc_slurm_appliance_image: >-
 # The default extra vars for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
+  cluster_home_manila_share: "{{ azimuth_caas_stackhpc_slurm_appliance_home_manila_share }}"
 # extra_vars overrides for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
 azimuth_caas_stackhpc_slurm_appliance_extra_vars: >-
