@@ -89,9 +89,11 @@ azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds: 1800
 # Whether to use manila shares for home directories:
 azimuth_caas_stackhpc_slurm_appliance_home_manila_share: false
+# The metadata file for the StackHPC Slurm appliance
+azimuth_caas_stackhpc_slurm_appliance_metadata_file: "{{ 'slurm-infra-manila-home.yml' if azimuth_caas_stackhpc_slurm_appliance_home_manila_share else 'slurm-infra.yml' }}"
 # The metadata root for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
-  https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/environments/.caas/ui-meta/slurm-infra.yml
+  https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance/{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}/environments/.caas/ui-meta/{{ azimuth_caas_stackhpc_slurm_appliance_metadata_file }}
 # The ID of the image to use with the StackHPC Slurm appliance
 # Support the old name for backwards compatibility
 # By default, use the openhpc image from community images if available
