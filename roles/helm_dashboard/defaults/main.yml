@@ -1,0 +1,28 @@
+---
+
+helm_dashboard_chart_repo: https://helm-charts.komodor.io
+helm_dashboard_chart_name: helm-dashboard
+helm_dashboard_chart_version: 0.1.10
+
+helm_dashboard_release_namespace: monitoring-system
+helm_dashboard_release_name: helm-dashboard
+
+# The timeout to wait for the dashboard to become ready
+helm_dashboard_wait_timeout: 10m
+
+# The values for the release
+helm_dashboard_release_defaults:
+  extraArgs:
+    - --no-browser
+    - --bind=0.0.0.0
+    - --no-analytics
+  dashboard:
+    allowWriteActions: false
+    persistence:
+      enabled: false
+helm_dashboard_release_overrides: {}
+helm_dashboard_release_values: >-
+  {{-
+    helm_dashboard_release_defaults |
+      combine(helm_dashboard_release_overrides, recursive = True)
+  }}

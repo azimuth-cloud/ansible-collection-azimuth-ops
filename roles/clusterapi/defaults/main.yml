@@ -10,6 +10,31 @@ clusterapi_openstack_repo: https://github.com/kubernetes-sigs/cluster-api-provid
 clusterapi_openstack_version: v0.9.0
 clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml"
 
+# The diagnostics address for Cluster API components
+clusterapi_diagnostics_address: 0.0.0.0:8443
+clusterapi_insecure_diagnostics: false
+
+# Variables for toggling feature gates for experimental features
+clusterapi_feature_gate_machine_pool: false
+clusterapi_feature_gate_cluster_resource_set: true
+clusterapi_feature_gate_cluster_topology: true
+clusterapi_feature_gate_runtime_sdk: true
+clusterapi_feature_gate_machine_set_preflight_checks: true
+clusterapi_feature_gate_kubeadm_bootstrap_format_ignition: false
+
+clusterapi_core_feature_gates:
+  MachinePool: "{{ clusterapi_feature_gate_machine_pool }}"
+  ClusterResourceSet: "{{ clusterapi_feature_gate_cluster_resource_set }}"
+  ClusterTopology: "{{ clusterapi_feature_gate_cluster_topology }}"
+  RuntimeSDK: "{{ clusterapi_feature_gate_runtime_sdk }}"
+  MachineSetPreflightChecks: "{{ clusterapi_feature_gate_machine_set_preflight_checks }}"
+clusterapi_kubeadm_bootstrap_feature_gates:
+  MachinePool: "{{ clusterapi_feature_gate_machine_pool }}"
+  KubeadmBootstrapFormatIgnition: "{{ clusterapi_feature_gate_kubeadm_bootstrap_format_ignition }}"
+clusterapi_kubeadm_control_plane_feature_gates:
+  ClusterTopology: "{{ clusterapi_feature_gate_cluster_topology }}"
+  KubeadmBootstrapFormatIgnition: "{{ clusterapi_feature_gate_kubeadm_bootstrap_format_ignition }}"
+
 # List of Cluster API component manifests to install
 clusterapi_manifests:
   - "{{ clusterapi_core_components }}"
@@ -23,7 +48,9 @@ clusterapi_patches:
         path: /spec/template/spec/containers/0/args
         value:
           - --leader-elect
-          - --metrics-bind-addr=localhost:8080
+          - --diagnostics-address={{ clusterapi_diagnostics_address }}
+          - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
+          - --feature-gates={% for k, v in clusterapi_core_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
     target:
       kind: Deployment
       namespace: capi-system
@@ -33,7 +60,9 @@ clusterapi_patches:
         path: /spec/template/spec/containers/0/args
         value:
           - --leader-elect
-          - --metrics-bind-addr=localhost:8080
+          - --diagnostics-address={{ clusterapi_diagnostics_address }}
+          - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
+          - --feature-gates={% for k, v in clusterapi_kubeadm_bootstrap_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
     target:
       kind: Deployment
       namespace: capi-kubeadm-bootstrap-system
@@ -43,7 +72,9 @@ clusterapi_patches:
         path: /spec/template/spec/containers/0/args
         value:
           - --leader-elect
-          - --metrics-bind-addr=localhost:8080
+          - --diagnostics-address={{ clusterapi_diagnostics_address }}
+          - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
+          - --feature-gates={% for k, v in clusterapi_kubeadm_control_plane_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
     target:
       kind: Deployment
       namespace: capi-kubeadm-control-plane-system
@@ -79,7 +110,7 @@ clusterapi_watches:
 # Helm chart information for the Cluster API addon provider
 clusterapi_addon_provider_chart_repo: https://stackhpc.github.io/cluster-api-addon-provider
 clusterapi_addon_provider_chart_name: cluster-api-addon-provider
-clusterapi_addon_provider_chart_version: 0.3.1
+clusterapi_addon_provider_chart_version: 0.5.0
 
 # Release information for the Cluster API addon provider release
 clusterapi_addon_provider_release_namespace: capi-addon-system
@@ -95,7 +126,7 @@ clusterapi_addon_provider_release_values: {}
 # Helm chart information for the Cluster API janitor
 clusterapi_janitor_openstack_chart_repo: https://stackhpc.github.io/cluster-api-janitor-openstack
 clusterapi_janitor_openstack_chart_name: cluster-api-janitor-openstack
-clusterapi_janitor_openstack_chart_version: 0.4.0
+clusterapi_janitor_openstack_chart_version: 0.5.1
 
 # Release information for the Cluster API janitor release
 clusterapi_janitor_openstack_release_namespace: capi-janitor-system

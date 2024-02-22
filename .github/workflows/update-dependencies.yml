@@ -203,6 +203,12 @@ jobs:
             chart_name_jsonpath: harbor_chart_name
             chart_version_jsonpath: harbor_chart_version
 
+          - key: helm-dashboard
+            path: ./roles/helm_dashboard/defaults/main.yml
+            chart_repo_jsonpath: helm_dashboard_chart_repo
+            chart_name_jsonpath: helm_dashboard_chart_name
+            chart_version_jsonpath: helm_dashboard_chart_version
+
           - key: ingress-nginx
             path: ./roles/ingress_nginx/defaults/main.yml
             chart_repo_jsonpath: ingress_nginx_chart_repo
@@ -214,6 +220,12 @@ jobs:
             chart_repo_jsonpath: kube_prometheus_stack_chart_repo
             chart_name_jsonpath: kube_prometheus_stack_chart_name
             chart_version_jsonpath: kube_prometheus_stack_chart_version
+
+          - key: kubernetes-dashboard
+            path: ./roles/kubernetes_dashboard/defaults/main.yml
+            chart_repo_jsonpath: kubernetes_dashboard_chart_repo
+            chart_name_jsonpath: kubernetes_dashboard_chart_name
+            chart_version_jsonpath: kubernetes_dashboard_chart_version
 
           - key: snapshot-controller
             path: ./roles/velero/defaults/main.yml

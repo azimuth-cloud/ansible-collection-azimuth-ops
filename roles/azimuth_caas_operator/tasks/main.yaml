@@ -47,3 +47,7 @@
       type: Opaque
       data: "{{ azimuth_caas_operator_default_ssh_secret_files }}"
   when: azimuth_caas_operator_default_ssh_secret_files
+
+- name: Fix up existing clusters for quota check changes
+  include_tasks:
+    file: quota_checks_fixup.yaml
