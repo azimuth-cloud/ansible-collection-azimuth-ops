@@ -42,6 +42,25 @@
       retries: 360
       delay: 10
 
+    # Note that because we waited for the cluster to become ready, we know
+    # the control plane machines are at the correct version
+    - name: Wait for all nodes to be at the same version
+      command: kubectl get machines --output json
+      changed_when: false
+      register: capi_cluster_machines_list
+      until: >-
+        (
+          capi_cluster_machines_list.stdout |
+            from_json |
+            json_query('items') |
+            map(attribute = "status.nodeInfo.kubeletVersion", default = "NA") |
+            unique |
+            list |
+            length
+        ) == 1
+      retries: 360
+      delay: 10
+
     - name: Wait for machine deployments to be running
       command: >-
         kubectl wait machinedeployments --all
