@@ -9,6 +9,20 @@ on:
       - reopened
     branches:
       - main
+    paths-ignore:
+      # Ignore any changes that are not actually code changes
+      - .gitignore
+      - CODEOWNERS
+      - LICENSE
+      - README.md
+      - .github/release.yml
+      - .github/workflows/update-dependencies.yml
+      # Ignore any changes that only affect the HA install
+      - playbooks/deploy_capi_mgmt.yml
+      - playbooks/provision_capi_mgmt.yml
+      - playbooks/restore.yml
+      - roles/capi_cluster/**
+      - roles/velero/**
 
 # Use the head ref for workflow concurrency, with cancellation
 # This should mean that any previous workflows for a PR get cancelled when a new commit is pushed
