@@ -97,6 +97,9 @@ resource "openstack_compute_instance_v2" "node" {
     uuid                  = "{{ infra_image_id }}"
     source_type           = "image"
     volume_size           = {{ infra_root_volume_size }}
+{% if infra_root_volume_type %}
+    volume_type           = "{{ infra_root_volume_type }}"
+{% endif %}
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
@@ -127,6 +130,9 @@ resource "openstack_blockstorage_volume_v3" "data_volume" {
   name = "{{ infra_name }}-data"
   size = {{ infra_data_volume_size }}
   enable_online_resize = true
+{% if infra_data_volume_type %}
+  volume_type = "{{ infra_data_volume_type }}"
+{% endif %}
 }
 
 resource "openstack_compute_volume_attach_v2" "data_volume_attach" {
