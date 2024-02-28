@@ -64,7 +64,7 @@ velero_release_defaults:
   configuration:
     backupsEnabled: true
     backupStorageLocation:
-      - name: s3
+      - name: default
         default: true
         provider: aws
         bucket: "{{ velero_bucket_name }}"
