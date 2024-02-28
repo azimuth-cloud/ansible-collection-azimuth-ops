@@ -85,9 +85,12 @@ infra_flavor_id: "{{ undef(hint = 'infra_flavor_id is required') }}"
 # to unpack and convert community images where necessary (40GB should be sufficient)
 infra_root_volume_enabled: no
 infra_root_volume_size: 40
+infra_root_volume_type:
 
 # The size in GB of the data volume
 infra_data_volume_size: 100
+# The volume type to use for the data volume
+infra_data_volume_type:
 
 # The Ansible groups to place the provisioned node into
 infra_ansible_groups: []
