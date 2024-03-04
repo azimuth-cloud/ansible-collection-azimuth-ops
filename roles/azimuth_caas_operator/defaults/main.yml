@@ -140,11 +140,11 @@ azimuth_caas_stackhpc_slurm_appliance_tenancy_access_control_annotations: >-
     {} |
     combine(
       { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_list | join(",")) }
-      if azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_list | length > 0
+      if azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_list
       else {}
     ) | combine(
       {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_list | join(",")) }
-      if azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_list | length > 0
+      if azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_list
       else {}
     ) | combine(
       { "acl.azimuth.stackhpc.com/allow-regex": azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_regex }
@@ -158,16 +158,17 @@ azimuth_caas_stackhpc_slurm_appliance_tenancy_access_control_annotations: >-
   }}
 # The template definition for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_template:
-  gitUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_git_url }}"
-  gitVersion: "{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}"
-  uiMetaUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_url }}"
-  playbook: "{{ azimuth_caas_stackhpc_slurm_appliance_playbook }}"
-  extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
-  jobTimeout: "{{ azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds }}"
-  envVars:
-    # Normally set through environment's activate script:
-    ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to runner project dir
-  access_controls: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_access_control_annotations }}"
+  annotations: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_access_control_annotations }}"
+  spec:
+    gitUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_git_url }}"
+    gitVersion: "{{ azimuth_caas_stackhpc_slurm_appliance_git_version }}"
+    uiMetaUrl: "{{ azimuth_caas_stackhpc_slurm_appliance_metadata_url }}"
+    playbook: "{{ azimuth_caas_stackhpc_slurm_appliance_playbook }}"
+    extraVars: "{{ azimuth_caas_stackhpc_slurm_appliance_extra_vars }}"
+    jobTimeout: "{{ azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds }}"
+    envVars:
+      # Normally set through environment's activate script:
+      ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to runner project dir
 
 
 # Indicates if the StackHPC workstation should be enabled
@@ -223,11 +224,11 @@ azimuth_caas_stackhpc_workstation_tenancy_access_control_annotations: >-
     {} |
     combine(
       { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_workstation_tenancy_allow_list | join(",")) }
-      if azimuth_caas_stackhpc_workstation_tenancy_allow_list | length > 0
+      if azimuth_caas_stackhpc_workstation_tenancy_allow_list
       else {}
     ) | combine(
       {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_workstation_tenancy_deny_list | join(",")) }
-      if azimuth_caas_stackhpc_workstation_tenancy_deny_list | length > 0
+      if azimuth_caas_stackhpc_workstation_tenancy_deny_list
       else {}
     ) | combine(
       { "acl.azimuth.stackhpc.com/allow-regex": azimuth_caas_stackhpc_workstation_tenancy_allow_regex }
@@ -241,13 +242,14 @@ azimuth_caas_stackhpc_workstation_tenancy_access_control_annotations: >-
   }}
 # The template definition for the StackHPC workstation appliance
 azimuth_caas_stackhpc_workstation_template:
-  gitUrl: "{{ azimuth_caas_stackhpc_workstation_git_url }}"
-  gitVersion: "{{ azimuth_caas_stackhpc_workstation_git_version }}"
-  uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_metadata_url }}"
-  playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
-  jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
-  extraVars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
-  access_controls: "{{ azimuth_caas_stackhpc_workstation_tenancy_access_control_annotations }}"
+  annotations: "{{ azimuth_caas_stackhpc_workstation_tenancy_access_control_annotations }}"
+  spec:
+    gitUrl: "{{ azimuth_caas_stackhpc_workstation_git_url }}"
+    gitVersion: "{{ azimuth_caas_stackhpc_workstation_git_version }}"
+    uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_metadata_url }}"
+    playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
+    jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
+    extraVars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
 
 # Indicates if the StackHPC workstation with SSH should be enabled
 azimuth_caas_stackhpc_workstation_ssh_enabled: "{{ azimuth_caas_stackhpc_workstation_enabled }}"
@@ -276,11 +278,11 @@ azimuth_caas_stackhpc_workstation_ssh_tenancy_access_control_annotations: >-
     {} |
     combine(
       { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list | join(",")) }
-      if azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list | length > 0
+      if azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list
       else {}
     ) | combine(
       {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list | join(",")) }
-      if azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list | length > 0
+      if azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list
       else {}
     ) | combine(
       { "acl.azimuth.stackhpc.com/allow-regex": azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_regex }
@@ -294,13 +296,14 @@ azimuth_caas_stackhpc_workstation_ssh_tenancy_access_control_annotations: >-
   }}
 # The template definition for the StackHPC SSH-enabled workstation appliance
 azimuth_caas_stackhpc_workstation_ssh_template:
-  gitUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_git_url }}"
-  gitVersion: "{{ azimuth_caas_stackhpc_workstation_ssh_git_version }}"
-  uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_metadata_url }}"
-  playbook: "{{ azimuth_caas_stackhpc_workstation_ssh_playbook }}"
-  jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
-  extraVars: "{{ azimuth_caas_stackhpc_workstation_ssh_extra_vars }}"
-  access_controls: "{{ azimuth_caas_stackhpc_workstation_ssh_tenancy_access_control_annotations }}"
+  annotations: "{{ azimuth_caas_stackhpc_workstation_ssh_tenancy_access_control_annotations }}"
+  spec:
+    gitUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_git_url }}"
+    gitVersion: "{{ azimuth_caas_stackhpc_workstation_ssh_git_version }}"
+    uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_metadata_url }}"
+    playbook: "{{ azimuth_caas_stackhpc_workstation_ssh_playbook }}"
+    jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
+    extraVars: "{{ azimuth_caas_stackhpc_workstation_ssh_extra_vars }}"
 
 
 # Indicates if the StackHPC repo2docker appliance should be enabled
@@ -356,11 +359,11 @@ azimuth_caas_stackhpc_repo2docker_tenancy_access_control_annotations: >-
     {} |
     combine(
       { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_repo2docker_tenancy_allow_list | join(",")) }
-      if azimuth_caas_stackhpc_repo2docker_tenancy_allow_list | length > 0
+      if azimuth_caas_stackhpc_repo2docker_tenancy_allow_list
       else {}
     ) | combine(
       {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_repo2docker_tenancy_deny_list | join(",")) }
-      if azimuth_caas_stackhpc_repo2docker_tenancy_deny_list | length > 0
+      if azimuth_caas_stackhpc_repo2docker_tenancy_deny_list
       else {}
     ) | combine(
       { "acl.azimuth.stackhpc.com/allow-regex": azimuth_caas_stackhpc_repo2docker_tenancy_allow_regex }
@@ -374,13 +377,14 @@ azimuth_caas_stackhpc_repo2docker_tenancy_access_control_annotations: >-
   }}
 # The template definition for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_template:
-  gitUrl: "{{ azimuth_caas_stackhpc_repo2docker_git_url }}"
-  gitVersion: "{{ azimuth_caas_stackhpc_repo2docker_git_version }}"
-  uiMetaUrl: "{{ azimuth_caas_stackhpc_repo2docker_metadata_url }}"
-  playbook: "{{ azimuth_caas_stackhpc_repo2docker_playbook }}"
-  jobTimeout: "{{ azimuth_caas_stackhpc_repo2docker_job_timeout_seconds }}"
-  extraVars: "{{ azimuth_caas_stackhpc_repo2docker_extra_vars }}"
-  access_controls: "{{ azimuth_caas_stackhpc_repo2docker_tenancy_access_control_annotations }}"
+  annotations: "{{ azimuth_caas_stackhpc_repo2docker_tenancy_access_control_annotations }}"
+  spec:
+    gitUrl: "{{ azimuth_caas_stackhpc_repo2docker_git_url }}"
+    gitVersion: "{{ azimuth_caas_stackhpc_repo2docker_git_version }}"
+    uiMetaUrl: "{{ azimuth_caas_stackhpc_repo2docker_metadata_url }}"
+    playbook: "{{ azimuth_caas_stackhpc_repo2docker_playbook }}"
+    jobTimeout: "{{ azimuth_caas_stackhpc_repo2docker_job_timeout_seconds }}"
+    extraVars: "{{ azimuth_caas_stackhpc_repo2docker_extra_vars }}"
 
 
 # Indicates if the StackHPC R-Studio appliance should be enabled
@@ -436,11 +440,11 @@ azimuth_caas_stackhpc_rstudio_tenancy_access_control_annotations: >-
     {} |
     combine(
       { "acl.azimuth.stackhpc.com/allow-list": (azimuth_caas_stackhpc_rstudio_tenancy_allow_list | join(",")) }
-      if azimuth_caas_stackhpc_rstudio_tenancy_allow_list | length > 0
+      if azimuth_caas_stackhpc_rstudio_tenancy_allow_list
       else {}
     ) | combine(
       {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_caas_stackhpc_rstudio_tenancy_deny_list | join(",")) }
-      if azimuth_caas_stackhpc_rstudio_tenancy_deny_list | length > 0
+      if azimuth_caas_stackhpc_rstudio_tenancy_deny_list
       else {}
     ) | combine(
       { "acl.azimuth.stackhpc.com/allow-regex": azimuth_caas_stackhpc_rstudio_tenancy_allow_regex }
@@ -454,13 +458,14 @@ azimuth_caas_stackhpc_rstudio_tenancy_access_control_annotations: >-
   }}
 # The template definition for the StackHPC R-Studio appliance  
 azimuth_caas_stackhpc_rstudio_template:
-  gitUrl: "{{ azimuth_caas_stackhpc_rstudio_git_url }}"
-  gitVersion: "{{ azimuth_caas_stackhpc_rstudio_git_version }}"
-  uiMetaUrl: "{{ azimuth_caas_stackhpc_rstudio_metadata_url }}"
-  playbook: "{{ azimuth_caas_stackhpc_rstudio_playbook }}"
-  jobTimeout: "{{ azimuth_caas_stackhpc_rstudio_job_timeout_seconds }}"
-  extraVars: "{{ azimuth_caas_stackhpc_rstudio_extra_vars }}"
-  access_controls: "{{ azimuth_caas_stackhpc_rstudio_tenancy_access_control_annotations }}"
+  annotations: "{{ azimuth_caas_stackhpc_rstudio_tenancy_access_control_annotations }}"
+  spec:
+    gitUrl: "{{ azimuth_caas_stackhpc_rstudio_git_url }}"
+    gitVersion: "{{ azimuth_caas_stackhpc_rstudio_git_version }}"
+    uiMetaUrl: "{{ azimuth_caas_stackhpc_rstudio_metadata_url }}"
+    playbook: "{{ azimuth_caas_stackhpc_rstudio_playbook }}"
+    jobTimeout: "{{ azimuth_caas_stackhpc_rstudio_job_timeout_seconds }}"
+    extraVars: "{{ azimuth_caas_stackhpc_rstudio_extra_vars }}"
 
 
 # Quick test appliance
