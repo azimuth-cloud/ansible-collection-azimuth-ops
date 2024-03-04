@@ -72,7 +72,7 @@
   loop_control:
     label: "{{ item.metadata.name }}"
 
-- name: Ensure cluster template tenancy access controls are up to date
+- name: Ensure cluster template tenancy access controls are applied
   command: >-
     kubectl annotate --overwrite --all
     clustertemplates.azimuth.stackhpc.com
