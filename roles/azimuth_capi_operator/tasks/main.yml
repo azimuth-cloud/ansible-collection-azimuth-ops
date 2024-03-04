@@ -75,28 +75,19 @@
 - name: Ensure cluster template tenancy access controls are up to date
   command: >-
     kubectl annotate --overwrite
-    clustertemplates.azimuth.stackhpc.com/{{ item[0].metadata.name }}
-    {{ item[1] }}{{-
-      '=' + azimuth_capi_operator_cluster_templates_tenancy_access_controls[item[1]] 
-      if item[1] in azimuth_capi_operator_cluster_templates_tenancy_access_controls
-      else '-'
-    }}
+    clustertemplates.azimuth.stackhpc.com/{{ item.metadata.name }}
+    acl.azimuth.stackhpc.com/allow-list={{ azimuth_capi_operator_cluster_templates_tenancy_allow_list }}
+    acl.azimuth.stackhpc.com/deny-list={{ azimuth_capi_operator_cluster_templates_tenancy_deny_list }}
+    acl.azimuth.stackhpc.com/allow-regex={{ azimuth_capi_operator_cluster_templates_tenancy_allow_regex }}
+    acl.azimuth.stackhpc.com/deny-regex={{ azimuth_capi_operator_cluster_templates_tenancy_deny_regex }}
   loop: >-
     {{-
       azimuth_capi_operator_templates_cmd.stdout |
         from_json |
-        json_query('items') |
-        product(acl_annotation_keys) |
-        list
+        json_query('items')
     }}
   loop_control:
-    label: "{{ item[0].metadata.name }} - {{ item[1] }}"
-  vars:
-    acl_annotation_keys:
-    - "acl.azimuth.stackhpc.com/allow-list"
-    - "acl.azimuth.stackhpc.com/deny-list"
-    - "acl.azimuth.stackhpc.com/allow-regex"
-    - "acl.azimuth.stackhpc.com/deny-regex"
+    label: "{{ item.metadata.name }}"
 
 - name: Install Azimuth CAPI app templates
   command: kubectl apply -f -

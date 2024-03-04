@@ -488,44 +488,22 @@ azimuth_capi_operator_cluster_templates_default: |-
 # Allow extra templates to be defined using a separate variable
 azimuth_capi_operator_cluster_templates_extra: {}
 
-# The tenancy-based access controls to apply to all Kubernetes cluster template
-# List of allowed tenancy IDs
-azimuth_capi_operator_cluster_templates_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default(None) }}"
-# List of denied tenancy IDs
-azimuth_capi_operator_cluster_templates_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default(None) }}"
-# Regex pattern to allow tenancies by name
-azimuth_capi_operator_cluster_templates_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default(None) }}"
-# Regex pattern to block tenancies by name
-azimuth_capi_operator_cluster_templates_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default(None) }}"
-# The set of key-value annotations to apply to the template
-azimuth_capi_operator_cluster_templates_tenancy_access_controls: >-
-  {{-
-    {} |
-    combine(
-      { "acl.azimuth.stackhpc.com/allow-list": (azimuth_capi_operator_cluster_templates_tenancy_allow_list | join(",")) }
-      if azimuth_capi_operator_cluster_templates_tenancy_allow_list | length > 0
-      else {}
-    ) | combine(
-      {  "acl.azimuth.stackhpc.com/deny-list": (azimuth_capi_operator_cluster_templates_tenancy_deny_list | join(",")) }
-      if azimuth_capi_operator_cluster_templates_tenancy_deny_list | length > 0
-      else {}
-    ) | combine(
-      { "acl.azimuth.stackhpc.com/allow-regex": azimuth_capi_operator_cluster_templates_tenancy_allow_regex }
-      if azimuth_capi_operator_cluster_templates_tenancy_allow_regex
-      else {}
-    ) | combine(
-      { "acl.azimuth.stackhpc.com/deny-regex": azimuth_capi_operator_cluster_templates_tenancy_deny_regex }
-      if azimuth_capi_operator_cluster_templates_tenancy_deny_regex
-      else {}
-    )
-  }}
-
 # The full list of Kubernetes cluster templates to install
 azimuth_capi_operator_cluster_templates: >-
   {{-
     azimuth_capi_operator_cluster_templates_default |
       combine(azimuth_capi_operator_cluster_templates_extra, recursive = True)
   }}
+
+# The tenancy-based access controls to apply to all Kubernetes cluster templates
+# List of allowed tenancy IDs
+azimuth_capi_operator_cluster_templates_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) | join(',') }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_cluster_templates_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) | join(',') }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_cluster_templates_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_cluster_templates_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
 
 
 #####
