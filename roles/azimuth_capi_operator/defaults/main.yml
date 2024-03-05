@@ -461,6 +461,21 @@ azimuth_capi_operator_cluster_template_defaults:
       internalNetwork:
         networkFilter:
           tags: portal-internal
+# Tenancy-based access controls to apply to Kubernetes cluster templates
+# List of allowed tenancy IDs
+azimuth_capi_operator_cluster_template_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_cluster_template_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_cluster_template_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_cluster_template_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the clusters templates
+azimuth_capi_operator_cluster_template_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_cluster_template_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_cluster_template_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_deny_regex }}"
 # By default, make a template for each Kubernetes release for which we have an image
 azimuth_capi_operator_cluster_templates_default: |-
   {
@@ -468,31 +483,36 @@ azimuth_capi_operator_cluster_templates_default: |-
     {% if "kubernetes_version" in image %}
     {% set kube_vn_no_prefix = image.kubernetes_version.removeprefix("v") %}
     {% set kube_vn_dash = kube_vn_no_prefix | replace('.', '-') %}
-    "kube-{{ kube_vn_dash }}": {{
-      azimuth_capi_operator_cluster_template_defaults |
-        combine(
-          {
-            "label": image.kubernetes_version,
-            "description": "Kubernetes " ~ kube_vn_no_prefix ~ " with HA control plane.",
-            "values": {
-              "kubernetesVersion": kube_vn_no_prefix,
-              "machineImageId": community_images_image_ids[key],
+    "kube-{{ kube_vn_dash }}": {
+      "annotations": {{ azimuth_capi_operator_cluster_template_annotations }},
+      "spec": {{
+        azimuth_capi_operator_cluster_template_defaults |
+          combine(
+            {
+              "label": image.kubernetes_version,
+              "description": "Kubernetes " ~ kube_vn_no_prefix ~ " with HA control plane.",
+              "values": {
+                "kubernetesVersion": kube_vn_no_prefix,
+                "machineImageId": community_images_image_ids[key],
+              },
             },
-          },
-          recursive = True
-        )
-    }},
+            recursive = True
+          )
+      }},
+    },
     {% endif %}
     {% endfor %}
   }
 # Allow extra templates to be defined using a separate variable
 azimuth_capi_operator_cluster_templates_extra: {}
+
 # The full list of Kubernetes cluster templates to install
 azimuth_capi_operator_cluster_templates: >-
   {{-
     azimuth_capi_operator_cluster_templates_default |
       combine(azimuth_capi_operator_cluster_templates_extra, recursive = True)
   }}
+
 
 #####
 # Kubernetes app template definitions
@@ -514,37 +534,54 @@ azimuth_capi_operator_app_templates_jupyterhub_description:
 azimuth_capi_operator_app_templates_jupyterhub_keep_versions: 3
 # The sync frequency for the JupyterHub app template (default 24h)
 azimuth_capi_operator_app_templates_jupyterhub_sync_frequency: 86400
-# Any defaultn values for the JupyterHub app template
+# Any default values for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_default_values: {}
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_jupyterhub_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_regex }}"
 # The spec for the JupyterHub app template
-azimuth_capi_operator_app_templates_jupyterhub_spec: >-
-  {{-
-    {
-      "chart": {
-        "repo": azimuth_capi_operator_app_templates_jupyterhub_chart_repo,
-        "name": azimuth_capi_operator_app_templates_jupyterhub_chart_name,
-      },
-      "versionRange": azimuth_capi_operator_app_templates_jupyterhub_version_range,
-      "keepVersions": azimuth_capi_operator_app_templates_jupyterhub_keep_versions,
-      "syncFrequency": azimuth_capi_operator_app_templates_jupyterhub_sync_frequency,
-      "defaultValues": azimuth_capi_operator_app_templates_jupyterhub_default_values,
-    } |
-      combine(
-        { "label": azimuth_capi_operator_app_templates_jupyterhub_label }
-        if azimuth_capi_operator_app_templates_jupyterhub_label
-        else {}
-      ) |
-      combine(
-        { "logo": azimuth_capi_operator_app_templates_jupyterhub_logo }
-        if azimuth_capi_operator_app_templates_jupyterhub_logo
-        else {}
-      ) |
-      combine(
-        { "description": azimuth_capi_operator_app_templates_jupyterhub_description }
-        if azimuth_capi_operator_app_templates_jupyterhub_description
-        else {}
-      )
-  }}
+azimuth_capi_operator_app_templates_jupyterhub_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_jupyterhub_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_jupyterhub_chart_repo,
+          "name": azimuth_capi_operator_app_templates_jupyterhub_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_jupyterhub_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_jupyterhub_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_jupyterhub_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_jupyterhub_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_jupyterhub_label }
+          if azimuth_capi_operator_app_templates_jupyterhub_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_jupyterhub_logo }
+          if azimuth_capi_operator_app_templates_jupyterhub_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_jupyterhub_description }
+          if azimuth_capi_operator_app_templates_jupyterhub_description
+          else {}
+        )
+    }}
 
 # Indicates whether the Zenith-enabled DaskHub app template should be enabled
 azimuth_capi_operator_app_templates_daskhub_enabled: true
@@ -564,35 +601,52 @@ azimuth_capi_operator_app_templates_daskhub_keep_versions: 3
 azimuth_capi_operator_app_templates_daskhub_sync_frequency: 86400
 # Any defaultn values for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_default_values: {}
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_daskhub_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_daskhub_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_daskhub_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_daskhub_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_daskhub_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_deny_regex }}"
 # The spec for the DaskHub app template
-azimuth_capi_operator_app_templates_daskhub_spec: >-
-  {{-
-    {
-      "chart": {
-        "repo": azimuth_capi_operator_app_templates_daskhub_chart_repo,
-        "name": azimuth_capi_operator_app_templates_daskhub_chart_name,
-      },
-      "versionRange": azimuth_capi_operator_app_templates_daskhub_version_range,
-      "keepVersions": azimuth_capi_operator_app_templates_daskhub_keep_versions,
-      "syncFrequency": azimuth_capi_operator_app_templates_daskhub_sync_frequency,
-      "defaultValues": azimuth_capi_operator_app_templates_daskhub_default_values,
-    } |
-      combine(
-        { "label": azimuth_capi_operator_app_templates_daskhub_label }
-        if azimuth_capi_operator_app_templates_daskhub_label
-        else {}
-      ) |
-      combine(
-        { "logo": azimuth_capi_operator_app_templates_daskhub_logo }
-        if azimuth_capi_operator_app_templates_daskhub_logo
-        else {}
-      ) |
-      combine(
-        { "description": azimuth_capi_operator_app_templates_daskhub_description }
-        if azimuth_capi_operator_app_templates_daskhub_description
-        else {}
-      )
-  }}
+azimuth_capi_operator_app_templates_daskhub_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_daskhub_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_daskhub_chart_repo,
+          "name": azimuth_capi_operator_app_templates_daskhub_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_daskhub_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_daskhub_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_daskhub_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_daskhub_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_daskhub_label }
+          if azimuth_capi_operator_app_templates_daskhub_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_daskhub_logo }
+          if azimuth_capi_operator_app_templates_daskhub_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_daskhub_description }
+          if azimuth_capi_operator_app_templates_daskhub_description
+          else {}
+        )
+    }}
 
 # Indicates whether the Zenith-enabled kubeflow app template should be enabled
 azimuth_capi_operator_app_templates_kubeflow_enabled: true
@@ -612,35 +666,52 @@ azimuth_capi_operator_app_templates_kubeflow_keep_versions: 3
 azimuth_capi_operator_app_templates_kubeflow_sync_frequency: 86400
 # Any defaultn values for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_default_values: {}
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_kubeflow_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_regex }}"
 # The spec for the kubeflow app template
-azimuth_capi_operator_app_templates_kubeflow_spec: >-
-  {{-
-    {
-      "chart": {
-        "repo": azimuth_capi_operator_app_templates_kubeflow_chart_repo,
-        "name": azimuth_capi_operator_app_templates_kubeflow_chart_name,
-      },
-      "versionRange": azimuth_capi_operator_app_templates_kubeflow_version_range,
-      "keepVersions": azimuth_capi_operator_app_templates_kubeflow_keep_versions,
-      "syncFrequency": azimuth_capi_operator_app_templates_kubeflow_sync_frequency,
-      "defaultValues": azimuth_capi_operator_app_templates_kubeflow_default_values,
-    } |
-      combine(
-        { "label": azimuth_capi_operator_app_templates_kubeflow_label }
-        if azimuth_capi_operator_app_templates_kubeflow_label
-        else {}
-      ) |
-      combine(
-        { "logo": azimuth_capi_operator_app_templates_kubeflow_logo }
-        if azimuth_capi_operator_app_templates_kubeflow_logo
-        else {}
-      ) |
-      combine(
-        { "description": azimuth_capi_operator_app_templates_kubeflow_description }
-        if azimuth_capi_operator_app_templates_kubeflow_description
-        else {}
-      )
-  }}
+azimuth_capi_operator_app_templates_kubeflow_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_kubeflow_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_kubeflow_chart_repo,
+          "name": azimuth_capi_operator_app_templates_kubeflow_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_kubeflow_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_kubeflow_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_kubeflow_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_kubeflow_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_kubeflow_label }
+          if azimuth_capi_operator_app_templates_kubeflow_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_kubeflow_logo }
+          if azimuth_capi_operator_app_templates_kubeflow_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_kubeflow_description }
+          if azimuth_capi_operator_app_templates_kubeflow_description
+          else {}
+        )
+    }}
 
 # Indicates whether the Zenith-enabled binderhub app template should be enabled
 azimuth_capi_operator_app_templates_binderhub_enabled: true
@@ -663,35 +734,52 @@ azimuth_capi_operator_app_templates_binderhub_use_https_redirects: "{{ ingress_t
 # Any default values for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_default_values:
   binderhub_oauth_use_https: "{{ azimuth_capi_operator_app_templates_binderhub_use_https_redirects }}"
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_binderhub_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_binderhub_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_binderhub_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_binderhub_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_binderhub_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_deny_regex }}"
 # The spec for the binderhub app template
-azimuth_capi_operator_app_templates_binderhub_spec: >-
-  {{-
-    {
-      "chart": {
-        "repo": azimuth_capi_operator_app_templates_binderhub_chart_repo,
-        "name": azimuth_capi_operator_app_templates_binderhub_chart_name,
-      },
-      "versionRange": azimuth_capi_operator_app_templates_binderhub_version_range,
-      "keepVersions": azimuth_capi_operator_app_templates_binderhub_keep_versions,
-      "syncFrequency": azimuth_capi_operator_app_templates_binderhub_sync_frequency,
-      "defaultValues": azimuth_capi_operator_app_templates_binderhub_default_values,
-    } |
-      combine(
-        { "label": azimuth_capi_operator_app_templates_binderhub_label }
-        if azimuth_capi_operator_app_templates_binderhub_label
-        else {}
-      ) |
-      combine(
-        { "logo": azimuth_capi_operator_app_templates_binderhub_logo }
-        if azimuth_capi_operator_app_templates_binderhub_logo
-        else {}
-      ) |
-      combine(
-        { "description": azimuth_capi_operator_app_templates_binderhub_description }
-        if azimuth_capi_operator_app_templates_binderhub_description
-        else {}
-      )
-  }}
+azimuth_capi_operator_app_templates_binderhub_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_binderhub_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_binderhub_chart_repo,
+          "name": azimuth_capi_operator_app_templates_binderhub_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_binderhub_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_binderhub_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_binderhub_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_binderhub_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_binderhub_label }
+          if azimuth_capi_operator_app_templates_binderhub_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_binderhub_logo }
+          if azimuth_capi_operator_app_templates_binderhub_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_binderhub_description }
+          if azimuth_capi_operator_app_templates_binderhub_description
+          else {}
+        )
+    }}
 
 # Indicates whether the Zenith-enabled huggingface_llm app template should be enabled
 azimuth_capi_operator_app_templates_huggingface_llm_enabled: true
@@ -700,7 +788,6 @@ azimuth_capi_operator_app_templates_huggingface_llm_chart_name: azimuth-llm
 # The Helm repository to use for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_chart_repo: https://stackhpc.github.io/azimuth-llm
 # The version range to use for the huggingface_llm Helm chart
-# TODO: Make this a SemVer tag in the future
 azimuth_capi_operator_app_templates_huggingface_llm_version_range: ">=0.0.0"
 # Overrides for the label, logo and description from the huggingface_llm Helm chart
 azimuth_capi_operator_app_templates_huggingface_llm_label:
@@ -714,35 +801,52 @@ azimuth_capi_operator_app_templates_huggingface_llm_keep_versions: 3
 azimuth_capi_operator_app_templates_huggingface_llm_sync_frequency: 86400
 # Any default values for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_default_values: {}
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_huggingface_llm_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_regex }}"
 # The spec for the huggingface_llm app template
-azimuth_capi_operator_app_templates_huggingface_llm_spec: >-
-  {{-
-    {
-      "chart": {
-        "repo": azimuth_capi_operator_app_templates_huggingface_llm_chart_repo,
-        "name": azimuth_capi_operator_app_templates_huggingface_llm_chart_name,
-      },
-      "versionRange": azimuth_capi_operator_app_templates_huggingface_llm_version_range,
-      "keepVersions": azimuth_capi_operator_app_templates_huggingface_llm_keep_versions,
-      "syncFrequency": azimuth_capi_operator_app_templates_huggingface_llm_sync_frequency,
-      "defaultValues": azimuth_capi_operator_app_templates_huggingface_llm_default_values,
-    } |
-      combine(
-        { "label": azimuth_capi_operator_app_templates_huggingface_llm_label }
-        if azimuth_capi_operator_app_templates_huggingface_llm_label
-        else {}
-      ) |
-      combine(
-        { "logo": azimuth_capi_operator_app_templates_huggingface_llm_logo }
-        if azimuth_capi_operator_app_templates_huggingface_llm_logo
-        else {}
-      ) |
-      combine(
-        { "description": azimuth_capi_operator_app_templates_huggingface_llm_description }
-        if azimuth_capi_operator_app_templates_huggingface_llm_description
-        else {}
-      )
-  }}
+azimuth_capi_operator_app_templates_huggingface_llm_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_huggingface_llm_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_huggingface_llm_chart_repo,
+          "name": azimuth_capi_operator_app_templates_huggingface_llm_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_huggingface_llm_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_huggingface_llm_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_huggingface_llm_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_huggingface_llm_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_huggingface_llm_label }
+          if azimuth_capi_operator_app_templates_huggingface_llm_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_huggingface_llm_logo }
+          if azimuth_capi_operator_app_templates_huggingface_llm_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_huggingface_llm_description }
+          if azimuth_capi_operator_app_templates_huggingface_llm_description
+          else {}
+        )
+    }}
 
 # The default templates
 azimuth_capi_operator_app_templates_default: >-

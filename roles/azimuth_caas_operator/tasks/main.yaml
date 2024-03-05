@@ -23,11 +23,12 @@
       kind: ClusterType
       metadata:
         name: "{{ template.name }}"
-      spec: "{{ template.spec }}"
+        annotations: "{{ template.config.annotations }}"
+      spec: "{{ template.config.spec }}"
   loop: >-
     {{-
       azimuth_caas_cluster_templates |
-        dict2items(key_name = 'name', value_name = 'spec')
+        dict2items(key_name = 'name', value_name = 'config')
     }}
   loop_control:
     loop_var: template
