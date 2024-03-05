@@ -23,11 +23,12 @@
       kind: ClusterTemplate
       metadata:
         name: "{{ template.name }}"
-      spec: "{{ template.spec }}"
+        annotations: "{{ template.config.annotations }}"
+      spec: "{{ template.config.spec }}"
   loop: >-
     {{-
       azimuth_capi_operator_cluster_templates |
-        dict2items(key_name = 'name', value_name = 'spec')
+        dict2items(key_name = 'name', value_name = 'config')
     }}
   loop_control:
     loop_var: template
@@ -72,15 +73,6 @@
   loop_control:
     label: "{{ item.metadata.name }}"
 
-- name: Ensure cluster template tenancy access controls are applied
-  command: >-
-    kubectl annotate --overwrite --all
-    clustertemplates.azimuth.stackhpc.com
-    acl.azimuth.stackhpc.com/allow-list={{ azimuth_capi_operator_cluster_templates_tenancy_allow_list }}
-    acl.azimuth.stackhpc.com/deny-list={{ azimuth_capi_operator_cluster_templates_tenancy_deny_list }}
-    acl.azimuth.stackhpc.com/allow-regex={{ azimuth_capi_operator_cluster_templates_tenancy_allow_regex }}
-    acl.azimuth.stackhpc.com/deny-regex={{ azimuth_capi_operator_cluster_templates_tenancy_deny_regex }}
-
 - name: Install Azimuth CAPI app templates
   command: kubectl apply -f -
   args:
@@ -91,8 +83,8 @@
       kind: AppTemplate
       metadata:
         name: "{{ template.name }}"
-        annotations: "{{ template.config.annotations | default({}) }}"
-      spec: "{{ template.config.spec | ansible.utils.remove_keys('access_controls') }}"
+        annotations: "{{ template.config.annotations }}"
+      spec: "{{ template.config.spec }}"
   loop: >-
     {{-
       azimuth_capi_operator_app_templates |

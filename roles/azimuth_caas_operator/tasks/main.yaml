@@ -23,7 +23,7 @@
       kind: ClusterType
       metadata:
         name: "{{ template.name }}"
-        annotations: "{{ template.config.annotations | default({}) }}"
+        annotations: "{{ template.config.annotations }}"
       spec: "{{ template.config.spec }}"
   loop: >-
     {{-
