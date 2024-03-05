@@ -1,12 +1,14 @@
-{{ test_case.name | default(test_case.cluster_type, True) }}
-{% if test_case.tags is defined and test_case.tags %}
-    [Tags]  {{ test_case.tags | join('  ') }}
-{% endif %}
-{% if test_case.timeout is defined and test_case.timeout %}
-    [Timeout]  {{ test_case.timeout }}
+{% set test_case_cluster_name_prefix = test_case.cluster_name_prefix | default('test', True) %}
+{% set test_case_cluster_name_suffix = lookup('community.general.random_string', length = 5, upper = false, special = false) %}
+{% set test_case_cluster_name = test_case_cluster_name_prefix ~ "-" ~ test_case_cluster_name_suffix %}
+{% set test_case_tags = test_case.tags | default([]) %}
+
+Create {{ test_case.name | default(test_case.cluster_type, True) }}
+    [Tags]  {{ (test_case_tags + ["create"]) | join('  ') }}
+{% if test_case.create_timeout is defined and test_case.create_timeout %}
+    [Timeout]  {{ test_case.create_timeout }}
 {% endif %}
     ${ctype} =  Find Cluster Type By Name  {{ test_case.cluster_type }}
-    ${name} =  Generate Name  {{ test_case.cluster_name_prefix | default('test', True) }}
     ${params} =  Guess Parameter Values For Cluster Type  ${ctype}
 {% if test_case.params is defined and test_case.params %}
     Set To Dictionary  ${params}
@@ -18,7 +20,14 @@
 {% endif %}
 {% endfor %}
 {% endif %}
-    ${cluster} =  Create Cluster  ${name}  ${ctype.name}  &{params}
+    ${cluster} =  Create Cluster  {{ test_case_cluster_name }}  ${ctype.name}  &{params}
+
+Verify {{ test_case.name | default(test_case.cluster_type, True) }}
+    [Tags]  {{ (test_case_tags + ["verify"]) | join('  ') }}
+{% if test_case.verify_timeout is defined and test_case.verify_timeout %}
+    [Timeout]  {{ test_case.verify_timeout }}
+{% endif %}
+    ${cluster} =  Find Cluster By Name  {{ test_case_cluster_name }}
     ${cluster} =  Wait For Cluster Ready  ${cluster.id}
 {% if test_case.services is defined and test_case.services %}
 {% for service in test_case.services %}
@@ -29,4 +38,11 @@
 {% endif %}
 {% endfor %}
 {% endif %}
-    [Teardown]  Delete Cluster  ${cluster.id}
+
+Delete {{ test_case.name | default(test_case.cluster_type, True) }}
+    [Tags]  {{ (test_case_tags + ["delete"]) | join('  ') }}
+{% if test_case.delete_timeout is defined and test_case.delete_timeout %}
+    [Timeout]  {{ test_case.delete_timeout }}
+{% endif %}
+    ${cluster} =  Find Cluster By Name  {{ test_case_cluster_name }}
+    Delete Cluster  ${cluster.id}

@@ -93,9 +93,9 @@ generate_tests_caas_test_case_workstation_ssh_enabled: false
 generate_tests_caas_test_case_slurm_enabled: true
 #   Extra tags for the Slurm test case
 generate_tests_caas_test_case_slurm_tags: [externalip]
-#   The timeout for the Slurm test case
+#   The verify timeout for the Slurm test case
 #   By default, the Slurm test case is permitted longer
-generate_tests_caas_test_case_slurm_timeout: "30 minutes"
+generate_tests_caas_test_case_slurm_verify_timeout: "30 minutes"
 #   Parameter values to reduce the resource consumption
 generate_tests_caas_test_case_slurm_param_compute_count: 2
 generate_tests_caas_test_case_slurm_param_home_volume_size: 20
@@ -141,7 +141,9 @@ generate_tests_caas_test_cases_default: >-
         "{{ tag }}",
         {% endfor %}
       ],
-      "timeout": "{{ lookup('vars', var_prefix ~ 'timeout', default = '') }}",
+      "create_timeout": "{{ lookup('vars', var_prefix ~ 'create_timeout', default = '') }}",
+      "verify_timeout": "{{ lookup('vars', var_prefix ~ 'verify_timeout', default = '') }}",
+      "delete_timeout": "{{ lookup('vars', var_prefix ~ 'delete_timeout', default = '') }}",
       "cluster_type": "{{ ctype.metadata.name }}",
       "cluster_name_prefix": "{{ lookup('vars', var_prefix ~ 'cluster_name_prefix', default = '') }}",
       "params": {
@@ -245,6 +247,7 @@ generate_tests_kubernetes_test_cases_default: >-
     %}
     {
       "kubernetes_template": "{{ tpl.metadata.name }}",
+      "tags": ["{{ tpl.metadata.name }}"],
       "control_plane_size": "{{ generate_tests_kubernetes_test_case_control_plane_size }}",
       "worker_size": "{{ generate_tests_kubernetes_test_case_worker_size }}",
       "worker_count": {{ generate_tests_kubernetes_test_case_worker_count }},
@@ -276,9 +279,10 @@ generate_tests_kubernetes_apps_suite_name: Kubernetes Apps
 # The tags to apply to tests in the suite
 generate_tests_kubernetes_apps_default_test_tags: [kubernetes, kubeapps]
 
-# The timeouts to apply to the suite setup and teardown
-generate_tests_kubernetes_apps_setup_timeout: "30 minutes"
-generate_tests_kubernetes_apps_teardown_timeout: "30 minutes"
+# The timeouts to apply to the setup, verify and teardown of the Kubernetes cluster
+generate_tests_kubernetes_apps_setup_timeout: "15 minutes"
+generate_tests_kubernetes_apps_verify_timeout: "30 minutes"
+generate_tests_kubernetes_apps_teardown_timeout: "15 minutes"
 
 # The timeout to apply to tests in the suite
 generate_tests_kubernetes_apps_default_test_timeout: "15 minutes"
@@ -341,7 +345,9 @@ generate_tests_kubernetes_apps_test_cases_default: >-
         "{{ tag }}",
         {% endfor %}
       ],
-      "timeout": "{{ lookup('vars', var_prefix ~ 'timeout', default = '') }}",
+      "create_timeout": "{{ lookup('vars', var_prefix ~ 'create_timeout', default = '') }}",
+      "verify_timeout": "{{ lookup('vars', var_prefix ~ 'verify_timeout', default = '') }}",
+      "delete_timeout": "{{ lookup('vars', var_prefix ~ 'delete_timeout', default = '') }}",
       "app_template": "{{ app_tpl.metadata.name }}",
       "app_name_prefix": "{{ lookup('vars', var_prefix ~ 'app_name_prefix', default = '') }}",
       "services": [
