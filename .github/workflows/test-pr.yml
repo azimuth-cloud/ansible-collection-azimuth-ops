@@ -62,6 +62,7 @@ jobs:
           os-clouds: ${{ secrets.OS_CLOUDS }}
           environment-prefix: ops-ci
           azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
+          target-cloud: ${{ vars.TARGET_CLOUD }}
 
       # Provision Azimuth using the azimuth-ops version under test
       - name: Provision Azimuth
