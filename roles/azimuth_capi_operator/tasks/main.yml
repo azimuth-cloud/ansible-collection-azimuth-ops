@@ -23,8 +23,9 @@
       kind: ClusterTemplate
       metadata:
         name: "{{ template.name }}"
-        annotations: "{{ template.config.annotations }}"
-      spec: "{{ template.config.spec }}"
+        annotations: "{{ template.config.annotations | default({}) }}"
+      # This allows old-style templates to still work
+      spec: "{{ template.config.spec | default(template.config) }}"
   loop: >-
     {{-
       azimuth_capi_operator_cluster_templates |
@@ -83,8 +84,9 @@
       kind: AppTemplate
       metadata:
         name: "{{ template.name }}"
-        annotations: "{{ template.config.annotations }}"
-      spec: "{{ template.config.spec }}"
+        annotations: "{{ template.config.annotations | default({}) }}"
+      # This allows old-style templates to still work
+      spec: "{{ template.config.spec | default(template.config) }}"
   loop: >-
     {{-
       azimuth_capi_operator_app_templates |

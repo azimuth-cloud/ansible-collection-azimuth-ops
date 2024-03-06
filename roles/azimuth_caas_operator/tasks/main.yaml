@@ -23,8 +23,9 @@
       kind: ClusterType
       metadata:
         name: "{{ template.name }}"
-        annotations: "{{ template.config.annotations }}"
-      spec: "{{ template.config.spec }}"
+        annotations: "{{ template.config.annotations | default({}) }}"
+      # This allows old-style templates to still work
+      spec: "{{ template.config.spec | default(template.config) }}"
   loop: >-
     {{-
       azimuth_caas_cluster_templates |
