@@ -160,7 +160,7 @@ azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC workstation
 azimuth_caas_stackhpc_workstation_git_url: https://github.com/stackhpc/caas-workstation.git
 # The git version for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_git_version: 0.4.0
+azimuth_caas_stackhpc_workstation_git_version: 0.5.0
 # The playbook to use for the workstation appliance
 azimuth_caas_stackhpc_workstation_playbook: workstation.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
