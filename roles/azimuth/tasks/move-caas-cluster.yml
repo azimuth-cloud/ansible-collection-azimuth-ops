@@ -1,0 +1,155 @@
+---
+
+# These tasks are responsible for moving clusters into the correct namespace and
+# setting up proper ownership of the corresponding identity platform, see
+# https://github.com/stackhpc/azimuth/pull/185
+
+- name: Get credentials secret for cluster
+  command: >-
+    kubectl get secret {{ cluster.spec.cloudCredentialsSecretName }}
+      --namespace {{ cluster.metadata.namespace }}
+      --output json
+  register: azimuth_cluster_cloud_credentials_secret
+
+- name: Set project ID and project name facts
+  set_fact:
+    azimuth_cluster_project_id: >-
+      {{
+        azimuth_cluster_cloud_credentials_secret.stdout |
+          from_json |
+          json_query('data."user_info.yaml"') |
+          b64decode |
+          from_yaml |
+          json_query('project_id') |
+          lower |
+          regex_replace('[^a-z0-9]+', '-') |
+          trim('-')
+      }}
+    azimuth_cluster_project_name: >-
+      {{
+        azimuth_cluster_cloud_credentials_secret.stdout |
+          from_json |
+          json_query('data."user_info.yaml"') |
+          b64decode |
+          from_yaml |
+          json_query('project_name') |
+          lower |
+          regex_replace('[^a-z0-9]+', '-') |
+          trim('-')
+      }}
+
+- name: Pause cluster
+  command: >-
+    kubectl patch clusters.caas {{ cluster.metadata.name }}
+      --namespace {{ cluster.metadata.namespace }}
+      --type merge
+      --patch '{"spec": {"paused": true}}'
+
+- name: Copy cloud credentials secret to new namespace
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ azimuth_cluster_cloud_credentials_secret_definition | to_nice_yaml }}"
+  vars:
+    azimuth_cluster_cloud_credentials_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ cluster.spec.cloudCredentialsSecretName }}"
+        namespace: "{{ 'az-' ~ azimuth_cluster_project_name }}"
+      type: Opaque
+      data: >-
+        {{ azimuth_cluster_cloud_credentials_secret.stdout | from_json | json_query('data') }}
+
+- name: Get deploy key secret for cluster
+  command: >-
+    kubectl get secret {{ cluster.metadata.name }}-deploy-key
+      --namespace {{ cluster.metadata.namespace }}
+      --output json
+  register: azimuth_cluster_deploy_key_secret
+
+- name: Copy deploy key secret to new namespace
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ azimuth_cluster_deploy_key_secret_definition | to_nice_yaml }}"
+  vars:
+    azimuth_cluster_deploy_key_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ cluster.metadata.name }}-deploy-key"
+        namespace: "az-{{ azimuth_cluster_project_name }}"
+      type: Opaque
+      data: >-
+        {{ azimuth_cluster_deploy_key_secret.stdout | from_json | json_query('data') }}
+
+- name: Copy cluster definition to new namespace
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ azimuth_cluster_definition | to_nice_yaml }}"
+  vars:
+    azimuth_cluster_definition:
+      apiVersion: "{{ cluster.apiVersion }}"
+      kind: "{{ cluster.kind }}"
+      metadata:
+        name: "{{ cluster.metadata.name }}"
+        namespace: "az-{{ azimuth_cluster_project_name }}"
+        annotations: "{{ cluster.metadata.annotations | default({}) }}"
+        labels: "{{ cluster.metadata.labels | default({}) }}"
+      # Make sure that the new cluster is paused
+      spec: "{{ cluster.spec | combine({'paused': True}) }}"
+
+- name: Copy cluster status to new cluster object
+  command: >-
+    kubectl patch clusters.caas {{ cluster.metadata.name }}
+      --namespace az-{{ azimuth_cluster_project_name }}
+      --subresource status
+      --type merge
+      --patch-file /dev/stdin
+  args:
+    stdin: "{{ azimuth_cluster_status_patch | to_nice_json }}"
+  vars:
+    azimuth_cluster_status_patch:
+      status: "{{ cluster.status }}"
+
+- name: Get UID of new cluster object
+  command: >-
+    kubectl get cluster.caas {{ cluster.metadata.name }}
+      --namespace az-{{ azimuth_cluster_project_name }}
+      --output go-template={% raw %}'{{.metadata.uid}}'{% endraw %}
+  register: azimuth_cluster_new_uid
+
+- name: Add owner reference to corresponding identity platform
+  command: >-
+    kubectl patch platform caas-{{ cluster.metadata.name }}
+      --namespace az-{{ azimuth_cluster_project_name }}
+      --type merge
+      --patch-file /dev/stdin
+  args:
+    stdin: "{{ azimuth_platform_owner_references_patch | to_nice_json }}"
+  vars:
+    azimuth_platform_owner_references_patch:
+      metadata:
+        ownerReferences:
+          - apiVersion: "{{ cluster.apiVersion }}"
+            kind: "{{ cluster.kind }}"
+            name: "{{ cluster.metadata.name }}"
+            uid: "{{ azimuth_cluster_new_uid.stdout }}"
+            blockOwnerDeletion: true
+
+- name: Resume new cluster
+  command: >-
+    kubectl patch clusters.caas {{ cluster.metadata.name }}
+      --namespace az-{{ azimuth_cluster_project_name }}
+      --type merge
+      --patch '{"spec": {"paused": false}}'
+
+- name: Remove old cluster resources
+  command: kubectl delete -f -
+  args:
+    stdin: "{{ item | to_nice_yaml }}"
+  loop:
+    - "{{ azimuth_cluster_cloud_credentials_secret.stdout }}"
+    - "{{ azimuth_cluster_deploy_key_secret.stdout }}"
+    - "{{ cluster }}"
+  loop_control:
+    label: "{{ item.kind }}/{{ item.metadata.namespace }}/{{ item.metadata.name }}"
