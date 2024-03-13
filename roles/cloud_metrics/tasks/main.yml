@@ -138,7 +138,7 @@
   set_fact:
     cloud_metrics_grafana_home_dashboard_url: >-
       {{-
-        "{scheme}://{host}{subpath}/d/{dashboard_uid}?kiosk=tv".format(
+        "{scheme}://{host}{subpath}/d/{dashboard_uid}?kiosk".format(
           scheme = "https" if cloud_metrics_grafana_ingress_tls_enabled else "http",
           host = cloud_metrics_grafana_ingress_host,
           subpath = cloud_metrics_grafana_ingress_subpath,
@@ -147,7 +147,7 @@
       }}
     cloud_metrics_grafana_tenant_dashboard_url_template: >-
       {{-
-        "{scheme}://{host}{subpath}/d/{dashboard_uid}?kiosk=tv&var-{tenant_var}={{tenant_id}}".format(
+        "{scheme}://{host}{subpath}/d/{dashboard_uid}?kiosk&var-{tenant_var}={{tenant_id}}".format(
           scheme = "https" if cloud_metrics_grafana_ingress_tls_enabled else "http",
           host = cloud_metrics_grafana_ingress_host,
           subpath = cloud_metrics_grafana_ingress_subpath,
