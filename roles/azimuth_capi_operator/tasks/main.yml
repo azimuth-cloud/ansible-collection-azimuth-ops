@@ -39,20 +39,23 @@
   command: kubectl get clustertemplates.azimuth.stackhpc.com --output json
   register: azimuth_capi_operator_templates_cmd
 
-- name: Correct Kubernetes version in template spec if required
+- name: Apply ACL annotations to non-current templates
   command: >-
-    kubectl patch
+    kubectl patch clustertemplates.azimuth.stackhpc.com/{{ item.metadata.name }}
       --type merge
-      --patch '{"spec": {"values": {"kubernetesVersion": "{{ kubernetes_version }}"}}}'
-      clustertemplates.azimuth.stackhpc.com/{{ item.metadata.name }}
+      --patch-file /dev/stdin
+  args:
+    stdin: "{{ azimuth_capi_operator_templates_acl_patch | to_nice_json }}"
   vars:
-    kubernetes_version: "{{ item | json_query('spec.values.global.kubernetesVersion') }}"
-  when: "not (item | json_query('spec.values.kubernetesVersion'))"
+    azimuth_capi_operator_templates_acl_patch:
+      metadata:
+        annotations: "{{ azimuth_capi_operator_cluster_template_annotations }}"
   loop: >-
     {{-
       azimuth_capi_operator_templates_cmd.stdout |
         from_json |
-        json_query('items')
+        json_query('items') |
+        rejectattr('metadata.name', 'in', azimuth_capi_operator_cluster_templates.keys())
     }}
   loop_control:
     label: "{{ item.metadata.name }}"
