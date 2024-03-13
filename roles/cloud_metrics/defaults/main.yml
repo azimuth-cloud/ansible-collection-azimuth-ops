@@ -223,6 +223,29 @@ cloud_metrics_grafana_tenant_dashboard_uid: >-
 # The variable name that the tenant ID should be placed in
 cloud_metrics_grafana_tenant_id_var: project_id
 
+# Configuration for the datasources to add
+# By default, we add the Azimuth Prometheus
+cloud_metrics_datasource_prometheus_scheme: http
+cloud_metrics_datasource_prometheus_host: kube-prometheus-stack-prometheus.monitoring-system
+cloud_metrics_datasource_prometheus_port: 9090
+cloud_metrics_datasource_prometheus_url: >-
+  {{-
+    "{}://{}:{}".format(
+      cloud_metrics_datasource_prometheus_scheme,
+      cloud_metrics_datasource_prometheus_host,
+      cloud_metrics_datasource_prometheus_port
+    )
+  }}
+cloud_metrics_grafana_datasources:
+  prometheus.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: "{{ cloud_metrics_datasource_prometheus_url }}"
+        access: proxy
+        isDefault: true
+
 # The deployment strategy for Grafana
 # If using persistence with RWO PVCs, this must be Recreate or the deployment gets stuck
 cloud_metrics_grafana_deployment_strategy:
@@ -270,6 +293,7 @@ cloud_metrics_grafana_release_defaults:
     passwordKey: "{{ cloud_metrics_grafana_admin_secret_password_key }}"
   dashboards: "{{ cloud_metrics_grafana_dashboards }}"
   dashboardProviders: "{{ cloud_metrics_grafana_dashboard_providers }}"
+  datasources: "{{ cloud_metrics_grafana_datasources }}"
   # Enable anonymous auth as we are already imposing Azimuth auth
   grafana.ini:
     server:
