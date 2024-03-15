@@ -23,7 +23,7 @@
     path: "{{ community_images_workdir }}"
 
 - name: "List images with name - {{ community_images_image_spec.name }}"
-  command: "openstack image list -f json --name {{ community_images_image_spec.name }}"
+  command: "openstack image list -f json --all --name {{ community_images_image_spec.name }}"
   changed_when: false
   register: community_images_image_list_cmd
 
