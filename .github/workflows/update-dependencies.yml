@@ -53,6 +53,12 @@ jobs:
             prereleases: "yes"
             version_jsonpath: community_images_azimuth_images_version
 
+          - key: azimuth-schedule-operator
+            path: ./roles/azimuth_schedule_operator/defaults/main.yml
+            repository: stackhpc/azimuth-schedule-operator
+            prereleases: "yes"
+            version_jsonpath: azimuth_schedule_operator_chart_version
+
           - key: caas-workstation
             path: ./roles/azimuth_caas_operator/defaults/main.yml
             repository: stackhpc/caas-workstation
