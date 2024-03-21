@@ -481,7 +481,7 @@ azimuth_capi_operator_cluster_templates_default: |-
   {
     {% for key, image in community_images.items() %}
     {% if "kubernetes_version" in image %}
-    {% set kube_vn_no_prefix = image.kubernetes_version.removeprefix("v") %}
+    {% set kube_vn_no_prefix = image.kubernetes_version | regex_replace('^v', '') %}
     {% set kube_vn_dash = kube_vn_no_prefix | replace('.', '-') %}
     "kube-{{ kube_vn_dash }}": {
       "annotations": {{ azimuth_capi_operator_cluster_template_annotations }},
