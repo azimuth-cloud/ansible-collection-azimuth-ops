@@ -74,27 +74,17 @@ generate_tests_caas_default_test_timeout: "15 minutes"
 # Indicates whether a test case should be generated for all cluster types by default
 #   If true, a test case will be generated unless explicitly disabled
 #   If false, a test case will not be generated unless explicitly enabled
-generate_tests_caas_default_test_case_enabled: false
+generate_tests_caas_default_test_case_enabled: true
 
-# Configuration for the workstation test case
-#   Indicates whether the workstation test case should be enabled
-#   Only applies if the workstation appliance is enabled
-generate_tests_caas_test_case_workstation_enabled: true
-#   Expected titles for the workstation services
+# Expected titles for the workstation services, if enabled
 generate_tests_caas_test_case_workstation_service_webconsole_expected_title: Apache Guacamole
 generate_tests_caas_test_case_workstation_service_monitoring_expected_title: Grafana
 
 # Disable the tests for the SSH workstation variant
 generate_tests_caas_test_case_workstation_ssh_enabled: false
 
-# Configuration for the Slurm test case
-#   Indicates if the Slurm test case should be enabled
-#   Only applies if the Slurm appliance is enabled
-generate_tests_caas_test_case_slurm_enabled: true
-#   Extra tags for the Slurm test case
-generate_tests_caas_test_case_slurm_tags: [externalip]
-#   The verify timeout for the Slurm test case
-#   By default, the Slurm test case is permitted longer
+# Configuration for the Slurm test case, if enabled
+#   Slurm takes a while to deploy so use a larger verify timeout
 generate_tests_caas_test_case_slurm_verify_timeout: "30 minutes"
 #   Parameter values to reduce the resource consumption
 generate_tests_caas_test_case_slurm_param_compute_count: 2
@@ -105,10 +95,7 @@ generate_tests_caas_test_case_slurm_param_cluster_run_validation: true
 generate_tests_caas_test_case_slurm_service_ood_expected_title: Dashboard
 generate_tests_caas_test_case_slurm_service_monitoring_expected_title: Grafana
 
-# Configuration for the repo2docker test case
-#   Indicates if the repo2docker test case should be enabled
-#   Only applies if the repo2docker appliance is enabled
-generate_tests_caas_test_case_repo2docker_enabled: true
+# Configuration for the repo2docker test case, if enabled
 #   The repository to use to build the image
 #   We pick a repository that has some meat but is relatively quick to build
 generate_tests_caas_test_case_repo2docker_param_cluster_repository: https://github.com/binder-examples/bokeh.git
@@ -116,11 +103,7 @@ generate_tests_caas_test_case_repo2docker_param_cluster_repository: https://gith
 generate_tests_caas_test_case_repo2docker_service_repo2docker_expected_title: JupyterLab
 generate_tests_caas_test_case_repo2docker_service_monitoring_expected_title: Grafana
 
-# Configuration for the R-Studio test case
-#   Indicates if the rstudio test case should be enabled
-#   Only applies if the rstudio appliance is enabled
-generate_tests_caas_test_case_rstudio_enabled: true
-#   Expected titles for the rstudio services
+# Expected titles for the rstudio services, if enabled
 generate_tests_caas_test_case_rstudio_service_rstudio_expected_title: RStudio Server
 generate_tests_caas_test_case_rstudio_service_monitoring_expected_title: Grafana
 
@@ -207,7 +190,7 @@ generate_tests_kubernetes_test_case_monitoring_enabled: true
 
 # Indicates if test cases should be generated for the latest Kubernetes version only,
 # or all non-deprecated versions
-generate_tests_kubernetes_test_cases_latest_only: true
+generate_tests_kubernetes_test_cases_latest_only: false
 
 # Work out what the latest supported Kubernetes version is
 _generate_tests_kubernetes_latest_available_version: >-
@@ -306,28 +289,19 @@ generate_tests_kubernetes_apps_k8s_worker_count: 2
 # Indicates whether a test case should be generated for all app templates by default
 #   If true, a test case will be generated unless explicitly disabled
 #   If false, a test case will not be generated unless explicitly enabled
-generate_tests_kubernetes_apps_default_test_case_enabled: false
+generate_tests_kubernetes_apps_default_test_case_enabled: true
 
 # Configuration for the JupyterHub test case
-#   Indicates if the JupyterHub test case should be enabled
-#   Only applies if the JupyterHub app is enabled
-generate_tests_kubernetes_apps_test_case_jupyterhub_enabled: true
 #   The services that will be produced by the JupyterHub app
 generate_tests_kubernetes_apps_test_case_jupyterhub_services: [jupyterhub-azimuth]
 #   The expected title for the JupyterHub app
 generate_tests_kubernetes_apps_test_case_jupyterhub_service_jupyterhub_azimuth_expected_title: JupyterLab
 
 # Configuration for the DaskHub test case
-#   Indicates if the DaskHub test case should be enabled
-#   Only applies if the DaskHub app is enabled
-generate_tests_kubernetes_apps_test_case_daskhub_enabled: true
 #   The services that will be produced by the DaskHub app
 generate_tests_kubernetes_apps_test_case_daskhub_services: [daskhub-azimuth]
 #   The expected title for the DaskHub app
 generate_tests_kubernetes_apps_test_case_daskhub_service_daskhub_azimuth_expected_title: JupyterLab
-
-# By default, we don't run tests for Kubeflow (for now)
-generate_tests_kubernetes_apps_test_case_kubeflow_enabled: false
 
 # The test cases for the suite
 generate_tests_kubernetes_apps_test_cases_default: >-

@@ -50,6 +50,17 @@ jobs:
           environment-prefix: ops-ci
           azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
           target-cloud: ${{ vars.TARGET_CLOUD }}
+          # Remove when https://github.com/stackhpc/azimuth-config/pull/129 merges
+          extra-vars: |
+            generate_tests_caas_default_test_case_enabled: false
+            generate_tests_caas_test_case_workstation_enabled: true
+            generate_tests_caas_test_case_slurm_enabled: true
+            generate_tests_caas_test_case_repo2docker_enabled: true
+            generate_tests_caas_test_case_rstudio_enabled: true
+            generate_tests_kubernetes_test_cases_latest_only: true
+            generate_tests_kubernetes_apps_default_test_case_enabled: false
+            generate_tests_kubernetes_apps_test_case_jupyterhub_enabled: true
+            generate_tests_kubernetes_apps_test_case_daskhub_enabled: true
 
       # Provision Azimuth using the azimuth-ops version under test
       - name: Provision Azimuth
