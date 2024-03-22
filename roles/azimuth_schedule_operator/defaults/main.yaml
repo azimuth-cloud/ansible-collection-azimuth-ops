@@ -23,4 +23,4 @@ azimuth_schedule_operator_release_values: >-
   }}
 
 # The timeout to wait for schedule operator to become ready
-azimuth_schedule_operator_wait_timeout:
+azimuth_schedule_operator_wait_timeout: 10m
