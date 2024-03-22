@@ -26,6 +26,8 @@
       when: azimuth_apps_enabled or azimuth_clusters_enabled
     - role: stackhpc.azimuth_ops.azimuth_caas_operator
       when: azimuth_clusters_enabled
+    - role: stackhpc.azimuth_ops.azimuth_schedule_operator
+      when: azimuth_clusters_enabled or azimuth_kubernetes_enabled
     - role: stackhpc.azimuth_ops.postgres_operator
       when: azimuth_apps_enabled
     - role: stackhpc.azimuth_ops.keycloak

@@ -1,0 +1,26 @@
+---
+# The chart to use
+azimuth_schedule_operator_chart_repo: https://stackhpc.github.io/azimuth-schedule-operator
+azimuth_schedule_operator_chart_name: azimuth-schedule-operator
+azimuth_schedule_operator_chart_version: 0.1.0
+
+# Release information for the operator release
+# Use the same namespace as Azimuth by default
+azimuth_schedule_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
+azimuth_schedule_operator_release_name: azimuth-schedule-operator
+
+# The values for the release
+azimuth_schedule_operator_release_defaults:
+  # Enable the metrics with the service monitor by default
+  metrics:
+    enabled: true
+
+azimuth_schedule_operator_release_overrides: {}
+azimuth_schedule_operator_release_values: >-
+  {{-
+    azimuth_schedule_operator_release_defaults |
+      combine(azimuth_schedule_operator_release_overrides, recursive = True)
+  }}
+
+# The timeout to wait for schedule operator to become ready
+azimuth_schedule_operator_wait_timeout: 10m
