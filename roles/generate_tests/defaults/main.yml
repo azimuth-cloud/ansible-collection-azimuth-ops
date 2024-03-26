@@ -206,7 +206,7 @@ _generate_tests_kubernetes_latest_available_version: >-
 generate_tests_kubernetes_test_cases_include_tags: >-
   {{-
     generate_tests_installed_kubernetes_templates |
-      map(attribute = 'spec.tags') |
+      map(attribute = 'spec.tags', default = []) |
       flatten |
       unique
   }}
