@@ -78,9 +78,15 @@ community_images_azimuth_images: |-
 community_images_slurm_base_url: >-
   https://object.arcus.openstack.hpc.cam.ac.uk/swift/v1/AUTH_3a06571936a0424bb40bc5c672c4ccb1/openhpc-images
 community_images_slurm:
-  openhpc:
-    name: openhpc-240116-1604-b3563a08  # https://github.com/stackhpc/ansible-slurm-appliance/pull/344
-    source_url: "{{ community_images_slurm_base_url }}/openhpc-240116-1604-b3563a08"
+  # both from https://github.com/stackhpc/ansible-slurm-appliance/releases/tag/v1.144
+  openhpc_v2: # RockyLinux 8
+    name: openhpc-RL8-240327-1050-4812f852
+    source_url: "{{ community_images_slurm_base_url }}/openhpc-RL8-240327-1050-4812f852"
+    source_disk_format: qcow2
+    container_format: bare
+  openhpc_v3: # RockyLinux 9
+    name: openhpc-RL9-240327-1026-4812f852
+    source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-240327-1026-4812f852"
     source_disk_format: qcow2
     container_format: bare
 
