@@ -52,4 +52,4 @@
 
 - name: Fix up existing clusters for quota check changes
   include_tasks:
-    file: quota_checks_fixup.yaml
+    file: quota_checks_fixup.yml

@@ -55,7 +55,7 @@
   
 
 - name: Create proxy cache projects
-  include_tasks: proxy_cache_project.yaml
+  include_tasks: proxy_cache_project.yml
   loop: "{{ harbor_proxy_cache_projects.values() }}"
   loop_control:
     loop_var: project
