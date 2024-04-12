@@ -131,3 +131,9 @@
           )
         )
       }}
+
+- name: Migrate services from Consul to CRDs
+  include_tasks: migrate-services.yml
+  when:
+    - consul_server_host is defined
+    - consul_server_port is defined

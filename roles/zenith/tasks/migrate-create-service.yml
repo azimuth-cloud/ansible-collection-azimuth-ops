@@ -1,0 +1,37 @@
+---
+
+- name: Create service resource
+  command: kubectl create -f - --output json
+  args:
+    stdin: "{{ zenith_migrate_service_definition | to_nice_yaml }}"
+  vars:
+    zenith_migrate_service_definition:
+      apiVersion: zenith.stackhpc.com/v1alpha1
+      kind: Service
+      metadata:
+        name: "{{ zenith_migrate_service_name }}"
+        namespace: "{{ zenith_target_namespace }}"
+  register: zenith_migrate_create_service_cmd
+
+- name: Create endpoints resource
+  command: kubectl create -f -
+  args:
+    stdin: "{{ zenith_migrate_endpoints_definition | to_nice_yaml }}"
+  vars:
+    zenith_migrate_endpoints_definition:
+      apiVersion: zenith.stackhpc.com/v1alpha1
+      kind: Endpoints
+      metadata:
+        name: "{{ zenith_migrate_service_name }}"
+        namespace: "{{ zenith_target_namespace }}"
+        ownerReferences:
+          - apiVersion: zenith.stackhpc.com/v1alpha1
+            kind: Service
+            name: "{{ zenith_migrate_service_name }}"
+            uid: >-
+              {{-
+                zenith_migrate_create_service_cmd.stdout |
+                  from_json |
+                  json_query("metadata.uid")
+              }}
+            blockOwnerDeletion: true

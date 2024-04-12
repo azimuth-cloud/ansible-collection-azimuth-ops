@@ -64,7 +64,7 @@ zenith_registrar_reserved_subdomains: >-
   }}
 
 # The namespace to create Zenith services in
-zenith_sync_target_namespace: zenith-services
+zenith_target_namespace: zenith-services
 
 # The type of service to make for SSHD
 zenith_sshd_service_type: LoadBalancer
@@ -86,7 +86,7 @@ zenith_release_defaults:
         secretName: "{{ zenith_ingress_tls_secret_name }}"
         annotations: "{{ zenith_ingress_tls_annotations }}"
     kubernetes:
-      targetNamespace: "{{ zenith_sync_target_namespace }}"
+      targetNamespace: "{{ zenith_target_namespace }}"
   sync:
     config:
       kubernetes:
