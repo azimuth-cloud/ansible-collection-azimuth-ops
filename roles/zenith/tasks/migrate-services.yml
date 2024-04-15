@@ -14,14 +14,71 @@
           default(azimuth_release_namespace) |
           default('azimuth')
       }}
+  changed_when: false
   register: zenith_migrate_consul_services_cmd
 
 - name: Create service CRDs
-  include_tasks: migrate-create-service.yml
+  command: kubectl create -f -
+  args:
+    stdin: "{{ zenith_migrate_service_definition | to_nice_yaml }}"
+  vars:
+    zenith_migrate_service_definition:
+      apiVersion: zenith.stackhpc.com/v1alpha1
+      kind: Service
+      metadata:
+        name: "{{ item }}"
+        namespace: "{{ zenith_target_namespace }}"
+  register: zenith_migrate_create_service
+  changed_when: zenith_migrate_create_service.rc == 0
+  failed_when: >-
+    zenith_migrate_create_service.rc != 0 and
+    "AlreadyExists" not in zenith_migrate_create_service.stderr
   loop: >-
     {{
       zenith_migrate_consul_services_cmd.stdout_lines |
         map("regex_replace", "^zenith/subdomains/", "")
     }}
-  loop_control:
-    loop_var: zenith_migrate_service_name
+
+- name: Fetch public key associations from Consul
+  command: >-
+    kubectl exec {{ zenith_migrate_consul_release_name }}-server-0
+      --namespace {{ zenith_migrate_consul_release_namespace }}
+      --
+      consul kv get -recurse zenith/pubkeys/
+  vars:
+    zenith_migrate_consul_release_name: "{{ consul_release_name | default('consul') }}"
+    zenith_migrate_consul_release_namespace: >-
+      {{
+        consul_release_namespace |
+          default(azimuth_release_namespace) |
+          default('azimuth')
+      }}
+  changed_when: false
+  register: zenith_migrate_consul_keys_cmd
+
+- name: Attach public key to service CRD
+  command: >-
+    kubectl patch services.zenith {{ item.1 }}
+      --namespace {{ zenith_target_namespace }}
+      --type merge
+      --patch-file /dev/stdin
+  args:
+    stdin: "{{ zenith_migrate_service_pk_patch | to_nice_yaml }}"
+  vars:
+    zenith_migrate_service_pk_patch:
+      metadata:
+        labels:
+          # The key we get from Consul is URL-safe base64-encoded, which we need
+          # We need to add the prefix in case it starts with - or _
+          zenith.stackhpc.com/fingerprint: "fp{{ item.0 }}"
+      spec:
+        # The fingerprint here should be regular base64-encoded, so we need to
+        # undo any URL-safe changes
+        # https://docs.python.org/3/library/base64.html#base64.urlsafe_b64encode
+        publicKeyFingerprint: "{{ item.0 | replace('-', '+') | replace('_', '/') }}"
+  loop: >-
+    {{
+      zenith_migrate_consul_keys_cmd.stdout_lines |
+        map("regex_replace", "^zenith/pubkeys/", "") |
+        map("split", ":")
+    }}
