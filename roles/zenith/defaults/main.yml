@@ -3,7 +3,7 @@
 # The chart to use
 zenith_chart_repo: https://stackhpc.github.io/zenith
 zenith_chart_name: zenith-server
-zenith_chart_version: 0.6.0
+zenith_chart_version: 0.7.0
 
 # Release information for the Zenith release
 # Use the same namespace as the Azimuth release by default
@@ -63,22 +63,8 @@ zenith_registrar_reserved_subdomains: >-
     list
   }}
 
-# The Consul server and port
-zenith_consul_server_host: >-
-  {{-
-    consul_server_host
-    if consul_server_host is defined
-    else undef(hint = 'zenith_consul_server_host is required')
-  }}
-zenith_consul_server_port: >-
-  {{
-    consul_server_port
-    if consul_server_port is defined
-    else undef(hint = 'zenith_consul_server_port is required')
-  }}
-
 # The namespace to create Zenith services in
-zenith_sync_target_namespace: zenith-services
+zenith_target_namespace: zenith-services
 
 # The type of service to make for SSHD
 zenith_sshd_service_type: LoadBalancer
@@ -91,13 +77,7 @@ zenith_sshd_service_load_balancer_ip:
 
 # The values for the release
 zenith_release_defaults:
-  # We don't need Zenith to deploy a Consul server
-  consul:
-    enabled: false
   common:
-    consul:
-      address: "{{ zenith_consul_server_host }}"
-      port: "{{ zenith_consul_server_port }}"
     ingress:
       baseDomain: "{{ zenith_ingress_base_domain }}"
       annotations: "{{ zenith_ingress_annotations }}"
@@ -105,10 +85,11 @@ zenith_release_defaults:
         enabled: "{{ zenith_ingress_tls_enabled }}"
         secretName: "{{ zenith_ingress_tls_secret_name }}"
         annotations: "{{ zenith_ingress_tls_annotations }}"
+    kubernetes:
+      targetNamespace: "{{ zenith_target_namespace }}"
   sync:
     config:
       kubernetes:
-        targetNamespace: "{{ zenith_sync_target_namespace }}"
         ingress:
           oidc:
             # Enable OIDC discovery

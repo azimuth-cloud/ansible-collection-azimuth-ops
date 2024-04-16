@@ -146,7 +146,7 @@ azimuth_identity_operator_keycloak_zenith_redirect_uri_scheme: >-
 #   The namespace to write Zenith discovery secrets to
 azimuth_identity_operator_keycloak_zenith_discovery_namespace: >-
   {{-
-    zenith_sync_target_namespace |
+    zenith_target_namespace |
       default("zenith-services", True)
   }}
 
