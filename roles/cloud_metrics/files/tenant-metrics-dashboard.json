@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 83,
+  "id": 3,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -57,12 +57,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "semi-dark-yellow",
-                "value": null
-              },
-              {
                 "color": "green",
-                "value": 1
+                "value": null
               }
             ]
           }
@@ -77,10 +73,9 @@
       },
       "id": 18,
       "options": {
-        "displayMode": "basic",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "orientation": "horizontal",
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -88,9 +83,11 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
       },
-      "pluginVersion": "9.1.2",
+      "pluginVersion": "10.4.0",
       "targets": [
         {
           "datasource": {
@@ -98,16 +95,29 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max(openstack_project_usage{project_id=~\"${project_id}\"}) by (placement_resource)",
+          "expr": "sum(openstack_project_usage{project_id=~\"${project_id}\",placement_resource=\"MEMORY_MB\"}) by (placement_resource) / 1024",
           "format": "time_series",
           "hide": false,
-          "legendFormat": "{{flavor_name}}",
+          "legendFormat": "Memory in GB",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(openstack_project_usage{project_id=~\"${project_id}\",placement_resource!=\"MEMORY_MB\"}) by (placement_resource)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B"
         }
       ],
-      "title": "Max usage",
-      "type": "bargauge"
+      "title": "Usage",
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -120,6 +130,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -133,6 +144,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -173,7 +185,7 @@
         "x": 0,
         "y": 11
       },
-      "id": 5,
+      "id": 17,
       "options": {
         "legend": {
           "calcs": [
@@ -198,14 +210,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(openstack_project_usage{project_id=~\"${project_id}\"}) by (placement_resource)",
+          "expr": "count(count(libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}) by (domain,flavor)) by (flavor)",
           "hide": false,
-          "legendFormat": "{{placement_resource}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Resources per Project",
+      "title": "Servers by flavor",
       "type": "timeseries"
     },
     {
@@ -213,13 +225,13 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -233,6 +245,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -273,7 +286,8 @@
         "x": 8,
         "y": 11
       },
-      "id": 19,
+      "id": 5,
+      "interval": "10m",
       "options": {
         "legend": {
           "calcs": [
@@ -298,14 +312,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "openstack_project_quota{project_id=~\"${project_id}\"}",
+          "expr": "sum(avg_over_time(openstack_project_usage{project_id=~\"${project_id}\"}[30m:])) by (placement_resource)",
           "hide": false,
-          "legendFormat": "{{project_name}}:{{quota_resource}}",
+          "legendFormat": "{{placement_resource}}",
           "range": true,
-          "refId": "B"
+          "refId": "A"
         }
       ],
-      "title": "Project quota",
+      "title": "Resources per Project",
       "type": "timeseries"
     },
     {
@@ -313,12 +327,14 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -332,6 +348,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -372,7 +389,8 @@
         "x": 16,
         "y": 11
       },
-      "id": 17,
+      "id": 19,
+      "interval": "10m",
       "options": {
         "legend": {
           "calcs": [
@@ -397,14 +415,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "count(count(libvirt_domain_info_meta{project_id=~\"${project_id}\"}) by (domain,flavor)) by (flavor)",
+          "expr": "avg_over_time(openstack_project_quota{project_id=~\"${project_id}\"}[30m:])",
           "hide": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{project_name}}:{{quota_resource}}",
           "range": true,
-          "refId": "A"
+          "refId": "B"
         }
       ],
-      "title": "Servers by flavor",
+      "title": "Project quota",
       "type": "timeseries"
     },
     {
@@ -418,6 +436,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -432,6 +451,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -473,16 +493,18 @@
         "y": 20
       },
       "id": 20,
+      "interval": "30m",
       "options": {
         "legend": {
           "calcs": [
             "min",
-            "max"
+            "max",
+            "mean"
           ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "sortBy": "Max",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -497,14 +519,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(irate(libvirt_domain_vcpu_time_seconds_total{}[5m]) / ignoring(instance,vcpu) group_left(domain) libvirt_domain_info_virtual_cpus{}) by (domain) * on(domain) group_left(instance_name,project_name,project_id) libvirt_domain_info_meta{project_id=~\"${project_id}\"}",
+          "expr": "avg(sum(irate(libvirt_domain_vcpu_time_seconds_total{}[5m]) / ignoring(instance,vcpu) group_left(domain) libvirt_domain_info_virtual_cpus{}) by (domain) * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}) by (project_name)",
           "hide": false,
           "legendFormat": "{{instance_name}}",
           "range": true,
           "refId": "B"
         }
       ],
-      "title": "CPU utilization per instance",
+      "title": "CPU utilization per project",
       "type": "timeseries"
     },
     {
@@ -518,6 +540,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -531,6 +554,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -577,12 +601,13 @@
         "legend": {
           "calcs": [
             "min",
-            "max"
+            "max",
+            "mean"
           ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "sortBy": "Max",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -597,14 +622,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "libvirt_domain_memory_stats_used_percent * on(domain) group_left(instance_name,project_name,project_id) libvirt_domain_info_meta{project_id=~\"${project_id}\"}",
+          "expr": "avg(libvirt_domain_memory_stats_used_percent{} * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}) by (project_name)",
           "hide": false,
           "legendFormat": "{{instance_name}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Memory utilization per instance",
+      "title": "Memory utilization per project",
       "type": "timeseries"
     },
     {
@@ -619,6 +644,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": true,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -632,6 +658,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -679,7 +706,460 @@
         "legend": {
           "calcs": [
             "min",
-            "max"
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "avg(rate(libvirt_domain_block_stats_read_time_seconds_total{}[5m]) * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}) by (project_name)",
+          "hide": false,
+          "legendFormat": "read: {{project_name}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "avg(rate(libvirt_domain_block_stats_write_time_seconds_total{}[5m]) * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"} * -1) by (project_name)",
+          "hide": false,
+          "legendFormat": " write: {{project_name}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Disk utilization per project",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Per Instance Utilization",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 23,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 30
+      },
+      "id": 23,
+      "interval": "30m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(irate(libvirt_domain_vcpu_time_seconds_total{}[5m]) / ignoring(instance,vcpu) group_left(domain) libvirt_domain_info_virtual_cpus{}) by (domain) * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}",
+          "hide": false,
+          "legendFormat": "{{instance_name}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "CPU utilization per instance",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 23,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 30
+      },
+      "id": 24,
+      "interval": "30m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "libvirt_domain_memory_stats_used_percent * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}",
+          "hide": false,
+          "legendFormat": "{{instance_name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Memory utilization per instance",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 23,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 1,
+          "min": -1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 30
+      },
+      "id": 25,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(libvirt_domain_block_stats_read_time_seconds_total[5m]) * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}",
+          "hide": false,
+          "legendFormat": "{{instance_name}} : read {{target_device}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "avg(rate(libvirt_domain_block_stats_write_time_seconds_total[5m]) * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"} * -1) by (project_name)",
+          "hide": false,
+          "legendFormat": "{{instance_name}} : write {{target_device}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Disk utilization per instance",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 23,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 26,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -699,9 +1179,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(libvirt_domain_block_stats_read_time_seconds_total[5m]) * on(domain) group_left(instance_name,project_name,project_id) libvirt_domain_info_meta{project_id=~\"${project_id}\"}",
+          "expr": "rate(libvirt_domain_interface_stats_receive_bytes_total{}[5m]) * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}",
           "hide": false,
-          "legendFormat": "{{instance_name}} : read {{target_device}}",
+          "legendFormat": "recieve: {{project_name}} {{instance_name}} {{target_device}}",
           "range": true,
           "refId": "B"
         },
@@ -711,99 +1191,20 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(libvirt_domain_block_stats_write_time_seconds_total[5m]) * on(domain) group_left(instance_name,project_name,project_id) libvirt_domain_info_meta{project_id=~\"${project_id}\"} * -1",
+          "expr": "rate(libvirt_domain_interface_stats_transmit_bytes_total{}[5m]) * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}",
           "hide": false,
-          "legendFormat": "{{instance_name}} : write {{target_device}}",
+          "legendFormat": " transmit: {{project_name}} {{instance_name}} {{target_device}}",
           "range": true,
           "refId": "C"
         }
       ],
-      "title": "Disk utilization per instance",
+      "title": "Network per instance",
       "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 29
-      },
-      "id": 15,
-      "panels": [],
-      "title": "Per Hypervisor Free Capacity",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "semi-dark-yellow",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 4
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 30
-      },
-      "id": 2,
-      "options": {
-        "displayMode": "basic",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true
-      },
-      "pluginVersion": "9.1.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "builder",
-          "expr": "openstack_free_capacity_by_flavor_total",
-          "format": "time_series",
-          "legendFormat": "{{flavor_name}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Free Capacity by Flavor",
-      "type": "bargauge"
     }
   ],
-  "schemaVersion": 37,
-  "style": "dark",
+  "refresh": "",
+  "revision": 1,
+  "schemaVersion": 39,
   "tags": [
     "capacity",
     "azimuth"
@@ -814,7 +1215,7 @@
         "current": {
           "selected": false,
           "text": "Prometheus",
-          "value": "Prometheus"
+          "value": "PBFA97CFB590B2093"
         },
         "description": "The prometheus datasource used for queries.",
         "hide": 0,
@@ -864,13 +1265,13 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-3d",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Tenant Metrics",
   "uid": "mXiuBDe7z",
-  "version": 11,
+  "version": 12,
   "weekStart": ""
 }

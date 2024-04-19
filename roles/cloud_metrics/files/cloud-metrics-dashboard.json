@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
+  "id": 4,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -44,7 +44,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "$datasource"
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -65,7 +65,7 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 1
       },
@@ -97,10 +97,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "SUM(openstack_hypervisor_placement_allocatable_capacity{resource=\"MEMORY_MB\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"MEMORY_MB\"})",
+          "expr": "sum(openstack_hypervisor_placement_allocatable_capacity{resource=\"MEMORY_MB\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"MEMORY_MB\"})",
           "hide": false,
           "legendFormat": "Free Memory",
           "range": true,
@@ -109,10 +109,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "SUM(openstack_hypervisor_placement_allocated{resource=\"MEMORY_MB\"})",
+          "expr": "sum(openstack_hypervisor_placement_allocated{resource=\"MEMORY_MB\"})",
           "hide": false,
           "legendFormat": "Allocated Memory",
           "range": true,
@@ -125,7 +125,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "$datasource"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -147,8 +147,8 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 9,
-        "x": 8,
+        "w": 6,
+        "x": 6,
         "y": 1
       },
       "id": 9,
@@ -179,11 +179,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "SUM(openstack_hypervisor_placement_allocatable_capacity{resource=\"VCPU\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"VCPU\"})",
-          "hide": false,
+          "expr": "sum(openstack_hypervisor_placement_allocatable_capacity{resource=\"VCPU\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"VCPU\"})",
+          "hide": true,
           "legendFormat": "Free VCPU",
           "range": true,
           "refId": "A"
@@ -191,10 +191,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "SUM(openstack_hypervisor_placement_allocatable_capacity{resource=\"PCPU\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"PCPU\"})",
+          "expr": "sum(openstack_hypervisor_placement_allocatable_capacity{resource=\"PCPU\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"PCPU\"})",
           "hide": false,
           "legendFormat": "Free PCPU",
           "range": true,
@@ -203,11 +203,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "SUM(openstack_hypervisor_placement_allocated{resource=\"VCPU\"})",
-          "hide": false,
+          "expr": "sum(openstack_hypervisor_placement_allocated{resource=\"VCPU\"})",
+          "hide": true,
           "legendFormat": "Allocated VCPU",
           "range": true,
           "refId": "B"
@@ -215,23 +215,107 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "SUM(openstack_hypervisor_placement_allocated{resource=\"PCPU\"})",
+          "expr": "sum(openstack_hypervisor_placement_allocated{resource=\"PCPU\"})",
           "hide": false,
           "legendFormat": "Allocated PCPU",
           "range": true,
           "refId": "D"
         }
       ],
-      "title": "Total CPU",
+      "title": "Total Pinned CPU",
       "type": "piechart"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "$datasource"
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 190,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Percent",
+          "sortDesc": false,
+          "values": [
+            "percent",
+            "value"
+          ]
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum(openstack_hypervisor_placement_allocatable_capacity{resource=\"VCPU\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"VCPU\"})",
+          "hide": false,
+          "legendFormat": "Free VCPU",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum(openstack_hypervisor_placement_allocated{resource=\"VCPU\"})",
+          "hide": false,
+          "legendFormat": "Allocated VCPU",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Total Non-Pinned CPU",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -253,8 +337,8 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 7,
-        "x": 17,
+        "w": 6,
+        "x": 18,
         "y": 1
       },
       "id": 8,
@@ -285,10 +369,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "SUM(openstack_hypervisor_placement_allocatable_capacity{resource=\"DISK_GB\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"DISK_GB\"})",
+          "expr": "sum(openstack_hypervisor_placement_allocatable_capacity{resource=\"DISK_GB\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"DISK_GB\"})",
           "hide": false,
           "legendFormat": "Free Local Disk",
           "range": true,
@@ -297,10 +381,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "SUM(openstack_hypervisor_placement_allocated{resource=\"DISK_GB\"})",
+          "expr": "sum(openstack_hypervisor_placement_allocated{resource=\"DISK_GB\"})",
           "hide": false,
           "legendFormat": "Allocated Local Disk",
           "range": true,
@@ -313,7 +397,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "$datasource"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -339,16 +423,18 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 9,
         "w": 24,
         "x": 0,
         "y": 11
       },
-      "id": 2,
+      "id": 192,
       "options": {
         "displayMode": "basic",
+        "maxVizHeight": 300,
         "minVizHeight": 10,
         "minVizWidth": 0,
+        "namePlacement": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
@@ -357,17 +443,19 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
       },
-      "pluginVersion": "9.1.2",
+      "pluginVersion": "10.4.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "editorMode": "builder",
-          "expr": "openstack_free_capacity_by_flavor_total",
+          "editorMode": "code",
+          "expr": "openstack_free_capacity_by_flavor_total{}",
           "format": "time_series",
           "legendFormat": "{{flavor_name}}",
           "range": true,
@@ -383,7 +471,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 20
       },
       "id": 11,
       "panels": [],
@@ -393,7 +481,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "$datasource"
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -401,6 +489,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -414,6 +503,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -450,21 +540,21 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 22
+        "y": 21
       },
       "id": 5,
+      "interval": "10m",
       "options": {
         "legend": {
           "calcs": [
-            "min",
-            "max"
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "sortBy": "Max",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -476,10 +566,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "openstack_project_usage{placement_resource=\"MEMORY_MB\"}",
+          "expr": "avg_over_time(openstack_project_usage{placement_resource=\"MEMORY_MB\"}[30m])",
           "legendFormat": "{{project_name}}",
           "range": true,
           "refId": "A"
@@ -491,7 +581,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "$datasource"
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -499,6 +589,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -512,6 +603,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -542,27 +634,27 @@
               }
             ]
           },
-          "unit": "decmbytes"
+          "unit": "none"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 22
+        "w": 8,
+        "x": 8,
+        "y": 21
       },
       "id": 16,
+      "interval": "10m",
       "options": {
         "legend": {
           "calcs": [
-            "min",
-            "max"
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "sortBy": "Max",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -574,10 +666,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "openstack_project_usage{placement_resource=\"VCPU\"}",
+          "expr": "avg_over_time(openstack_project_usage{placement_resource=\"VCPU\"}[30m])",
+          "hide": true,
           "legendFormat": "VCPU {{project_name}}",
           "range": true,
           "refId": "A"
@@ -585,58 +678,46 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "openstack_project_usage{placement_resource=\"PCPU\"}",
+          "expr": "avg_over_time(openstack_project_usage{placement_resource=\"PCPU\"}[30m])",
           "hide": false,
           "legendFormat": "PCPU {{project_name}}",
           "range": true,
           "refId": "B"
         }
       ],
-      "title": "CPUs Used by Project",
+      "title": "PCPUs Used by Project",
       "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 30
-      },
-      "id": 15,
-      "panels": [],
-      "title": "Per Hypervisor Free Capacity",
-      "type": "row"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "$datasource"
+        "uid": "${DS_PROMETHEUS}"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 29,
+            "fillOpacity": 23,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "lineInterpolation": "smooth",
+            "insertNulls": false,
+            "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -659,6 +740,234 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 21
+      },
+      "id": 193,
+      "interval": "10m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "avg_over_time(openstack_project_usage{placement_resource=\"VCPU\"}[30m])",
+          "legendFormat": "VCPU {{project_name}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "avg_over_time(openstack_project_usage{placement_resource=\"PCPU\"}[30m])",
+          "hide": true,
+          "legendFormat": "PCPU {{project_name}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "VCPUs Used by Project",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 23,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 194,
+      "interval": "10m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "avg_over_time(openstack_project_usage{placement_resource!~\"VCPU|PCPU|MEMORY_MB|DISK_GB\"}[30m])",
+          "legendFormat": "{{project_name}} {{placement_resource}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Other resources by Project",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 38
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Per Hypervisor Free Capacity",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 28,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
               },
               {
                 "color": "red",
@@ -673,15 +982,15 @@
         "h": 13,
         "w": 12,
         "x": 0,
-        "y": 31
+        "y": 39
       },
       "id": 6,
+      "interval": "10m",
       "options": {
         "legend": {
           "calcs": [
             "min",
-            "max",
-            "mean"
+            "max"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -699,23 +1008,25 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum(openstack_free_capacity_hypervisor_by_flavor) by (flavor_name, az_aggregate)",
+          "exemplar": false,
+          "expr": "avg_over_time(openstack_free_capacity_hypervisor_by_flavor{flavor_name=~\"$flavors\"}[30m])",
           "format": "time_series",
-          "legendFormat": "{{az_aggregate}} : {{flavor_name}} ",
+          "instant": false,
+          "legendFormat": "{{flavor_name}} on {{hypervisor}}",
           "range": true,
-          "refId": "A"
+          "refId": "Available Capacity on Hypervisors"
         }
       ],
-      "title": "Free Capacity by Flavor and AZ",
+      "title": "Available Capacity for $flavors",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "$datasource"
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -723,6 +1034,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -736,6 +1048,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -757,8 +1070,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -774,9 +1086,10 @@
         "h": 13,
         "w": 12,
         "x": 12,
-        "y": 31
+        "y": 39
       },
       "id": 4,
+      "interval": "10m",
       "options": {
         "legend": {
           "calcs": [
@@ -798,10 +1111,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${DS_PROMETHEUS}"
           },
-          "editorMode": "builder",
-          "expr": "openstack_hypervisor_placement_allocatable_capacity{resource=\"MEMORY_MB\"} - on(hypervisor) openstack_hypervisor_placement_allocated{resource=\"MEMORY_MB\"}",
+          "editorMode": "code",
+          "expr": "avg_over_time(openstack_hypervisor_placement_allocatable_capacity{resource=\"MEMORY_MB\"}[30m]) - on(hypervisor) avg_over_time(openstack_hypervisor_placement_allocated{resource=\"MEMORY_MB\"}[30m])",
           "legendFormat": "{{hypervisor}}",
           "range": true,
           "refId": "A"
@@ -811,8 +1124,9 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 37,
-  "style": "dark",
+  "refresh": "",
+  "revision": 1,
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": [
@@ -820,14 +1134,14 @@
         "current": {
           "selected": false,
           "text": "Prometheus",
-          "value": "Prometheus"
+          "value": "PBFA97CFB590B2093"
         },
         "description": "The prometheus datasource used for queries.",
         "hide": 0,
         "includeAll": false,
         "label": "datasource",
         "multi": false,
-        "name": "datasource",
+        "name": "DS_PROMETHEUS",
         "options": [],
         "query": "prometheus",
         "queryValue": "",
@@ -835,17 +1149,47 @@
         "regex": "",
         "skipUrlSync": false,
         "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(openstack_free_capacity_by_flavor_total, flavor_name)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "flavors",
+        "options": [],
+        "query": {
+          "query": "label_values(openstack_free_capacity_by_flavor_total, flavor_name)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
       }
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-3d",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Cloud Metrics",
   "uid": "g__ksD67z",
-  "version": 14,
+  "version": 18,
   "weekStart": ""
 }
