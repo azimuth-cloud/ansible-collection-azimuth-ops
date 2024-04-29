@@ -10,13 +10,9 @@
   vars:
     infra_ansible_groups: [k3s, azimuth_deploy]
 
-
 # Configure the node as a K3S cluster
 - hosts: k3s
   tasks:
-    - include_role:
-        name: stackhpc.azimuth_ops.community_images
-
     - block:
         - include_role:
             name: stackhpc.azimuth_ops.sysctl_inotify
@@ -59,7 +55,10 @@
         content: "{{ k3s_kubeconfig.content | b64decode }}"
         dest: "{{ ansible_env.HOME }}/.kube/config"
         mode: u=rwx,g=,o=
-
+    
+    - include_role:
+        name: stackhpc.azimuth_ops.community_images
+    
     # For a single node install, we put the monitoring and ingress controller on the K3S cluster
     - block:
         # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
