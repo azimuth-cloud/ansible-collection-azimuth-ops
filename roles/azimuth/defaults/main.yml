@@ -325,6 +325,9 @@ azimuth_apps_query_params:
         default('azimuth')
     }}
 
+# Indicates whether the smart scheduling should be enabled
+azimuth_scheduling_enabled: false
+
 # Theme settings
 #   Custom bootstrap CSS URL
 azimuth_theme_bootstrap_css_url:
@@ -390,6 +393,8 @@ azimuth_release_defaults:
       if azimuth_apps_enabled
       else {}
     }}
+  scheduling:
+    enabled: "{{ azimuth_scheduling_enabled }}"
   theme: >-
     {{-
       {} |
