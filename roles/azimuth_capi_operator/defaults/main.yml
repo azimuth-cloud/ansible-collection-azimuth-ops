@@ -848,6 +848,72 @@ azimuth_capi_operator_app_templates_huggingface_llm_spec:
         )
     }}
 
+
+# Indicates whether the Argo CD app template should be enabled
+azimuth_capi_operator_app_templates_argocd_enabled: true
+# The Helm chart to use for the argocd app template
+azimuth_capi_operator_app_templates_argocd_chart_name: argocd-azimuth
+# The Helm repository to use for the argocd app template
+azimuth_capi_operator_app_templates_argocd_chart_repo: https://stackhpc.github.io/azimuth-charts
+# The version range to use for the argocd Helm chart
+azimuth_capi_operator_app_templates_argocd_version_range: ">=0.0.0"
+# Overrides for the label, logo and description from the argocd Helm chart
+azimuth_capi_operator_app_templates_argocd_label:
+azimuth_capi_operator_app_templates_argocd_logo:
+azimuth_capi_operator_app_templates_argocd_description:
+# The number of versions to make available for the argocd app template
+azimuth_capi_operator_app_templates_argocd_keep_versions: 3
+# The sync frequency for the argocd app template (default 24h)
+azimuth_capi_operator_app_templates_argocd_sync_frequency: 86400
+# Any default values for the argocd app template
+azimuth_capi_operator_app_templates_argocd_default_values: {}
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_argocd_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_argocd_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_argocd_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_argocd_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_argocd_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_deny_regex }}"
+# The spec for the argocd app template
+azimuth_capi_operator_app_templates_argocd_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_argocd_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_argocd_chart_repo,
+          "name": azimuth_capi_operator_app_templates_argocd_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_argocd_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_argocd_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_argocd_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_argocd_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_argocd_label }
+          if azimuth_capi_operator_app_templates_argocd_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_argocd_logo }
+          if azimuth_capi_operator_app_templates_argocd_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_argocd_description }
+          if azimuth_capi_operator_app_templates_argocd_description
+          else {}
+        )
+    }}
+
 # The default templates
 azimuth_capi_operator_app_templates_default: >-
   {{-
@@ -870,6 +936,11 @@ azimuth_capi_operator_app_templates_default: >-
       combine(
         { "binderhub": azimuth_capi_operator_app_templates_binderhub_spec }
         if azimuth_capi_operator_app_templates_binderhub_enabled
+        else {}
+      ) |
+      combine(
+        { "argocd": azimuth_capi_operator_app_templates_argocd_spec }
+        if azimuth_capi_operator_app_templates_argocd_enabled
         else {}
       ) |
       combine(
