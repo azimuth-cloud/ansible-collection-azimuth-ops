@@ -117,6 +117,10 @@ azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone: nova
 # The Cinder volume type for the default Cinder CSI storage class
 azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type:
 
+# Whether to allow config snippet annotations on individual ingress resources
+# on each tenant cluster.
+azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations: true
+
 azimuth_capi_operator_capi_helm_values_defaults:
   kubeNetwork:
     pods: >-
@@ -288,6 +292,13 @@ azimuth_capi_operator_capi_helm_values_defaults:
     monitoring:
       blackboxExporter:
         enabled: false
+    # Allow nginx ingress config snippets as ingress resource annotations
+    ingress:
+      nginx:
+        release:
+          values:
+            controller:
+              allowSnippetAnnotations: "{{ azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations }}"
   etcd: >-
     {{-
       {
