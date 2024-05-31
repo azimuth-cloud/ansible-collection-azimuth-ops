@@ -217,31 +217,31 @@
           }}
   when: keycloak_admin_creds_secret_cmd.rc != 0
 
+- name: Get Keycloak admin token
+  uri:
+    url: "{{ keycloak_base_url }}/realms/master/protocol/openid-connect/token"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      grant_type: password
+      client_id: admin-cli
+      username: "{{ keycloak_admin_username }}"
+      password: "{{ keycloak_admin_password_current }}"
+    ca_path: "{{ keycloak_ca_path or omit }}"
+    validate_certs: "{{ keycloak_validate_certs }}"
+  register: keycloak_admin_token_req
+  # This is the first task that tries to access the Keycloak API, so retry when
+  # there is an SSL error (reported as -1)
+  retries: 60
+  delay: 10
+  until: keycloak_admin_token_req.status != -1
+
+- name: Set Keycloak admin token fact
+  set_fact:
+    keycloak_admin_token: "{{ keycloak_admin_token_req.json.access_token }}"
+
 - name: Update Keycloak admin password
   block:
-    - name: Get Keycloak admin token
-      uri:
-        url: "{{ keycloak_base_url }}/realms/master/protocol/openid-connect/token"
-        method: POST
-        body_format: form-urlencoded
-        body:
-          grant_type: password
-          client_id: admin-cli
-          username: "{{ keycloak_admin_username }}"
-          password: "{{ keycloak_admin_password_current }}"
-        ca_path: "{{ keycloak_ca_path or omit }}"
-        validate_certs: "{{ keycloak_validate_certs }}"
-      register: keycloak_admin_token_req
-      # This is the first task that tries to access the Keycloak API, so retry when
-      # there is an SSL error (reported as -1)
-      retries: 60
-      delay: 10
-      until: keycloak_admin_token_req.status != -1
-
-    - name: Set Keycloak admin token fact
-      set_fact:
-        keycloak_admin_token: "{{ keycloak_admin_token_req.json.access_token }}"
-
     - name: Get Keycloak master realm users
       uri:
         url: "{{ keycloak_base_url }}/admin/realms/master/users"
@@ -293,3 +293,16 @@
             username: "{{ keycloak_admin_username }}"
             password: "{{ keycloak_admin_password }}"
   when: keycloak_admin_password != keycloak_admin_password_current
+
+- name: Configure SSL requirement for master realm
+  uri:
+    url: "{{ keycloak_base_url }}/admin/realms/master"
+    method: PUT
+    headers:
+      authorization: "Bearer {{ keycloak_admin_token }}"
+    body_format: json
+    body:
+      sslRequired: "{{ 'external' if keycloak_ingress_tls_enabled else 'none' }}"
+    ca_path: "{{ keycloak_ca_path or omit }}"
+    validate_certs: "{{ keycloak_validate_certs }}"
+    status_code: [204]
