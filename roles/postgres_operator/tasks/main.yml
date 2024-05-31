@@ -11,6 +11,23 @@
     pgo_create_namespace.rc != 0 and
     'AlreadyExists' not in pgo_create_namespace.stderr
 
+- name: Remove defunct upgrade controller resources
+  command: kubectl delete {{ item.kind }} {{ item.name }} --namespace {{ pgo_namespace }}
+  register: pgo_remove_upgrade_component
+  changed_when: pgo_remove_upgrade_component.rc == 0
+  failed_when: >-
+    pgo_remove_upgrade_component.rc != 0 and
+    'NotFound' not in pgo_remove_upgrade_component.stderr
+  loop:
+    - kind: deployment
+      name: pgo-upgrade
+    - kind: clusterrolebinding
+      name: postgres-operator-upgrade
+    - kind: clusterrole
+      name: postgres-operator-upgrade
+    - kind: serviceaccount
+      name: postgres-operator-upgrade
+
 - name: Make kustomization directory
   file:
     path: "{{ pgo_kustomization_directory }}"

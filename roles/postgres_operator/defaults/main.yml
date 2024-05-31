@@ -7,14 +7,24 @@ pgo_namespace: postgres-operator
 pgo_repository: https://github.com/CrunchyData/postgres-operator-examples.git
 
 # The version of the install repository to use
-pgo_repository_version: af88ad9c0d0a827e12115c8771dd09f1dcc8a713
+pgo_repository_version: be4cf56ee896c497e0fb30a6a982cf26f4ecbd58
 
 # List of bases to install
 pgo_kustomization_bases:
   - "{{ pgo_repository }}/kustomize/install/default?ref={{ pgo_repository_version }}"
 
 # List of patches to apply to the resources in the manifests
-pgo_kustomization_patches: []
+pgo_kustomization_patches:
+  # Add the most recent Postgres 14 image until we upgrade to 15
+  - patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: RELATED_IMAGE_POSTGRES_14
+          value: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-14.11-0
+    target:
+      kind: Deployment
+      name: pgo
 
 # The kustomization to use for Cluster API
 pgo_kustomization:
@@ -30,8 +40,4 @@ pgo_watches:
   - kind: deployment
     namespace: "{{ pgo_namespace }}"
     name: pgo
-    condition: Available
-  - kind: deployment
-    namespace: "{{ pgo_namespace }}"
-    name: pgo-upgrade
     condition: Available
