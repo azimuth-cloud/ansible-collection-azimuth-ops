@@ -115,6 +115,12 @@ jobs:
             repository: k3s-io/k3s
             version_jsonpath: k3s_version
 
+          - key: keycloak-operator
+            path: ./roles/keycloak/defaults/main.yml
+            repository: keycloak/keycloak-k8s-resources
+            tags: "yes"
+            version_jsonpath: keycloak_operator_version
+
           - key: kustomize
             path: ./roles/kustomize/defaults/main.yml
             repository: kubernetes-sigs/kustomize
@@ -152,6 +158,7 @@ jobs:
         with:
           repository: ${{ matrix.repository }}
           prereleases: ${{ matrix.prereleases || 'no' }}
+          tags: ${{ matrix.tags || 'no' }}
 
       - name: Update dependency key
         uses: stackhpc/github-actions/config-update@master
