@@ -38,16 +38,16 @@ capi_cluster_openstack_ca_cert: >-
 # Default, wire these up with an image from community images when available
 capi_cluster_kubernetes_version: >-
   {{-
-    community_images.kube_1_28.kubernetes_version
-    if community_images is defined and 'kube_1_28' in community_images
+    community_images.kube_1_29.kubernetes_version
+    if community_images is defined and 'kube_1_29' in community_images
     else undef(hint = 'capi_cluster_kubernetes_version is required')
   }}
 capi_cluster_machine_image_id: >-
   {{-
-    community_images_image_ids.kube_1_28
+    community_images_image_ids.kube_1_29
     if (
       community_images_image_ids is defined and
-      'kube_1_28' in community_images_image_ids
+      'kube_1_29' in community_images_image_ids
     )
     else undef(hint = 'capi_cluster_machine_image_id is required')
   }}
