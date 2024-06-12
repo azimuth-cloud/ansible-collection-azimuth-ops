@@ -98,7 +98,7 @@ generate_tests_caas_test_case_slurm_service_monitoring_expected_title: Grafana
 # Configuration for the repo2docker test case, if enabled
 #   The repository to use to build the image
 #   We pick a repository that has some meat but is relatively quick to build
-generate_tests_caas_test_case_repo2docker_param_cluster_repository: https://github.com/binder-examples/bokeh.git
+generate_tests_caas_test_case_repo2docker_param_cluster_repository: https://github.com/binder-examples/demo-julia.git
 #   Expected titles for the repo2docker services
 generate_tests_caas_test_case_repo2docker_service_repo2docker_expected_title: JupyterLab
 generate_tests_caas_test_case_repo2docker_service_monitoring_expected_title: Grafana
