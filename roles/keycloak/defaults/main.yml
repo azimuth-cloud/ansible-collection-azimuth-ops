@@ -75,6 +75,9 @@ keycloak_spec_defaults:
           }
         )
     }}
+  # Configure Keycloak to respect the xforwarded headers from the ingress controller
+  proxy:
+    headers: xforwarded
   # We will do our own ingress with TLS annotations
   ingress:
     enabled: false
