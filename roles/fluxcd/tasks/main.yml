@@ -1,0 +1,43 @@
+---
+
+- name: Install Flux CD on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ fluxcd_chart_name }}"
+    chart_repo_url: "{{ fluxcd_chart_repo }}"
+    chart_version: "{{ fluxcd_chart_version }}"
+    release_namespace: "{{ fluxcd_release_namespace }}"
+    release_name: "{{ fluxcd_release_name }}"
+    release_values: "{{ fluxcd_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ fluxcd_wait_timeout }}"
+
+- name: Make kustomization directory for Flux CD dashboard
+  file:
+    path: "{{ fluxcd_dashboard_kustomization_directory }}"
+    state: directory
+
+- name: Write kustomization file for Flux CD dashboard
+  copy:
+    content: "{{ fluxcd_dashboard_kustomization | to_nice_yaml }}"
+    dest: "{{ fluxcd_dashboard_kustomization_directory }}/kustomization.yaml"
+
+- name: Install Flux CD dashboard resources
+  command: kubectl apply -k {{ fluxcd_dashboard_kustomization_directory }}
+
+- name: Wait for Flux CD dashboard to become ready
+  command: >-
+    kubectl rollout status
+      --namespace {{ watch.namespace }}
+      --timeout 1s
+      {{ watch.kind }}/{{ watch.name }}
+  changed_when: false
+  register: fluxcd_dashboard_wait
+  until: fluxcd_dashboard_wait is succeeded
+  retries: 60
+  delay: 10
+  loop: "{{ fluxcd_dashboard_watches }}"
+  loop_control:
+    loop_var: watch
+    label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"

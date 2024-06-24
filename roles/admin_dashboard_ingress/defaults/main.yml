@@ -76,8 +76,8 @@ admin_dashboard_ingress_grafana_name: grafana
 #   The host for the ingress
 admin_dashboard_ingress_grafana_host: >-
   {{-
-    "{}.{}".format(ingress_grafana_subdomain, ingress_base_domain)
-    if ingress_grafana_subdomain is defined and ingress_base_domain is defined
+    "{}.{}".format(ingress_grafana_subdomain | default("grafana"), ingress_base_domain)
+    if ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_grafana_host is required')
   }}
 #   The name of the service for the ingress
@@ -108,8 +108,8 @@ admin_dashboard_ingress_prometheus_name: prometheus
 #   The host for the ingress
 admin_dashboard_ingress_prometheus_host: >-
   {{-
-    "{}.{}".format(ingress_prometheus_subdomain, ingress_base_domain)
-    if ingress_prometheus_subdomain is defined and ingress_base_domain is defined
+    "{}.{}".format(ingress_prometheus_subdomain | default("prometheus"), ingress_base_domain)
+    if ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_prometheus_host is required')
   }}
 #   The name of the service for the ingress
@@ -140,8 +140,8 @@ admin_dashboard_ingress_alertmanager_name: alertmanager
 #   The host for the ingress
 admin_dashboard_ingress_alertmanager_host: >-
   {{-
-    "{}.{}".format(ingress_alertmanager_subdomain, ingress_base_domain)
-    if ingress_alertmanager_subdomain is defined and ingress_base_domain is defined
+    "{}.{}".format(ingress_alertmanager_subdomain | default("alertmanager"), ingress_base_domain)
+    if ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_alertmanager_host is required')
   }}
 #   The name of the service for the ingress
@@ -172,8 +172,8 @@ admin_dashboard_ingress_consul_name: consul
 #   The host for the ingress
 admin_dashboard_ingress_consul_host: >-
   {{-
-    "{}.{}".format(ingress_consul_subdomain, ingress_base_domain)
-    if ingress_consul_subdomain is defined and ingress_base_domain is defined
+    "{}.{}".format(ingress_consul_subdomain | default("consul"), ingress_base_domain)
+    if ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_consul_host is required')
   }}
 #   The name of the service for the ingress
@@ -210,8 +210,8 @@ admin_dashboard_ingress_ara_name: ara
 #   The host for the ingress
 admin_dashboard_ingress_ara_host: >-
   {{-
-    "{}.{}".format(ingress_ara_subdomain, ingress_base_domain)
-    if ingress_ara_subdomain is defined and ingress_base_domain is defined
+    "{}.{}".format(ingress_ara_subdomain | default("ara"), ingress_base_domain)
+    if ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_ara_host is required')
   }}
 #   The name of the service for the ingress
@@ -248,8 +248,8 @@ admin_dashboard_ingress_helm_dashboard_name: helm-dashboard
 #   The host for the ingress
 admin_dashboard_ingress_helm_dashboard_host: >-
   {{-
-    "{}.{}".format(ingress_helm_dashboard_subdomain, ingress_base_domain)
-    if ingress_helm_dashboard_subdomain is defined and ingress_base_domain is defined
+    "{}.{}".format(ingress_helm_dashboard_subdomain | default("helm"), ingress_base_domain)
+    if ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_helm_dashboard_host is required')
   }}
 #   The name of the service for the ingress
@@ -280,8 +280,8 @@ admin_dashboard_ingress_kubernetes_dashboard_name: kubernetes-dashboard
 #   The host for the ingress
 admin_dashboard_ingress_kubernetes_dashboard_host: >-
   {{-
-    "{}.{}".format(ingress_kubernetes_dashboard_subdomain, ingress_base_domain)
-    if ingress_kubernetes_dashboard_subdomain is defined and ingress_base_domain is defined
+    "{}.{}".format(ingress_kubernetes_dashboard_subdomain | default("kubernetes"), ingress_base_domain)
+    if ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_kubernetes_dashboard_host is required')
   }}
 #   The name of the service for the ingress
@@ -304,6 +304,38 @@ admin_dashboard_ingress_kubernetes_dashboard:
   port: "{{ admin_dashboard_ingress_kubernetes_dashboard_port }}"
   tls_secret_name: "{{ admin_dashboard_ingress_kubernetes_dashboard_tls_secret_name }}"
 
+# Settings for the Flux CD dashboard ingress
+#   The namespace for the ingress
+admin_dashboard_ingress_fluxcd_dashboard_namespace: flux-system
+#   The name for the ingress
+admin_dashboard_ingress_fluxcd_dashboard_name: fluxcd-dashboard
+#   The host for the ingress
+admin_dashboard_ingress_fluxcd_dashboard_host: >-
+  {{-
+    "{}.{}".format(ingress_fluxcd_dashboard_subdomain | default("fluxcd"), ingress_base_domain)
+    if ingress_base_domain is defined
+    else undef(hint = 'admin_dashboard_ingress_fluxcd_dashboard_host is required')
+  }}
+#   The name of the service for the ingress
+admin_dashboard_ingress_fluxcd_dashboard_service: capacitor
+#   The name of the service port for the ingress
+admin_dashboard_ingress_fluxcd_dashboard_port: http
+#   The name of the secret containing the certificate for the ingress
+admin_dashboard_ingress_fluxcd_dashboard_tls_secret_name: >-
+  {{-
+    admin_dashboard_ingress_tls_wildcard_secret_name
+    if admin_dashboard_ingress_tls_wildcard_certificate
+    else admin_dashboard_ingress_fluxcd_dashboard_name ~ '-tls'
+  }}
+#   The ingress definition
+admin_dashboard_ingress_fluxcd_dashboard:
+  name: "{{ admin_dashboard_ingress_fluxcd_dashboard_name }}"
+  namespace: "{{ admin_dashboard_ingress_fluxcd_dashboard_namespace }}"
+  host: "{{ admin_dashboard_ingress_fluxcd_dashboard_host }}"
+  service: "{{ admin_dashboard_ingress_fluxcd_dashboard_service }}"
+  port: "{{ admin_dashboard_ingress_fluxcd_dashboard_port }}"
+  tls_secret_name: "{{ admin_dashboard_ingress_fluxcd_dashboard_tls_secret_name }}"
+
 # The list of ingresses to create
 admin_dashboard_ingresses: >-
   {{-
@@ -315,6 +347,7 @@ admin_dashboard_ingresses: >-
       admin_dashboard_ingress_ara,
       admin_dashboard_ingress_helm_dashboard,
       admin_dashboard_ingress_kubernetes_dashboard,
+      admin_dashboard_ingress_fluxcd_dashboard,
     ] |
       select() |
       list

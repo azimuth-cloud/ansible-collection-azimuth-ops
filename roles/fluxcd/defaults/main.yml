@@ -1,0 +1,55 @@
+---
+
+# Chart details for Flux CD installation
+fluxcd_chart_repo: https://fluxcd-community.github.io/helm-charts
+fluxcd_chart_name: flux2
+fluxcd_chart_version: 2.13.0
+
+# Release details for Flux CD installation
+fluxcd_release_namespace: flux-system
+fluxcd_release_name: flux
+
+fluxcd_wait_timeout: 10m
+
+fluxcd_release_defaults:
+  installCRDs: true
+  imageAutomationController:
+    create: false
+  imageReflectionController:
+    create: false
+fluxcd_release_overrides: {}
+fluxcd_release_values: >-
+  {{-
+    fluxcd_release_defaults |
+      combine(fluxcd_release_overrides, recursive = True)
+  }}
+
+
+# The repository to install the Flux CD dashboard from
+fluxcd_dashboard_repository: https://github.com/gimlet-io/capacitor.git
+# The version of the install repository to us
+fluxcd_dashboard_version: v0.4.2
+
+# The namespace to install the dashboard into
+fluxcd_dashboard_namespace: "{{ fluxcd_release_namespace }}"
+# List of resources to install
+fluxcd_dashboard_kustomization_resources:
+  - "{{ fluxcd_dashboard_repository }}/deploy/k8s?ref=capacitor-{{ fluxcd_dashboard_version }}"
+# List of patches to apply to the resources in the manifests
+fluxcd_dashboard_kustomization_patches: []
+
+# The kustomization to use for the Flux CD dashboard
+fluxcd_dashboard_kustomization:
+  namespace: "{{ fluxcd_dashboard_namespace }}"
+  resources: "{{ fluxcd_dashboard_kustomization_resources }}"
+  patches: "{{ fluxcd_dashboard_kustomization_patches }}"
+
+# Use a directory in $HOME for the kustomization by default
+fluxcd_dashboard_kustomization_directory: "{{ (ansible_env.HOME, 'fluxcd-dashboard') | path_join }}"
+
+# List of resources to watch for completeness
+fluxcd_dashboard_watches:
+  - kind: deployment
+    namespace: "{{ fluxcd_dashboard_namespace }}"
+    name: capacitor
+    condition: Available
