@@ -1,10 +1,5 @@
 ---
 
-# The chart to use
-consul_chart_repo: https://helm.releases.hashicorp.com
-consul_chart_name: consul
-consul_chart_version: 1.2.3
-
 # Release information for the Consul release
 # By default, deploy into the same namespace as Azimuth
 consul_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
@@ -12,39 +7,3 @@ consul_release_name: consul
 
 # The timeout to wait for Consul to become ready
 consul_wait_timeout: 10m
-
-# The number of replicas for the Consul server
-consul_server_replicas: 3
-
-# The values for the release
-consul_release_defaults:
-  fullnameOverride: "{{ consul_release_name }}"
-  server:
-    # We don't use the service mesh
-    connect: false
-    replicas: "{{ consul_server_replicas }}"
-  # The client must now be explicitly enabled
-  client:
-    enabled: true
-  connectInject:
-    enabled: false
-  global:
-    metrics:
-      enabled: true
-      enableAgentMetrics: true
-      enableGatewayMetrics: false
-consul_release_overrides: {}
-consul_release_values: >-
-  {{-
-    consul_release_defaults |
-      combine(consul_release_overrides, recursive = True)
-  }}
-
-
-# Release information for the Consul exporter release
-# By default, deploy into the same namespace as Consul
-consul_exporter_release_namespace: "{{ consul_release_namespace }}"
-consul_exporter_release_name: consul-exporter
-
-# The timeout to wait for the Consul exporter to become ready
-consul_exporter_wait_timeout: 10m
