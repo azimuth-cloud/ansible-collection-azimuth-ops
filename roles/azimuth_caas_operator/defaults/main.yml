@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: 0.12.7-dev.0.feat-k8s-tf-backend.12
+azimuth_caas_operator_chart_version: 0.12.7-dev.0.feat-k8s-tf-backend.27
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -23,11 +23,15 @@ azimuth_caas_operator_global_extravars_defaults:
   terraform_backend_type: kubernetes
   terraform_backend_config:
     in_cluster_config: "true"
-    # Use unsafe to prevent Ansible interpreting these strings
+    # Use unsafe to prevent azimuth-ops resolving the variables here
+    # We want them to be resolved in the ansible-runner pods when clusters are created
     secret_suffix: !unsafe >-
       {{ cluster_name }}
-    labels: !unsafe >-
-      {{ {"caas.azimuth.stackhpc.com/cluster-id": cluster_id} | to_json }}
+    labels:
+      caas.azimuth.stackhpc.com/cluster-id: !unsafe >-
+        {{ cluster_id }}
+      caas.azimuth.stackhpc.com/cluster-name: !unsafe >-
+        {{ cluster_name }}
     # Use the namespace for the service account
     namespace: !unsafe >-
       {{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/namespace') }}
@@ -170,7 +174,7 @@ azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC workstation
 azimuth_caas_stackhpc_workstation_git_url: https://github.com/stackhpc/caas-workstation.git
 # The git version for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_git_version: 0.6.1
+azimuth_caas_stackhpc_workstation_git_version: 0.7.0
 # The playbook to use for the workstation appliance
 azimuth_caas_stackhpc_workstation_playbook: workstation.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
@@ -273,7 +277,7 @@ azimuth_caas_stackhpc_repo2docker_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_git_url: https://github.com/stackhpc/caas-repo2docker.git
 # The git version for the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_git_version: 0.4.0
+azimuth_caas_stackhpc_repo2docker_git_version: 0.5.0
 # The playbook to use for the StackHPC repo2docker appliance
 azimuth_caas_stackhpc_repo2docker_playbook: repo2docker.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
@@ -338,7 +342,7 @@ azimuth_caas_stackhpc_rstudio_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC R-Studio appliance
 azimuth_caas_stackhpc_rstudio_git_url: https://github.com/stackhpc/caas-r-studio-server
 # The git version for the StackHPC R-Studio appliance
-azimuth_caas_stackhpc_rstudio_git_version: 0.4.0
+azimuth_caas_stackhpc_rstudio_git_version: 0.5.0
 # The playbook to use for the StackHPC R-Studio appliance
 azimuth_caas_stackhpc_rstudio_playbook: rstudio.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
