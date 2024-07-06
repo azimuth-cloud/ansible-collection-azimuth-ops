@@ -1,18 +1,5 @@
 ---
 
-- name: Install Consul on target Kubernetes cluster
-  kubernetes.core.helm:
-    chart_ref: "{{ consul_chart_name }}"
-    chart_repo_url: "{{ consul_chart_repo }}"
-    chart_version: "{{ consul_chart_version }}"
-    release_namespace: "{{ consul_release_namespace }}"
-    release_name: "{{ consul_release_name }}"
-    release_values: "{{ consul_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
-    wait_timeout: "{{ consul_wait_timeout }}"
-
 - name: Get Consul service information
   command: >-
     kubectl get service
@@ -23,9 +10,9 @@
   vars:
     consul_server_service_selector: "app={{ consul_release_name }},component=server"
 
-- name: Set Consul server service fact
+- name: Set Consul server services fact
   set_fact:
-    consul_server_service: "{{ (consul_services_cmd.stdout | from_json)['items'] | first }}"
+    consul_server_services: "{{ (consul_services_cmd.stdout | from_json)['items'] }}"
 
 - name: Set Consul server facts
   set_fact:
@@ -51,91 +38,6 @@
             first
         )
       }}
-
-- name: Install ServiceMonitor for Consul server metrics
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ consul_servicemonitor_server_definition | to_nice_yaml }}"
   vars:
-    consul_servicemonitor_server_definition:
-      apiVersion: monitoring.coreos.com/v1
-      kind: ServiceMonitor
-      metadata:
-        name: "{{ consul_release_name }}-server"
-        namespace: "{{ consul_release_namespace }}"
-      spec:
-        endpoints:
-          - port: http
-            path: /v1/agent/metrics
-        namespaceSelector:
-          matchNames:
-            - "{{ consul_release_namespace }}"
-        selector:
-          matchLabels:
-            app: "{{ consul_release_name }}"
-            release: "{{ consul_release_name }}"
-            component: server
-
-- name: Remove PodMonitor for Consul client metrics
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ consul_podmonitor_client_definition | to_nice_yaml }}"
-  vars:
-    consul_podmonitor_client_definition:
-      apiVersion: monitoring.coreos.com/v1
-      kind: PodMonitor
-      metadata:
-        name: "{{ consul_release_name }}-client"
-        namespace: "{{ consul_release_namespace }}"
-      spec:
-        podMetricsEndpoints:
-          - port: http
-            path: /v1/agent/metrics
-        namespaceSelector:
-          matchNames:
-            - "{{ consul_release_namespace }}"
-        selector:
-          matchLabels:
-            app: "{{ consul_release_name }}"
-            release: "{{ consul_release_name }}"
-            component: client
-
-# Remove the legacy installation of Consul exporter
-# This is now managed as part of a Zenith installation
-- name: Remove Consul exporter from prometheus-community
-  kubernetes.core.helm:
-    release_namespace: "{{ consul_exporter_release_namespace }}"
-    release_name: "{{ consul_exporter_release_name }}"
-    state: absent
-    wait: yes
-    wait_timeout: "{{ consul_exporter_wait_timeout }}"
-
-- name: Install Grafana dashboards for Consul metrics
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ consul_dashboard_definition | to_nice_yaml }}"
-  vars:
-    consul_dashboard_definition:
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: consul-grafana-dashboard
-        namespace: "{{ consul_release_namespace }}"
-        labels:
-          grafana_dashboard: "1"
-      data:
-        consul_system_dashboard.json: |-
-          {{ lookup("file", "grafana_dashboard.json") | from_json | to_nice_json }}
-
-- name: Delete Prometheus rule in default namespace
-  command: kubectl delete prometheusrule consul
-  register: consul_delete_prometheus_rule_default
-  changed_when: "consul_delete_prometheus_rule_default.rc == 0"
-  failed_when: >-
-    consul_delete_prometheus_rule_default.rc != 0 and
-    "NotFound" not in consul_delete_prometheus_rule_default.stderr
-
-- name: Install Prometheus alerts rule for Consul
-  command: kubectl apply -n {{ consul_release_namespace }} -f -
-  args:
-    stdin: "{{ lookup('file', 'prometheus_rule.yaml') }}"
+    consul_server_service: "{{ consul_server_services | first }}"
+  when: consul_server_services | length > 0

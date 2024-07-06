@@ -1,5 +1,31 @@
 ---
 
+# We need to copy states from Consul to Kubernetes secrets
+- block:
+    - name: List CaaS clusters
+      command: kubectl get clusters.caas --all-namespaces --output json
+      changed_when: false
+      register: azimuth_caas_operator_list_clusters
+
+    - include_tasks: copy_tf_state.yml
+      loop: >-
+        {{-
+          azimuth_caas_operator_list_clusters.stdout |
+            from_json |
+            json_query('items')
+        }}
+      loop_control:
+        loop_var: azimuth_caas_operator_cluster_info
+        label: >-
+          {{-
+            azimuth_caas_operator_cluster_info.metadata.namespace ~
+            "/" ~
+            azimuth_caas_operator_cluster_info.metadata.name
+          }}
+  when:
+    - consul_server_host is defined
+    - consul_server_port is defined
+
 - name: Install Azimuth CaaS operator on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_caas_operator_chart_name }}"
@@ -49,7 +75,3 @@
       type: Opaque
       data: "{{ azimuth_caas_operator_default_ssh_secret_files }}"
   when: azimuth_caas_operator_default_ssh_secret_files
-
-- name: Fix up existing clusters for quota check changes
-  include_tasks:
-    file: quota_checks_fixup.yml
