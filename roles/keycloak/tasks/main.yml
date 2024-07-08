@@ -129,9 +129,9 @@
 - name: Install metrics service for Keycloak
   command: kubectl apply -f -
   args:
-    stdin: "{{ keycloak_servicemonitor_definition | to_nice_yaml }}"
+    stdin: "{{ keycloak_service_definition | to_nice_yaml }}"
   vars:
-    keycloak_servicemonitor_definition:
+    keycloak_service_definition:
       apiVersion: v1
       kind: Service
       metadata:
@@ -145,7 +145,8 @@
         clusterIP: None
         ports:
           - name: metrics
-            port: 8080
+            port: 9000
+            targetPort: management
         selector:
           app.kubernetes.io/managed-by: keycloak-operator
           app: "{{ keycloak_name }}"
