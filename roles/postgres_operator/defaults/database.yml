@@ -20,6 +20,9 @@ pgo_database_backup_volume_size: "{{ pgo_database_data_volume_size }}"
 # The spec of the database resource
 pgo_database_spec_defaults:
   postgresVersion: "{{ pgo_database_version }}"
+  # TODO(mkjpryor)
+  # Remove this when we move to Postgres 15
+  image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-14.11-0
   # Enable the monitoring sidecar
   monitoring:
     pgmonitor:
@@ -44,6 +47,9 @@ pgo_database_spec_defaults:
         }}
   backups:
     pgbackrest:
+      # TODO(mkjpryor)
+      # Remove this when we move to Postgres 15
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.49-0
       repos:
         - name: repo1
           volume:
