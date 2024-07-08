@@ -1,0 +1,29 @@
+---
+
+- name: Ensure unpack directory exists
+  file:
+    path: "{{ k9s_unpack_directory }}"
+    state: directory
+
+- name: Download and extract K9s archive
+  unarchive:
+    remote_src: yes
+    src: "{{ k9s_archive_url }}"
+    dest: "{{ k9s_unpack_directory }}"
+
+- name: Ensure binary directory exists
+  file:
+    path: "{{ k9s_bin_directory }}"
+    state: directory
+
+- name: Copy executable to binary directory
+  copy:
+    remote_src: yes
+    src: "{{ (k9s_unpack_directory, 'k9s') | path_join }}"
+    dest: "{{ k9s_bin_directory }}"
+    mode: u=rwx,g=rw,o=rx
+
+- name: Ensure K9s shell completions are in .bashrc
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: source <(k9s completion bash)
