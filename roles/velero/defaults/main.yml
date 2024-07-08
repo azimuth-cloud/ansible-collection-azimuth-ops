@@ -17,7 +17,8 @@ velero_cli_repo: https://github.com/vmware-tanzu/velero
 velero_cli_version: v1.14.0
 velero_cli_os: "{{ ansible_system | lower }}"
 velero_cli_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
-velero_cli_archive_name: velero-{{ velero_cli_version }}-{{ velero_cli_os }}-{{ velero_cli_arch }}.tar.gz
+velero_cli_archive_name: >-
+  velero-{{ velero_cli_version }}-{{ velero_cli_os }}-{{ velero_cli_arch }}.tar.gz
 velero_cli_archive_url: >-
   {{ velero_cli_repo }}/releases/download/{{ velero_cli_version }}/{{ velero_cli_archive_name }}
 # The directory into which the Velero CLI archive should be unpacked
@@ -30,8 +31,6 @@ velero_s3_url: "{{ undef(hint = 'velero_s3_url is required') }}"
 
 # The name of a pre-existing bucket in the target object store
 velero_bucket_name: "{{ undef(hint = 'velero_bucket_name is required') }}"
-# Indicates whether to create the bucket if it doesn't exist
-velero_bucket_create: true
 
 # The name to use for the secret containing the object store credentials
 velero_s3_creds_secret_name: velero-s3-config

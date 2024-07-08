@@ -1,21 +1,5 @@
 ---
 
-- name: Create Minio client alias for backup target
-  ansible.builtin.command: >-
-    mc alias set backup \
-      {{ velero_s3_url }} \
-      {{ velero_aws_access_key_id }} \
-      {{ velero_aws_secret_access_key }}
-
-- name: Ensure bucket exists for Velero backups
-  ansible.builtin.command: mc mb backup/{{ velero_bucket_name }}
-  register: velero_create_bucket
-  changed_when: velero_create_bucket.rc == 0
-  failed_when: >-
-    velero_create_bucket.rc != 0 and
-    "BucketAlreadyExists" not in velero_create_bucket.stderr
-  when: velero_bucket_create
-
 - name: Ensure CSI snapshot controller is installed
   kubernetes.core.helm:
     chart_ref: "{{ velero_csi_snapshot_controller_chart_name }}"

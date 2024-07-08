@@ -41,10 +41,6 @@
         - include_role:
             name: stackhpc.azimuth_ops.kustomize
 
-        - include_role:
-            name: stackhpc.azimuth_ops.minio
-            tasks_from: client.yml
-
         - name: Slurp kubeconfig file
           slurp:
             src: /etc/rancher/k3s/k3s.yaml
