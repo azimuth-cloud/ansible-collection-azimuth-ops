@@ -1,42 +1,41 @@
 ---
 
-- fail:
-
 - name: Check status of target backup
-  # This also acts as check that target backup exists
-  ansible.builtin.command: >-
+  command: >-
     kubectl get backup {{ velero_restore_backup_name }}
       --namespace {{ velero_release_namespace }}
       --output jsonpath='{.status.phase}'
+  changed_when: false
   register: velero_target_backup_check
 
-- name: Fail if target backup is incomplete and strict mode is enabled
-  ansible.builtin.fail: 
+- name: Fail if target backup is not in an allowable state
+  fail:
     msg: "Aborting restore of backup in state '{{ velero_target_backup_check.stdout }}'"
-  when: velero_restore_strict and velero_target_backup_check.stdout != "Completed"
+  when: >-
+    velero_target_backup_check.stdout != "Completed" and
+    (not velero_restore_allow_partial or velero_target_backup_check.stdout != "PartiallyFailed")
 
-- name: Warn if target backup has status 'PartiallyFailed'
-  debug:
-    msg: "WARNING: Target backup as status 'PartiallyFailed' - restore may be ineffective"
-  when: velero_target_backup_check.stdout == "PartiallyFailed"
+- name: Apply restore config
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ velero_restore_definition | to_nice_yaml }}"
+  vars:
+    velero_restore_definition:
+      apiVersion: velero.io/v1
+      kind: Restore
+      metadata:
+        name: "{{ velero_restore_name }}"
+        namespace: "{{ velero_release_namespace }}"
+      spec: "{{ velero_restore_spec }}"
 
-- name: Perform Velero restore
-  include_tasks: restore_loop.yml
-  loop: "{{ range(1, velero_max_restore_passes + 1) | list }}"
-
-# Annotate cluster resources triggers a new watch event and 
-# causes the addon provider to re-adopt the restored addons
-- name: Annotate helmrelease and manifest resources to trigger capi addon readoption
-  ansible.builtin.command: >-
-    kubectl annotate "{{ item }}"
-    velero.io/restore-time={{ '%Y%m%d%H%M%S' | strftime(ansible_date_time.epoch) }}
-    -A --all --overwrite
-  loop:
-  - helmrelease
-  - manifests
-
-# Without this step, deleting tenant CAPI clusters after a restore fails because the CAPI Janitor
-# doesn't think it's service account has permission to watch openstackcluster resources.
-- name: Restart CAPI janitor to pick up restored ServiceAccount permissions
-  ansible.builtin.command: >-
-    kubectl -n capi-janitor-system rollout restart deployment/cluster-api-janitor-openstack
+- name: Wait for restore to complete
+  command: >-
+    kubectl wait restores.velero.io/{{ velero_restore_name }}
+      --for=jsonpath='{.status.phase}'=Completed
+      --namespace {{ velero_release_namespace }}
+      --timeout 0s
+  changed_when: false
+  register: velero_restore_complete
+  until: velero_restore_complete is succeeded
+  retries: 360
+  delay: 10

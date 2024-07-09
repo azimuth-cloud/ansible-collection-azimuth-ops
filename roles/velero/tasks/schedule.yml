@@ -2,28 +2,15 @@
 - name: Ensure Velero components are installed
   include_tasks: install.yml
 
-- name: Apply volumes backup schedule
+- name: Apply backup schedule
   ansible.builtin.command: kubectl apply -f -
   args:
-    stdin: "{{ velero_schedule_volumes_definition | to_nice_yaml }}"
+    stdin: "{{ velero_schedule_definition | to_nice_yaml }}"
   vars:
-    velero_schedule_volumes_definition:
+    velero_schedule_definition:
       apiVersion: velero.io/v1
       kind: Schedule
       metadata:
-        name: "{{ velero_schedule_volumes_name }}"
+        name: "{{ velero_backup_schedule_name }}"
         namespace: "{{ velero_release_namespace }}"
-      spec: "{{ velero_schedule_volumes_spec }}"
-
-- name: Apply platforms backup schedule
-  ansible.builtin.command: kubectl apply -f -
-  args:
-    stdin: "{{ velero_schedule_platforms_definition | to_nice_yaml }}"
-  vars:
-    velero_schedule_platforms_definition:
-      apiVersion: velero.io/v1
-      kind: Schedule
-      metadata:
-        name: "{{ velero_schedule_platforms_name }}"
-        namespace: "{{ velero_release_namespace }}"
-      spec: "{{ velero_schedule_platforms_spec }}"
+      spec: "{{ velero_backup_schedule_spec }}"
