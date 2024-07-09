@@ -214,10 +214,6 @@ velero_restore_name: >-
 velero_restore_include_resource_status:
   - clusters.caas.azimuth.stackhpc.com
 
-# Configuration for the resource modifier
-resource_modifier_configmap_name: "{{ velero_restore_name }}-modifier-rules"
-resource_modifier_rules: []
-
 velero_restore_spec_defaults:
   restoreStatus:
     includedResources: "{{ velero_restore_include_resource_status }}"
