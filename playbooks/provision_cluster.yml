@@ -20,6 +20,9 @@
         - include_role:
             name: stackhpc.azimuth_ops.k3s
 
+        - include_role:
+            name: stackhpc.azimuth_ops.k9s
+
         - name: Get installed Kubernetes version
           command: k3s kubectl version --output json
           changed_when: false
