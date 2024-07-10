@@ -5,7 +5,7 @@
 # Ensure CAPI management cluster is provisioned
 - import_playbook: stackhpc.azimuth_ops.provision_cluster
 
-# Initiate restore process
+# Restore the backup
 - hosts: k3s
   environment:
     KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
@@ -14,7 +14,7 @@
         name: stackhpc.azimuth_ops.velero
         tasks_from: restore.yml
 
-# Install any remaining Azimuth components after restore
+# Install Azimuth components
 - import_playbook: stackhpc.azimuth_ops.deploy
   vars:
     # In HA mode, use the kubeconfig for the HA cluster
