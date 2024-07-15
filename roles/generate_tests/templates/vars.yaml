@@ -1,0 +1,40 @@
+caas:
+  cluster_names:
+    {% for test_case in generate_tests_caas_test_cases -%}
+    {%- set test_case_name = test_case.name | default(test_case.cluster_type, True) -%}
+    {%- set test_case_cluster_name_prefix = test_case.cluster_name_prefix | default('test', True) -%}
+    {%- set test_case_cluster_name_suffix = lookup('community.general.random_string', length = 5, upper = false, special = false) -%}
+    {%- set test_case_cluster_name = test_case_cluster_name_prefix ~ "-" ~ test_case_cluster_name_suffix -%}
+    {{ test_case_name }}: {{
+      generate_tests_existing_vars.caas.cluster_names[test_case_name] | default(test_case_cluster_name)
+    }}
+    {% endfor %}
+
+kubernetes:
+  cluster_names:
+    {% for test_case in generate_tests_kubernetes_test_cases -%}
+    {%- set test_case_name = test_case.name | default(test_case.kubernetes_template, True) -%}
+    {%- set test_case_cluster_name_prefix = test_case.cluster_name_prefix | default('testk8s', True) -%}
+    {%- set test_case_cluster_name_suffix = lookup('community.general.random_string', length = 5, upper = false, special = false) -%}
+    {%- set test_case_cluster_name = test_case_cluster_name_prefix ~ "-" ~ test_case_cluster_name_suffix -%}
+    {{ test_case_name }}: {{
+      generate_tests_existing_vars.kubernetes.cluster_names[test_case_name] | default(test_case_cluster_name)
+    }}
+    {% endfor %}
+
+kubeapps:
+  {% set kubeapps_cluster_name_suffix = lookup('community.general.random_string', length = 5, upper = false, special = false) -%}
+  cluster_name: {{
+    generate_tests_existing_vars.kubeapps.cluster_name |
+      default(generate_tests_kubernetes_apps_k8s_name_prefix ~ "-" ~ kubeapps_cluster_name_suffix)
+  }}
+  app_names:
+    {% for test_case in generate_tests_kubernetes_apps_test_cases -%}
+    {%- set test_case_name = test_case.name | default(test_case.app_template, True) -%}
+    {%- set test_case_app_name_prefix = test_case.app_name_prefix | default('testapp', True) -%}
+    {%- set test_case_app_name_suffix = lookup('community.general.random_string', length = 5, upper = false, special = false) -%}
+    {%- set test_case_app_name = test_case_app_name_prefix ~ "-" ~ test_case_app_name_suffix -%}
+    {{ test_case_name }}: {{
+      generate_tests_existing_vars.kubeapps.app_names[test_case_name] | default(test_case_app_name)
+    }}
+    {% endfor %}

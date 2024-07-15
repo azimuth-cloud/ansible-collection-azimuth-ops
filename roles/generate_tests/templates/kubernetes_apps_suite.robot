@@ -7,15 +7,6 @@ Test Tags       {{ generate_tests_kubernetes_apps_default_test_tags | join("  ")
 Test Timeout    {{ generate_tests_kubernetes_apps_default_test_timeout }}
 
 
-*** Variables ***
-
-${apps_cluster_name}  {{
-    generate_tests_kubernetes_apps_k8s_name_prefix ~
-    "-" ~
-    lookup('community.general.random_string', length = 5, upper = false, special = false)
-}}
-
-
 *** Test Cases ***
 
 Setup Apps Kubernetes Cluster
@@ -38,7 +29,7 @@ Setup Apps Kubernetes Cluster
     ${worker_size} =  Find Smallest Size With Resources  min_cpus=2  min_ram=4096  min_disk=20
 {% endif %}
     ${config} =  New Kubernetes Config
-    ...  name=${apps_cluster_name}
+    ...  name=${kubeapps.cluster_name}
     ...  template=${template.id}
     ...  control_plane_size=${cp_size.id}
     ${config} =  Add Node Group To Kubernetes Config  ${config}
@@ -47,21 +38,28 @@ Setup Apps Kubernetes Cluster
     ...  count={{ generate_tests_kubernetes_apps_k8s_worker_count }}
     ${cluster} =  Create Kubernetes Cluster  ${config}
 
+{% if generate_tests_include_upgrade_tests %}
+Upgrade Apps Kubernetes Cluster
+    [Tags]  appscluster  upgrade
+    [Timeout]  {{ generate_tests_kubernetes_apps_upgrade_timeout }}
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubeapps.cluster_name}
+    ${template} =  Find Kubernetes Cluster Template For Upgrade  ${cluster.template.id}
+    Upgrade Kubernetes Cluster  ${cluster.id}  ${template.id}
+{% endif %}
 
 Verify Apps Kubernetes Cluster
-    [tags]  appscluster  verify
+    [Tags]  appscluster  verify
     [Timeout]  {{ generate_tests_kubernetes_apps_verify_timeout }}
-    ${cluster} =  Find Kubernetes Cluster By Name  ${apps_cluster_name}
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubeapps.cluster_name}
     ${cluster} =  Wait For Kubernetes Cluster Ready  ${cluster.id}
 
 {% for test_case in generate_tests_kubernetes_apps_test_cases %}
 {% include (test_case.template | default(generate_tests_kubernetes_apps_test_case_template, True)) %}
-
 
 {% endfor %}
 
 Teardown Apps Kubernetes Cluster
     [Tags]  appscluster  delete
     [Timeout]  {{ generate_tests_kubernetes_apps_teardown_timeout }}
-    ${cluster} =  Find Kubernetes Cluster By Name  ${apps_cluster_name}
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubeapps.cluster_name}
     Delete Kubernetes Cluster  ${cluster.id}
