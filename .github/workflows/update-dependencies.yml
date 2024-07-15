@@ -136,11 +136,6 @@ jobs:
             repository: vmware-tanzu/velero-plugin-for-aws
             version_jsonpath: velero_s3_plugin_image_version
 
-          - key: velero-plugin-for-csi
-            path: ./roles/velero/defaults/main.yml
-            repository: vmware-tanzu/velero-plugin-for-csi
-            version_jsonpath: velero_csi_plugin_image_version
-
           - key: zenith
             path: ./roles/zenith/defaults/main.yml
             repository: stackhpc/zenith
