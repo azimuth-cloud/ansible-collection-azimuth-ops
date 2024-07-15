@@ -23,6 +23,7 @@ Upgrade {{ test_case_name }}
     [Timeout]  {{ test_case.upgrade_timeout }}
 {% endif %}
     ${app} =  Find Kubernetes App By Name  ${kubeapps.app_names['{{ test_case_name }}']}
+    ${template} =  Fetch Kubernetes App Template  ${app.template.id}
     ${latest} =  Get Latest Version For Kubernetes App Template  ${template}
     ${defaults} =  Get Defaults For Kubernetes App Template Version  ${latest}
     Update Kubernetes App  ${app.id}  ${latest}  ${defaults}
