@@ -1,5 +1,11 @@
 ---
 
+# The path for the test vars file
+generate_tests_vars_file: "{{ (ansible_env.HOME, 'testvars.yaml') | path_join }}"
+
+# The template to use for generating the test vars file
+generate_tests_vars_template: vars.yaml
+
 # The directory to generate the test suite files in
 # Use a directory in $HOME by default
 generate_tests_suite_directory: "{{ (ansible_env.HOME, 'test-suite') | path_join }}"
@@ -50,6 +56,8 @@ generate_tests_suite_template: suite.robot
 # The name for the suite
 generate_tests_suite_name: Azimuth Tests
 
+# Indicates whether upgrade tests should be generated
+generate_tests_include_upgrade_tests: false
 
 #-----
 # Settings for the CaaS test suite
@@ -265,6 +273,7 @@ generate_tests_kubernetes_apps_default_test_tags: [kubernetes, kubeapps]
 # The timeouts to apply to the setup, verify and teardown of the Kubernetes cluster
 generate_tests_kubernetes_apps_setup_timeout: "15 minutes"
 generate_tests_kubernetes_apps_verify_timeout: "30 minutes"
+generate_tests_kubernetes_apps_upgrade_timeout: "15 minutes"
 generate_tests_kubernetes_apps_teardown_timeout: "15 minutes"
 
 # The timeout to apply to tests in the suite

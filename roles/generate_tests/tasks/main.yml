@@ -11,6 +11,32 @@
 # This is done to avoid hiding the console output as the tests progress
 #####
 
+- name: Check if test vars file exists
+  stat:
+    path: "{{ generate_tests_vars_file }}"
+  register: generate_tests_vars_file_stat
+
+- block:
+    - name: Read the existing variables
+      slurp:
+        src: "{{ generate_tests_vars_file }}"
+      register: generate_tests_slurp_vars
+
+    - name: Set fact for existing test vars
+      set_fact:
+        generate_tests_existing_vars: >-
+          {{-
+            generate_tests_slurp_vars.content |
+              b64decode |
+              from_yaml
+          }}
+  when: generate_tests_vars_file_stat.stat.exists
+
+- name: Generate test vars
+  template:
+    src: "{{ generate_tests_vars_template }}"
+    dest: "{{ generate_tests_vars_file }}"
+
 - name: Delete test suite directory if it exists
   file:
     path: "{{ generate_tests_suite_directory }}"

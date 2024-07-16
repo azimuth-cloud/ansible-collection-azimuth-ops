@@ -1,9 +1,7 @@
-{% set test_case_cluster_name_prefix = test_case.cluster_name_prefix | default('test', True) %}
-{% set test_case_cluster_name_suffix = lookup('community.general.random_string', length = 5, upper = false, special = false) %}
-{% set test_case_cluster_name = test_case_cluster_name_prefix ~ "-" ~ test_case_cluster_name_suffix %}
+{% set test_case_name = test_case.name | default(test_case.cluster_type, True) %}
 {% set test_case_tags = test_case.tags | default([]) %}
 
-Create {{ test_case.name | default(test_case.cluster_type, True) }}
+Create {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["create"]) | join('  ') }}
 {% if test_case.create_timeout is defined and test_case.create_timeout %}
     [Timeout]  {{ test_case.create_timeout }}
@@ -20,14 +18,24 @@ Create {{ test_case.name | default(test_case.cluster_type, True) }}
 {% endif %}
 {% endfor %}
 {% endif %}
-    ${cluster} =  Create Cluster  {{ test_case_cluster_name }}  ${ctype.name}  &{params}
+    ${cluster} =  Create Cluster  ${caas.cluster_names['{{ test_case_name }}']}  ${ctype.name}  &{params}
 
-Verify {{ test_case.name | default(test_case.cluster_type, True) }}
+{% if generate_tests_include_upgrade_tests %}
+Upgrade {{ test_case_name }}
+    [Tags]  {{ (test_case_tags + ["upgrade"]) | join('  ') }}
+{% if test_case.upgrade_timeout is defined and test_case.upgrade_timeout %}
+    [Timeout]  {{ test_case.upgrade_timeout }}
+{% endif %}
+    ${cluster} =  Find Cluster By Name  ${caas.cluster_names['{{ test_case_name }}']}
+    Patch Cluster  ${cluster.id}
+{% endif %}
+
+Verify {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["verify"]) | join('  ') }}
 {% if test_case.verify_timeout is defined and test_case.verify_timeout %}
     [Timeout]  {{ test_case.verify_timeout }}
 {% endif %}
-    ${cluster} =  Find Cluster By Name  {{ test_case_cluster_name }}
+    ${cluster} =  Find Cluster By Name  ${caas.cluster_names['{{ test_case_name }}']}
     ${cluster} =  Wait For Cluster Ready  ${cluster.id}
 {% if test_case.services is defined and test_case.services %}
 {% for service in test_case.services %}
@@ -39,10 +47,10 @@ Verify {{ test_case.name | default(test_case.cluster_type, True) }}
 {% endfor %}
 {% endif %}
 
-Delete {{ test_case.name | default(test_case.cluster_type, True) }}
+Delete {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["delete"]) | join('  ') }}
 {% if test_case.delete_timeout is defined and test_case.delete_timeout %}
     [Timeout]  {{ test_case.delete_timeout }}
 {% endif %}
-    ${cluster} =  Find Cluster By Name  {{ test_case_cluster_name }}
+    ${cluster} =  Find Cluster By Name  ${caas.cluster_names['{{ test_case_name }}']}
     Delete Cluster  ${cluster.id}
