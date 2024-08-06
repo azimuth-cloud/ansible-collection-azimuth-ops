@@ -153,7 +153,7 @@ azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
   cluster_home_manila_share: "{{ azimuth_caas_stackhpc_slurm_appliance_home_manila_share }}"
   ansible_init_collections: "{{ azimuth_caas_stackhpc_slurm_appliance_init_collections }}"
-  azimuth_init_playbooks: "{{ azimuth_caas_stackhpc_slurm_appliance_init_playbooks }}"
+  ansible_init_playbooks: "{{ azimuth_caas_stackhpc_slurm_appliance_init_playbooks }}"
 # extra_vars overrides for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
 azimuth_caas_stackhpc_slurm_appliance_extra_vars: >-
