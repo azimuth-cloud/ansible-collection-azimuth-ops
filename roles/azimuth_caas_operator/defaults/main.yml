@@ -128,10 +128,32 @@ azimuth_caas_stackhpc_slurm_appliance_image: >-
       else None
     )
   }}
+# Combine default and any extra workstation ansible collections
+azimuth_caas_stackhpc_slurm_appliance_init_collections_default: >-
+  {{ ansible_init_default_collections | default([]) }}
+azimuth_caas_stackhpc_slurm_appliance_init_collections_extra: []
+azimuth_caas_stackhpc_slurm_appliance_init_collections: >-
+  {{
+    azimuth_caas_stackhpc_slurm_appliance_init_collections_default +
+    azimuth_caas_stackhpc_slurm_appliance_init_collections_extra
+  }}
+
+# Combine default and any extra workstation ansible playbooks
+azimuth_caas_stackhpc_slurm_appliance_init_playbooks_default: >-
+  {{ ansible_init_default_playbooks | default([]) }}
+azimuth_caas_stackhpc_slurm_appliance_init_playbooks_extra: []
+azimuth_caas_stackhpc_slurm_appliance_init_playbooks: >-
+  {{
+    azimuth_caas_stackhpc_slurm_appliance_init_playbooks_default + 
+    azimuth_caas_stackhpc_slurm_appliance_init_playbooks_extra
+  }}
+
 # The default extra vars for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_stackhpc_slurm_appliance_image }}"
   cluster_home_manila_share: "{{ azimuth_caas_stackhpc_slurm_appliance_home_manila_share }}"
+  ansible_init_collections: "{{ azimuth_caas_stackhpc_slurm_appliance_init_collections }}"
+  azimuth_init_playbooks: "{{ azimuth_caas_stackhpc_slurm_appliance_init_playbooks }}"
 # extra_vars overrides for templates in the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_extra_vars_overrides: {}
 azimuth_caas_stackhpc_slurm_appliance_extra_vars: >-
