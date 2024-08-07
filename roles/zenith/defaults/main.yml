@@ -1,7 +1,7 @@
 ---
 
 # The chart to use
-zenith_chart_repo: https://stackhpc.github.io/zenith
+zenith_chart_repo: https://azimuth-cloud.github.io/zenith
 zenith_chart_name: zenith-server
 zenith_chart_version: 0.10.1
 

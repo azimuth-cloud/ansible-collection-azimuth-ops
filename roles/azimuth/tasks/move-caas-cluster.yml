@@ -2,7 +2,7 @@
 
 # These tasks are responsible for moving clusters into the correct namespace and
 # setting up proper ownership of the corresponding identity platform, see
-# https://github.com/stackhpc/azimuth/pull/185
+# https://github.com/azimuth-cloud/azimuth/pull/185
 
 - name: Get credentials secret for cluster
   command: >-

@@ -1,7 +1,7 @@
 ---
 
 # The chart to use
-azimuth_chart_repo: https://stackhpc.github.io/azimuth
+azimuth_chart_repo: https://azimuth-cloud.github.io/azimuth
 azimuth_chart_name: azimuth
 azimuth_chart_version: 0.10.0
 
@@ -84,7 +84,7 @@ azimuth_metrics_tenant_metrics_url_template: >-
 
 # The documentation URL
 # By default, we use the generic Azimuth docs
-azimuth_documentation_url: https://stackhpc.github.io/azimuth-user-docs/
+azimuth_documentation_url: https://azimuth-cloud.github.io/azimuth-user-docs/
 
 # A list of curated sizes, mapping a flavor ID to an alternative name and description
 # If no sizes are given, the sizes returned by the cloud provider are used

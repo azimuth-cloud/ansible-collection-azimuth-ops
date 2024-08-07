@@ -5,7 +5,7 @@
   tasks:
     - name: Discover k3s host and adopt it
       include_role:
-        name: stackhpc.azimuth_ops.infra
+        name: azimuth_cloud.azimuth_ops.infra
       vars:
         infra_readonly: true
         infra_ansible_groups: [k3s, azimuth_deploy]
@@ -61,4 +61,4 @@
     # Generate the test suite based on the discovered information
     - name: Generate test suite
       include_role:
-        name: stackhpc.azimuth_ops.generate_tests
+        name: azimuth_cloud.azimuth_ops.generate_tests

@@ -25,61 +25,61 @@ jobs:
 
           - key: azimuth
             path: ./roles/azimuth/defaults/main.yml
-            repository: stackhpc/azimuth
+            repository: azimuth-cloud/azimuth
             prereleases: "yes"
             version_jsonpath: azimuth_chart_version
 
           - key: azimuth-caas-operator
             path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repository: stackhpc/azimuth-caas-operator
+            repository: azimuth-cloud/azimuth-caas-operator
             prereleases: "yes"
             version_jsonpath: azimuth_caas_operator_chart_version
 
           - key: azimuth-capi-operator
             path: ./roles/azimuth_capi_operator/defaults/main.yml
-            repository: stackhpc/azimuth-capi-operator
+            repository: azimuth-cloud/azimuth-capi-operator
             prereleases: "yes"
             version_jsonpath: azimuth_capi_operator_chart_version
 
           - key: azimuth-identity-operator
             path: ./roles/azimuth_identity_operator/defaults/main.yml
-            repository: stackhpc/azimuth-identity-operator
+            repository: azimuth-cloud/azimuth-identity-operator
             prereleases: "yes"
             version_jsonpath: azimuth_identity_operator_chart_version
 
           - key: azimuth-images
             path: ./roles/community_images/defaults/main.yml
-            repository: stackhpc/azimuth-images
+            repository: azimuth-cloud/azimuth-images
             prereleases: "yes"
             version_jsonpath: community_images_azimuth_images_version
 
           - key: azimuth-schedule-operator
             path: ./roles/azimuth_schedule_operator/defaults/main.yml
-            repository: stackhpc/azimuth-schedule-operator
+            repository: azimuth-cloud/azimuth-schedule-operator
             prereleases: "yes"
             version_jsonpath: azimuth_schedule_operator_chart_version
 
           - key: caas-workstation
             path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repository: stackhpc/caas-workstation
+            repository: azimuth-cloud/caas-workstation
             prereleases: "yes"
-            version_jsonpath: azimuth_caas_stackhpc_workstation_git_version
+            version_jsonpath: azimuth_caas_workstation_default_git_version
 
           - key: caas-repo2docker
             path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repository: stackhpc/caas-repo2docker
+            repository: azimuth-cloud/caas-repo2docker
             prereleases: "yes"
-            version_jsonpath: azimuth_caas_stackhpc_repo2docker_git_version
+            version_jsonpath: azimuth_caas_repo2docker_default_git_version
 
           - key: caas-rstudio
             path: ./roles/azimuth_caas_operator/defaults/main.yml
-            repository: stackhpc/caas-r-studio-server
+            repository: azimuth-cloud/caas-r-studio-server
             prereleases: "yes"
-            version_jsonpath: azimuth_caas_stackhpc_rstudio_git_version
+            version_jsonpath: azimuth_caas_rstudio_default_git_version
 
           - key: capi-helm-openstack-cluster
             path: ./roles/capi_cluster/defaults/main.yml
-            repository: stackhpc/capi-helm-charts
+            repository: azimuth-cloud/capi-helm-charts
             prereleases: "yes"
             version_jsonpath: capi_cluster_chart_version
 
@@ -95,13 +95,13 @@ jobs:
 
           - key: cluster-api-addon-provider
             path: ./roles/clusterapi/defaults/main.yml
-            repository: stackhpc/cluster-api-addon-provider
+            repository: azimuth-cloud/cluster-api-addon-provider
             prereleases: "yes"
             version_jsonpath: clusterapi_addon_provider_chart_version
 
           - key: cluster-api-janitor-openstack
             path: ./roles/clusterapi/defaults/main.yml
-            repository: stackhpc/cluster-api-janitor-openstack
+            repository: azimuth-cloud/cluster-api-janitor-openstack
             prereleases: "yes"
             version_jsonpath: clusterapi_janitor_openstack_chart_version
 
@@ -138,7 +138,7 @@ jobs:
 
           - key: zenith
             path: ./roles/zenith/defaults/main.yml
-            repository: stackhpc/zenith
+            repository: azimuth-cloud/zenith
             prereleases: "yes"
             version_jsonpath: zenith_chart_version
 
@@ -149,26 +149,26 @@ jobs:
 
       - name: Check for most recent GitHub release
         id: next
-        uses: stackhpc/github-actions/github-latest-release@master
+        uses: azimuth-cloud/github-actions/github-latest-release@master
         with:
           repository: ${{ matrix.repository }}
           prereleases: ${{ matrix.prereleases || 'no' }}
           tags: ${{ matrix.tags || 'no' }}
 
       - name: Update dependency key
-        uses: stackhpc/github-actions/config-update@master
+        uses: azimuth-cloud/github-actions/config-update@master
         with:
           path: ${{ matrix.path }}
           updates: |
             ${{ matrix.version_jsonpath }}=${{ steps.next.outputs.version }}
 
       - name: Generate app token for PR
-        uses: stackhpc/github-actions/generate-app-token@master
+        uses: azimuth-cloud/github-actions/generate-app-token@master
         id: generate-app-token
         with:
           repository: ${{ github.repository }}
-          app-id: ${{ secrets.APP_ID }}
-          app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.AUTOMATION_APP_ID }}
+          app-private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
 
       - name: Propose changes via PR if required
         uses: peter-evans/create-pull-request@v6
@@ -254,7 +254,7 @@ jobs:
 
       - name: Extract repo and chart
         id: chart-info
-        uses: stackhpc/github-actions/config-extract@master
+        uses: azimuth-cloud/github-actions/config-extract@master
         with:
           path: ${{ matrix.path }}
           outputs: |
@@ -263,25 +263,25 @@ jobs:
 
       - name: Check for updates
         id: next
-        uses: stackhpc/github-actions/helm-latest-version@master
+        uses: azimuth-cloud/github-actions/helm-latest-version@master
         with:
           repository: ${{ steps.chart-info.outputs.repo }}
           chart: ${{ steps.chart-info.outputs.name }}
 
       - name: Update chart version
-        uses: stackhpc/github-actions/config-update@master
+        uses: azimuth-cloud/github-actions/config-update@master
         with:
           path: ${{ matrix.path }}
           updates: |
             ${{ matrix.chart_version_jsonpath }}=${{ steps.next.outputs.version }}
 
       - name: Generate app token for PR
-        uses: stackhpc/github-actions/generate-app-token@master
+        uses: azimuth-cloud/github-actions/generate-app-token@master
         id: generate-app-token
         with:
           repository: ${{ github.repository }}
-          app-id: ${{ secrets.APP_ID }}
-          app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.AUTOMATION_APP_ID }}
+          app-private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
 
       - name: Propose changes via PR if required
         uses: peter-evans/create-pull-request@v6

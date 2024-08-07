@@ -6,7 +6,7 @@
 # Provision the node using Terraform
 - hosts: terraform_provision
   roles:
-    - stackhpc.azimuth_ops.infra
+    - azimuth_cloud.azimuth_ops.infra
   vars:
     infra_ansible_groups: [k3s, azimuth_deploy]
 
@@ -15,13 +15,13 @@
   tasks:
     - block:
         - include_role:
-            name: stackhpc.azimuth_ops.sysctl_inotify
+            name: azimuth_cloud.azimuth_ops.sysctl_inotify
 
         - include_role:
-            name: stackhpc.azimuth_ops.k3s
+            name: azimuth_cloud.azimuth_ops.k3s
 
         - include_role:
-            name: stackhpc.azimuth_ops.k9s
+            name: azimuth_cloud.azimuth_ops.k9s
 
         - name: Get installed Kubernetes version
           command: k3s kubectl version --output json
@@ -33,13 +33,13 @@
             kubectl_version: "{{ (k3s_kubectl_version.stdout | from_json).serverVersion.gitVersion.split('+') | first }}"
 
         - include_role:
-            name: stackhpc.azimuth_ops.kubectl
+            name: azimuth_cloud.azimuth_ops.kubectl
 
         - include_role:
-            name: stackhpc.azimuth_ops.helm
+            name: azimuth_cloud.azimuth_ops.helm
 
         - include_role:
-            name: stackhpc.azimuth_ops.kustomize
+            name: azimuth_cloud.azimuth_ops.kustomize
 
         - name: Slurp kubeconfig file
           slurp:
@@ -60,32 +60,32 @@
         mode: u=rwx,g=,o=
     
     - include_role:
-        name: stackhpc.azimuth_ops.community_images
+        name: azimuth_cloud.azimuth_ops.community_images
     
     # For a single node install, we put the monitoring and ingress controller on the K3S cluster
     - block:
         # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
         - include_role:
-            name: stackhpc.azimuth_ops.kube_prometheus_stack
+            name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
 
         - include_role:
-            name: stackhpc.azimuth_ops.ingress_nginx
+            name: azimuth_cloud.azimuth_ops.ingress_nginx
           when: "ingress_controller_enabled | default(true)"
       when: install_mode == 'singlenode'
 
     # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
     - block:
         - include_role:
-            name: stackhpc.azimuth_ops.certmanager
+            name: azimuth_cloud.azimuth_ops.certmanager
           vars:
             certmanager_monitoring_enabled: no
             certmanager_acmehttp01issuer_enabled: no
 
         - include_role:
-            name: stackhpc.azimuth_ops.clusterapi
+            name: azimuth_cloud.azimuth_ops.clusterapi
 
         - include_role:
-            name: stackhpc.azimuth_ops.capi_cluster
+            name: azimuth_cloud.azimuth_ops.capi_cluster
           vars:
             capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
 
@@ -93,7 +93,7 @@
         # NOTE(sd109): Need to use block so that we can set `environment` variables
         - block:
             - include_role:
-                name: stackhpc.azimuth_ops.velero
+                name: azimuth_cloud.azimuth_ops.velero
                 tasks_from: schedule.yml
           environment:
             KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"

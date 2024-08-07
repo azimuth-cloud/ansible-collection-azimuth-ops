@@ -1,4 +1,4 @@
-namespace: stackhpc
+namespace: azimuth_cloud
 name: azimuth_ops
 version: 0.1.0
 description: Roles and playbooks for performing Azimuth operations.
@@ -7,10 +7,10 @@ authors:
   - "Matt Pryor <matt@stackhpc.com>"
 license:
   - "Apache-2.0"
-repository: "https://github.com/stackhpc/ansible-collection-azimuth-ops"
+repository: "https://github.com/azimuth-cloud/ansible-collection-azimuth-ops"
 
 dependencies:
   ansible.posix: "1.5.4"
   community.general: "7.4.0"
   kubernetes.core: "2.4.0"
-  "git+https://github.com/stackhpc/ansible-collection-terraform.git": "0.2.0"
+  "git+https://github.com/azimuth-cloud/ansible-collection-terraform.git": "0.2.0"
