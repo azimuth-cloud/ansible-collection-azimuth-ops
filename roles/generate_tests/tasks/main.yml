@@ -5,7 +5,7 @@
 #   https://robotframework.org/
 #
 # It utilises the keyword library for Azimuth
-#   https://github.com/stackhpc/azimuth-robotframework
+#   https://github.com/azimuth-cloud/azimuth-robotframework
 #
 # This test suite should then be executed _outside_ of Ansible
 # This is done to avoid hiding the console output as the tests progress

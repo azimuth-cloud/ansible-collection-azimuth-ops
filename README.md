@@ -1,7 +1,7 @@
 # ansible-collection-azimuth-ops
 
 This [Ansible collection](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html)
-contains roles and playbooks for deploying [Azimuth](https://github.com/stackhpc/azimuth) and
+contains roles and playbooks for deploying [Azimuth](https://github.com/azimuth-cloud/azimuth) and
 all of its dependencies.
 
 It can function in three modes:
@@ -16,5 +16,5 @@ It can function in three modes:
      Cluster API and finally deploy Azimuth onto the high-availability cluster.
 
 This collection is designed to be used with a configuration repository that is forked
-from [azimuth-config](https://github.com/stackhpc/azimuth-config), and user documentation
+from [azimuth-config](https://github.com/azimuth-cloud/azimuth-config), and user documentation
 for configuration options can be found in that project.

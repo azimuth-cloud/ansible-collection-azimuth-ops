@@ -108,7 +108,7 @@ clusterapi_watches:
     condition: Available
 
 # Helm chart information for the Cluster API addon provider
-clusterapi_addon_provider_chart_repo: https://stackhpc.github.io/cluster-api-addon-provider
+clusterapi_addon_provider_chart_repo: https://azimuth-cloud.github.io/cluster-api-addon-provider
 clusterapi_addon_provider_chart_name: cluster-api-addon-provider
 clusterapi_addon_provider_chart_version: 0.5.9
 
@@ -124,7 +124,7 @@ clusterapi_addon_provider_wait_timeout: 30m
 clusterapi_addon_provider_release_values: {}
 
 # Helm chart information for the Cluster API janitor
-clusterapi_janitor_openstack_chart_repo: https://stackhpc.github.io/cluster-api-janitor-openstack
+clusterapi_janitor_openstack_chart_repo: https://azimuth-cloud.github.io/cluster-api-janitor-openstack
 clusterapi_janitor_openstack_chart_name: cluster-api-janitor-openstack
 clusterapi_janitor_openstack_chart_version: 0.5.9
 

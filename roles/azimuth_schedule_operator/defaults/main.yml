@@ -1,6 +1,6 @@
 ---
 # The chart to use
-azimuth_schedule_operator_chart_repo: https://stackhpc.github.io/azimuth-schedule-operator
+azimuth_schedule_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-schedule-operator
 azimuth_schedule_operator_chart_name: azimuth-schedule-operator
 azimuth_schedule_operator_chart_version: 0.4.0
 

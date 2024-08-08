@@ -2,12 +2,12 @@
 
 - name: Install Terraform
   include_role:
-    name: stackhpc.terraform.install
+    name: azimuth_cloud.terraform.install
 
 - block:
     - name: Upload infra image
       include_role:
-        name: stackhpc.azimuth_ops.community_images
+        name: azimuth_cloud.azimuth_ops.community_images
         tasks_from: upload_image
       vars:
         community_images_image_spec:
@@ -42,6 +42,6 @@
 
 - name: Provision infrastructure
   include_role:
-    name: stackhpc.terraform.infra
+    name: azimuth_cloud.terraform.infra
   vars:
     terraform_readonly: "{{ infra_readonly }}"

@@ -56,7 +56,7 @@
 
 - name: Deploy internal database for Keycloak
   include_role:
-    name: stackhpc.azimuth_ops.postgres_operator
+    name: azimuth_cloud.azimuth_ops.postgres_operator
     tasks_from: database.yml
     defaults_from: database.yml
   vars:

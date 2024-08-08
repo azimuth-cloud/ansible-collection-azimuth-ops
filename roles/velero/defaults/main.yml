@@ -191,7 +191,7 @@ velero_backup_schedule_spec: >-
 # See https://github.com/vmware-tanzu/helm-charts/blob/1e6a5b46a59d2dae8153fa8c0794bad84e1d63e1/charts/velero/values.yaml#L239
 
 #####
-# Velero restore config (applies to stackhpc.azimuth_ops.restore playbook)
+# Velero restore config (applies to restore playbook)
 #####
 
 # Name of backup to use for restore process
