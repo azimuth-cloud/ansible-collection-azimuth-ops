@@ -122,10 +122,11 @@ azimuth_caas_stackhpc_slurm_appliance_image: >-
           community_images_image_ids is defined and
           'openhpc' in community_images_image_ids
         )
-        else undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+        else (
+          undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+          if azimuth_caas_stackhpc_slurm_appliance_enabled
+          else None
       )
-      if azimuth_caas_stackhpc_slurm_appliance_enabled
-      else None
     )
   }}
 # The default extra vars for templates in the StackHPC Slurm appliance
@@ -490,7 +491,7 @@ azimuth_caas_rstudio_image: >-
   {{-
     azimuth_caas_stackhpc_rstudio_image
     if azimuth_caas_stackhpc_rstudio_image is defined
-    (
+    else (
       community_images_image_ids.rstudio
       if (
         community_images_image_ids is defined and
