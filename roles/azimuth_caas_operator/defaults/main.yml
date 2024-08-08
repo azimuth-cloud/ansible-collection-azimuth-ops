@@ -116,16 +116,15 @@ azimuth_caas_stackhpc_slurm_appliance_image: >-
     azimuth_caas_stackhpc_slurm_appliance_rocky8_image
     if azimuth_caas_stackhpc_slurm_appliance_rocky8_image is defined
     else (
-      (
-        community_images_image_ids.openhpc
-        if (
-          community_images_image_ids is defined and
-          'openhpc' in community_images_image_ids
-        )
-        else (
-          undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
-          if azimuth_caas_stackhpc_slurm_appliance_enabled
-          else None
+      community_images_image_ids.openhpc
+      if (
+        community_images_image_ids is defined and
+        'openhpc' in community_images_image_ids
+      )
+      else (
+        undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+        if azimuth_caas_stackhpc_slurm_appliance_enabled
+        else None
       )
     )
   }}
@@ -171,7 +170,7 @@ azimuth_caas_stackhpc_slurm_appliance_template:
 
 
 # Indicates if the workstation should be enabled
-zimuth_caas_workstation_enabled: >-
+azimuth_caas_workstation_enabled: >-
   {{ azimuth_caas_stackhpc_workstation_enabled | default(azimuth_clusters_enabled) }}
 # The git URL for the workstation
 azimuth_caas_workstation_git_url: >-
@@ -562,8 +561,8 @@ azimuth_caas_cluster_templates_default: >-
   {{-
     {} |
       combine(
-        { "slurm": azimuth_caas_slurm_appliance_template }
-        if azimuth_caas_slurm_appliance_enabled
+        { "slurm": azimuth_caas_stackhpc_slurm_appliance_template }
+        if azimuth_caas_stackhpc_slurm_appliance_enabled
         else {}
       ) |
       combine(
