@@ -140,7 +140,7 @@ resource "openstack_compute_volume_attach_v2" "data_volume_attach" {
   volume_id   = openstack_blockstorage_volume_v3.data_volume.id
 }
 
-{% if not infra_provisioning_network_id %}
+{% if not infra_provisioning_network_id and infra_use_floatingip %}
 {% if not infra_fixed_floatingip %}
 {% if not infra_floatingip_pool %}
 data "openstack_networking_network_v2" "external_net" {
