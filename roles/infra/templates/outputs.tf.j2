@@ -6,12 +6,16 @@ output "cluster_ssh_private_key" {
 
 output "cluster_gateway_ip" {
   description = "The IP address of the gateway used to contact the cluster nodes"
-{% if infra_provisioning_network_id %}
-  value = openstack_networking_port_v2.port_provisioning.all_fixed_ips[0]
-{% elif infra_fixed_floatingip %}
+{% if not infra_provisioning_network_id and infra_use_floatingip %}
+{% if infra_fixed_floatingip %}
   value = "{{ infra_fixed_floatingip }}"
 {% else %}
   value = openstack_networking_floatingip_v2.fip.address
+{% endif %}
+{% elif infra_provisioning_network_id %}
+  value = openstack_networking_port_v2.port_provisioning.all_fixed_ips[0]
+{% else %}
+  value = openstack_networking_port_v2.port_internal.all_fixed_ips[0]
 {% endif %}
 }
 
@@ -31,7 +35,7 @@ output "cluster_nodes" {
           k3s_storage_device = openstack_compute_volume_attach_v2.data_volume_attach.device
 
           # Set the gateway IP as a fact that can be consumed
-{% if not infra_provisioning_network_id %}
+{% if not infra_provisioning_network_id and infra_use_floatingip %}
 {% if infra_fixed_floatingip %}
           infra_external_ip = "{{ infra_fixed_floatingip }}"
 {% else %}
