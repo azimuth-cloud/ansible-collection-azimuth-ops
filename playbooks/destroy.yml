@@ -8,7 +8,7 @@
   tasks:
     - name: Discover k3s host and adopt it
       include_role:
-        name: stackhpc.azimuth_ops.infra
+        name: azimuth_cloud.azimuth_ops.infra
       vars:
         infra_readonly: true
         infra_ansible_groups: [k3s]
@@ -20,7 +20,7 @@
   ignore_unreachable: "{{ force_destroy | default(False) }}"
   ignore_errors: "{{ force_destroy | default(False) }}"
   roles:
-    - role: stackhpc.azimuth_ops.capi_cluster
+    - role: azimuth_cloud.azimuth_ops.capi_cluster
       vars:
         capi_cluster_release_state: absent
 
@@ -28,6 +28,6 @@
 # Tear down the Terraform provisioned infrastructure
 - hosts: terraform_provision
   roles:
-    - role: stackhpc.azimuth_ops.infra
+    - role: azimuth_cloud.azimuth_ops.infra
       vars:
         terraform_state: absent

@@ -60,7 +60,7 @@ velero_s3_plugin_image_version: v1.10.0
 # Velero Helm chart config
 velero_chart_name: velero
 velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
-velero_chart_version: 7.1.0
+velero_chart_version: 7.1.4
 velero_release_namespace: velero
 velero_release_name: velero
 velero_wait_timeout: 10m
@@ -191,7 +191,7 @@ velero_backup_schedule_spec: >-
 # See https://github.com/vmware-tanzu/helm-charts/blob/1e6a5b46a59d2dae8153fa8c0794bad84e1d63e1/charts/velero/values.yaml#L239
 
 #####
-# Velero restore config (applies to stackhpc.azimuth_ops.restore playbook)
+# Velero restore config (applies to restore playbook)
 #####
 
 # Name of backup to use for restore process

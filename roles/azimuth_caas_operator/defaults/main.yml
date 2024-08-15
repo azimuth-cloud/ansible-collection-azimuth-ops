@@ -1,6 +1,6 @@
 ---
 # The chart to use
-azimuth_caas_operator_chart_repo: https://stackhpc.github.io/azimuth-caas-operator
+azimuth_caas_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
 azimuth_caas_operator_chart_version: 0.13.0
 
@@ -116,16 +116,16 @@ azimuth_caas_stackhpc_slurm_appliance_image: >-
     azimuth_caas_stackhpc_slurm_appliance_rocky8_image
     if azimuth_caas_stackhpc_slurm_appliance_rocky8_image is defined
     else (
-      (
-        community_images_image_ids.openhpc
-        if (
-          community_images_image_ids is defined and
-          'openhpc' in community_images_image_ids
-        )
-        else undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+      community_images_image_ids.openhpc
+      if (
+        community_images_image_ids is defined and
+        'openhpc' in community_images_image_ids
       )
-      if azimuth_caas_stackhpc_slurm_appliance_enabled
-      else None
+      else (
+        undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+        if azimuth_caas_stackhpc_slurm_appliance_enabled
+        else None
+      )
     )
   }}
 # Combine default and any extra workstation ansible collections
@@ -191,237 +191,389 @@ azimuth_caas_stackhpc_slurm_appliance_template:
       ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to runner project dir
 
 
-# Indicates if the StackHPC workstation should be enabled
-azimuth_caas_stackhpc_workstation_enabled: "{{ azimuth_clusters_enabled }}"
-# The git URL for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_git_url: https://github.com/stackhpc/caas-workstation.git
-# The git version for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_git_version: 0.7.1
+# Indicates if the workstation should be enabled
+azimuth_caas_workstation_enabled: >-
+  {{ azimuth_caas_stackhpc_workstation_enabled | default(azimuth_clusters_enabled) }}
+# The git URL for the workstation
+azimuth_caas_workstation_git_url: >-
+  {{
+    azimuth_caas_stackhpc_workstation_git_url |
+      default("https://github.com/azimuth-cloud/caas-workstation.git")
+  }}
+# The git version for the workstation
+azimuth_caas_workstation_default_git_version: 0.7.1
+azimuth_caas_workstation_git_version: >-
+  {{
+    azimuth_caas_stackhpc_workstation_git_version |
+      default(azimuth_caas_workstation_default_git_version)
+  }}
 # The playbook to use for the workstation appliance
-azimuth_caas_stackhpc_workstation_playbook: workstation.yml
+azimuth_caas_workstation_playbook: >-
+  {{ azimuth_caas_stackhpc_workstation_playbook | default("workstation.yml") }}
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_stackhpc_workstation_job_timeout_seconds: 900
-# The metadata URL for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_metadata_url: >-
-  https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta/workstation.yml
-# The ID of the image for use with the StackHPC workstation
+azimuth_caas_workstation_job_timeout_seconds: 900
+# The metadata URL for the workstation
+azimuth_caas_workstation_default_metadata_url: >-
+  https://raw.githubusercontent.com/azimuth-cloud/caas-workstation/{{ azimuth_caas_workstation_git_version }}/ui-meta/workstation.yml
+azimuth_caas_workstation_metadata_url: >-
+  {{
+    azimuth_caas_stackhpc_workstation_metadata_url |
+      default(azimuth_caas_workstation_default_metadata_url)
+  }}
+# The ID of the image for use with the workstation
 # By default, use the workstation image from community images if available
-azimuth_caas_stackhpc_workstation_image: >-
-  {{-
-    (
+azimuth_caas_workstation_image: >-
+  {{
+    azimuth_caas_stackhpc_workstation_image
+    if azimuth_caas_stackhpc_workstation_image is defined
+    else (
       community_images_image_ids.workstation
       if (
         community_images_image_ids is defined and
         'workstation' in community_images_image_ids
       )
-      else undef(hint = 'azimuth_caas_stackhpc_workstation_image is required')
+      else (
+        undef(hint = 'azimuth_caas_workstation_image is required')
+        if azimuth_caas_workstation_enabled
+        else None
+      )
     )
-    if azimuth_caas_stackhpc_workstation_enabled
-    else None
   }}
-# The default extra vars for templates in the StackHPC workstation
-azimuth_caas_stackhpc_workstation_extra_vars_defaults:
-  cluster_image: "{{ azimuth_caas_stackhpc_workstation_image }}"
-# extra_vars overrides for templates in the StackHPC workstation
-azimuth_caas_stackhpc_workstation_extra_vars_overrides: {}
-azimuth_caas_stackhpc_workstation_extra_vars: >-
+# The default extra vars for templates in the workstation
+azimuth_caas_workstation_extra_vars_defaults:
+  cluster_image: "{{ azimuth_caas_workstation_image }}"
+# extra_vars overrides for templates in the workstation
+azimuth_caas_workstation_extra_vars_overrides: {}
+azimuth_caas_workstation_extra_vars: >-
   {{-
-    azimuth_caas_stackhpc_workstation_extra_vars_defaults |
-      combine(azimuth_caas_stackhpc_workstation_extra_vars_overrides)
+    azimuth_caas_workstation_extra_vars_defaults |
+      combine(azimuth_caas_stackhpc_workstation_extra_vars_overrides | default({})) |
+      combine(azimuth_caas_workstation_extra_vars_overrides)
   }}
-# The tenancy-based access controls for the StackHPC workstation
+# The tenancy-based access controls for the workstation
 # List of allowed tenancy IDs
-azimuth_caas_stackhpc_workstation_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+azimuth_caas_workstation_tenancy_allow_list: >-
+  {{
+    azimuth_caas_stackhpc_workstation_tenancy_allow_list |
+      default(platforms_tenancy_allow_list | default([]))
+  }}
 # List of denied tenancy IDs
-azimuth_caas_stackhpc_workstation_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+azimuth_caas_workstation_tenancy_deny_list: >-
+  {{
+    azimuth_caas_stackhpc_workstation_tenancy_deny_list |
+      default(platforms_tenancy_deny_list | default([]))
+  }}
 # Regex pattern to allow tenancies by name
-azimuth_caas_stackhpc_workstation_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+azimuth_caas_workstation_tenancy_allow_regex: >-
+  {{
+    azimuth_caas_stackhpc_workstation_tenancy_allow_regex |
+      default(platforms_tenancy_allow_regex | default(''))
+  }}
 # Regex pattern to block tenancies by name
-azimuth_caas_stackhpc_workstation_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+azimuth_caas_workstation_tenancy_deny_regex: >-
+  {{
+    azimuth_caas_stackhpc_workstation_tenancy_deny_regex |
+      default(platforms_tenancy_deny_regex | default(''))
+  }}
 # The set of key-value annotations to apply to the template
-azimuth_caas_stackhpc_workstation_annotations:
-  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_stackhpc_workstation_tenancy_allow_list | join(',') }}"
-  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_stackhpc_workstation_tenancy_deny_list | join(',') }}"
-  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_stackhpc_workstation_tenancy_allow_regex }}"
-  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_stackhpc_workstation_tenancy_deny_regex }}"
-# The template definition for the StackHPC workstation appliance
-azimuth_caas_stackhpc_workstation_template:
-  annotations: "{{ azimuth_caas_stackhpc_workstation_annotations }}"
+azimuth_caas_workstation_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_workstation_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_workstation_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_workstation_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_workstation_tenancy_deny_regex }}"
+# The template definition for the workstation appliance
+azimuth_caas_workstation_template:
+  annotations: "{{ azimuth_caas_workstation_annotations }}"
   spec:
-    gitUrl: "{{ azimuth_caas_stackhpc_workstation_git_url }}"
-    gitVersion: "{{ azimuth_caas_stackhpc_workstation_git_version }}"
-    uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_metadata_url }}"
-    playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
-    jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
-    extraVars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
+    gitUrl: "{{ azimuth_caas_workstation_git_url }}"
+    gitVersion: "{{ azimuth_caas_workstation_git_version }}"
+    uiMetaUrl: "{{ azimuth_caas_workstation_metadata_url }}"
+    playbook: "{{ azimuth_caas_workstation_playbook }}"
+    jobTimeout: "{{ azimuth_caas_workstation_job_timeout_seconds }}"
+    extraVars: "{{ azimuth_caas_workstation_extra_vars }}"
 
-# Indicates if the StackHPC workstation with SSH should be enabled
-azimuth_caas_stackhpc_workstation_ssh_enabled: "{{ azimuth_caas_stackhpc_workstation_enabled }}"
-# The git URL for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_ssh_git_url: "{{ azimuth_caas_stackhpc_workstation_git_url }}"
-# The git version for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_ssh_git_version: "{{ azimuth_caas_stackhpc_workstation_git_version }}"
+# Indicates if the workstation with SSH should be enabled
+azimuth_caas_workstation_ssh_enabled: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_enabled |
+      default(azimuth_caas_workstation_enabled)
+  }}
+# The git URL for the workstation
+azimuth_caas_workstation_ssh_git_url: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_git_url |
+      default(azimuth_caas_workstation_git_url)
+  }}
+# The git version for the workstation
+azimuth_caas_workstation_ssh_git_version: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_git_version |
+      default(azimuth_caas_workstation_git_version)
+  }}
 # The playbook to use for the workstation appliance
-azimuth_caas_stackhpc_workstation_ssh_playbook: "{{ azimuth_caas_stackhpc_workstation_playbook }}"
-# The metadata URL for the StackHPC workstation
-azimuth_caas_stackhpc_workstation_ssh_metadata_url: >-
-  https://raw.githubusercontent.com/stackhpc/caas-workstation/{{ azimuth_caas_stackhpc_workstation_git_version }}/ui-meta/workstation-external-ssh.yml
-azimuth_caas_stackhpc_workstation_ssh_extra_vars: "{{ azimuth_caas_stackhpc_workstation_extra_vars }}"
-# The tenancy-based access controls for the StackHPC SSH-enabled workstation
+azimuth_caas_workstation_ssh_playbook: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_playbook |
+      default(azimuth_caas_workstation_playbook)
+  }}
+# The metadata URL for the workstation
+azimuth_caas_workstation_default_ssh_metadata_url: >-
+  https://raw.githubusercontent.com/azimuth-cloud/caas-workstation/{{ azimuth_caas_workstation_ssh_git_version }}/ui-meta/workstation-external-ssh.yml
+azimuth_caas_workstation_ssh_metadata_url: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_metadata_url |
+      default(azimuth_caas_workstation_default_ssh_metadata_url)
+  }}
+azimuth_caas_workstation_ssh_extra_vars: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_extra_vars |
+      default(azimuth_caas_workstation_extra_vars)
+  }}
+# The tenancy-based access controls for the SSH-enabled workstation
 # List of allowed tenancy IDs
-azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list: "{{ azimuth_caas_stackhpc_workstation_tenancy_allow_list }}"
+azimuth_caas_workstation_ssh_tenancy_allow_list: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list |
+      default(azimuth_caas_workstation_tenancy_allow_list)
+  }}
 # List of denied tenancy IDs
-azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list: "{{ azimuth_caas_stackhpc_workstation_tenancy_deny_list }}"
+azimuth_caas_workstation_ssh_tenancy_deny_list: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list |
+      default(azimuth_caas_workstation_tenancy_deny_list)
+  }}
 # Regex pattern to allow tenancies by name
-azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_regex: "{{ azimuth_caas_stackhpc_workstation_tenancy_allow_regex }}"
+azimuth_caas_workstation_ssh_tenancy_allow_regex: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_regex |
+      default(azimuth_caas_workstation_tenancy_allow_regex)
+  }}
 # Regex pattern to block tenancies by name
-azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_regex: "{{ azimuth_caas_stackhpc_workstation_tenancy_deny_regex }}"
+azimuth_caas_workstation_ssh_tenancy_deny_regex: >-
+  {{
+    azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_regex |
+      default(azimuth_caas_workstation_tenancy_deny_regex)
+  }}
 # The set of key-value annotations to apply to the template
-azimuth_caas_stackhpc_workstation_ssh_annotations:
-  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_list | join(',') }}"
-  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_list | join(',') }}"
-  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_stackhpc_workstation_ssh_tenancy_allow_regex }}"
-  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_stackhpc_workstation_ssh_tenancy_deny_regex }}"
-# The template definition for the StackHPC SSH-enabled workstation appliance
-azimuth_caas_stackhpc_workstation_ssh_template:
-  annotations: "{{ azimuth_caas_stackhpc_workstation_ssh_annotations }}"
+azimuth_caas_workstation_ssh_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_workstation_ssh_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_workstation_ssh_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_workstation_ssh_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_workstation_ssh_tenancy_deny_regex }}"
+# The template definition for the SSH-enabled workstation appliance
+azimuth_caas_workstation_ssh_template:
+  annotations: "{{ azimuth_caas_workstation_ssh_annotations }}"
   spec:
-    gitUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_git_url }}"
-    gitVersion: "{{ azimuth_caas_stackhpc_workstation_ssh_git_version }}"
-    uiMetaUrl: "{{ azimuth_caas_stackhpc_workstation_ssh_metadata_url }}"
-    playbook: "{{ azimuth_caas_stackhpc_workstation_ssh_playbook }}"
-    jobTimeout: "{{ azimuth_caas_stackhpc_workstation_job_timeout_seconds }}"
-    extraVars: "{{ azimuth_caas_stackhpc_workstation_ssh_extra_vars }}"
+    gitUrl: "{{ azimuth_caas_workstation_ssh_git_url }}"
+    gitVersion: "{{ azimuth_caas_workstation_ssh_git_version }}"
+    uiMetaUrl: "{{ azimuth_caas_workstation_ssh_metadata_url }}"
+    playbook: "{{ azimuth_caas_workstation_ssh_playbook }}"
+    jobTimeout: "{{ azimuth_caas_workstation_job_timeout_seconds }}"
+    extraVars: "{{ azimuth_caas_workstation_ssh_extra_vars }}"
 
 
-# Indicates if the StackHPC repo2docker appliance should be enabled
-azimuth_caas_stackhpc_repo2docker_enabled: "{{ azimuth_clusters_enabled }}"
-# The git URL for the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_git_url: https://github.com/stackhpc/caas-repo2docker.git
-# The git version for the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_git_version: 0.5.0
-# The playbook to use for the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_playbook: repo2docker.yml
+# Indicates if the repo2docker appliance should be enabled
+azimuth_caas_repo2docker_enabled: >-
+  {{ azimuth_caas_stackhpc_repo2docker_enabled | default(azimuth_clusters_enabled) }}
+# The git URL for the repo2docker appliance
+azimuth_caas_repo2docker_git_url: >-
+  {{
+    azimuth_caas_stackhpc_repo2docker_git_url |
+      default("https://github.com/azimuth-cloud/caas-repo2docker.git")
+  }}
+# The git version for the repo2docker appliance
+azimuth_caas_repo2docker_default_git_version: 0.7.0
+azimuth_caas_repo2docker_git_version: >-
+  {{
+    azimuth_caas_stackhpc_repo2docker_git_version |
+      default(azimuth_caas_repo2docker_default_git_version)
+  }}
+# The playbook to use for the repo2docker appliance
+azimuth_caas_repo2docker_playbook: >-
+  {{ azimuth_caas_stackhpc_repo2docker_playbook | default("repo2docker.yml") }}
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_stackhpc_repo2docker_job_timeout_seconds: 1200
-# The metadata root for the StackHPC repo2docker appliance project
-azimuth_caas_stackhpc_repo2docker_metadata_url: >-
-  https://raw.githubusercontent.com/stackhpc/caas-repo2docker/{{ azimuth_caas_stackhpc_repo2docker_git_version }}/ui-meta/repo2docker.yml
-# The ID of the image for use with the StackHPC repo2docker appliance
+azimuth_caas_repo2docker_job_timeout_seconds: 1200
+# The metadata root for the repo2docker appliance project
+azimuth_caas_repo2docker_default_metadata_url: >-
+  https://raw.githubusercontent.com/azimuth-cloud/caas-repo2docker/{{ azimuth_caas_repo2docker_git_version }}/ui-meta/repo2docker.yml
+azimuth_caas_repo2docker_metadata_url: >-
+  {{
+    azimuth_caas_stackhpc_repo2docker_metadata_url |
+      default(azimuth_caas_repo2docker_default_metadata_url)
+  }}
+# The ID of the image for use with the repo2docker appliance
 # By default, use the repo2docker image from community images if available
-azimuth_caas_stackhpc_repo2docker_image: >-
-  {{-
-    (
+azimuth_caas_repo2docker_image: >-
+  {{
+    azimuth_caas_stackhpc_repo2docker_image
+    if azimuth_caas_stackhpc_repo2docker_image is defined
+    else (
       community_images_image_ids.repo2docker
       if (
         community_images_image_ids is defined and
         'repo2docker' in community_images_image_ids
       )
-      else undef(hint = 'azimuth_caas_stackhpc_repo2docker_image is required')
+      else (
+        undef(hint = 'azimuth_caas_repo2docker_image is required')
+        if azimuth_caas_repo2docker_enabled
+        else None
+      )
     )
-    if azimuth_caas_stackhpc_repo2docker_enabled
-    else None
   }}
-# The default extra vars for templates in the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_extra_vars_defaults:
-  cluster_image: "{{ azimuth_caas_stackhpc_repo2docker_image }}"
-# extra_vars overrides for templates in the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_extra_vars_overrides: {}
-azimuth_caas_stackhpc_repo2docker_extra_vars: >-
+# The default extra vars for templates in the repo2docker appliance
+azimuth_caas_repo2docker_extra_vars_defaults:
+  cluster_image: "{{ azimuth_caas_repo2docker_image }}"
+# extra_vars overrides for templates in the repo2docker appliance
+azimuth_caas_repo2docker_extra_vars_overrides: {}
+azimuth_caas_repo2docker_extra_vars: >-
   {{-
-    azimuth_caas_stackhpc_repo2docker_extra_vars_defaults |
-      combine(azimuth_caas_stackhpc_repo2docker_extra_vars_overrides)
+    azimuth_caas_repo2docker_extra_vars_defaults |
+      combine(azimuth_caas_stackhpc_repo2docker_extra_vars_overrides | default({})) |
+      combine(azimuth_caas_repo2docker_extra_vars_overrides)
   }}
-# The tenancy-based access controls for the StackHPC repo2docker appliance
+# The tenancy-based access controls for the repo2docker appliance
 # List of allowed tenancy IDs
-azimuth_caas_stackhpc_repo2docker_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+azimuth_caas_repo2docker_tenancy_allow_list: >-
+  {{
+    azimuth_caas_stackhpc_repo2docker_tenancy_allow_list |
+      default(platforms_tenancy_allow_list | default([]))
+  }}
 # List of denied tenancy IDs
-azimuth_caas_stackhpc_repo2docker_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+azimuth_caas_repo2docker_tenancy_deny_list: >-
+  {{
+    azimuth_caas_stackhpc_repo2docker_tenancy_deny_list |
+      default(platforms_tenancy_deny_list | default([]))
+  }}
 # Regex pattern to allow tenancies by name
-azimuth_caas_stackhpc_repo2docker_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+azimuth_caas_repo2docker_tenancy_allow_regex: >-
+  {{
+    azimuth_caas_stackhpc_repo2docker_tenancy_allow_regex|
+      default(platforms_tenancy_allow_regex | default(''))
+  }}
 # Regex pattern to block tenancies by name
-azimuth_caas_stackhpc_repo2docker_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+azimuth_caas_repo2docker_tenancy_deny_regex: >-
+  {{
+    azimuth_caas_stackhpc_repo2docker_tenancy_deny_regex |
+      default(platforms_tenancy_deny_regex | default(''))
+  }}
 # The set of key-value annotations to apply to the template
-azimuth_caas_stackhpc_repo2docker_annotations:
-  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_stackhpc_repo2docker_tenancy_allow_list | join(',') }}"
-  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_stackhpc_repo2docker_tenancy_deny_list | join(',') }}"
-  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_stackhpc_repo2docker_tenancy_allow_regex }}"
-  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_stackhpc_repo2docker_tenancy_deny_regex }}"
-# The template definition for the StackHPC repo2docker appliance
-azimuth_caas_stackhpc_repo2docker_template:
-  annotations: "{{ azimuth_caas_stackhpc_repo2docker_annotations }}"
+azimuth_caas_repo2docker_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_repo2docker_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_repo2docker_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_repo2docker_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_repo2docker_tenancy_deny_regex }}"
+# The template definition for the repo2docker appliance
+azimuth_caas_repo2docker_template:
+  annotations: "{{ azimuth_caas_repo2docker_annotations }}"
   spec:
-    gitUrl: "{{ azimuth_caas_stackhpc_repo2docker_git_url }}"
-    gitVersion: "{{ azimuth_caas_stackhpc_repo2docker_git_version }}"
-    uiMetaUrl: "{{ azimuth_caas_stackhpc_repo2docker_metadata_url }}"
-    playbook: "{{ azimuth_caas_stackhpc_repo2docker_playbook }}"
-    jobTimeout: "{{ azimuth_caas_stackhpc_repo2docker_job_timeout_seconds }}"
-    extraVars: "{{ azimuth_caas_stackhpc_repo2docker_extra_vars }}"
+    gitUrl: "{{ azimuth_caas_repo2docker_git_url }}"
+    gitVersion: "{{ azimuth_caas_repo2docker_git_version }}"
+    uiMetaUrl: "{{ azimuth_caas_repo2docker_metadata_url }}"
+    playbook: "{{ azimuth_caas_repo2docker_playbook }}"
+    jobTimeout: "{{ azimuth_caas_repo2docker_job_timeout_seconds }}"
+    extraVars: "{{ azimuth_caas_repo2docker_extra_vars }}"
 
 
-# Indicates if the StackHPC R-Studio appliance should be enabled
-azimuth_caas_stackhpc_rstudio_enabled: "{{ azimuth_clusters_enabled }}"
-# The git URL for the StackHPC R-Studio appliance
-azimuth_caas_stackhpc_rstudio_git_url: https://github.com/stackhpc/caas-r-studio-server
-# The git version for the StackHPC R-Studio appliance
-azimuth_caas_stackhpc_rstudio_git_version: 0.5.0
-# The playbook to use for the StackHPC R-Studio appliance
-azimuth_caas_stackhpc_rstudio_playbook: rstudio.yml
+# Indicates if the R-Studio appliance should be enabled
+azimuth_caas_rstudio_enabled: >-
+  {{ azimuth_caas_stackhpc_rstudio_enabled | default(azimuth_clusters_enabled) }}
+# The git URL for the R-Studio appliance
+azimuth_caas_rstudio_git_url: >-
+  {{
+    azimuth_caas_stackhpc_rstudio_git_url |
+      default("https://github.com/azimuth-cloud/caas-r-studio-server.git")
+  }}
+# The git version for the R-Studio appliance
+azimuth_caas_rstudio_default_git_version: 0.7.0
+azimuth_caas_rstudio_git_version: >-
+  {{
+    azimuth_caas_stackhpc_rstudio_git_version |
+      default(azimuth_caas_rstudio_default_git_version)
+  }}
+# The playbook to use for the R-Studio appliance
+azimuth_caas_rstudio_playbook: >-
+  {{ azimuth_caas_stackhpc_rstudio_playbook | default("rstudio.yml") }}
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_stackhpc_rstudio_job_timeout_seconds: 900
-# The metadata root for the StackHPC R-Studio appliance project
-azimuth_caas_stackhpc_rstudio_metadata_url: >-
-  https://raw.githubusercontent.com/stackhpc/caas-r-studio-server/{{ azimuth_caas_stackhpc_rstudio_git_version }}/ui-meta/rstudio.yml
-# The ID of the image for use with the StackHPC R-Studio appliance
+azimuth_caas_rstudio_job_timeout_seconds: 900
+# The metadata root for the R-Studio appliance project
+azimuth_caas_rstudio_default_metadata_url: >-
+  https://raw.githubusercontent.com/azimuth-cloud/caas-r-studio-server/{{ azimuth_caas_rstudio_git_version }}/ui-meta/rstudio.yml
+azimuth_caas_rstudio_metadata_url: >-
+  {{
+    azimuth_caas_stackhpc_rstudio_metadata_url |
+      default(azimuth_caas_rstudio_default_metadata_url)
+  }}
+# The ID of the image for use with the R-Studio appliance
 # By default, use the R-Studio image from community images if available
-azimuth_caas_stackhpc_rstudio_image: >-
+azimuth_caas_rstudio_image: >-
   {{-
-    (
+    azimuth_caas_stackhpc_rstudio_image
+    if azimuth_caas_stackhpc_rstudio_image is defined
+    else (
       community_images_image_ids.rstudio
       if (
         community_images_image_ids is defined and
         'rstudio' in community_images_image_ids
       )
-      else undef(hint = 'azimuth_caas_stackhpc_rstudio_image is required')
+      else (
+        undef(hint = 'azimuth_caas_rstudio_image is required')
+        if azimuth_caas_rstudio_enabled
+        else None
+      )
     )
-    if azimuth_caas_stackhpc_rstudio_enabled
-    else None
   }}
-# The default extra vars for templates in the StackHPC R-Studio appliance
-azimuth_caas_stackhpc_rstudio_extra_vars_defaults:
-  cluster_image: "{{ azimuth_caas_stackhpc_rstudio_image }}"
-# extra_vars overrides for templates in the StackHPC R-Studio appliance
-azimuth_caas_stackhpc_rstudio_extra_vars_overrides: {}
-azimuth_caas_stackhpc_rstudio_extra_vars: >-
+# The default extra vars for templates in the R-Studio appliance
+azimuth_caas_rstudio_extra_vars_defaults:
+  cluster_image: "{{ azimuth_caas_rstudio_image }}"
+# extra_vars overrides for templates in the R-Studio appliance
+azimuth_caas_rstudio_extra_vars_overrides: {}
+azimuth_caas_rstudio_extra_vars: >-
   {{-
-    azimuth_caas_stackhpc_rstudio_extra_vars_defaults |
-      combine(azimuth_caas_stackhpc_rstudio_extra_vars_overrides)
+    azimuth_caas_rstudio_extra_vars_defaults |
+      combine(azimuth_caas_stackhpc_rstudio_extra_vars_overrides | default({})) |
+      combine(azimuth_caas_rstudio_extra_vars_overrides)
   }}
-# The tenancy-based access controls for the StackHPC R-Studio appliance
+# The tenancy-based access controls for the R-Studio appliance
 # List of allowed tenancy IDs
-azimuth_caas_stackhpc_rstudio_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+azimuth_caas_rstudio_tenancy_allow_list: >-
+  {{
+    azimuth_caas_stackhpc_rstudio_tenancy_allow_list |
+      default(platforms_tenancy_allow_list | default([]))
+  }}
 # List of denied tenancy IDs
-azimuth_caas_stackhpc_rstudio_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+azimuth_caas_rstudio_tenancy_deny_list: >-
+  {{
+    azimuth_caas_stackhpc_rstudio_tenancy_deny_list |
+      default(platforms_tenancy_deny_list | default([]))
+  }}
 # Regex pattern to allow tenancies by name
-azimuth_caas_stackhpc_rstudio_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+azimuth_caas_rstudio_tenancy_allow_regex: >-
+  {{
+    azimuth_caas_stackhpc_rstudio_tenancy_allow_regex |
+      default(platforms_tenancy_allow_regex | default(''))
+  }}
 # Regex pattern to block tenancies by name
-azimuth_caas_stackhpc_rstudio_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+azimuth_caas_rstudio_tenancy_deny_regex: >-
+  {{
+    azimuth_caas_stackhpc_rstudio_tenancy_deny_regex |
+      default(platforms_tenancy_deny_regex | default(''))
+  }}
 # The set of key-value annotations to apply to the template
-azimuth_caas_stackhpc_rstudio_annotations:
-  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_stackhpc_rstudio_tenancy_allow_list | join(',') }}"
-  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_stackhpc_rstudio_tenancy_deny_list | join(',') }}"
-  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_stackhpc_rstudio_tenancy_allow_regex }}"
-  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_stackhpc_rstudio_tenancy_deny_regex }}"
-# The template definition for the StackHPC R-Studio appliance  
-azimuth_caas_stackhpc_rstudio_template:
-  annotations: "{{ azimuth_caas_stackhpc_rstudio_annotations }}"
+azimuth_caas_rstudio_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_rstudio_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_rstudio_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_rstudio_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_rstudio_tenancy_deny_regex }}"
+# The template definition for the R-Studio appliance
+azimuth_caas_rstudio_template:
+  annotations: "{{ azimuth_caas_rstudio_annotations }}"
   spec:
-    gitUrl: "{{ azimuth_caas_stackhpc_rstudio_git_url }}"
-    gitVersion: "{{ azimuth_caas_stackhpc_rstudio_git_version }}"
-    uiMetaUrl: "{{ azimuth_caas_stackhpc_rstudio_metadata_url }}"
-    playbook: "{{ azimuth_caas_stackhpc_rstudio_playbook }}"
-    jobTimeout: "{{ azimuth_caas_stackhpc_rstudio_job_timeout_seconds }}"
-    extraVars: "{{ azimuth_caas_stackhpc_rstudio_extra_vars }}"
+    gitUrl: "{{ azimuth_caas_rstudio_git_url }}"
+    gitVersion: "{{ azimuth_caas_rstudio_git_version }}"
+    uiMetaUrl: "{{ azimuth_caas_rstudio_metadata_url }}"
+    playbook: "{{ azimuth_caas_rstudio_playbook }}"
+    jobTimeout: "{{ azimuth_caas_rstudio_job_timeout_seconds }}"
+    extraVars: "{{ azimuth_caas_rstudio_extra_vars }}"
 
 
 azimuth_caas_cluster_templates_default: >-
@@ -433,23 +585,23 @@ azimuth_caas_cluster_templates_default: >-
         else {}
       ) |
       combine(
-        { "workstation": azimuth_caas_stackhpc_workstation_template }
-        if azimuth_caas_stackhpc_workstation_enabled
+        { "workstation": azimuth_caas_workstation_template }
+        if azimuth_caas_workstation_enabled
         else {}
       ) |
       combine(
-        { "workstation-ssh": azimuth_caas_stackhpc_workstation_ssh_template }
-        if azimuth_caas_stackhpc_workstation_ssh_enabled
+        { "workstation-ssh": azimuth_caas_workstation_ssh_template }
+        if azimuth_caas_workstation_ssh_enabled
         else {}
       ) |
       combine(
-        { "repo2docker": azimuth_caas_stackhpc_repo2docker_template }
-        if azimuth_caas_stackhpc_repo2docker_enabled
+        { "repo2docker": azimuth_caas_repo2docker_template }
+        if azimuth_caas_repo2docker_enabled
         else {}
       ) |
       combine(
-        { "rstudio": azimuth_caas_stackhpc_rstudio_template }
-        if azimuth_caas_stackhpc_rstudio_enabled
+        { "rstudio": azimuth_caas_rstudio_template }
+        if azimuth_caas_rstudio_enabled
         else {}
       )
   }}
