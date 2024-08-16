@@ -192,9 +192,10 @@
   register: keycloak_admin_token_req
   # This is the first task that tries to access the Keycloak API, so retry when there
   # is an SSL error (reported as -1) as cert-manager takes time to create certs
+  # We also retry when the service is not available
   retries: 60
   delay: 10
-  until: keycloak_admin_token_req.status != -1
+  until: keycloak_admin_token_req.status not in [-1, 503]
 
 - name: Set Keycloak admin token fact
   set_fact:
