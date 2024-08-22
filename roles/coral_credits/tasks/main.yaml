@@ -1,5 +1,39 @@
 ---
 
+- name: Deploy internal database
+  include_role:
+    name: azimuth_cloud.azimuth_ops.postgres_operator
+    tasks_from: database.yml
+    defaults_from: database.yml
+  vars:
+    pgo_database_name: "{{ coral_credits_database_name }}"
+    pgo_database_namespace: "{{ coral_credits_release_namespace }}"
+    pgo_database_data_volume_storage_class: "{{ coral_credits_database_data_volume_storage_class }}"
+    pgo_database_backup_volume_storage_class: "{{ coral_credits_database_backup_volume_storage_class }}"
+    pgo_database_data_volume_size: "{{ coral_credits_database_data_volume_size }}"
+    pgo_database_backup_volume_size: "{{ coral_credits_database_backup_volume_size }}"
+
+- name: Get database secret
+  command: >-
+    kubectl get secret coral-credits-db-pguser-coral-credits-db
+    --namespace {{ coral_credits_release_namespace }}
+    --output json
+  register: coral_credits_raw_secret
+  no_log: true
+
+- name: Read database secret
+  set_fact:
+    coral_credits_secret: "{{ coral_credits_raw_secret.stdout | from_json }}"
+  no_log: true
+
+- name: Set database authentication variables
+  set_fact:
+    coral_credits_database_user: "{{ coral_credits_secret.data.user | b64decode }}"
+    coral_credits_database_password: "{{ coral_credits_secret.data.password | b64decode }}"
+    coral_credits_database_host: "{{ coral_credits_secret.data.host | b64decode }}"
+    coral_credits_database_port: "{{ coral_credits_secret.data.port | b64decode }}"
+  no_log: true
+
 - name: Install wildcard TLS certificate
   command: kubectl apply -f -
   args:
