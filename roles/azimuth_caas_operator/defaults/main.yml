@@ -239,9 +239,29 @@ azimuth_caas_workstation_image: >-
       )
     )
   }}
+# Combine default and any extra workstation ansible collections
+azimuth_caas_workstation_init_collections_default: >-
+  {{ ansible_init_default_collections | default([]) }}
+azimuth_caas_workstation_init_collections_extra: []
+azimuth_caas_workstation_init_collections: >-
+  {{
+    azimuth_caas_workstation_init_collections_default +
+    azimuth_caas_workstation_init_collections_extra
+  }}
+# Combine default and any extra workstation ansible playbooks
+azimuth_caas_workstation_init_playbooks_default: >-
+  {{ ansible_init_default_playbooks | default([]) }}
+azimuth_caas_workstation_init_playbooks_extra: []
+azimuth_caas_workstation_init_playbooks: >-
+  {{
+    azimuth_caas_workstation_init_playbooks_default + 
+    azimuth_caas_workstation_init_playbooks_extra
+  }}
 # The default extra vars for templates in the workstation
 azimuth_caas_workstation_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_workstation_image }}"
+  ansible_init_collections: "{{ azimuth_caas_workstation_init_collections }}"
+  azimuth_init_playbooks: "{{ azimuth_caas_workstation_init_playbooks }}"
 # extra_vars overrides for templates in the workstation
 azimuth_caas_workstation_extra_vars_overrides: {}
 azimuth_caas_workstation_extra_vars: >-
@@ -420,9 +440,29 @@ azimuth_caas_repo2docker_image: >-
       )
     )
   }}
+# Combine default and any extra repo2docker ansible collections
+azimuth_caas_repo2docker_init_collections_default: >-
+  {{ ansible_init_default_collections | default([]) }}
+azimuth_caas_repo2docker_init_collections_extra: []
+azimuth_caas_repo2docker_init_collections: >-
+  {{
+    azimuth_caas_repo2docker_init_collections_default +
+    azimuth_caas_repo2docker_init_collections_extra
+  }}
+# Combine default and any extra repo2docker ansible playbooks
+azimuth_caas_repo2docker_init_playbooks_default: >-
+  {{ ansible_init_default_playbooks | default([]) }}
+azimuth_caas_repo2docker_init_playbooks_extra: []
+azimuth_caas_repo2docker_init_playbooks: >-
+  {{
+    azimuth_caas_repo2docker_init_playbooks_default + 
+    azimuth_caas_repo2docker_init_playbooks_extra
+  }}
 # The default extra vars for templates in the repo2docker appliance
 azimuth_caas_repo2docker_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_repo2docker_image }}"
+  ansible_init_collections: "{{ azimuth_caas_repo2docker_init_collections }}"
+  azimuth_init_playbooks: "{{ azimuth_caas_repo2docker_init_playbooks }}"
 # extra_vars overrides for templates in the repo2docker appliance
 azimuth_caas_repo2docker_extra_vars_overrides: {}
 azimuth_caas_repo2docker_extra_vars: >-
@@ -522,9 +562,29 @@ azimuth_caas_rstudio_image: >-
       )
     )
   }}
+# Combine default and any extra rstudio ansible collections
+azimuth_caas_rstudio_init_collections_default: >-
+  {{ ansible_init_default_collections | default([]) }}
+azimuth_caas_rstudio_init_collections_extra: []
+azimuth_caas_rstudio_init_collections: >-
+  {{
+    azimuth_caas_rstudio_init_collections_default +
+    azimuth_caas_rstudio_init_collections_extra
+  }}
+# Combine default and any extra rstudio ansible playbooks
+azimuth_caas_rstudio_init_playbooks_default: >-
+  {{ ansible_init_default_playbooks | default([]) }}
+azimuth_caas_rstudio_init_playbooks_extra: []
+azimuth_caas_rstudio_init_playbooks: >-
+  {{
+    azimuth_caas_rstudio_init_playbooks_default + 
+    azimuth_caas_rstudio_init_playbooks_extra
+  }}
 # The default extra vars for templates in the R-Studio appliance
 azimuth_caas_rstudio_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_rstudio_image }}"
+  ansible_init_collections: "{{ azimuth_caas_rstudio_init_collections }}"
+  azimuth_init_playbooks: "{{ azimuth_caas_rstudio_init_playbooks }}"
 # extra_vars overrides for templates in the R-Studio appliance
 azimuth_caas_rstudio_extra_vars_overrides: {}
 azimuth_caas_rstudio_extra_vars: >-
