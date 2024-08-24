@@ -126,7 +126,7 @@ clusterapi_addon_provider_release_values: {}
 # Helm chart information for the Cluster API janitor
 clusterapi_janitor_openstack_chart_repo: https://azimuth-cloud.github.io/cluster-api-janitor-openstack
 clusterapi_janitor_openstack_chart_name: cluster-api-janitor-openstack
-clusterapi_janitor_openstack_chart_version: 0.5.9
+clusterapi_janitor_openstack_chart_version: 0.6.0
 
 # Release information for the Cluster API janitor release
 clusterapi_janitor_openstack_release_namespace: capi-janitor-system
