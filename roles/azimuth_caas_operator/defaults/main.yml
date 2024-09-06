@@ -12,6 +12,9 @@ azimuth_caas_operator_release_name: azimuth-caas-operator
 # The timeout to wait for operator to become ready
 azimuth_caas_operator_wait_timeout: 10m
 
+# Custom trust bundle for SSL verification
+azimuth_caas_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+
 # The ansible-runner image and tag to use
 # Leave blank to use the defaults
 azimuth_caas_operator_ansible_runner_image_repository:
@@ -63,6 +66,7 @@ azimuth_caas_operator_release_defaults:
           )
       }}
     globalExtraVars: "{{ azimuth_caas_operator_global_extravars }}"
+  trustBundle: "{{ azimuth_caas_operator_trust_bundle }}"
 azimuth_caas_operator_release_overrides: {}
 azimuth_caas_operator_release_values: >-
   {{-

@@ -14,12 +14,7 @@ certmanager_wait_timeout: 10m
 
 # The trust bundle to use in the cert-manager containers
 # If empty, the default trust bundle will be used
-certmanager_trust_bundle: |-
-  {%- if trust_bundle is defined %}
-  {%- for certificate in trust_bundle.values() %}
-  {{ certificate }}
-  {%- endfor %}
-  {%- endif %}
+certmanager_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 certmanager_trust_bundle_configmap_name: "{{ trust_bundle_configmap_name | default('certmanager-trust-bundle') }}"
 
 # Indicates whether the monitoring should be enabled

@@ -12,6 +12,10 @@ harbor_release_name: harbor
 # The timeout to wait for Harbor to become ready
 harbor_wait_timeout: 10m
 
+# Custom trust bundle for SSL verification
+harbor_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+harbor_trust_bundle_secret_name: "{{ harbor_release_name }}-trust-bundle"
+
 # The Harbor admin password and secret key
 harbor_admin_password: "{{ undef(hint = 'harbor_admin_password is not set') }}"
 harbor_secret_key: "{{ undef(hint = 'harbor_secret_key is not set') }}"
@@ -99,6 +103,12 @@ harbor_persistence_pvc_trivy_size: 5Gi
 
 # The values for the Harbor release
 harbor_release_defaults:
+  caBundleSecretName: >-
+    {{
+      harbor_trust_bundle_secret_name
+      if harbor_trust_bundle
+      else None
+    }}
   externalURL: "{{ harbor_external_url }}"
   harborAdminPassword: "{{ harbor_admin_password }}"
   secretKey: "{{ harbor_secret_key }}"
@@ -154,7 +164,7 @@ harbor_release_values: >-
   }}
 
 # Path to a CA file to use when talking to the Harbor API
-harbor_ca_path:
+harbor_ca_path: /etc/ssl/certs/ca-certificates.crt
 # Whether or not to validate SSL certificates when talking to the Harbor API
 harbor_validate_certs: yes
 

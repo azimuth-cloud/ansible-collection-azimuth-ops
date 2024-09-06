@@ -13,6 +13,9 @@ azimuth_identity_operator_release_name: azimuth-identity-operator
 # The timeout to wait for CAPI operator to become ready
 azimuth_identity_operator_wait_timeout: 10m
 
+# Custom trust bundle for SSL verification
+azimuth_identity_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+
 #####
 # TLS settings
 #####
@@ -188,6 +191,7 @@ azimuth_identity_operator_release_defaults:
   # Enable the metrics with the service monitor by default
   metrics:
     enabled: true
+  trustBundle: "{{ azimuth_identity_operator_trust_bundle }}"
 azimuth_identity_operator_release_overrides: {}
 azimuth_identity_operator_release_values: >-
   {{-
