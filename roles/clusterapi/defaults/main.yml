@@ -42,6 +42,15 @@ clusterapi_manifests:
 
 # List of patches to apply to the resources in the manifests
 clusterapi_patches:
+  # Remove the caBundle from the CAPO custom resource definitions
+  # It is injected by cert-manager and causes validation issues if set outside of that
+  # The CAPI CRDs do not have the field set in the manifests that are shipped
+  - patch: |-
+      - op: remove
+        path: /spec/conversion/webhook/clientConfig/caBundle
+    target:
+      kind: CustomResourceDefinition
+      labelSelector: cluster.x-k8s.io/provider=infrastructure-openstack
   # The manifests contain environment variable substitutions for feature gates that we do not need
   - patch: |-
       - op: replace
