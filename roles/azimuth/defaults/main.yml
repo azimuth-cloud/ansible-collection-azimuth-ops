@@ -46,14 +46,7 @@ azimuth_ingress_tls_key: >-
   }}
 
 # Custom trust bundle for SSL verification
-azimuth_trust_bundle: |-
-  {%- if trust_bundle is defined %}
-  {%- for certificate in trust_bundle.values() %}
-  {{ certificate }}
-  {%- endfor %}
-  {%- endif %}
-# The name of the configmap into which the trust bundle should be placed
-azimuth_trust_bundle_configmap_name: "{{ trust_bundle_configmap_name | default('azimuth-trust-bundle') }}"
+azimuth_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
 # The Django secret key, used mainly for ensuring session cookies are not tampered with
 azimuth_secret_key: "{{ undef(hint = 'azimuth_secret_key is required') }}"
@@ -347,12 +340,7 @@ azimuth_release_defaults:
       enabled: "{{ azimuth_ingress_tls_enabled }}"
       secretName: "{{ azimuth_ingress_tls_secret_name }}"
       annotations: "{{ azimuth_ingress_tls_annotations }}"
-  trustBundleConfigMapName: >-
-    {{-
-      azimuth_trust_bundle_configmap_name
-      if azimuth_trust_bundle
-      else None
-    }}
+  trustBundle: "{{ azimuth_trust_bundle }}"
   settings:
     secretKey: "{{ azimuth_secret_key }}"
     availableClouds: "{{ azimuth_linked_clouds }}"

@@ -24,14 +24,14 @@ capi_cluster_cloud_name: "{{ lookup('env', 'OS_CLOUD') or 'openstack' }}"
 # The OpenStack Cluster API provider requires the project ID to be present in the clouds file
 capi_cluster_openstack_project_id: "{{ undef(hint = 'capi_cluster_openstack_project_id is required') }}"
 
-# The CA certificate to use to validate OpenStack connections
-# If not given, then connections are not verified
+# Use the system CA bundle to verify OpenStack connections if no explicit cert is given
+# Note that the system CA bundle will contain any custom CAs that were specified
 capi_cluster_openstack_ca_cert_file:
 capi_cluster_openstack_ca_cert: >-
   {{-
     lookup('file', capi_cluster_openstack_ca_cert_file)
     if capi_cluster_openstack_ca_cert_file
-    else None
+    else (system_trust_ca_bundle | default(''))
   }}
 
 # The Kubernetes version of the cluster and the id of the matching image
@@ -63,7 +63,8 @@ capi_cluster_ssh_keypair: >-
 
 # Bundle of certificates that should be added to the system trustroots of cluster nodes
 # E.g. if using a registry with a custom CA chain
-capi_cluster_trust_bundle: "{{ trust_bundle | default({}) }}"
+capi_cluster_trust_bundle: >-
+  {{ system_trust_extra_root_cas | default(trust_bundle) | default({}) }}
 
 # The registry mirrors for the cluster
 # NOTE: This cannot depend on Harbor as it isn't deployed yet!

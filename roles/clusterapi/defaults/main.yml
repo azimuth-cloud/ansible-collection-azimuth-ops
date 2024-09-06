@@ -130,9 +130,20 @@ clusterapi_addon_provider_release_name: cluster-api-addon-provider
 # The timeout to wait for the Cluster API addon provider to become ready
 clusterapi_addon_provider_wait_timeout: 30m
 
+# The trust bundle to use with the Cluster API addon provider
+# This allows for pulling charts from places using a custom CA for TLS
+clusterapi_addon_provider_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+
 # The values for the Cluster API addon provider deployment
 # The defaults are sufficient for most use cases
-clusterapi_addon_provider_release_values: {}
+clusterapi_addon_provider_release_defaults:
+  trustBundle: "{{ clusterapi_addon_provider_trust_bundle }}"
+clusterapi_addon_provider_release_overrides: {}
+clusterapi_addon_provider_release_values: >-
+  {{-
+    clusterapi_addon_provider_release_defaults |
+      combine(clusterapi_addon_provider_release_overrides, recursive = True)
+  }}
 
 # Helm chart information for the Cluster API janitor
 clusterapi_janitor_openstack_chart_repo: https://azimuth-cloud.github.io/cluster-api-janitor-openstack
