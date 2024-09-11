@@ -153,21 +153,33 @@ azimuth_authenticator_federated_identity_providers:
     protocol: "{{ azimuth_authenticator_federated_protocol }}"
 #   List of authenticators in the order in which they should appear in the form
 
-# Additional password authenticator variables, set as many as needed and
-# set enabled to true to include them in the list of authenticators.
-# All variables have been set to the default values apart from those
-# which require changing.
-azimuth_additional_authenticator_variables:
-  - name: "please-change-me"
-    label: "This authentication method isn't FULLY configured yet!"
-    hidden: "{{ azimuth_authenticator_password_hidden }}"
-    type: "openstack-password"
-    authUrl: "{{ azimuth_authenticator_password_auth_url }}"
-    domain: "{{ azimuth_authenticator_password_domain }}"
-    verifySsl: "{{ azimuth_authenticator_password_verify_ssl }}"
-    enabled: False
+# Additional password authenticator variables, set azimuth_authenticator_variables
+# in Azimuth variables config and set enabled to true to include them in the list
+#  of authenticators. All variables have been set to the default values, however,
+# name and label require setting.
+azimuth_authenticators_extra: >-
+  [] +
+      {% for var in azimuth_additional_authenticator_variables %}
+        (
+         [
+           {
+              "name": {{ var.name | default("please-change-me") }},
+              "label": {{ var.label | default("This authentication method isnt FULLY configured") }},
+              "hidden": {{ var.hidden | default(azimuth_authenticator_password_hidden) }},
+              "type": "{{ var.type | default("openstack-password") }},
+              "openstackPassword": {
+                "authUrl": {{ var.authUrl | default(azimuth_authenticator_password_auth_url) }},
+                "domain": {{ var.domain | default(azimuth_authenticator_password_domain) }},
+                "verifySsl": {{ var.verifySsl | default(azimuth_authenticator_password_verify_ssl) }},
+              },
+            },
+          ]
+          if {{ var.enabled | default(false) }}
+          else []
+        ) +
+      {% endfor %}
 
-azimuth_authenticators: >-
+azimuth_authenticators_base: >-
   {{-
     [] +
       (
@@ -185,25 +197,6 @@ azimuth_authenticators: >-
         if azimuth_authenticator_federated_enabled
         else []
       ) +
-      {% for var in azimuth_authenticator_variables %}
-      (
-        [
-          {
-           "name": "{{ var.name }}",
-           "label": {{ var.label }},
-           "hidden": {{ var.hidden }},
-           "type": "{{ var.type }}",
-           "openstackPassword": {
-             "authUrl": {{ var.authUrl }},
-             "domain": {{ var.domain }},
-             "verifySsl": {{ var.verifySsl }},
-            },
-          },
-        ]
-        if {{ var.enabled }}
-        else []
-      ) +
-      {% endfor %}
       (
         [
           {
@@ -239,6 +232,7 @@ azimuth_authenticators: >-
       )
   }}
 
+azimuth_authenticators: "{{ azimuth_authenticators_base + azimuth_authenticators_extra }}"
 
 # OpenStack provider settings
 #   The Keystone auth URL
