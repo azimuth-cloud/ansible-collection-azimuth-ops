@@ -1,19 +1,5 @@
 ---
 
-- name: Install custom certificates
-  copy:
-    content: "{{ item.certificate }}"
-    dest: /usr/local/share/ca-certificates/{{ item.name }}.crt
-  # Split the trust bundle into individual certificates
-  loop: "{{ k3s_trust_bundle | dict2items(key_name = 'name', value_name = 'certificate') }}"
-  loop_control:
-    label: "{{ item.name }}"
-  register: k3s_trusted_certificates
-
-- name: Update system trust bundles
-  command: update-ca-certificates
-  when: k3s_trusted_certificates is changed
-
 - name: Check if k3s storage device is attached
   stat:
     path: "{{ k3s_storage_device }}"
@@ -66,11 +52,7 @@
     state: >-
       {{-
         'restarted'
-        if (
-          k3s_binary is changed or
-          k3s_server_systemd_unit is changed or
-          k3s_trusted_certificates is changed
-        )
+        if k3s_binary is changed or k3s_server_systemd_unit is changed
         else 'started'
       }}
     enabled: yes

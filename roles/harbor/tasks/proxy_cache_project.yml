@@ -9,7 +9,7 @@
     user: admin
     password: "{{ harbor_admin_password }}"
     force_basic_auth: yes
-    ca_path: "{{ harbor_ca_path or omit }}"
+    ca_path: "{{ harbor_ca_path }}"
     validate_certs: "{{ harbor_validate_certs }}"
     # 404 is an acceptable error code, indicating that we need to create the project
     status_code: [200, 404]
@@ -23,7 +23,7 @@
         user: admin
         password: "{{ harbor_admin_password }}"
         force_basic_auth: yes
-        ca_path: "{{ harbor_ca_path or omit }}"
+        ca_path: "{{ harbor_ca_path }}"
         validate_certs: "{{ harbor_validate_certs }}"
       register: harbor_registry_list
 
@@ -45,7 +45,7 @@
               name: "{{ project.name }}"
               type: "{{ project.type }}"
               url: "{{ project.url }}"
-            ca_path: "{{ harbor_ca_path or omit }}"
+            ca_path: "{{ harbor_ca_path }}"
             validate_certs: "{{ harbor_validate_certs }}"
             status_code: [201]
           changed_when: true
@@ -59,7 +59,7 @@
             user: admin
             password: "{{ harbor_admin_password }}"
             force_basic_auth: yes
-            ca_path: "{{ harbor_ca_path or omit }}"
+            ca_path: "{{ harbor_ca_path }}"
             validate_certs: "{{ harbor_validate_certs }}"
           register: harbor_registry_created
         
@@ -88,7 +88,7 @@
               "auto_scan": "true"
             }
           }
-        ca_path: "{{ harbor_ca_path or omit }}"
+        ca_path: "{{ harbor_ca_path }}"
         validate_certs: "{{ harbor_validate_certs }}"
         status_code: [201]
       changed_when: true

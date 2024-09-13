@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.7.0
+azimuth_capi_operator_chart_version: 0.7.1-dev.0.feat-custom-ca.9
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -12,6 +12,9 @@ azimuth_capi_operator_release_name: azimuth-capi-operator
 
 # The timeout to wait for CAPI operator to become ready
 azimuth_capi_operator_wait_timeout: 10m
+
+# Custom trust bundle for SSL verification
+azimuth_capi_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
 # The timer interval to use for the CAPI operator
 azimuth_capi_operator_timer_interval: 60
@@ -39,7 +42,8 @@ azimuth_capi_operator_capi_helm_dns_nameservers:
 
 # Bundle of certificates that should be added to the system trustroots for provisioned clusters
 # E.g. for pulling containers from a registry with a custom CA chain
-azimuth_capi_operator_capi_helm_trust_bundle: "{{ trust_bundle | default({}) }}"
+azimuth_capi_operator_capi_helm_trust_bundle: >-
+  {{ system_trust_extra_root_cas | default(trust_bundle) | default({}) }}
 # The registry mirrors for provisioned clusters
 azimuth_capi_operator_capi_helm_registry_mirrors: >-
   {{-
@@ -448,6 +452,7 @@ azimuth_capi_operator_release_defaults:
   # Enable the metrics with the service monitor by default
   metrics:
     enabled: true
+  trustBundle: "{{ azimuth_capi_operator_trust_bundle }}"
 azimuth_capi_operator_release_overrides: {}
 azimuth_capi_operator_release_values: >-
   {{-
