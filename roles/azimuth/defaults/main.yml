@@ -272,7 +272,17 @@ azimuth_apps_base_domain: >-
 azimuth_apps_verify_ssl: true
 #   Indicates whether SSL should be verified by clients when associating keys with the
 #   registrar using the external endpoint
-azimuth_apps_verify_ssl_clients: "{{ azimuth_apps_verify_ssl }}"
+#   By default, clients will verify SSL when Azimuth itself does
+#   The exception to this is when custom CAs are specified, as there is currently no mechanism
+#   for propagating the custom CAs into the trust store of the appliance
+azimuth_apps_verify_ssl_clients: >-
+  {{-
+    azimuth_apps_verify_ssl and
+    not (
+      (system_trust_extra_root_cas is defined and system_trust_extra_root_cas) or
+      (trust_bundle is defined and trust_bundle)
+    )
+  }}
 #   The external URL for the Zenith registrar
 azimuth_apps_registrar_external_url: >-
   {{-
