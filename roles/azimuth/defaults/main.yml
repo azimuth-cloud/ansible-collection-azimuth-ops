@@ -153,33 +153,12 @@ azimuth_authenticator_federated_identity_providers:
     protocol: "{{ azimuth_authenticator_federated_protocol }}"
 #   List of authenticators in the order in which they should appear in the form
 
-# Additional password authenticator variables, set azimuth_authenticator_variables
-# in Azimuth variables config and set enabled to true to include them in the list
-#  of authenticators. All variables have been set to the default values, however,
-# name and label require setting.
-azimuth_authenticators_extra: >-
-  [] +
-      {% for var in azimuth_additional_authenticator_variables %}
-        (
-         [
-           {
-              "name": {{ var.name | default("please-change-me") }},
-              "label": {{ var.label | default("This authentication method isnt FULLY configured") }},
-              "hidden": {{ var.hidden | default(azimuth_authenticator_password_hidden) }},
-              "type": "{{ var.type | default("openstack-password") }},
-              "openstackPassword": {
-                "authUrl": {{ var.authUrl | default(azimuth_authenticator_password_auth_url) }},
-                "domain": {{ var.domain | default(azimuth_authenticator_password_domain) }},
-                "verifySsl": {{ var.verifySsl | default(azimuth_authenticator_password_verify_ssl) }},
-              },
-            },
-          ]
-          if {{ var.enabled | default(false) }}
-          else []
-        ) +
-      {% endfor %}
+# Additional password authenticator variables, set azimuth_authenticators_extra
+# in Azimuth variables config and set all variables required for the authenticator
+# of authenticators.
+azimuth_authenticators_extra: []
 
-azimuth_authenticators_base: >-
+azimuth_authenticators: >-
   {{-
     [] +
       (
@@ -229,10 +208,9 @@ azimuth_authenticators_base: >-
         ]
         if azimuth_authenticator_appcred_enabled
         else []
-      )
+      ) + azimuth_authenticators_extra
   }}
 
-azimuth_authenticators: "{{ azimuth_authenticators_base + azimuth_authenticators_extra }}"
 
 # OpenStack provider settings
 #   The Keystone auth URL
