@@ -202,9 +202,10 @@ velero_restore_backup_name: "{{ undef(hint = 'velero_restore_backup_name is requ
 velero_restore_name: >-
   {{ velero_restore_backup_name }}-{{ "%Y%m%d%H%M%S" | strftime(ansible_date_time.epoch) }}
 
-# CaaS clusters have persistent state in their status, so restore them
+# Resources that require their status to be restored in order to function correctly
 velero_restore_include_resource_status:
   - clusters.caas.azimuth.stackhpc.com
+  - leases.scheduling.azimuth.stackhpc.com
 
 velero_restore_spec_defaults:
   restoreStatus:
