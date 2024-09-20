@@ -100,7 +100,7 @@ azimuth_caas_stackhpc_slurm_appliance_git_version: v1.152
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds: 1800
+azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds: 3600
 # Whether to use manila shares for home directories:
 azimuth_caas_stackhpc_slurm_appliance_home_manila_share: false
 # The metadata file for the StackHPC Slurm appliance
@@ -211,7 +211,7 @@ azimuth_caas_workstation_git_version: >-
 azimuth_caas_workstation_playbook: >-
   {{ azimuth_caas_stackhpc_workstation_playbook | default("workstation.yml") }}
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_workstation_job_timeout_seconds: 900
+azimuth_caas_workstation_job_timeout_seconds: 3600
 # The metadata URL for the workstation
 azimuth_caas_workstation_default_metadata_url: >-
   https://raw.githubusercontent.com/azimuth-cloud/caas-workstation/{{ azimuth_caas_workstation_git_version }}/ui-meta/workstation.yml
@@ -412,7 +412,7 @@ azimuth_caas_repo2docker_git_version: >-
 azimuth_caas_repo2docker_playbook: >-
   {{ azimuth_caas_stackhpc_repo2docker_playbook | default("repo2docker.yml") }}
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_repo2docker_job_timeout_seconds: 1200
+azimuth_caas_repo2docker_job_timeout_seconds: 3600
 # The metadata root for the repo2docker appliance project
 azimuth_caas_repo2docker_default_metadata_url: >-
   https://raw.githubusercontent.com/azimuth-cloud/caas-repo2docker/{{ azimuth_caas_repo2docker_git_version }}/ui-meta/repo2docker.yml
@@ -534,7 +534,7 @@ azimuth_caas_rstudio_git_version: >-
 azimuth_caas_rstudio_playbook: >-
   {{ azimuth_caas_stackhpc_rstudio_playbook | default("rstudio.yml") }}
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_rstudio_job_timeout_seconds: 900
+azimuth_caas_rstudio_job_timeout_seconds: 3600
 # The metadata root for the R-Studio appliance project
 azimuth_caas_rstudio_default_metadata_url: >-
   https://raw.githubusercontent.com/azimuth-cloud/caas-r-studio-server/{{ azimuth_caas_rstudio_git_version }}/ui-meta/rstudio.yml
