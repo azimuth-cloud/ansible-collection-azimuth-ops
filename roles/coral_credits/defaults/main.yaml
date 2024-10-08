@@ -3,7 +3,7 @@
 # The chart to use
 coral_credits_chart_repo: https://stackhpc.github.io/coral-credits
 coral_credits_chart_name: coral-credits
-coral_credits_chart_version: 0.3.4
+coral_credits_chart_version: 0.3.5
 
 # Release information for the coral credits release
 coral_credits_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
