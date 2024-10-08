@@ -9,12 +9,33 @@ azimuth_schedule_operator_chart_version: 0.5.1
 azimuth_schedule_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
 azimuth_schedule_operator_release_name: azimuth-schedule-operator
 
+# Indicates whether Blazar support should be enabled in the schedule operator
+azimuth_schedule_operator_blazar_enabled: no
+# The interval at which Blazar leases are checked
+# If not specified, the operator default is used
+azimuth_schedule_operator_check_interval:
+# The amount of time before the end of a lease that a platform is deleted
+# This is to allow for a clean shutdown of platforms when Blazar is in use
+azimuth_schedule_operator_default_grace_period: >-
+  {{ 600 if azimuth_schedule_operator_blazar_enabled else 0 }}
+
 # The values for the release
 azimuth_schedule_operator_release_defaults:
+  config: >-
+    {{-
+      {
+        "blazarEnabled": ("yes" if azimuth_schedule_operator_blazar_enabled else "no"),
+        "defaultGracePeriod": azimuth_schedule_operator_default_grace_period,
+      } |
+        combine(
+          { "checkInterval": azimuth_schedule_operator_check_interval }
+          if azimuth_schedule_operator_check_interval
+          else {}
+        )
+    }}
   # Enable the metrics with the service monitor by default
   metrics:
     enabled: true
-
 azimuth_schedule_operator_release_overrides: {}
 azimuth_schedule_operator_release_values: >-
   {{-
