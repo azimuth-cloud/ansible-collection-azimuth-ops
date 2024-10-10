@@ -6,7 +6,7 @@ coral_credits_chart_name: coral-credits
 coral_credits_chart_version: 0.3.5
 
 # Release information for the coral credits release
-coral_credits_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
+coral_credits_release_namespace: "{{ azimuth_release_namespace | default('coral-credits') }}"
 coral_credits_release_name: coral-credits
 
 # The timeout to wait for coral credits API to become ready
@@ -14,7 +14,7 @@ coral_credits_wait_timeout: 10m
 
 # Feature flags
 #   Indicates if coral credits should be enabled
-coral_credits_enabled: yes
+coral_credits_enabled: no
 
 # Database settings
 #   The name of the database resource
@@ -50,7 +50,7 @@ coral_credits_ingress_host: >-
     else undef(hint = 'coral_credits_ingress_subdomain is required')
   }}
 #   Subdomain for the Coral credits ingress host
-coral_credits_ingress_subdomain: "coral"
+coral_credits_ingress_subdomain: "credits"
 #   Annotations for coral_credits ingress resources
 coral_credits_ingress_annotations: "{{ ingress_annotations | default({}) }}"
 #   Indicates whether TLS should be enabled
