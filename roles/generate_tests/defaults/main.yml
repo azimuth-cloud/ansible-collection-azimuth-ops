@@ -77,7 +77,11 @@ generate_tests_caas_suite_name: CaaS
 generate_tests_caas_default_test_tags: [caas]
 
 # The timeout to apply to tests in the suite
-generate_tests_caas_default_test_timeout: "15 minutes"
+# The default test timeout needs to be longer than the longest appliance job timeout
+# This is because in some cases, the cluster will not go into the ERROR state until the job times
+# out, but the delete cannot proceed until this has happened
+# These all default to 3600s, see the azimuth_caas_operator role
+generate_tests_caas_default_test_timeout: "90 minutes"
 
 # Indicates whether a test case should be generated for all cluster types by default
 #   If true, a test case will be generated unless explicitly disabled
@@ -92,8 +96,6 @@ generate_tests_caas_test_case_workstation_service_monitoring_expected_title: Gra
 generate_tests_caas_test_case_workstation_ssh_enabled: false
 
 # Configuration for the Slurm test case, if enabled
-#   Slurm takes a while to deploy so use a larger verify timeout
-generate_tests_caas_test_case_slurm_verify_timeout: "30 minutes"
 #   Parameter values to reduce the resource consumption
 generate_tests_caas_test_case_slurm_param_compute_count: 2
 generate_tests_caas_test_case_slurm_param_home_volume_size: 20
@@ -106,7 +108,7 @@ generate_tests_caas_test_case_slurm_service_monitoring_expected_title: Grafana
 # Configuration for the repo2docker test case, if enabled
 #   The repository to use to build the image
 #   We pick a repository that has some meat but is relatively quick to build
-generate_tests_caas_test_case_repo2docker_param_cluster_repository: https://github.com/binder-examples/demo-julia.git
+generate_tests_caas_test_case_repo2docker_param_cluster_repository: https://github.com/binder-examples/conda.git
 #   Expected titles for the repo2docker services
 generate_tests_caas_test_case_repo2docker_service_repo2docker_expected_title: JupyterLab
 generate_tests_caas_test_case_repo2docker_service_monitoring_expected_title: Grafana
