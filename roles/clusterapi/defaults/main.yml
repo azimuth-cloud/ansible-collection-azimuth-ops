@@ -2,7 +2,7 @@
 
 # The repo, version and manifest URL for the Cluster API core components
 clusterapi_core_repo: https://github.com/kubernetes-sigs/cluster-api
-clusterapi_core_version: v1.7.3
+clusterapi_core_version: v1.8.3
 clusterapi_core_components: "{{ clusterapi_core_repo }}/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml"
 
 # The repo, version and manifest URL for the Cluster API OpenStack provider components
@@ -42,6 +42,15 @@ clusterapi_manifests:
 
 # List of patches to apply to the resources in the manifests
 clusterapi_patches:
+  # Remove the caBundle from the CAPO custom resource definitions
+  # It is injected by cert-manager and causes validation issues if set outside of that
+  # The CAPI CRDs do not have the field set in the manifests that are shipped
+  - patch: |-
+      - op: remove
+        path: /spec/conversion/webhook/clientConfig/caBundle
+    target:
+      kind: CustomResourceDefinition
+      labelSelector: cluster.x-k8s.io/provider=infrastructure-openstack
   # The manifests contain environment variable substitutions for feature gates that we do not need
   - patch: |-
       - op: replace
@@ -110,7 +119,7 @@ clusterapi_watches:
 # Helm chart information for the Cluster API addon provider
 clusterapi_addon_provider_chart_repo: https://azimuth-cloud.github.io/cluster-api-addon-provider
 clusterapi_addon_provider_chart_name: cluster-api-addon-provider
-clusterapi_addon_provider_chart_version: 0.5.9
+clusterapi_addon_provider_chart_version: 0.6.1
 
 # Release information for the Cluster API addon provider release
 clusterapi_addon_provider_release_namespace: capi-addon-system
@@ -126,7 +135,7 @@ clusterapi_addon_provider_release_values: {}
 # Helm chart information for the Cluster API janitor
 clusterapi_janitor_openstack_chart_repo: https://azimuth-cloud.github.io/cluster-api-janitor-openstack
 clusterapi_janitor_openstack_chart_name: cluster-api-janitor-openstack
-clusterapi_janitor_openstack_chart_version: 0.5.9
+clusterapi_janitor_openstack_chart_version: 0.6.0
 
 # Release information for the Cluster API janitor release
 clusterapi_janitor_openstack_release_namespace: capi-janitor-system
