@@ -1,0 +1,101 @@
+---
+
+# The chart to use
+coral_credits_chart_repo: https://stackhpc.github.io/coral-credits
+coral_credits_chart_name: coral-credits
+coral_credits_chart_version: 0.3.5
+
+# Release information for the coral credits release
+coral_credits_release_namespace: "{{ azimuth_release_namespace | default('coral-credits') }}"
+coral_credits_release_name: coral-credits
+
+# The timeout to wait for coral credits API to become ready
+coral_credits_wait_timeout: 10m
+
+# Feature flags
+#   Indicates if coral credits should be enabled
+coral_credits_enabled: no
+
+# Database settings
+#   The name of the database resource
+coral_credits_database_name: "coral-credits-db"
+#   The username for the database
+coral_credits_database_user:
+#   The password for the database
+coral_credits_database_password:
+#   The hostname for the database
+coral_credits_database_host:
+#   The port for the database
+coral_credits_database_port:
+#   The Django engine for the database
+coral_credits_database_engine: "django.db.backends.postgresql"
+#   The storage class to use for the database volume
+#   If left blank, the default storage class will be used
+coral_credits_database_data_volume_storage_class:
+#   The storage class to use for the backup volume
+#   By default, this is the same as the data volume
+coral_credits_database_backup_volume_storage_class: "{{ coral_credits_database_data_volume_storage_class }}"
+#   The size of the data volume for the database
+coral_credits_database_data_volume_size: 8Gi
+#   The size of the backup volume for the database
+#   By default, this is the same as the data volume
+coral_credits_database_backup_volume_size: "{{ coral_credits_database_data_volume_size }}"
+
+# Ingress settings
+#   The hostname for Coral credits ingress resources
+coral_credits_ingress_host: >-
+  {{-
+    "{}.{}".format(coral_credits_ingress_subdomain, ingress_base_domain)
+    if coral_credits_ingress_subdomain is defined and ingress_base_domain is defined
+    else undef(hint = 'coral_credits_ingress_subdomain is required')
+  }}
+#   Subdomain for the Coral credits ingress host
+coral_credits_ingress_subdomain: "credits"
+#   Annotations for coral_credits ingress resources
+coral_credits_ingress_annotations: "{{ ingress_annotations | default({}) }}"
+#   Indicates whether TLS should be enabled
+coral_credits_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
+#   The TLS secret name (can be null)
+coral_credits_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default('coral-credits-tls', true) }}"
+#   Any TLS-specific annotations
+coral_credits_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
+#   Wildcard TLS certificate, if available
+coral_credits_ingress_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
+coral_credits_ingress_tls_key: >-
+  {{-
+    ingress_tls_wildcard_key
+    if ingress_tls_wildcard_key is defined
+    else undef(hint = 'coral_credits_ingress_tls_key is required')
+  }}
+
+# The admin username to use for coral credits
+coral_credits_admin_username: admin
+# The admin password to use for coral credits
+coral_credits_admin_password: admin
+
+# The values for the release
+coral_credits_release_defaults:
+  ingress:
+    host: "{{ coral_credits_ingress_host }}"
+    annotations: "{{ coral_credits_ingress_annotations }}"
+    tls:
+      enabled: "{{ coral_credits_ingress_tls_enabled }}"
+      secretName: "{{ coral_credits_ingress_tls_secret_name }}"
+      annotations: "{{ coral_credits_ingress_tls_annotations }}"
+  settings:
+    superuserUsername: "{{ coral_credits_admin_username }}"
+    superuserPassword: "{{ coral_credits_admin_password }}"
+    database:
+      engine: "{{ coral_credits_database_engine }}"
+      name: "{{ coral_credits_database_name }}"
+      user: "{{ coral_credits_database_user }}"
+      password: "{{ coral_credits_database_password | quote }}"
+      host: "{{ coral_credits_database_host }}"
+      port: "{{ coral_credits_database_port }}"
+
+coral_credits_release_overrides: {}
+coral_credits_release_values: >-
+  {{-
+    coral_credits_release_defaults |
+      combine(coral_credits_release_overrides, recursive = True)
+  }}

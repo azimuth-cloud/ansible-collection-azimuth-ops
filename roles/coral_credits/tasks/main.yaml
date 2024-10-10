@@ -1,0 +1,65 @@
+---
+
+- name: Deploy internal database
+  include_role:
+    name: azimuth_cloud.azimuth_ops.postgres_operator
+    tasks_from: database.yml
+    defaults_from: database.yml
+  vars:
+    pgo_database_name: "{{ coral_credits_database_name }}"
+    pgo_database_namespace: "{{ coral_credits_release_namespace }}"
+    pgo_database_data_volume_storage_class: "{{ coral_credits_database_data_volume_storage_class }}"
+    pgo_database_backup_volume_storage_class: "{{ coral_credits_database_backup_volume_storage_class }}"
+    pgo_database_data_volume_size: "{{ coral_credits_database_data_volume_size }}"
+    pgo_database_backup_volume_size: "{{ coral_credits_database_backup_volume_size }}"
+
+- name: Get database secret
+  command: >-
+    kubectl get secret coral-credits-db-pguser-coral-credits-db
+    --namespace {{ coral_credits_release_namespace }}
+    --output json
+  register: coral_credits_raw_secret
+  no_log: true
+
+- name: Read database secret
+  set_fact:
+    coral_credits_secret: "{{ coral_credits_raw_secret.stdout | from_json }}"
+  no_log: true
+
+- name: Set database authentication variables
+  set_fact:
+    coral_credits_database_user: "{{ coral_credits_secret.data.user | b64decode }}"
+    coral_credits_database_password: "{{ coral_credits_secret.data.password | b64decode }}"
+    coral_credits_database_host: "{{ coral_credits_secret.data.host | b64decode }}"
+    coral_credits_database_port: "{{ coral_credits_secret.data.port | b64decode }}"
+  no_log: true
+
+- name: Install wildcard TLS certificate
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ coral_credits_ingress_tls_wildcard_secret_definition | to_nice_yaml }}"
+  vars:
+    coral_credits_ingress_tls_wildcard_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ coral_credits_ingress_tls_secret_name }}"
+        namespace: "{{ coral_credits_release_namespace }}"
+      type: kubernetes.io/tls
+      stringData:
+        tls.crt: "{{ coral_credits_ingress_tls_certificate }}"
+        tls.key: "{{ coral_credits_ingress_tls_key }}"
+  when: coral_credits_ingress_tls_certificate
+
+- name: Install Coral Credits API on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ coral_credits_chart_name }}"
+    chart_repo_url: "{{ coral_credits_chart_repo }}"
+    chart_version: "{{ coral_credits_chart_version }}"
+    release_namespace: "{{ coral_credits_release_namespace }}"
+    release_name: "{{ coral_credits_release_name }}"
+    release_values: "{{ coral_credits_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ coral_credits_wait_timeout }}"
