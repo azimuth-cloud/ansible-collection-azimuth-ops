@@ -1,3 +1,4 @@
+---
 namespace: azimuth_cloud
 name: azimuth_ops
 version: 0.1.0
@@ -13,4 +14,4 @@ dependencies:
   ansible.posix: "1.5.4"
   community.general: "7.4.0"
   kubernetes.core: "2.4.0"
-  "git+https://github.com/azimuth-cloud/ansible-collection-terraform.git": "0.3.0"
+  "git+https://github.com/azimuth-cloud/ansible-collection-terraform.git": "0.4.0"
