@@ -107,7 +107,7 @@ jobs:
 
           - key: coral-credits
             path: ./roles/coral_credits/defaults/main.yml
-            respoistory: stackhpc/coral-credits
+            repository: stackhpc/coral-credits
             prereleases: "yes"
             version_jsonpath: coral_credits_chart_version
 
