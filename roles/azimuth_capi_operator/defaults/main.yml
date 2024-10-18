@@ -50,6 +50,51 @@ azimuth_capi_operator_capi_helm_registry_mirrors: >-
 # The additional packages for provisioned clusters
 azimuth_capi_operator_capi_helm_additional_packages: []
 
+# Work out the ansible-init collections to use for tenant clusters
+azimuth_capi_operator_ansible_init_collections_default: >-
+  {{ ansible_init_default_collections | default([]) }}
+azimuth_capi_operator_ansible_init_collections_extra: []
+azimuth_capi_operator_ansible_init_collections: >-
+  {{
+    azimuth_capi_operator_ansible_init_collections_default +
+    azimuth_capi_operator_ansible_init_collections_extra
+  }}
+
+# Work out the ansible-init playbooks to use for tenant clusters
+azimuth_capi_operator_ansible_init_playbooks_default: >-
+  {{ ansible_init_default_playbooks | default([]) }}
+azimuth_capi_operator_ansible_init_playbooks_extra: []
+azimuth_capi_operator_ansible_init_playbooks: >-
+  {{
+    azimuth_capi_operator_ansible_init_playbooks_default +
+    azimuth_capi_operator_ansible_init_playbooks_extra
+  }}
+
+# Metadata to associate with the machines in provisioned clusters
+# By default, we set the metadata for the ansible-init collections and playbooks
+azimuth_capi_operator_capi_helm_machine_metadata_defaults: |-
+  {
+    {% for collection in azimuth_capi_operator_ansible_init_collections %}
+    "ansible_init_coll_{{ loop.index0 }}_name": "{{ collection.name }}",
+    "ansible_init_coll_{{ loop.index0 }}_type": "{{ collection.type }}",
+    "ansible_init_coll_{{ loop.index0 }}_version": "{{ collection.version }}",
+    {% if collection.source is defined %}
+    "ansible_init_coll_{{ loop.index0 }}_source": "{{ collection.source }}",
+    {% endif %}
+    {% endfor %}
+    {% for playbook in azimuth_capi_operator_ansible_init_playbooks %}
+    "ansible_init_pb_{{ loop.index0 }}_name": "{{ playbook.name }}",
+    {% if playbook.stage is defined %}
+    "ansible_init_pb_{{ loop.index0 }}_stage": "{{ playbook.stage }}",
+    {% endif %}
+    {% endfor %}
+  }
+azimuth_capi_operator_capi_helm_machine_metadata_overrides: {}
+azimuth_capi_operator_capi_helm_machine_metadata: >-
+  {{-
+    azimuth_capi_operator_capi_helm_machine_metadata_defaults |
+      combine(azimuth_capi_operator_capi_helm_machine_metadata_overrides, recursive = True)
+  }}
 
 # Indicates whether the failure domain (availability zone) should be omitted from control plane nodes
 # Omitting the failure domain allows OpenStack to select a suitable AZ based on other scheduling constraints
@@ -122,6 +167,7 @@ azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type:
 azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations: true
 
 azimuth_capi_operator_capi_helm_values_defaults:
+  machineMetadata: "{{ azimuth_capi_operator_capi_helm_machine_metadata }}"
   kubeNetwork:
     pods: >-
       {{-
