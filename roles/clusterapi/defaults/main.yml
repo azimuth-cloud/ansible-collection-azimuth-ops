@@ -7,7 +7,7 @@ clusterapi_core_components: "{{ clusterapi_core_repo }}/releases/download/{{ clu
 
 # The repo, version and manifest URL for the Cluster API OpenStack provider components
 clusterapi_openstack_repo: https://github.com/kubernetes-sigs/cluster-api-provider-openstack
-clusterapi_openstack_version: v0.9.0
+clusterapi_openstack_version: v0.10.5
 clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml"
 
 # The diagnostics address for Cluster API components
@@ -45,12 +45,14 @@ clusterapi_patches:
   # Remove the caBundle from the CAPO custom resource definitions
   # It is injected by cert-manager and causes validation issues if set outside of that
   # The CAPI CRDs do not have the field set in the manifests that are shipped
+  # The caBundle exists on every CRD _except_ openstackfloatingippools
   - patch: |-
       - op: remove
         path: /spec/conversion/webhook/clientConfig/caBundle
     target:
       kind: CustomResourceDefinition
       labelSelector: cluster.x-k8s.io/provider=infrastructure-openstack
+      name: openstack(cluster|machine).*
   # The manifests contain environment variable substitutions for feature gates that we do not need
   - patch: |-
       - op: replace

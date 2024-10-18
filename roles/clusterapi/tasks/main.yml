@@ -13,6 +13,14 @@
 - name: Install Cluster API resources
   command: kubectl apply -k {{ clusterapi_kustomization_directory }}
 
+- name: Remove legacy CAPO mutating webhook
+  command: kubectl delete mutatingwebhookconfiguration capo-mutating-webhook-configuration
+  register: clusterapi_capo_mutating_webhook_delete
+  changed_when: clusterapi_capo_mutating_webhook_delete.rc == 0
+  failed_when: >-
+    clusterapi_capo_mutating_webhook_delete.rc != 0 and
+    "NotFound" not in clusterapi_capo_mutating_webhook_delete.stderr
+
 - name: Wait for Cluster API controllers to become ready
   command: >-
     kubectl rollout status
