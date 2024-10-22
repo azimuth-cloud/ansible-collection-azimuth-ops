@@ -25,21 +25,6 @@
         tls.key: "{{ azimuth_ingress_tls_key }}"
   when: azimuth_ingress_tls_certificate
 
-- name: Install trust bundle
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ azimuth_trust_bundle_configmap_definition | to_nice_yaml }}"
-  vars:
-    azimuth_trust_bundle_configmap_definition:
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: "{{ azimuth_trust_bundle_configmap_name }}"
-        namespace: "{{ azimuth_release_namespace }}"
-      data:
-        ca-certificates.crt: "{{ azimuth_trust_bundle }}"
-  when: azimuth_trust_bundle
-
 - name: Install Azimuth on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_chart_name }}"

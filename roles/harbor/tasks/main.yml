@@ -8,6 +8,21 @@
     harbor_create_namespace.rc != 0 and
     'AlreadyExists' not in harbor_create_namespace.stderr
 
+- name: Install trust bundle
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ harbor_trust_bundle_secret_definition | to_nice_yaml }}"
+  vars:
+    harbor_trust_bundle_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ harbor_trust_bundle_secret_name }}"
+        namespace: "{{ harbor_release_namespace }}"
+      stringData:
+        ca.crt: "{{ harbor_trust_bundle }}"
+  when: harbor_trust_bundle
+
 - name: Install wildcard TLS certificate
   command: kubectl apply -f -
   args:
@@ -46,7 +61,7 @@
     password: "{{ harbor_admin_password }}"
     force_basic_auth: yes
     timeout: 5
-    ca_path: "{{ harbor_ca_path or omit }}"
+    ca_path: "{{ harbor_ca_path }}"
     validate_certs: "{{ harbor_validate_certs }}"
   register: harbor_api_available
   until: harbor_api_available is succeeded

@@ -15,6 +15,9 @@
   tasks:
     - block:
         - include_role:
+            name: azimuth_cloud.azimuth_ops.system_trust
+
+        - include_role:
             name: azimuth_cloud.azimuth_ops.sysctl_inotify
 
         - include_role:

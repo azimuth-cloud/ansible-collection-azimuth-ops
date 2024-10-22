@@ -68,6 +68,21 @@
     pgo_database_backup_volume_size: "{{ keycloak_database_backup_volume_size }}"
   when: not keycloak_external_db_url
 
+- name: Install trust bundle
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ keycloak_trust_bundle_secret_definition | to_nice_yaml }}"
+  vars:
+    keycloak_trust_bundle_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ keycloak_trust_bundle_secret_name }}"
+        namespace: "{{ keycloak_namespace }}"
+      stringData:
+        trust-bundle.pem: "{{ keycloak_trust_bundle }}"
+  when: keycloak_trust_bundle
+
 - name: Install Keycloak instance
   command: kubectl apply -f -
   args:
@@ -187,7 +202,7 @@
       password: "{{ keycloak_admin_password }}"
     # An authentication error (401) is an expected status code here
     status_code: [200, 401]
-    ca_path: "{{ keycloak_ca_path or omit }}"
+    ca_path: "{{ keycloak_ca_path }}"
     validate_certs: "{{ keycloak_validate_certs }}"
   register: keycloak_admin_token_req
   # This is the first task that tries to access the Keycloak API, so retry when there
@@ -223,7 +238,7 @@
           client_id: admin-cli
           username: "{{ keycloak_admin_username }}"
           password: "{{ keycloak_initial_admin_password_cmd.stdout }}"
-        ca_path: "{{ keycloak_ca_path or omit }}"
+        ca_path: "{{ keycloak_ca_path }}"
         validate_certs: "{{ keycloak_validate_certs }}"
       register: keycloak_admin_token_initial_req
 
@@ -237,7 +252,7 @@
         method: GET
         headers:
           authorization: "Bearer {{ keycloak_admin_token }}"
-        ca_path: "{{ keycloak_ca_path or omit }}"
+        ca_path: "{{ keycloak_ca_path }}"
         validate_certs: "{{ keycloak_validate_certs }}"
       register: keycloak_realm_users_req
 
@@ -252,7 +267,7 @@
           type: password
           temporary: false
           value: "{{ keycloak_admin_password }}"
-        ca_path: "{{ keycloak_ca_path or omit }}"
+        ca_path: "{{ keycloak_ca_path }}"
         validate_certs: "{{ keycloak_validate_certs }}"
         status_code: [204]
       vars:
@@ -274,6 +289,6 @@
     body_format: json
     body:
       sslRequired: "{{ 'external' if keycloak_ingress_tls_enabled else 'none' }}"
-    ca_path: "{{ keycloak_ca_path or omit }}"
+    ca_path: "{{ keycloak_ca_path }}"
     validate_certs: "{{ keycloak_validate_certs }}"
     status_code: [204]

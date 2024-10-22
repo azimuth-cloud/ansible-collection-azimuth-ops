@@ -22,6 +22,9 @@ velero_cli_unpack_directory: "/opt/velero/{{ velero_cli_version }}"
 # The directory into which the Velero CLI binary should be placed
 velero_cli_bin_directory: /usr/local/bin
 
+# The trust bundle to use with the S3 endpoint
+velero_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+
 # The URL endpoint for the target object store
 velero_s3_url: "{{ undef(hint = 'velero_s3_url is required') }}"
 
@@ -80,6 +83,7 @@ velero_release_defaults:
           s3ForcePathStyle: true
           # Older Ceph doesn't implement checksums properly
           checksumAlgorithm: ""
+        caCert: "{{ velero_trust_bundle }}"
     volumeSnapshotLocation: []
   initContainers:
     - name: velero-plugin-for-aws
