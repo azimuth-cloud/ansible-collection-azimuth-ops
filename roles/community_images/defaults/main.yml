@@ -33,7 +33,7 @@ community_images_disk_format: qcow2
 # The repository to use for azimuth-images
 community_images_azimuth_images_repo: https://github.com/azimuth-cloud/azimuth-images
 # The version of azimuth-images to use to populate the default community images
-community_images_azimuth_images_version: 0.13.0
+community_images_azimuth_images_version: 0.14.0
 # The azimuth-images manifest URL
 community_images_azimuth_images_manifest_url: >-
   {{ community_images_azimuth_images_repo }}/releases/download/{{ community_images_azimuth_images_version }}/manifest.json
@@ -80,7 +80,7 @@ community_images_slurm_base_url: >-
 community_images_slurm:
   # from https://github.com/stackhpc/ansible-slurm-appliance/releases/tag/v1.153
   openhpc:
-    name:  openhpc-ofed-RL9-240906-1041-32568dbb
+    name: openhpc-ofed-RL9-240906-1041-32568dbb
     source_url: "{{ community_images_slurm_base_url }}/openhpc-ofed-RL9-240906-1041-32568dbb"
     source_disk_format: qcow2
     container_format: bare
