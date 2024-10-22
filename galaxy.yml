@@ -11,7 +11,7 @@ license:
 repository: "https://github.com/azimuth-cloud/ansible-collection-azimuth-ops"
 
 dependencies:
-  ansible.posix: "1.6.1"
+  ansible.posix: "1.6.2"
   community.general: "7.4.0"
   kubernetes.core: "5.0.0"
   "git+https://github.com/azimuth-cloud/ansible-collection-terraform.git": "0.4.0"
