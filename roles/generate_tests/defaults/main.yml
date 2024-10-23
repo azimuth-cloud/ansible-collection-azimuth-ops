@@ -149,12 +149,14 @@ generate_tests_caas_test_cases_default: >-
       },
       "services": [
         {% for service in ctype.status.uiMeta.services %}
+        {% if not (service.internal | default(False)) %}
         {% set service_var = service.name | replace('-', '_') %}
         {% set service_expected_title_var = var_prefix ~ 'service_' ~ service_var ~ '_expected_title' %}
         {
           "name": "{{ service.name }}",
           "expected_title": "{{ lookup('vars', service_expected_title_var, default = '') }}",
         },
+        {% endif %}
         {% endfor %}
       ],
     },
