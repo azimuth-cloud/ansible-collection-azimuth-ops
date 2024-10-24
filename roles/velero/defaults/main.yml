@@ -60,6 +60,32 @@ velero_cinder_snapshot_class_name: cinder-csi-snapshot
 velero_s3_plugin_image_source: velero/velero-plugin-for-aws
 velero_s3_plugin_image_version: v1.10.1
 
+# The default backup storage location
+# We disable checksums because older Ceph doesn't implement them properly
+velero_default_backup_storage_location: >-
+  {{-
+    {
+      "name": "default",
+      "default": True,
+      "provider": "aws",
+      "bucket": velero_bucket_name,
+      "credential": {
+        "name": velero_s3_creds_secret_name,
+        "key": "s3-creds",
+      },
+      "config": {
+        "s3Url": velero_s3_url,
+        "s3ForcePathStyle": True,
+        "checksumAlgorithm": "",
+      },
+    } |
+      combine(
+        {"caCert": (velero_trust_bundle | b64encode)}
+        if velero_trust_bundle
+        else {}
+      )
+  }}
+
 # Velero Helm chart config
 velero_chart_name: velero
 velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
@@ -71,19 +97,7 @@ velero_release_defaults:
   configuration:
     features: EnableCSI
     backupStorageLocation:
-      - name: default
-        default: true
-        provider: aws
-        bucket: "{{ velero_bucket_name }}"
-        credential:
-          name: "{{ velero_s3_creds_secret_name }}"
-          key: s3-creds
-        config:
-          s3Url: "{{ velero_s3_url }}"
-          s3ForcePathStyle: true
-          # Older Ceph doesn't implement checksums properly
-          checksumAlgorithm: ""
-        caCert: "{{ velero_trust_bundle }}"
+      - "{{ velero_default_backup_storage_location }}"
     volumeSnapshotLocation: []
   initContainers:
     - name: velero-plugin-for-aws
