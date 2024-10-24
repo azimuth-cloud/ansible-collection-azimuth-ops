@@ -145,6 +145,12 @@ azimuth_authenticator_federated_identity_providers:
     provider: "{{ azimuth_authenticator_federated_provider }}"
     protocol: "{{ azimuth_authenticator_federated_protocol }}"
 #   List of authenticators in the order in which they should appear in the form
+
+# Additional password authenticator variables, set azimuth_authenticators_extra
+# in Azimuth variables config and set all variables required for the authenticator
+# of authenticators.
+azimuth_authenticators_extra: []
+
 azimuth_authenticators: >-
   {{-
     [] +
@@ -195,7 +201,7 @@ azimuth_authenticators: >-
         ]
         if azimuth_authenticator_appcred_enabled
         else []
-      )
+      ) + azimuth_authenticators_extra
   }}
 
 
