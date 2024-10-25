@@ -94,6 +94,34 @@ velero_release_namespace: velero
 velero_release_name: velero
 velero_wait_timeout: 10m
 velero_release_defaults:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+    prometheusRule:
+      enabled: true
+      spec:
+        - alert: VeleroBackupPartialFailures
+          annotations:
+            # Use the unsafe tag to prevent Ansible trying to render it as a template
+            message: !unsafe >-
+              Velero schedule '{{ $labels.schedule }}' has partially failed backups in the last 24 hours.
+          expr: |-
+            sum(increase(velero_backup_partial_failure_total{schedule!=""}[24h])) by(schedule) > 0
+          for: 15m
+          labels:
+            severity: warning
+
+        - alert: VeleroBackupFailures
+          annotations:
+            # Use the unsafe tag to prevent Ansible trying to render it as a template
+            message: !unsafe >-
+              Velero schedule '{{ $labels.schedule }}' has failed backups in the last 24 hours.
+          expr: |-
+            sum(increase(velero_backup_failure_total{schedule!=""}[24h])) by(schedule) > 0
+          for: 15m
+          labels:
+            severity: warning
   configuration:
     features: EnableCSI
     backupStorageLocation:
