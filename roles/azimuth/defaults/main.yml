@@ -154,9 +154,10 @@ azimuth_authenticator_federated_identity_providers:
 #   List of authenticators in the order in which they should appear in the form
 
 # Additional password authenticator variables, set azimuth_authenticators_extra
-# in Azimuth variables config and set all variables required for the authenticator
-# of authenticators.
-azimuth_authenticators_extra: []
+# in Azimuth variables config and set all the required variables for the authenticator
+# in a similar fashion to those below in azimuth_authenticators.
+azimuth_authenticators_extra: >-
+  []
 
 azimuth_authenticators: >-
   {{-
