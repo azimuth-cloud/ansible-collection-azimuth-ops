@@ -157,6 +157,7 @@ azimuth_authenticators_extra: []
 #         authUrl: https://keystone.openstack.example.com/v3
 #         domain: my-domain
 #         verifySsl: true
+
 azimuth_authenticators: >-
   {{-
     [] +
