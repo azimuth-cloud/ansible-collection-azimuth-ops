@@ -153,12 +153,17 @@ azimuth_authenticator_federated_identity_providers:
     protocol: "{{ azimuth_authenticator_federated_protocol }}"
 #   List of authenticators in the order in which they should appear in the form
 
-# Additional password authenticator variables, set azimuth_authenticators_extra
-# in Azimuth variables config and set all the required variables for the authenticator
-# in a similar fashion to those below in azimuth_authenticators.
-azimuth_authenticators_extra: >-
-  []
-
+# Additional authenticators to include
+azimuth_authenticators_extra: []
+# Example for authenticating with an additional Keystone domain:
+#    - hidden: false
+#       label: "What shows up on login dropdown menu"
+#       name: a_unique_name
+#       type: openstack-password
+#       openstackPassword:
+#         authUrl: https://keystone.openstack.example.com/v3
+#         domain: my-domain
+#         verifySsl: true
 azimuth_authenticators: >-
   {{-
     [] +
