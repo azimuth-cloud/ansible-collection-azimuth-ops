@@ -17,6 +17,28 @@ jobs:
     strategy:
       matrix:
         include:
+          - key: ansible.posix
+            path: galaxy.yml
+            repository: ansible-collections/ansible.posix
+            version_jsonpath: dependencies['ansible.posix']
+
+          - key: community.general
+            path: galaxy.yml
+            repository: ansible-collections/community.general
+            version_jsonpath: dependencies['community.general']
+
+          - key: kubernetes.core
+            path: galaxy.yml
+            repository: ansible-collections/kubernetes.core
+            tags: "yes"
+            version_jsonpath: dependencies['kubernetes.core']
+
+          - key: ansible-collection-terraform
+            path: ./galaxy.yml
+            repository: azimuth-cloud/ansible-collection-terraform
+            prereleases: "yes"
+            version_jsonpath: dependencies['git+https://github.com/azimuth-cloud/ansible-collection-terraform.git']
+
           # - key: ansible-slurm-appliance
           #   path: ./roles/azimuth_caas_operator/defaults/main.yml
           #   repository: stackhpc/ansible-slurm-appliance
@@ -82,6 +104,12 @@ jobs:
             repository: azimuth-cloud/capi-helm-charts
             prereleases: "yes"
             version_jsonpath: capi_cluster_chart_version
+
+          - key: coral-credits
+            path: ./roles/coral_credits/defaults/main.yml
+            repository: stackhpc/coral-credits
+            prereleases: "yes"
+            version_jsonpath: coral_credits_chart_version
 
           - key: cluster-api
             path: ./roles/clusterapi/defaults/main.yml

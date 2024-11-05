@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.7.0
+azimuth_capi_operator_chart_version: 0.8.1
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -12,6 +12,9 @@ azimuth_capi_operator_release_name: azimuth-capi-operator
 
 # The timeout to wait for CAPI operator to become ready
 azimuth_capi_operator_wait_timeout: 10m
+
+# Custom trust bundle for SSL verification
+azimuth_capi_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
 # The timer interval to use for the CAPI operator
 azimuth_capi_operator_timer_interval: 60
@@ -39,7 +42,8 @@ azimuth_capi_operator_capi_helm_dns_nameservers:
 
 # Bundle of certificates that should be added to the system trustroots for provisioned clusters
 # E.g. for pulling containers from a registry with a custom CA chain
-azimuth_capi_operator_capi_helm_trust_bundle: "{{ trust_bundle | default({}) }}"
+azimuth_capi_operator_capi_helm_trust_bundle: >-
+  {{ system_trust_extra_root_cas | default(trust_bundle) | default({}) }}
 # The registry mirrors for provisioned clusters
 azimuth_capi_operator_capi_helm_registry_mirrors: >-
   {{-
@@ -50,6 +54,51 @@ azimuth_capi_operator_capi_helm_registry_mirrors: >-
 # The additional packages for provisioned clusters
 azimuth_capi_operator_capi_helm_additional_packages: []
 
+# Work out the ansible-init collections to use for tenant clusters
+azimuth_capi_operator_ansible_init_collections_default: >-
+  {{ ansible_init_default_collections | default([]) }}
+azimuth_capi_operator_ansible_init_collections_extra: []
+azimuth_capi_operator_ansible_init_collections: >-
+  {{
+    azimuth_capi_operator_ansible_init_collections_default +
+    azimuth_capi_operator_ansible_init_collections_extra
+  }}
+
+# Work out the ansible-init playbooks to use for tenant clusters
+azimuth_capi_operator_ansible_init_playbooks_default: >-
+  {{ ansible_init_default_playbooks | default([]) }}
+azimuth_capi_operator_ansible_init_playbooks_extra: []
+azimuth_capi_operator_ansible_init_playbooks: >-
+  {{
+    azimuth_capi_operator_ansible_init_playbooks_default +
+    azimuth_capi_operator_ansible_init_playbooks_extra
+  }}
+
+# Metadata to associate with the machines in provisioned clusters
+# By default, we set the metadata for the ansible-init collections and playbooks
+azimuth_capi_operator_capi_helm_machine_metadata_defaults: |-
+  {
+    {% for collection in azimuth_capi_operator_ansible_init_collections %}
+    "ansible_init_coll_{{ loop.index0 }}_name": "{{ collection.name }}",
+    "ansible_init_coll_{{ loop.index0 }}_type": "{{ collection.type }}",
+    "ansible_init_coll_{{ loop.index0 }}_version": "{{ collection.version }}",
+    {% if collection.source is defined %}
+    "ansible_init_coll_{{ loop.index0 }}_source": "{{ collection.source }}",
+    {% endif %}
+    {% endfor %}
+    {% for playbook in azimuth_capi_operator_ansible_init_playbooks %}
+    "ansible_init_pb_{{ loop.index0 }}_name": "{{ playbook.name }}",
+    {% if playbook.stage is defined %}
+    "ansible_init_pb_{{ loop.index0 }}_stage": "{{ playbook.stage }}",
+    {% endif %}
+    {% endfor %}
+  }
+azimuth_capi_operator_capi_helm_machine_metadata_overrides: {}
+azimuth_capi_operator_capi_helm_machine_metadata: >-
+  {{-
+    azimuth_capi_operator_capi_helm_machine_metadata_defaults |
+      combine(azimuth_capi_operator_capi_helm_machine_metadata_overrides, recursive = True)
+  }}
 
 # Indicates whether the failure domain (availability zone) should be omitted from control plane nodes
 # Omitting the failure domain allows OpenStack to select a suitable AZ based on other scheduling constraints
@@ -122,6 +171,7 @@ azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type:
 azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations: true
 
 azimuth_capi_operator_capi_helm_values_defaults:
+  machineMetadata: "{{ azimuth_capi_operator_capi_helm_machine_metadata }}"
   kubeNetwork:
     pods: >-
       {{-
@@ -448,6 +498,7 @@ azimuth_capi_operator_release_defaults:
   # Enable the metrics with the service monitor by default
   metrics:
     enabled: true
+  trustBundle: "{{ azimuth_capi_operator_trust_bundle }}"
 azimuth_capi_operator_release_overrides: {}
 azimuth_capi_operator_release_values: >-
   {{-

@@ -1,0 +1,28 @@
+---
+
+- name: Install extra root CAs
+  copy:
+    content: "{{ item.certificate }}"
+    dest: /usr/local/share/ca-certificates/{{ item.name }}.crt
+  # Split the trust bundle into individual certificates
+  loop: >-
+    {{
+      system_trust_extra_root_cas |
+        dict2items(key_name = 'name', value_name = 'certificate')
+    }}
+  loop_control:
+    label: "{{ item.name }}"
+  register: system_trust_install_extra_root_cas
+
+- name: Update system trust bundles
+  command: update-ca-certificates
+  when: system_trust_install_extra_root_cas is changed
+
+- name: Slurp system CA bundle
+  slurp:
+    src: /etc/ssl/certs/ca-certificates.crt
+  register: system_trust_slurp_ca_bundle
+
+- name: Set system CA bundle fact
+  set_fact:
+    system_trust_ca_bundle: "{{ system_trust_slurp_ca_bundle.content | b64decode }}"

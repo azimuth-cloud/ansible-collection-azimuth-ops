@@ -2,12 +2,12 @@
 
 # The repo, version and manifest URL for the Cluster API core components
 clusterapi_core_repo: https://github.com/kubernetes-sigs/cluster-api
-clusterapi_core_version: v1.8.2
+clusterapi_core_version: v1.8.4
 clusterapi_core_components: "{{ clusterapi_core_repo }}/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml"
 
 # The repo, version and manifest URL for the Cluster API OpenStack provider components
 clusterapi_openstack_repo: https://github.com/kubernetes-sigs/cluster-api-provider-openstack
-clusterapi_openstack_version: v0.9.0
+clusterapi_openstack_version: v0.11.0
 clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml"
 
 # The diagnostics address for Cluster API components
@@ -45,12 +45,14 @@ clusterapi_patches:
   # Remove the caBundle from the CAPO custom resource definitions
   # It is injected by cert-manager and causes validation issues if set outside of that
   # The CAPI CRDs do not have the field set in the manifests that are shipped
+  # The caBundle exists on every CRD _except_ openstackfloatingippools
   - patch: |-
       - op: remove
         path: /spec/conversion/webhook/clientConfig/caBundle
     target:
       kind: CustomResourceDefinition
       labelSelector: cluster.x-k8s.io/provider=infrastructure-openstack
+      name: openstack(cluster|machine).*
   # The manifests contain environment variable substitutions for feature gates that we do not need
   - patch: |-
       - op: replace
@@ -119,7 +121,7 @@ clusterapi_watches:
 # Helm chart information for the Cluster API addon provider
 clusterapi_addon_provider_chart_repo: https://azimuth-cloud.github.io/cluster-api-addon-provider
 clusterapi_addon_provider_chart_name: cluster-api-addon-provider
-clusterapi_addon_provider_chart_version: 0.6.1
+clusterapi_addon_provider_chart_version: 0.7.1
 
 # Release information for the Cluster API addon provider release
 clusterapi_addon_provider_release_namespace: capi-addon-system
@@ -128,14 +130,25 @@ clusterapi_addon_provider_release_name: cluster-api-addon-provider
 # The timeout to wait for the Cluster API addon provider to become ready
 clusterapi_addon_provider_wait_timeout: 30m
 
+# The trust bundle to use with the Cluster API addon provider
+# This allows for pulling charts from places using a custom CA for TLS
+clusterapi_addon_provider_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+
 # The values for the Cluster API addon provider deployment
 # The defaults are sufficient for most use cases
-clusterapi_addon_provider_release_values: {}
+clusterapi_addon_provider_release_defaults:
+  trustBundle: "{{ clusterapi_addon_provider_trust_bundle }}"
+clusterapi_addon_provider_release_overrides: {}
+clusterapi_addon_provider_release_values: >-
+  {{-
+    clusterapi_addon_provider_release_defaults |
+      combine(clusterapi_addon_provider_release_overrides, recursive = True)
+  }}
 
 # Helm chart information for the Cluster API janitor
 clusterapi_janitor_openstack_chart_repo: https://azimuth-cloud.github.io/cluster-api-janitor-openstack
 clusterapi_janitor_openstack_chart_name: cluster-api-janitor-openstack
-clusterapi_janitor_openstack_chart_version: 0.6.0
+clusterapi_janitor_openstack_chart_version: 0.6.2
 
 # Release information for the Cluster API janitor release
 clusterapi_janitor_openstack_release_namespace: capi-janitor-system

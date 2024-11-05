@@ -39,7 +39,7 @@
     dest: "{{ pgo_kustomization_directory }}/kustomization.yaml"
 
 - name: Install PGO resources
-  command: kubectl apply --server-side -k {{ pgo_kustomization_directory }}
+  command: kubectl apply --server-side --force-conflicts -k {{ pgo_kustomization_directory }}
 
 - name: Wait for PGO controllers to become ready
   command: >-
@@ -58,7 +58,7 @@
     label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
 
 - name: Install monitoring dashboards
-  command: kubectl apply -f -
+  command: kubectl apply --server-side --force-conflicts -f -
   args:
     stdin: "{{ pgo_dashboard_definition | to_nice_yaml }}"
   vars:

@@ -22,6 +22,9 @@ velero_cli_unpack_directory: "/opt/velero/{{ velero_cli_version }}"
 # The directory into which the Velero CLI binary should be placed
 velero_cli_bin_directory: /usr/local/bin
 
+# The trust bundle to use with the S3 endpoint
+velero_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+
 # The URL endpoint for the target object store
 velero_s3_url: "{{ undef(hint = 'velero_s3_url is required') }}"
 
@@ -57,6 +60,32 @@ velero_cinder_snapshot_class_name: cinder-csi-snapshot
 velero_s3_plugin_image_source: velero/velero-plugin-for-aws
 velero_s3_plugin_image_version: v1.10.1
 
+# The default backup storage location
+# We disable checksums because older Ceph doesn't implement them properly
+velero_default_backup_storage_location: >-
+  {{-
+    {
+      "name": "default",
+      "default": True,
+      "provider": "aws",
+      "bucket": velero_bucket_name,
+      "credential": {
+        "name": velero_s3_creds_secret_name,
+        "key": "s3-creds",
+      },
+      "config": {
+        "s3Url": velero_s3_url,
+        "s3ForcePathStyle": True,
+        "checksumAlgorithm": "",
+      },
+    } |
+      combine(
+        {"caCert": (velero_trust_bundle | b64encode)}
+        if velero_trust_bundle
+        else {}
+      )
+  }}
+
 # Velero Helm chart config
 velero_chart_name: velero
 velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
@@ -65,21 +94,38 @@ velero_release_namespace: velero
 velero_release_name: velero
 velero_wait_timeout: 10m
 velero_release_defaults:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+    prometheusRule:
+      enabled: true
+      spec:
+        - alert: VeleroBackupPartialFailures
+          annotations:
+            # Use the unsafe tag to prevent Ansible trying to render it as a template
+            message: !unsafe >-
+              Velero schedule '{{ $labels.schedule }}' has partially failed backups in the last 24 hours.
+          expr: |-
+            sum(increase(velero_backup_partial_failure_total{schedule!=""}[24h])) by(schedule) > 0
+          for: 15m
+          labels:
+            severity: warning
+
+        - alert: VeleroBackupFailures
+          annotations:
+            # Use the unsafe tag to prevent Ansible trying to render it as a template
+            message: !unsafe >-
+              Velero schedule '{{ $labels.schedule }}' has failed backups in the last 24 hours.
+          expr: |-
+            sum(increase(velero_backup_failure_total{schedule!=""}[24h])) by(schedule) > 0
+          for: 15m
+          labels:
+            severity: warning
   configuration:
     features: EnableCSI
     backupStorageLocation:
-      - name: default
-        default: true
-        provider: aws
-        bucket: "{{ velero_bucket_name }}"
-        credential:
-          name: "{{ velero_s3_creds_secret_name }}"
-          key: s3-creds
-        config:
-          s3Url: "{{ velero_s3_url }}"
-          s3ForcePathStyle: true
-          # Older Ceph doesn't implement checksums properly
-          checksumAlgorithm: ""
+      - "{{ velero_default_backup_storage_location }}"
     volumeSnapshotLocation: []
   initContainers:
     - name: velero-plugin-for-aws
@@ -202,9 +248,10 @@ velero_restore_backup_name: "{{ undef(hint = 'velero_restore_backup_name is requ
 velero_restore_name: >-
   {{ velero_restore_backup_name }}-{{ "%Y%m%d%H%M%S" | strftime(ansible_date_time.epoch) }}
 
-# CaaS clusters have persistent state in their status, so restore them
+# Resources that require their status to be restored in order to function correctly
 velero_restore_include_resource_status:
   - clusters.caas.azimuth.stackhpc.com
+  - leases.scheduling.azimuth.stackhpc.com
 
 velero_restore_spec_defaults:
   restoreStatus:

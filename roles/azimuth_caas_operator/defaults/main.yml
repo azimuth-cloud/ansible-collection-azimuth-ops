@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: 0.15.0
+azimuth_caas_operator_chart_version: 0.16.0
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -11,6 +11,9 @@ azimuth_caas_operator_release_name: azimuth-caas-operator
 
 # The timeout to wait for operator to become ready
 azimuth_caas_operator_wait_timeout: 10m
+
+# Custom trust bundle for SSL verification
+azimuth_caas_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
 # The ansible-runner image and tag to use
 # Leave blank to use the defaults
@@ -63,6 +66,7 @@ azimuth_caas_operator_release_defaults:
           )
       }}
     globalExtraVars: "{{ azimuth_caas_operator_global_extravars }}"
+  trustBundle: "{{ azimuth_caas_operator_trust_bundle }}"
 azimuth_caas_operator_release_overrides: {}
 azimuth_caas_operator_release_values: >-
   {{-
@@ -96,11 +100,11 @@ azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/ansible-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: v1.151
+azimuth_caas_stackhpc_slurm_appliance_git_version: v1.155
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds: 1800
+azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds: 3600
 # Whether to use manila shares for home directories:
 azimuth_caas_stackhpc_slurm_appliance_home_manila_share: false
 # The metadata file for the StackHPC Slurm appliance
@@ -201,7 +205,7 @@ azimuth_caas_workstation_git_url: >-
       default("https://github.com/azimuth-cloud/caas-workstation.git")
   }}
 # The git version for the workstation
-azimuth_caas_workstation_default_git_version: 0.8.0
+azimuth_caas_workstation_default_git_version: 0.9.0
 azimuth_caas_workstation_git_version: >-
   {{
     azimuth_caas_stackhpc_workstation_git_version |
@@ -211,7 +215,7 @@ azimuth_caas_workstation_git_version: >-
 azimuth_caas_workstation_playbook: >-
   {{ azimuth_caas_stackhpc_workstation_playbook | default("workstation.yml") }}
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_workstation_job_timeout_seconds: 900
+azimuth_caas_workstation_job_timeout_seconds: 3600
 # The metadata URL for the workstation
 azimuth_caas_workstation_default_metadata_url: >-
   https://raw.githubusercontent.com/azimuth-cloud/caas-workstation/{{ azimuth_caas_workstation_git_version }}/ui-meta/workstation.yml
@@ -261,7 +265,7 @@ azimuth_caas_workstation_init_playbooks: >-
 azimuth_caas_workstation_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_workstation_image }}"
   ansible_init_collections: "{{ azimuth_caas_workstation_init_collections }}"
-  azimuth_init_playbooks: "{{ azimuth_caas_workstation_init_playbooks }}"
+  ansible_init_playbooks: "{{ azimuth_caas_workstation_init_playbooks }}"
 # extra_vars overrides for templates in the workstation
 azimuth_caas_workstation_extra_vars_overrides: {}
 azimuth_caas_workstation_extra_vars: >-
@@ -412,7 +416,7 @@ azimuth_caas_repo2docker_git_version: >-
 azimuth_caas_repo2docker_playbook: >-
   {{ azimuth_caas_stackhpc_repo2docker_playbook | default("repo2docker.yml") }}
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_repo2docker_job_timeout_seconds: 1200
+azimuth_caas_repo2docker_job_timeout_seconds: 3600
 # The metadata root for the repo2docker appliance project
 azimuth_caas_repo2docker_default_metadata_url: >-
   https://raw.githubusercontent.com/azimuth-cloud/caas-repo2docker/{{ azimuth_caas_repo2docker_git_version }}/ui-meta/repo2docker.yml
@@ -462,7 +466,7 @@ azimuth_caas_repo2docker_init_playbooks: >-
 azimuth_caas_repo2docker_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_repo2docker_image }}"
   ansible_init_collections: "{{ azimuth_caas_repo2docker_init_collections }}"
-  azimuth_init_playbooks: "{{ azimuth_caas_repo2docker_init_playbooks }}"
+  ansible_init_playbooks: "{{ azimuth_caas_repo2docker_init_playbooks }}"
 # extra_vars overrides for templates in the repo2docker appliance
 azimuth_caas_repo2docker_extra_vars_overrides: {}
 azimuth_caas_repo2docker_extra_vars: >-
@@ -534,7 +538,7 @@ azimuth_caas_rstudio_git_version: >-
 azimuth_caas_rstudio_playbook: >-
   {{ azimuth_caas_stackhpc_rstudio_playbook | default("rstudio.yml") }}
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
-azimuth_caas_rstudio_job_timeout_seconds: 900
+azimuth_caas_rstudio_job_timeout_seconds: 3600
 # The metadata root for the R-Studio appliance project
 azimuth_caas_rstudio_default_metadata_url: >-
   https://raw.githubusercontent.com/azimuth-cloud/caas-r-studio-server/{{ azimuth_caas_rstudio_git_version }}/ui-meta/rstudio.yml
@@ -584,7 +588,7 @@ azimuth_caas_rstudio_init_playbooks: >-
 azimuth_caas_rstudio_extra_vars_defaults:
   cluster_image: "{{ azimuth_caas_rstudio_image }}"
   ansible_init_collections: "{{ azimuth_caas_rstudio_init_collections }}"
-  azimuth_init_playbooks: "{{ azimuth_caas_rstudio_init_playbooks }}"
+  ansible_init_playbooks: "{{ azimuth_caas_rstudio_init_playbooks }}"
 # extra_vars overrides for templates in the R-Studio appliance
 azimuth_caas_rstudio_extra_vars_overrides: {}
 azimuth_caas_rstudio_extra_vars: >-

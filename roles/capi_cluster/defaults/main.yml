@@ -3,7 +3,7 @@
 # The chart to use
 capi_cluster_chart_repo: https://azimuth-cloud.github.io/capi-helm-charts
 capi_cluster_chart_name: openstack-cluster
-capi_cluster_chart_version: 0.10.1
+capi_cluster_chart_version: 0.11.2
 
 # Release information for the cluster release
 capi_cluster_release_namespace: default
@@ -24,30 +24,30 @@ capi_cluster_cloud_name: "{{ lookup('env', 'OS_CLOUD') or 'openstack' }}"
 # The OpenStack Cluster API provider requires the project ID to be present in the clouds file
 capi_cluster_openstack_project_id: "{{ undef(hint = 'capi_cluster_openstack_project_id is required') }}"
 
-# The CA certificate to use to validate OpenStack connections
-# If not given, then connections are not verified
+# Use the system CA bundle to verify OpenStack connections if no explicit cert is given
+# Note that the system CA bundle will contain any custom CAs that were specified
 capi_cluster_openstack_ca_cert_file:
 capi_cluster_openstack_ca_cert: >-
   {{-
     lookup('file', capi_cluster_openstack_ca_cert_file)
     if capi_cluster_openstack_ca_cert_file
-    else None
+    else (system_trust_ca_bundle | default(''))
   }}
 
 # The Kubernetes version of the cluster and the id of the matching image
 # Default, wire these up with an image from community images when available
 capi_cluster_kubernetes_version: >-
   {{-
-    community_images.kube_1_29.kubernetes_version
-    if community_images is defined and 'kube_1_29' in community_images
+    community_images.kube_1_30.kubernetes_version
+    if community_images is defined and 'kube_1_30' in community_images
     else undef(hint = 'capi_cluster_kubernetes_version is required')
   }}
 capi_cluster_machine_image_id: >-
   {{-
-    community_images_image_ids.kube_1_29
+    community_images_image_ids.kube_1_30
     if (
       community_images_image_ids is defined and
-      'kube_1_29' in community_images_image_ids
+      'kube_1_30' in community_images_image_ids
     )
     else undef(hint = 'capi_cluster_machine_image_id is required')
   }}
@@ -63,7 +63,8 @@ capi_cluster_ssh_keypair: >-
 
 # Bundle of certificates that should be added to the system trustroots of cluster nodes
 # E.g. if using a registry with a custom CA chain
-capi_cluster_trust_bundle: "{{ trust_bundle | default({}) }}"
+capi_cluster_trust_bundle: >-
+  {{ system_trust_extra_root_cas | default(trust_bundle) | default({}) }}
 
 # The registry mirrors for the cluster
 # NOTE: This cannot depend on Harbor as it isn't deployed yet!

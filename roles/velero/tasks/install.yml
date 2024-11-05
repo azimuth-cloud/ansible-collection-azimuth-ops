@@ -67,6 +67,23 @@
     wait: yes
     wait_timeout: "{{ velero_wait_timeout }}"
 
+- name: Install Grafana dashboard for Velero metrics
+  command: kubectl apply --server-side --force-conflicts -f -
+  args:
+    stdin: "{{ velero_dashboard_definition | to_nice_yaml }}"
+  vars:
+    velero_dashboard_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: velero-grafana-dashboard
+        namespace: "{{ velero_release_namespace }}"
+        labels:
+          grafana_dashboard: "1"
+      data:
+        velero_dashboard.json: |-
+          {{ lookup('file', 'grafana_dashboard.json' ) | from_json | to_nice_json }}
+
 - block:
     - name: Ensure Velero CLI unpack directory exists
       file:

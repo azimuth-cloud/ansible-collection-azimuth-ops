@@ -3,7 +3,7 @@
 # The chart to use
 zenith_chart_repo: https://azimuth-cloud.github.io/zenith
 zenith_chart_name: zenith-server
-zenith_chart_version: 0.12.0
+zenith_chart_version: 0.13.0
 
 # Release information for the Zenith release
 # Use the same namespace as the Azimuth release by default
@@ -12,6 +12,9 @@ zenith_release_name: zenith-server
 
 # The timeout to wait for Zenith to become ready
 zenith_wait_timeout: 10m
+
+# Custom trust bundle for SSL verification
+zenith_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
 # Ingress settings
 #   The base domain for Zenith ingress resources
@@ -84,6 +87,7 @@ zenith_sshd_service_load_balancer_ip: >-
 # The values for the release
 zenith_release_defaults:
   common:
+    trustBundle: "{{ zenith_trust_bundle }}"
     ingress:
       baseDomain: "{{ zenith_ingress_base_domain }}"
       annotations: "{{ zenith_ingress_annotations }}"

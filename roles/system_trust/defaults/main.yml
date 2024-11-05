@@ -1,0 +1,5 @@
+---
+
+# The extra root CAs to inject into the system trust store
+# Map of cert name -> cert, with a single cert per entry
+system_trust_extra_root_cas: "{{ trust_bundle | default({}) }}"

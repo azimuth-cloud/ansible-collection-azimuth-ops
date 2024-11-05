@@ -1,0 +1,53 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cert-manager-alerting-rules
+  namespace:  "{{ certmanager_release_namespace }}"
+  labels:
+    release: kube-prometheus-stack
+{% raw %}
+spec:
+  groups:
+    - name: cert-manager.rules
+      rules:
+        - alert: CertManagerAbsent
+          annotations:
+            description: >-
+              New certificates will not be able to be minted, and existing ones can't
+              be renewed until cert-manager is back.
+            runbook_url: https://github.com/imusmanmalik/cert-manager-mixin/blob/main/RUNBOOK.md#certmanagerabsent
+            summary: Cert Manager has disappeared from Prometheus service discovery.
+          expr: absent(up{job="cert-manager"})
+          for: 10m
+          labels:
+            severity: critical
+
+        - alert: CertManagerCertExpirySoon
+          annotations:
+            description: >-
+              The domain that this cert covers will be unavailable after {{ $value | humanizeDuration }}.
+              Clients using endpoints that this cert protects will start to fail in {{ $value | humanizeDuration }}.
+            runbook_url: https://github.com/imusmanmalik/cert-manager-mixin/blob/main/RUNBOOK.md#certmanagercertexpirysoon
+            summary: The cert `{{ $labels.name }}` is {{ $value | humanizeDuration }} from expiry.
+          expr: |
+            avg by (exported_namespace, namespace, name) (
+              certmanager_certificate_expiration_timestamp_seconds - time()
+            ) < (30 * 24 * 3600)
+          for: 1h
+          labels:
+            severity: warning
+        
+        - alert: CertManagerHittingRateLimits
+          annotations:
+            description: >-
+              Depending on the rate limit, cert-manager may be unable to generate certificates for up to a week.
+            runbook_url: https://github.com/imusmanmalik/cert-manager-mixin/blob/main/RUNBOOK.md#certmanagerhittingratelimits
+            summary: Cert manager hitting LetsEncrypt rate limits.
+          expr: |
+            sum by (host) (
+              rate(certmanager_http_acme_client_request_count{status="429"}[5m])
+            ) > 0
+          for: 5m
+          labels:
+            severity: critical
+{% endraw %}
