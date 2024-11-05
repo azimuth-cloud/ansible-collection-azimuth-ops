@@ -149,14 +149,14 @@ azimuth_authenticator_federated_identity_providers:
 # Additional authenticators to include
 azimuth_authenticators_extra: []
 # Example for authenticating with an additional Keystone domain:
-#    - hidden: false
-#       label: "What shows up on login dropdown menu"
-#       name: a_unique_name
-#       type: openstack-password
-#       openstackPassword:
-#         authUrl: https://keystone.openstack.example.com/v3
-#         domain: my-domain
-#         verifySsl: true
+# - hidden: false
+#   label: "What shows up on login dropdown menu"
+#   name: a_unique_name
+#   type: openstack-password
+#   openstackPassword:
+#     authUrl: https://keystone.openstack.example.com/v3
+#     domain: my-domain
+#     verifySsl: true
 
 azimuth_authenticators: >-
   {{-
