@@ -6,3 +6,4 @@
 backend.tf
 .vscode/
 __pycache__
+**/.DS_Store

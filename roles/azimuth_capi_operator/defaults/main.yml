@@ -846,7 +846,7 @@ azimuth_capi_operator_app_templates_binderhub_spec:
 # Indicates whether the Zenith-enabled huggingface_llm app template should be enabled
 azimuth_capi_operator_app_templates_huggingface_llm_enabled: true
 # The Helm chart to use for the huggingface_llm app template
-azimuth_capi_operator_app_templates_huggingface_llm_chart_name: azimuth-llm
+azimuth_capi_operator_app_templates_huggingface_llm_chart_name: azimuth-llm-chat
 # The Helm repository to use for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_chart_repo: https://stackhpc.github.io/azimuth-llm
 # The version range to use for the huggingface_llm Helm chart
