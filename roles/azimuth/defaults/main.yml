@@ -85,7 +85,7 @@ azimuth_metrics_tenant_metrics_url_template: >-
 # The documentation URL
 # By default, we use the generic Azimuth docs
 azimuth_documentation_url: https://azimuth-cloud.github.io/azimuth-user-docs/
-azimuth_support_url: https://confluence.skatelescope.org/display/SRCSC/Azimuth+Support+on+Cambridge+Arcus
+azimuth_support_url: None
 
 # A list of curated sizes, mapping a flavor ID to an alternative name and description
 # If no sizes are given, the sizes returned by the cloud provider are used
