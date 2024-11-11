@@ -58,7 +58,7 @@ velero_cinder_snapshot_class_name: cinder-csi-snapshot
 
 # Velero plugin config
 velero_s3_plugin_image_source: velero/velero-plugin-for-aws
-velero_s3_plugin_image_version: v1.10.1
+velero_s3_plugin_image_version: v1.11.0
 
 # The default backup storage location
 # We disable checksums because older Ceph doesn't implement them properly
