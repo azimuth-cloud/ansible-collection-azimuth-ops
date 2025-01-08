@@ -8,7 +8,7 @@ mkdocs_user_docs_enabled: "{{ mkdocs_enabled }}"
 # The Helm chart to use
 mkdocs_chart_repo: https://azimuth-cloud.github.io/mkdocs-helm
 mkdocs_chart_name: mkdocs-helm
-mkdocs_chart_version: 0.1.0-dev.0.main.10 # TODO: Publish a stable release
+mkdocs_chart_version: 0.1.0
 
 # Helm Release information
 # TODO: Are we happy with this namespace? Maybe 'azimuth' namespace instead?
