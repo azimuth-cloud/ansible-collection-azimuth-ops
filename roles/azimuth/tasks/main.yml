@@ -1,5 +1,14 @@
 ---
 
+- name: Fail if legacy authentication settings are defined
+  fail:
+    msg: |
+      Legacy authentication parameters detected in environment.
+      Please consult the docs and update your configuration accordingly.
+  when: >-
+    azimuth_authenticators is defined or
+    azimuth_authenticators_extra is defined
+
 - name: Create Azimuth release namespace
   command: kubectl create namespace {{ azimuth_release_namespace }}
   register: azimuth_create_namespace
