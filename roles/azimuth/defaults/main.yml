@@ -273,6 +273,11 @@ azimuth_authentication: >-
       combine(azimuth_authentication_overrides, recursive = True)
   }}
 
+# The type of provider to use
+#   Setting this to "null" disables all cloud functionality, only retaining support
+#   for deploying onto a pre-configured Kubernetes cluster for each tenant
+azimuth_cloud_provider_type: openstack
+
 # OpenStack provider settings
 #   The template to use when searching for the internal network
 #   Only used if the internal network is not tagged
@@ -292,7 +297,6 @@ azimuth_openstack_create_internal_net: true
 azimuth_openstack_internal_net_cidr: 192.168.3.0/24
 #   The nameservers to set on auto-created tenant internal networks
 azimuth_openstack_internal_net_dns_nameservers: []
-
 # Azimuth OpenStack provider configuration
 azimuth_openstack_provider: >-
   {{-
@@ -437,8 +441,15 @@ azimuth_release_defaults:
     supportUrl: "{{ azimuth_support_url }}"
     curatedSizes: "{{ azimuth_curated_sizes }}"
   authentication: "{{ azimuth_authentication }}"
-  provider:
-    openstack: "{{ azimuth_openstack_provider }}"
+  provider: >-
+    {{-
+      { "type": azimuth_cloud_provider_type } |
+        combine(
+          { "openstack": azimuth_openstack_provider }
+          if azimuth_cloud_provider_type == "openstack"
+          else {}
+        )
+    }}
   apps: >-
     {{-
       {

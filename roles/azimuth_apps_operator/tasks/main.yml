@@ -12,25 +12,3 @@
     create_namespace: yes
     wait: yes
     wait_timeout: "{{ azimuth_apps_operator_wait_timeout }}"
-
-- name: Install Azimuth apps app templates
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ template_definition | to_nice_yaml }}"
-  vars:
-    template_definition:
-      apiVersion: apps.azimuth-cloud.io/v1alpha1
-      kind: AppTemplate
-      metadata:
-        name: "{{ template.name }}"
-        annotations: "{{ template.config.annotations | default({}) }}"
-      # This allows old-style templates to still work
-      spec: "{{ template.config.spec | default(template.config) }}"
-  loop: >-
-    {{-
-      azimuth_apps_operator_app_templates |
-        dict2items(key_name = 'name', value_name = 'config')
-    }}
-  loop_control:
-    loop_var: template
-    label: "{{ template.name }}"
