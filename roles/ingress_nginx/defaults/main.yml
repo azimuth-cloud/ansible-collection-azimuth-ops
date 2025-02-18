@@ -16,6 +16,13 @@ ingress_nginx_wait_timeout: 10m
 ingress_nginx_release_defaults:
   controller:
     allowSnippetAnnotations: true
+    # We need to allow arbitrary configuration snippets so that
+    # the Azimuth Identity operator can create ingress resources
+    # which strip the X-Remote-User header. This is safe since
+    # we control all ingress objects which get created on the
+    # management cluster.
+    config:
+      annotations-risk-level: Critical
     metrics:
       enabled: true
       serviceMonitor:
