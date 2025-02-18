@@ -1,0 +1,14 @@
+---
+
+- name: Install Flux controllers on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ flux_chart_name }}"
+    chart_repo_url: "{{ flux_chart_repo }}"
+    chart_version: "{{ flux_chart_version }}"
+    release_namespace: "{{ flux_release_namespace }}"
+    release_name: "{{ flux_release_name }}"
+    release_values: "{{ flux_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ flux_wait_timeout }}"

@@ -1,0 +1,30 @@
+---
+
+# The chart to use
+azimuth_apps_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-apps-operator
+azimuth_apps_operator_chart_name: azimuth-apps-operator
+azimuth_apps_operator_chart_version: 0.1.0-dev.0.main.14
+
+# Release information for the apps operator release
+# Use the same namespace as Azimuth by default
+azimuth_apps_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
+azimuth_apps_operator_release_name: azimuth-apps-operator
+
+# The timeout to wait for apps operator to become ready
+azimuth_apps_operator_wait_timeout: 10m
+
+# Custom trust bundle for SSL verification
+azimuth_apps_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+
+# The values for the release
+azimuth_apps_operator_release_defaults:
+  # Enable the metrics with the service monitor by default
+  metrics:
+    enabled: true
+  trustBundle: "{{ azimuth_apps_operator_trust_bundle }}"
+azimuth_apps_operator_release_overrides: {}
+azimuth_apps_operator_release_values: >-
+  {{-
+    azimuth_apps_operator_release_defaults |
+      combine(azimuth_apps_operator_release_overrides, recursive = True)
+  }}
