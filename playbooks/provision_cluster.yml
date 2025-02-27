@@ -44,6 +44,10 @@
         - include_role:
             name: azimuth_cloud.azimuth_ops.kustomize
 
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.flux
+            tasks_from: cli
+
         - name: Slurp kubeconfig file
           slurp:
             src: /etc/rancher/k3s/k3s.yaml
@@ -64,6 +68,7 @@
     
     - include_role:
         name: azimuth_cloud.azimuth_ops.community_images
+      when: community_images_enabled is not defined or community_images_enabled
     
     # For a single node install, we put the monitoring and ingress controller on the K3S cluster
     - block:
