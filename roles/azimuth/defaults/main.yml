@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://azimuth-cloud.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.14.0
+azimuth_chart_version: 0.14.1-dev.0.feat-python-oidc.17
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -94,6 +94,37 @@ azimuth_curated_sizes: []
   #   description: >-
   #     {% raw %}{{ cpus }} CPUs, {{ ram }} RAM, {{ disk }} disk, {{ ephemeral_disk }} ephemeral disk{% endraw %}
 
+# The authentication type to use - oidc and openstack are supported
+azimuth_authentication_type: openstack
+
+# Settings for OIDC authentication
+#   The OIDC issuer URL
+#   The issuer must support the OIDC discovery specification
+azimuth_oidc_issuer_url: "{{ undef(hint = 'azimuth_oidc_issuer_url is required') }}"
+azimuth_oidc_client_id: "{{ undef(hint = 'azimuth_oidc_client_id is required') }}"
+azimuth_oidc_client_secret: "{{ undef(hint = 'azimuth_oidc_client_secret is required') }}"
+#   The scope to use when requesting tokens
+azimuth_oidc_scope: "openid profile email"
+#   The claims to use for the user ID, username, email and groups respectively
+azimuth_oidc_userid_claim: sub
+azimuth_oidc_username_claim: preferred_username
+azimuth_oidc_email_claim: email
+azimuth_oidc_groups_claim: groups
+#   Indicates whether to verify SSL when talking to the OIDC provider
+azimuth_oidc_verify_ssl: true
+#   The aggregated settings object for OIDC authentication
+azimuth_oidc_authentication:
+  issuerUrl: "{{ azimuth_oidc_issuer_url }}"
+  scope: "{{ azimuth_oidc_scope }}"
+  claims:
+    userid: "{{ azimuth_oidc_userid_claim }}"
+    username: "{{ azimuth_oidc_username_claim }}"
+    email: "{{ azimuth_oidc_email_claim }}"
+    groups: "{{ azimuth_oidc_groups_claim }}"
+  clientID: "{{ azimuth_oidc_client_id }}"
+  clientSecret: "{{ azimuth_oidc_client_secret }}"
+  verifySsl: "{{ azimuth_oidc_verify_ssl }}"
+
 # Settings for OpenStack authentication
 #   The Keystone auth URL
 azimuth_openstack_auth_url: "{{ undef(hint = 'azimuth_openstack_auth_url is required') }}"
@@ -147,55 +178,69 @@ azimuth_authenticator_federated_identity_providers:
     provider: "{{ azimuth_authenticator_federated_provider }}"
     # A human-readble label for the identity provider, used in the selection form
     label: "{{ azimuth_authenticator_federated_label }}"
-# The authentication settings, structured as defaults + overrides
-azimuth_authentication_defaults:
-  type: openstack
-  openstack: >-
-    {{-
-      {
-        "authUrl": azimuth_openstack_auth_url,
-        "interface": azimuth_openstack_interface,
-        "verifySsl": azimuth_openstack_verify_ssl,
-        "appcred": {
-          "hidden": azimuth_authenticator_appcred_hidden,
-        },
-        "password": {
-          "enabled": azimuth_authenticator_password_enabled,
-        },
-        "federated": {
-          "enabled": azimuth_authenticator_federated_enabled,
-        },
-      } |
-        combine(
-          { "region": azimuth_openstack_region }
-          if azimuth_openstack_region
+#   The aggregated settings object for OpenStack auth
+azimuth_openstack_authentication: >-
+  {{-
+    {
+      "authUrl": azimuth_openstack_auth_url,
+      "interface": azimuth_openstack_interface,
+      "verifySsl": azimuth_openstack_verify_ssl,
+      "appcred": {
+        "hidden": azimuth_authenticator_appcred_hidden,
+      },
+      "password": {
+        "enabled": azimuth_authenticator_password_enabled,
+      },
+      "federated": {
+        "enabled": azimuth_authenticator_federated_enabled,
+      },
+    } |
+      combine(
+        { "region": azimuth_openstack_region }
+        if azimuth_openstack_region
+        else {}
+      ) |
+      combine(
+        (
+          {
+            "password": {
+              "domains": azimuth_authenticator_password_domains,
+            },
+          }
+          if azimuth_authenticator_password_enabled
           else {}
-        ) |
-        combine(
-          (
-            {
-              "password": {
-                "domains": azimuth_authenticator_password_domains,
-              },
-            }
-            if azimuth_authenticator_password_enabled
-            else {}
-          ),
-          recursive = True
-        ) |
-        combine(
-          (
-            {
-              "federated": {
-                "identityProviders": azimuth_authenticator_federated_identity_providers,
-              },
-            }
-            if azimuth_authenticator_federated_enabled
-            else {}
-          ),
-          recursive = True
-        )
-    }}
+        ),
+        recursive = True
+      ) |
+      combine(
+        (
+          {
+            "federated": {
+              "identityProviders": azimuth_authenticator_federated_identity_providers,
+            },
+          }
+          if azimuth_authenticator_federated_enabled
+          else {}
+        ),
+        recursive = True
+      )
+  }}
+
+# The authentication settings, structured as defaults + overrides
+azimuth_authentication_defaults: >-
+  {{-
+    { "type": azimuth_authentication_type } |
+      combine(
+        { "openstack": azimuth_openstack_authentication }
+        if azimuth_authentication_type == "openstack"
+        else {}
+      ) |
+      combine(
+        { "oidc": azimuth_oidc_authentication }
+        if azimuth_authentication_type == "oidc"
+        else {}
+      )
+  }}
 azimuth_authentication_overrides: {}
 azimuth_authentication: >-
   {{-
