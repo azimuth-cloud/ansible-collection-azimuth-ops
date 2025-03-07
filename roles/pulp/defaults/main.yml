@@ -1,0 +1,49 @@
+
+# The namespace in which the Pulp Operator should be deployed
+pulp_namespace: pulp
+
+# # Custom trust bundle for SSL verification
+# pulp_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+# pulp_trust_bundle_secret_name: "{{ pulp_release_name }}-trust-bundle"
+
+# # The name of the secret containing the wildcard certificate
+# pulp_tls_secret_name: pulp-tls
+
+# # A pre-existing wildcard certificate and key
+# pulp_tls_wildcard_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
+# pulp_tls_wildcard_key: >-
+#   {{
+#     ingress_tls_wildcard_key
+#     if ingress_tls_wildcard_key is defined
+#     else undef(hint = 'pulp_tls_wildcard_key is required')
+#   }}
+
+
+# Use a directory in $HOME for the kustomization by default
+pulp_kustomization_directory: "{{ (ansible_env.HOME, 'pulp') | path_join }}"
+
+# The repository to install the Pulp Operator from:
+pulp_repository: https://github.com/pulp/pulp-operator.git
+
+# The version of the install repository to use:
+pulp_repository_version: 1.0.0-beta.4
+
+# List of bases to install
+pulp_kustomization_bases:
+  - "{{ pulp_repository }}/config/manager?ref={{ pulp_repository_version }}"
+
+# The kustomization to use
+pulp_kustomization:
+  namespace: "{{ pulp_namespace }}"
+  bases: "{{ pulp_kustomization_bases }}"
+  images:
+    - name: controller
+      newName: quay.io/pulp/pulp-operator
+      newTag: v0.5.0.dev
+
+# List of resources to watch for completeness
+pulp_watches:
+  - kind: deployment
+    namespace: "{{ pulp_namespace }}"
+    name: pulp
+    condition: Available

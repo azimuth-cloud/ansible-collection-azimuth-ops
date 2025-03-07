@@ -16,6 +16,8 @@
     - role: azimuth_cloud.azimuth_ops.admin_dashboard_ingress
     - role: azimuth_cloud.azimuth_ops.harbor
       when: harbor_enabled
+    - role: azimuth_cloud.azimuth_ops.pulp
+      when: pulp_enabled
     - role: azimuth_cloud.azimuth_ops.cloud_metrics
       when: cloud_metrics_enabled
     - role: azimuth_cloud.azimuth_ops.clusterapi
