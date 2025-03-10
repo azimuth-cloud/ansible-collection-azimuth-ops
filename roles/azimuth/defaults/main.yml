@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://azimuth-cloud.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.14.1-dev.0.feat-python-oidc.17
+azimuth_chart_version: 0.14.1-dev.0.feat-python-oidc.19
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -98,13 +98,38 @@ azimuth_curated_sizes: []
 azimuth_authentication_type: openstack
 
 # Settings for OIDC authentication
-#   The OIDC issuer URL
-#   The issuer must support the OIDC discovery specification
-azimuth_oidc_issuer_url: "{{ undef(hint = 'azimuth_oidc_issuer_url is required') }}"
-azimuth_oidc_client_id: "{{ undef(hint = 'azimuth_oidc_client_id is required') }}"
+#   The name of the identity realm to create for Azimuth users
+#   This will result in a realm in Keycloak named {namespace}-{name}, e.g. azimuth-users
+#   Only used if azimuth_oidc_issuer_url is not given
+azimuth_oidc_users_realm_name: users
+#   The OIDC issuer URL (must support the OIDC discovery specification)
+#   If not given, this is set to the issuer URL for the identity realm
+azimuth_oidc_issuer_url:
+#   The OIDC client ID
+#   If an identity realm is being used and no client secret is given, a client is created
+#   with this ID using the spec that follows
+azimuth_oidc_client_id: azimuth-portal
+#   The spec for the OIDC client
+#   Used to create an OIDC client when no client secret is given
+azimuth_oidc_client_spec:
+  # Use the realm that we created
+  realmName: "{{ azimuth_oidc_users_realm_name }}"
+  # Azimuth uses a confidential client with the authcode grant
+  public: false
+  grantTypes: [AuthorizationCode]
+  redirectUris:
+    - >-
+        {{
+          "{}://{}/auth/oidc/complete/".format(
+            'https' if azimuth_ingress_tls_enabled else 'http',
+            azimuth_ingress_host
+          )
+        }}
+#   The client secret
+#   If not given and an identity realm is being used, a client is created - see above
 azimuth_oidc_client_secret: "{{ undef(hint = 'azimuth_oidc_client_secret is required') }}"
 #   The scope to use when requesting tokens
-azimuth_oidc_scope: "openid profile email"
+azimuth_oidc_scope: "openid profile email groups"
 #   The claims to use for the user ID, username, email and groups respectively
 azimuth_oidc_userid_claim: sub
 azimuth_oidc_username_claim: preferred_username
