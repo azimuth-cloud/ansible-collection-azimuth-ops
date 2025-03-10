@@ -51,6 +51,12 @@ jobs:
             prereleases: "yes"
             version_jsonpath: azimuth_chart_version
 
+          - key: azimuth-apps-operator
+            path: ./roles/azimuth_apps_operator/defaults/main.yml
+            repository: azimuth-cloud/azimuth-apps-operator
+            prereleases: "yes"
+            version_jsonpath: azimuth_apps_operator_chart_version
+
           - key: azimuth-caas-operator
             path: ./roles/azimuth_caas_operator/defaults/main.yml
             repository: azimuth-cloud/azimuth-caas-operator
@@ -132,6 +138,11 @@ jobs:
             repository: azimuth-cloud/cluster-api-janitor-openstack
             prereleases: "yes"
             version_jsonpath: clusterapi_janitor_openstack_chart_version
+
+          - key: flux-cli
+            path: ./roles/flux/defaults/main.yml
+            repository: fluxcd/flux2
+            version_jsonpath: flux_cli_version
 
           - key: helm
             path: ./roles/helm/defaults/main.yml
@@ -233,6 +244,12 @@ jobs:
             chart_name_jsonpath: cloud_metrics_grafana_chart_name
             chart_version_jsonpath: cloud_metrics_grafana_chart_version
 
+          - key: flux
+            path: ./roles/flux/defaults/main.yml
+            chart_repo_jsonpath: flux_chart_repo
+            chart_name_jsonpath: flux_chart_name
+            chart_version_jsonpath: flux_chart_version
+
           - key: harbor
             path: ./roles/harbor/defaults/main.yml
             chart_repo_jsonpath: harbor_chart_repo
@@ -268,6 +285,12 @@ jobs:
             chart_repo_jsonpath: velero_csi_snapshot_controller_chart_repo
             chart_name_jsonpath: velero_csi_snapshot_controller_chart_name
             chart_version_jsonpath: velero_csi_snapshot_controller_chart_version
+
+          - key: sealed-secrets
+            path: ./roles/sealed_secrets/defaults/main.yml
+            chart_repo_jsonpath: sealed_secrets_chart_repo
+            chart_name_jsonpath: sealed_secrets_chart_name
+            chart_version_jsonpath: sealed_secrets_chart_version
 
           - key: velero
             path: ./roles/velero/defaults/main.yml
