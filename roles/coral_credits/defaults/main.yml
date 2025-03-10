@@ -71,7 +71,7 @@ coral_credits_ingress_tls_key: >-
 # The admin username to use for coral credits
 coral_credits_admin_username: admin
 # The admin password to use for coral credits
-coral_credits_admin_password: admin
+coral_credits_admin_password: "{{ undef(hint = 'coral_credits_admin_password is required') }}"
 
 # The values for the release
 coral_credits_release_defaults:
