@@ -8,63 +8,135 @@
     pulp_create_namespace.rc != 0 and
     'AlreadyExists' not in pulp_create_namespace.stderr
 
-# - name: Install trust bundle
-#   command: kubectl apply -f -
-#   args:
-#     stdin: "{{ pulp_trust_bundle_secret_definition | to_nice_yaml }}"
-#   vars:
-#     pulp_trust_bundle_secret_definition:
-#       apiVersion: v1
-#       kind: Secret
-#       metadata:
-#         name: "{{ pulp_trust_bundle_secret_name }}"
-#         namespace: "{{ pulp_release_namespace }}"
-#       stringData:
-#         ca.crt: "{{ pulp_trust_bundle }}"
-#   when: pulp_trust_bundle
+- name: Install Pulp Operator on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ pulp_operator_chart_name }}"
+    chart_repo_url: "{{ pulp_operator_chart_repo }}"
+    chart_version: "{{ pulp_operator_chart_version }}"
+    release_namespace: "{{ pulp_release_namespace }}"
+    release_name: "{{ pulp_release_name }}"
+    release_values: "{{ pulp_operator_release_values }}"
+    atomic: yes
+    create_namespace: yes
+    wait: yes
+    wait_timeout: "{{ pulp_operator_wait_timeout }}"
 
-# - name: Install wildcard TLS certificate
-#   command: kubectl apply -f -
-#   args:
-#     stdin: "{{ pulp_tls_wildcard_secret_definition | to_nice_yaml }}"
-#   vars:
-#     pulp_tls_wildcard_secret_definition:
-#       apiVersion: v1
-#       kind: Secret
-#       metadata:
-#         name: "{{ pulp_tls_secret_name }}"
-#         namespace: "{{ pulp_release_namespace }}"
-#       type: kubernetes.io/tls
-#       stringData:
-#         tls.crt: "{{ pulp_tls_wildcard_certificate }}"
-#         tls.key: "{{ pulp_tls_wildcard_key }}"
-#   when: pulp_tls_wildcard_certificate
+- name: Deploy internal database for Pulp
+  include_role:
+    name: azimuth_cloud.azimuth_ops.postgres_operator
+    tasks_from: database.yml
+    defaults_from: database.yml
+  vars:
+    pgo_database_name: "{{ pulp_database_name }}"
+    pgo_database_namespace: "{{ pulp_release_namespace }}"
+    pgo_database_data_volume_storage_class: "{{ pulp_database_data_volume_storage_class }}"
+    pgo_database_backup_volume_storage_class: "{{ pulp_database_backup_volume_storage_class }}"
+    pgo_database_data_volume_size: "{{ pulp_database_data_volume_size }}"
+    pgo_database_backup_volume_size: "{{ pulp_database_backup_volume_size }}"
 
-- name: Make kustomisation directory
-  file:
-    path: "{{ pulp_kustomization_directory }}"
-    state: directory
+- name: Extract Postgres database secret
+  command: "kubectl get secret -n {{ pulp_release_namespace }} {{ pulp_database_name }}-pguser-{{ pulp_database_name }} -o json"
+  register: pulp_db_pguser_secret_raw
 
-- name: Write kustomisation file
-  copy:
-    content: "{{ pulp_kustomization | to_nice_yaml }}"
-    dest: "{{ pulp_kustomisation_directory }}/kustomization.yaml"
+- name: Set fact Postgres database secret
+  set_fact:
+    pulp_db_pguser_secret_data: "{{ (pulp_db_pguser_secret_raw.stdout | from_json).data }}"
 
-- name: Install Pulp resources
-  command: kubectl apply --server-side --force-conflicts -k {{ pulp_kustomisation_directory }}
+- name: Create Pulp database secret
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ pulp_db_secret_definition | to_nice_yaml }}"
+  vars:
+    pulp_db_secret_definition: 
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ pulp_release_name }}-postgresql-auth"
+        namespace: "{{ pulp_release_namespace }}"
+        labels: "{{ pulp_labels }}"
+      type: generic
+      stringData:
+        POSTGRES_HOST: "{{ pulp_db_pguser_secret_data.host | b64decode }}"
+        POSTGRES_PORT: "{{ pulp_db_pguser_secret_data.port | b64decode }}"
+        POSTGRES_USERNAME: "{{ pulp_db_pguser_secret_data.user | b64decode }}"
+        POSTGRES_PASSWORD: "{{ pulp_db_pguser_secret_data.password | b64decode }}"
+        POSTGRES_DB_NAME: "{{ pulp_database_name }}"
+        POSTGRES_SSLMODE: "prefer"
 
-- name: Wait for Pulp controllers to become ready
-  command: >-
-    kubectl rollout status
-      --namespace "{{ watch.namespace }}"
-      --timeout 1s
-      {{ watch.kind }}/{{ watch.name }}
-  changed_when: false
-  register: pulp_controller_wait
-  until: pulp_controller_wait is succeeded
-  retries: 60
-  delay: 10
-  loop: "{{ pulp_watches }}"
-  loop_control:
-    loop_var: watch
-    label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
+- name: Install Pulp ingress
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ pulp_ingress_definition | to_nice_yaml }}"
+  vars:
+    pulp_ingress_definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "{{ pulp_ingress_name }}"
+        namespace: "{{ pulp_release_namespace }}"
+        labels: "{{ pulp_labels }}"
+        annotations: "{{ pulp_ingress_annotations }}"
+      spec: "{{ pulp_ingress_spec }}"
+
+- name: Install Pulp
+  # see https://github.com/pulp/pulp-operator/tree/main/config/samples
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ pulp_cr_definition | to_nice_yaml }}"
+  vars:
+    pulp_cr_definition:
+      apiVersion: repo-manager.pulpproject.org/v1beta2
+      kind: Pulp
+      metadata:
+        name: pulp
+        namespace: "{{ pulp_release_namespace }}"
+      spec:
+        image_version: "{{ pulp_image_version }}"
+        image_web_version: "{{ pulp_image_web_version }}"
+        image: "{{ pulp_image }}"
+        api:
+          replicas: 2
+        content:
+          replicas: 2
+        worker:
+          replicas: 3
+        database:
+          external_db_secret: "{{ pulp_release_name }}-postgresql-auth"
+        cache:
+          enabled: false
+        pulp_settings:
+          api_root: "/pulp/"
+          allowed_export_paths:
+            - /tmp
+          allowed_import_paths:
+            - /tmp
+          content_origin: "{{ pulp_ingress_host }}/pulp/content"
+          ansible_api_hostname: "https://{{ pulp_ingress_host }}"
+          token_server: "https://{{ pulp_ingress_host }}/token"
+          csrf_trusted_origins: ["https://{{ pulp_ingress_host }}"]
+
+- name: Create service for Pulp
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ pulp_service_definition | to_nice_yaml }}"
+  vars:
+    pulp_service_definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: pulp-service
+        namespace: "{{ pulp_release_namespace }}"
+        labels:
+          app.kubernetes.io/managed-by: azimuth-ops
+          app: pulp
+          instance: "{{ pulp_release_name }}"
+      spec:
+        selector:
+          app: pulp
+        ports:
+          - protocol: TCP
+            port: 24817
+        selector:
+          app.kubernetes.io/managed-by: pulp-operator
+
+- meta: end_here
