@@ -12,3 +12,8 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ flux_wait_timeout }}"
+
+- include_tasks: extras.yml
+  loop: "{{ flux_git_repos_extra }}"
+  loop_control:
+    label: "{{ item.name }}"

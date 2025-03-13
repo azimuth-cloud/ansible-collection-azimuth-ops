@@ -1,5 +1,9 @@
 ---
 
+#####
+# Sealed Secrets controller installation using Helm
+#####
+
 sealed_secrets_chart_repo: https://bitnami-labs.github.io/sealed-secrets
 sealed_secrets_chart_name: sealed-secrets
 sealed_secrets_chart_version: 2.17.1
@@ -18,3 +22,27 @@ sealed_secrets_release_values: >-
     sealed_secrets_release_defaults |
       combine(sealed_secrets_release_overrides, recursive = True)
   }}
+
+
+#####
+# Kubeseal CLI installation on the seed
+#####
+
+# The Kubeseal repository
+kubeseal_cli_repo: https://github.com/bitnami-labs/sealed-secrets
+# The Kubeseal version to download
+kubeseal_cli_version: v0.27.1
+# The OS variant and architecture to use
+kubeseal_cli_os: "{{ ansible_system | lower }}"
+kubeseal_cli_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+# The name of the Kubeseal archive
+kubeseal_cli_archive_name: >-
+  kubeseal-{{ kubeseal_cli_version.removeprefix('v') }}-{{ kubeseal_cli_os }}-{{ kubeseal_cli_architecture }}.tar.gz
+# The URL of the Kubeseal archive to download
+kubeseal_cli_archive_url: >-
+  {{ kubeseal_cli_repo }}/releases/download/{{ kubeseal_cli_version }}/{{ kubeseal_cli_archive_name }}
+
+# The directory into which the Kubeseal archive should be unpacked
+kubeseal_cli_unpack_directory: "/opt/kubeseal/{{ kubeseal_cli_version }}"
+# The directory into which the Kubeseal binary should be placed
+kubeseal_cli_bin_directory: /usr/local/bin

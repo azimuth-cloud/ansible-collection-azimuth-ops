@@ -1,0 +1,10 @@
+---
+- name: Install RBAC for {{ item.name }} FluxCD resources
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'rbac.yaml.j2') }}"
+
+- name: Install {{ item.name }} FluxCD resources
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'repo.yaml.j2') }}"

@@ -48,6 +48,10 @@
             name: azimuth_cloud.azimuth_ops.flux
             tasks_from: cli
 
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.sealed_secrets
+            tasks_from: cli
+
         - name: Slurp kubeconfig file
           slurp:
             src: /etc/rancher/k3s/k3s.yaml
@@ -65,11 +69,11 @@
         content: "{{ k3s_kubeconfig.content | b64decode }}"
         dest: "{{ ansible_env.HOME }}/.kube/config"
         mode: u=rwx,g=,o=
-    
+
     - include_role:
         name: azimuth_cloud.azimuth_ops.community_images
       when: community_images_enabled is not defined or community_images_enabled
-    
+
     # For a single node install, we put the monitoring and ingress controller on the K3S cluster
     - block:
         # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
@@ -106,5 +110,5 @@
           environment:
             KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
           when: velero_enabled
-  
+
       when: install_mode == 'ha'

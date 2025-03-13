@@ -1,0 +1,24 @@
+---
+
+- name: Ensure Kubeseal CLI unpack directory exists
+  file:
+    path: "{{ kubeseal_cli_unpack_directory }}"
+    state: directory
+
+- name: Download and extract Kubeseal CLI archive
+  unarchive:
+    remote_src: yes
+    src: "{{ kubeseal_cli_archive_url }}"
+    dest: "{{ kubeseal_cli_unpack_directory }}"
+
+- name: Ensure Kubeseal CLI binary directory exists
+  file:
+    path: "{{ kubeseal_cli_bin_directory }}"
+    state: directory
+
+- name: Copy Kubeseal CLI executable to binary directory
+  copy:
+    remote_src: yes
+    src: "{{ (kubeseal_cli_unpack_directory, 'kubeseal') | path_join }}"
+    dest: "{{ kubeseal_cli_bin_directory }}"
+    mode: u=rwx,g=rw,o=rx

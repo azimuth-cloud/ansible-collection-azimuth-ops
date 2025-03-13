@@ -53,3 +53,28 @@ flux_cli_archive_url: >-
 flux_cli_unpack_directory: "/opt/flux/{{ flux_cli_version }}"
 # The directory into which the Flux binary should be placed
 flux_cli_bin_directory: /usr/local/bin
+
+
+#####
+# Additional Flux sources to be installed on the management cluster
+#####
+
+flux_git_repos_extra: []
+  # - name: capi-cluster-example
+  #   repo: ssh://git@github.com/sd109/capi-helm-gitops-template
+  #   # Optional git ref to track
+  #   # https://fluxcd.io/flux/components/source/gitrepositories/#reference
+  #   ref:
+  #     branch: main
+  #   # Required for private repos
+  #   deploy_key_secret: "{{ flux_secrets_deploy_key }}"
+  #   # Optional path to kustomization.yaml file in target repo
+  #   path: ./
+  #   # Optional reconciliation frequency
+  #   interval: 5m0
+
+# Real keys must be stored in git-encrypted azimuth-config secrets.yaml
+# flux_secrets_deploy_key: |
+#   -----BEGIN OPENSSH PRIVATE KEY-----
+#   ...
+#   -----END OPENSSH PRIVATE KEY-----
