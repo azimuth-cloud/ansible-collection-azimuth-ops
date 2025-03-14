@@ -1,4 +1,8 @@
-# TODO: THIS IS TOTALLY MADEUP
+# Prototype/test using
+# kubectl run -i --tty --rm debug --image=rockylinux/rockylinux:9.5 --restart=Never -- bash
+#   https://github.com/stackhpc/ansible-slurm-appliance.git
+#   main - v1.155 doesn't have sync-pulp!
+
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -10,18 +14,21 @@ spec:
       containers:
       - name: pulp_sync
         image: rockylinux/rockylinux:9.5 # TODO: can we replace this with whatever the execution environment is??
+        envFrom:
+          - configMapRef:
+              name: pulp-sync-cfg
+          - secretRef:
+              name: pulp-sync-secret
         command: ["bash",  "-c"]
         args:
         - |
           dnf install -y git python39
           git clone {{ azimuth_caas_stackhpc_slurm_appliance_git_url }}
-          git checkout {{ azimuth_caas_stackhpc_slurm_appliance_git_version }}
           cd ansible-slurm-appliance
+          git checkout {{ azimuth_caas_stackhpc_slurm_appliance_git_version }}
           ./dev/setup-env.sh
-          # TODO: do we need to generate an environment to be able to use it??
-          # TODO: what about the pulp config/secrets
           . venv/bin/activate
-          # TODO: activate environment?
+          . environments/.caas/activate
           ansible-playbook -v ansible/adhoc/sync-pulp.yml
       restartPolicy: Never
   backoffLimit: 4

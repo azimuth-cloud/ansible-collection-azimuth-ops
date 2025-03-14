@@ -1,0 +1,51 @@
+
+- name: Set fact from Pulp API Service
+  set_fact:
+    _pulp_api_svc: "{{ lookup(_kubectl_pulp_svc) | from_yaml }}"
+  vars:
+    _kubectl_pulp_svc: "kubectl get --namespace {{ azimuth_caas_pulp_namespace }} service pulp-api-svc -o yaml"
+
+- name: Set fact from Pulp admin password secret
+  set_fact:
+    _pulp_admin_secret: "{{ lookup(_kubectl_pulp_admin_secret) | from_yaml }}"
+  vars:
+    _kubectl_pulp_admin_secret: "kubectl get --namespace {{ azimuth_caas_pulp_namespace }}  secret pulp-admin-password -o yaml" #| jq --raw-output .data.password | base64 -d
+
+- name: Create ConfigMap for Pulp sync Job
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ _pulp_sync_configmap_definition | to_nice_yaml }}"
+  vars:
+    _pulp_sync_configmap_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: pulp-sync-cfg
+        namespace: "{{ azimuth_caas_pulp_namespace }}"
+      data:
+        appliances_pulp_url: "http://{{ _pulp_api_svc.spec.clusterIP }}:{{ _pulp_api_svc.spec.ports[0].port }}"
+        # TODO: work out how to specify this, maybe for more than one!
+        pulp_site_target_distribution_version: "9.5"
+        pulp_site_target_distribution_version_major: "9"
+
+- name: Create Secret for Pulp sync Job
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ _pulp_sync_secret_definition | to_nice_yaml }}"
+  vars:
+    _pulp_sync_secret_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: pulp-sync-secret
+        namespace: "{{ azimuth_caas_pulp_namespace }}"
+      data:
+        pulp_site_password: "{{ _pulp_admin_secret.data.password | b64decode }}"
+        #TODO: error if these are not defined when synching!
+        pulp_site_upstream_username: "{{ azimuth_caas_pulp_upstream_username }}"
+        pulp_site_upstream_password: "{{ azimuth_caas_pulp_upstream_password }}"
+
+- name: Sync Pulp snapshots
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'pulp_sync_job.yaml.j2') }}"
