@@ -8,7 +8,7 @@
     pulp_create_namespace.rc != 0 and
     'AlreadyExists' not in pulp_create_namespace.stderr
 
-- name: Install Pulp Operator on target Kubernetes cluster
+- name: Install Pulp operator on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ pulp_operator_chart_name }}"
     chart_repo_url: "{{ pulp_operator_chart_repo }}"
@@ -20,6 +20,22 @@
     create_namespace: yes
     wait: yes
     wait_timeout: "{{ pulp_operator_wait_timeout }}"
+
+- name: Wait for Pulp operator to be come ready
+  command: >-
+    kubectl rollout status
+      --namespace {{ watch.namespace }}
+      --timeout 1s
+      {{ watch.kind }}/{{ watch.name }}
+  changed_when: false
+  register: pulp_operator_wait
+  until: pulp_operator_wait is succeeded
+  retries: 60
+  delay: 10
+  loop: "{{ pulp_operator_watches }}"
+  loop_control:
+    loop_var: watch
+    label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
 
 - name: Deploy internal database for Pulp
   include_role:
@@ -64,6 +80,7 @@
         POSTGRES_SSLMODE: "prefer"
 
 - name: Install Pulp ingress
+  # https://github.com/pulp/pulp-operator/tree/main/docs/configuring/networking
   command: kubectl apply -f -
   args:
     stdin: "{{ pulp_ingress_definition | to_nice_yaml }}"
@@ -79,7 +96,9 @@
       spec: "{{ pulp_ingress_spec }}"
 
 - name: Install Pulp
-  # see https://github.com/pulp/pulp-operator/tree/main/config/samples
+  # See https://github.com/pulp/pulp-operator/tree/main/config/samples
+  # See https://pulpproject.org/pulp-oci-images/docs/admin/reference/available-images/single-process-images/
+  # for info on the containers which are deployed
   command: kubectl apply -f -
   args:
     stdin: "{{ pulp_cr_definition | to_nice_yaml }}"
@@ -94,7 +113,7 @@
         image_version: "{{ pulp_image_version }}"
         image_web_version: "{{ pulp_image_web_version }}"
         image: "{{ pulp_image }}"
-        api:
+        api: # TODO: make these controllable
           replicas: 2
         content:
           replicas: 2
@@ -110,33 +129,48 @@
             - /tmp
           allowed_import_paths:
             - /tmp
-          content_origin: "{{ pulp_ingress_host }}/pulp/content"
-          ansible_api_hostname: "https://{{ pulp_ingress_host }}"
-          token_server: "https://{{ pulp_ingress_host }}/token"
-          csrf_trusted_origins: ["https://{{ pulp_ingress_host }}"]
+          content_origin: "{{ pulp_external_url_base }}"
+          ansible_api_hostname: "{{ pulp_external_url_base }}"
+          token_server: "{{ pulp_external_url_base }}/token" # maybe??
+          csrf_trusted_origins: ["{{ pulp_external_url_base }}"]
 
-- name: Create service for Pulp
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ pulp_service_definition | to_nice_yaml }}"
-  vars:
-    pulp_service_definition:
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: pulp-service
-        namespace: "{{ pulp_release_namespace }}"
-        labels:
-          app.kubernetes.io/managed-by: azimuth-ops
-          app: pulp
-          instance: "{{ pulp_release_name }}"
-      spec:
-        selector:
-          app: pulp
-        ports:
-          - protocol: TCP
-            port: 24817
-        selector:
-          app.kubernetes.io/managed-by: pulp-operator
+
+# - name: Create service for Pulp
+# # TODO: Prevent this being hit externally??
+#   command: kubectl apply -f -
+#   args:
+#     stdin: "{{ pulp_service_definition | to_nice_yaml }}"
+#   vars:
+#     pulp_service_definition:
+#       apiVersion: v1
+#       kind: Service
+#       metadata:
+#         name: pulp-service
+#         namespace: "{{ pulp_release_namespace }}"
+#         labels:
+#           app.kubernetes.io/managed-by: azimuth-ops
+#           app: pulp
+#           instance: "{{ pulp_release_name }}"
+#       spec:
+#         #TODO: type:
+#         selector:
+#           app: pulp
+#         ports:
+#           - protocol: TCP
+#             port: 24817
+#         selector:
+#           app.kubernetes.io/managed-by: pulp-operator
+
+- name: Wait for Pulp to become ready
+  uri:
+    url: "{{ pulp_external_url_content }}"
+    method: GET
+    timeout: 5
+  register: pulp_content_available
+  until: pulp_content_available is succeeded
+  retries: 60
+  delay: 10
+
+# TODO: How can I reach the API server? maybe that's OK actually
 
 - meta: end_here

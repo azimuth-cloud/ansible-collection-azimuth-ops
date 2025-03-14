@@ -8,6 +8,12 @@ pulp_operator_chart_version: '0.1.0'
 pulp_operator_wait_timeout: 10m
 pulp_operator_release_values: {}
 
+pulp_operator_watches:
+  - kind: deployment
+    namespace: "{{ pulp_release_namespace }}"
+    name: pulp-operator-controller-manager
+    condition: Available
+
 pulp_database_name: "{{ pulp_release_name }}-db"
 pulp_database_data_volume_storage_class:
 pulp_database_backup_volume_storage_class: "{{ pulp_database_data_volume_storage_class}}"
@@ -41,6 +47,8 @@ pulp_ingress_annotations: >-
       ) |
       combine(pulp_ingress_annotations_overrides)
   }}
+# Note service below is created by operator
+# See https://github.com/pulp/pulp-operator/blob/main/docs/configuring/networking/reverse_proxy.md#manually-configuring-ingress-resources
 pulp_ingress_spec_defaults: >-
   {{-
     {
@@ -51,13 +59,13 @@ pulp_ingress_spec_defaults: >-
           "http": {
             "paths": [
               {
-                "path": "/",
+                "path": "/pulp/content/",
                 "pathType": "Prefix",
                 "backend": {
                   "service": {
-                    "name": pulp_release_name ~ "-service",
+                    "name": pulp_release_name ~ "-content-svc",
                     "port": {
-                      "number": 8080,
+                      "name": "content-24816",
                     },
                   },
                 },
@@ -89,3 +97,7 @@ pulp_ingress_spec: >-
 pulp_image: quay.io/pulp/pulp
 pulp_image_version: '3.52.0'
 pulp_image_web_version: '3.52.0'
+
+pulp_external_url_scheme: "{{ 'https' if pulp_ingress_tls_enabled else 'http' }}"
+pulp_external_url_base: "{{ pulp_external_url_scheme }}://{{ pulp_ingress_host }}"
+pulp_external_url_content: "{{ pulp_external_url_base }}/pulp/content/"
