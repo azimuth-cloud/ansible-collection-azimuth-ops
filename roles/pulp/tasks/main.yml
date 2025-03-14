@@ -81,6 +81,8 @@
 
 - name: Install Pulp ingress
   # https://github.com/pulp/pulp-operator/tree/main/docs/configuring/networking
+  # TODO: lock this down to only portal_internal, see infra_network_cidr and infra_network_id
+  # actually I suspect the latter is always set by the infra role, so we shoud be OK?
   command: kubectl apply -f -
   args:
     stdin: "{{ pulp_ingress_definition | to_nice_yaml }}"
@@ -134,34 +136,9 @@
           token_server: "{{ pulp_external_url_base }}/token" # maybe??
           csrf_trusted_origins: ["{{ pulp_external_url_base }}"]
 
-
-# - name: Create service for Pulp
-# # TODO: Prevent this being hit externally??
-#   command: kubectl apply -f -
-#   args:
-#     stdin: "{{ pulp_service_definition | to_nice_yaml }}"
-#   vars:
-#     pulp_service_definition:
-#       apiVersion: v1
-#       kind: Service
-#       metadata:
-#         name: pulp-service
-#         namespace: "{{ pulp_release_namespace }}"
-#         labels:
-#           app.kubernetes.io/managed-by: azimuth-ops
-#           app: pulp
-#           instance: "{{ pulp_release_name }}"
-#       spec:
-#         #TODO: type:
-#         selector:
-#           app: pulp
-#         ports:
-#           - protocol: TCP
-#             port: 24817
-#         selector:
-#           app.kubernetes.io/managed-by: pulp-operator
-
 - name: Wait for Pulp to become ready
+  # Might need to use the service instead of the ingress if we lock down
+  # ingress
   uri:
     url: "{{ pulp_external_url_content }}"
     method: GET
@@ -171,6 +148,6 @@
   retries: 60
   delay: 10
 
-# TODO: How can I reach the API server? maybe that's OK actually
-
-- meta: end_here
+# TODO: we need to inject the Ingress (e.g.pulp.apps.45-135-58-216.sslip.io)
+# not the service for the VMs. For the container, the service is fine/better
+# as it'll avoid any CIDR limitations

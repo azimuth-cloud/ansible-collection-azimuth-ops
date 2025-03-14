@@ -76,12 +76,8 @@
       data: "{{ azimuth_caas_operator_default_ssh_secret_files }}"
   when: azimuth_caas_operator_default_ssh_secret_files
 
-- name: Sync Pulp snapshots
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ lookup('template', 'pulp_sync_job.yaml.j2') }}"
+- include_tasks: sync-pulp.yml
   when:
     - pulp_enabled
     - azimuth_caas_stackhpc_slurm_appliance_enabled
     # TODO: some flag for we want to enable package installs?
-  

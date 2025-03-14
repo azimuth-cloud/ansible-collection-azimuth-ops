@@ -33,7 +33,7 @@ pulp_ingress_host:  >-
   }}
 pulp_ingress_annotations_defaults: "{{ ingress_annotations | default({}) }}"
 pulp_ingress_annotations_overrides: {}
-pulp_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
+pulp_ingress_tls_enabled: "{{ ingress_tls_enabled | default(true) }}"
 pulp_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default('pulp-tls', True) }}"
 pulp_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
 pulp_ingress_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"

@@ -1,34 +1,43 @@
-# TODO: THIS IS TOTALLY MADEUP
+# Prototype/test using
+# kubectl run -i --tty --rm debug --image=rockylinux/rockylinux:9.5 --restart=Never -- bash
+#   https://github.com/stackhpc/ansible-slurm-appliance.git
+#   main - v1.155 doesn't have sync-pulp!
+
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: pulp_sync
+  name: pulp-repo-sync
+  namespace: "{{ azimuth_caas_pulp_namespace }}"
 # TODO: do we run this in the pulp namespace?
 spec:
   template:
     spec:
       containers:
-      - name: pulp_sync
+      - name: pulp-repo-sync
         image: rockylinux/rockylinux:9.5 # TODO: can we replace this with whatever the execution environment is??
-        command: ["bash",  "-c"]
+        envFrom:
+          - configMapRef:
+              name: pulp-sync-config
+          - secretRef:
+              name: pulp-sync-secret
+        command: ["bash",  "-c", "--"]
         args:
         - |
           dnf install -y git python39
           git clone {{ azimuth_caas_stackhpc_slurm_appliance_git_url }}
-          git checkout {{ azimuth_caas_stackhpc_slurm_appliance_git_version }}
           cd ansible-slurm-appliance
+          git checkout {{ azimuth_caas_stackhpc_slurm_appliance_git_version }}
           ./dev/setup-env.sh
-          # TODO: do we need to generate an environment to be able to use it??
-          # TODO: what about the pulp config/secrets
           . venv/bin/activate
-          # TODO: activate environment?
-          ansible-playbook -v ansible/adhoc/sync-pulp.yml
-      restartPolicy: Never
+          # don't have an activate script in caas environment:
+          export ANSIBLE_INVENTORY=environments/common/inventory,environments/.caas/inventory
+          ansible-playbook -v ansible/adhoc/sync-pulp.yml -e ansible_python_interpreter="/ansible-slurm-appliance/venv/bin/python3"
+      restartPolicy: Never # FIXME: above why do we need to specify interpreter, is the environment odd?
   backoffLimit: 4
 
-# looks like we need to set:
-pulp_site_url:
-pulp_site_port: # although squeezer doesn't take this?
-pulp_site_username
-pulp_site_password
-_cache_dir ?
+# # looks like we need to set:
+# pulp_site_url:
+# pulp_site_port: # although squeezer doesn't take this?
+# pulp_site_username
+# pulp_site_password
+# _cache_dir ?

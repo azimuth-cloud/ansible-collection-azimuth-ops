@@ -1,0 +1,59 @@
+
+- name: Query Pulp API Service
+  command: >-
+      kubectl get --namespace {{ azimuth_caas_pulp_namespace }}
+      service pulp-api-svc -o yaml
+  register: _pulp_api_service_query
+  
+- name: Query Pulp admin password secret
+  command: >-
+      kubectl get --namespace {{ azimuth_caas_pulp_namespace }}
+      secret pulp-admin-password -o yaml
+  register: _pulp_admin_secret_query
+
+- name: Create ConfigMap for Pulp sync Job
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ _pulp_sync_configmap_definition | to_nice_yaml }}"
+  vars:
+    _pulp_sync_configmap_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: pulp-sync-config
+        namespace: "{{ azimuth_caas_pulp_namespace }}"
+      data:
+        appliances_pulp_url: "http://{{ _pulp_api_service.spec.clusterIP }}:{{ _pulp_api_service.spec.ports[0].port }}"
+        # TODO: need to work out how to specify https or not
+        pulp_site_target_distribution_version: "9.5"
+        pulp_site_target_distribution_version_major: "9"
+    _pulp_api_service: "{{ _pulp_api_service_query.stdout | from_yaml }}"
+
+- name: Create Secret for Pulp sync Job
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ _pulp_sync_secret_definition | to_nice_yaml }}"
+  vars:
+    _pulp_sync_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      type: Opaque
+      metadata:
+        name: pulp-sync-secret
+        namespace: "{{ azimuth_caas_pulp_namespace }}"
+      data:
+        pulp_site_password: "{{ _pulp_admin_secret.data.password }}" # is already base64 encoded
+        #TODO: error if these are not defined when synching!
+        pulp_site_upstream_username: "{{ azimuth_caas_pulp_upstream_username | b64encode }}"
+        pulp_site_upstream_password: "{{ azimuth_caas_pulp_upstream_password | b64encode }}"
+    _pulp_admin_secret: "{{ _pulp_admin_secret_query.stdout | from_yaml }}"
+
+- name: Sync Pulp snapshots
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'pulp_sync_job.yaml.j2') }}"
+
+- name: Wait for sync to finish
+  command: kubectl wait --namespace={{ azimuth_caas_pulp_namespace }} --for=condition=complete --timeout={{ pulp_sync_timeout }} job/pulp-repo-sync
+  vars:
+    pulp_sync_timeout: 15m # TODO: make configurable took 3 mins just to start installing pip packages

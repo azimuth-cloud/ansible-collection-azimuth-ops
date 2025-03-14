@@ -675,3 +675,8 @@ azimuth_caas_cluster_templates: >-
     azimuth_caas_cluster_templates_default |
       combine(azimuth_caas_cluster_templates_overrides, recursive = True)
   }}
+
+# Defaults for Pulp
+azimuth_caas_pulp_namespace: "{{ pulp_release_namespace | default('pulp') }}"
+#azimuth_caas_pulp_upstream_username:
+#azimuth_caas_pulp_upstream_password:
