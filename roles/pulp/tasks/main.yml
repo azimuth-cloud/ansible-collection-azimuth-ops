@@ -117,14 +117,26 @@
         image: "{{ pulp_image }}"
         api: # TODO: make these controllable
           replicas: 2
+          strategy:
+            type: Recreate # TODO: see below b/c RWO storage
         content:
           replicas: 2
+          strategy:
+            type: Recreate # TODO: see below b/c RWO storage
         worker:
           replicas: 3
+          strategy:
+            type: Recreate # TODO: see below b/c RWO storage
         database:
           external_db_secret: "{{ pulp_release_name }}-postgresql-auth"
         cache:
           enabled: false
+        # https://github.com/pulp/pulp-operator/blob/main/docs/configuring/storage.md#configuring-pulp-operator-storage-to-use-a-storage-class
+        # TODO: how do we set these, really?
+        # or should we use e.g. s3?
+        file_storage_storage_class: local-path
+        file_storage_size: "2Gi"
+        file_storage_access_mode: "ReadWriteOnce"
         pulp_settings:
           api_root: "/pulp/"
           allowed_export_paths:
