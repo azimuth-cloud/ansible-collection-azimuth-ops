@@ -5,31 +5,31 @@
 - hosts: azimuth_deploy
   roles:
     # Configure alerting
-    # - role: azimuth_cloud.azimuth_ops.alertmanager_config
-    #   when: >-
-    #     alertmanager_config_slack_webhook_url is defined and
-    #     alertmanager_config_slack_webhook_url
-    # - role: azimuth_cloud.azimuth_ops.certmanager
-    #   when: certmanager_enabled or azimuth_kubernetes_enabled
-    # - role: azimuth_cloud.azimuth_ops.kubernetes_dashboard
-    # - role: azimuth_cloud.azimuth_ops.helm_dashboard
-    # - role: azimuth_cloud.azimuth_ops.admin_dashboard_ingress
-    # - role: azimuth_cloud.azimuth_ops.harbor
-    #   when: harbor_enabled
-    # - role: azimuth_cloud.azimuth_ops.cloud_metrics
-    #   when: cloud_metrics_enabled
-    # - role: azimuth_cloud.azimuth_ops.clusterapi
-    #   when: azimuth_kubernetes_enabled
-    # - role: azimuth_cloud.azimuth_ops.consul
-    #   when: azimuth_apps_enabled or azimuth_clusters_enabled
+    - role: azimuth_cloud.azimuth_ops.alertmanager_config
+      when: >-
+        alertmanager_config_slack_webhook_url is defined and
+        alertmanager_config_slack_webhook_url
+    - role: azimuth_cloud.azimuth_ops.certmanager
+      when: certmanager_enabled or azimuth_kubernetes_enabled
+    - role: azimuth_cloud.azimuth_ops.kubernetes_dashboard
+    - role: azimuth_cloud.azimuth_ops.helm_dashboard
+    - role: azimuth_cloud.azimuth_ops.admin_dashboard_ingress
+    - role: azimuth_cloud.azimuth_ops.harbor
+      when: harbor_enabled
+    - role: azimuth_cloud.azimuth_ops.cloud_metrics
+      when: cloud_metrics_enabled
+    - role: azimuth_cloud.azimuth_ops.clusterapi
+      when: azimuth_kubernetes_enabled
+    - role: azimuth_cloud.azimuth_ops.consul
+      when: azimuth_apps_enabled or azimuth_clusters_enabled
+    - role: azimuth_cloud.azimuth_ops.postgres_operator
+      when: azimuth_apps_enabled
     - role: azimuth_cloud.azimuth_ops.pulp
-      when: pulp_enabled # TODO: should this be azimuth_pulp_enabled ?
+      when: azimuth_pulp_enabled # TODO: should this be azimuth_pulp_enabled ?
     - role: azimuth_cloud.azimuth_ops.azimuth_caas_operator
       when: azimuth_clusters_enabled
-    # - role: azimuth_cloud.azimuth_ops.azimuth_schedule_operator
-    #   when: azimuth_clusters_enabled or azimuth_kubernetes_enabled
-    # - role: azimuth_cloud.azimuth_ops.postgres_operator
-    #   when: azimuth_apps_enabled
+    - role: azimuth_cloud.azimuth_ops.azimuth_schedule_operator
+      when: azimuth_clusters_enabled or azimuth_kubernetes_enabled
     - role: azimuth_cloud.azimuth_ops.keycloak
       when: azimuth_apps_enabled
     - role: azimuth_cloud.azimuth_ops.zenith
