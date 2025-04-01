@@ -4,7 +4,7 @@ pulp_release_name: pulp
 
 pulp_operator_chart_repo: https://github.com/pulp/pulp-k8s-resources/raw/main/helm-charts/
 pulp_operator_chart_name: pulp-operator
-pulp_operator_chart_version: '0.1.0'
+pulp_operator_chart_version: '0.2.0'
 pulp_operator_wait_timeout: 10m
 pulp_operator_release_values: {}
 
