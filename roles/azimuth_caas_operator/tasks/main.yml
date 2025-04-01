@@ -78,6 +78,6 @@
 
 - include_tasks: sync-pulp.yml
   when:
-    - pulp_enabled
+    - azimuth_pulp_enabled
     - azimuth_caas_stackhpc_slurm_appliance_enabled
     # TODO: some flag for we want to enable package installs?
