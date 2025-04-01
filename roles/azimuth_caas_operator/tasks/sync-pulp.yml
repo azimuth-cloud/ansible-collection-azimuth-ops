@@ -49,11 +49,20 @@
     _pulp_admin_secret: "{{ _pulp_admin_secret_query.stdout | from_yaml }}"
 
 - name: Sync Pulp snapshots
-  command: kubectl apply -f -
+  command: kubectl create -o json -f  -
   args:
     stdin: "{{ lookup('template', 'pulp_sync_job.yaml.j2') }}"
+  register: _pulp_sync_job
 
 - name: Wait for sync to finish
-  command: kubectl wait --namespace={{ azimuth_caas_pulp_namespace }} --for=condition=complete --timeout={{ pulp_sync_timeout }} job/pulp-repo-sync
+  command: "kubectl --namespace={{ azimuth_caas_pulp_namespace }} get --watch-only {{ _pulp_sync_jobname }}"
+  register: _pulp_sync_finished
+  until: _pulp_sync_finished.stdout != ''
+  retries: "{{ azimuth_caas_pulp_sync_timeout * 2 }}"
+  delay: 30
   vars:
-    pulp_sync_timeout: 15m # TODO: make configurable took 3 mins just to start installing pip packages
+    _pulp_sync_jobname: "{{ (_pulp_sync_job.stdout | from_json).metadata.name }}"
+
+- name: Assert sync was successful
+  assert:
+    that: "'Complete' in _pulp_sync_finished.stdout"

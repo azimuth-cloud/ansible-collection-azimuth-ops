@@ -678,5 +678,6 @@ azimuth_caas_cluster_templates: >-
 
 # Defaults for Pulp
 azimuth_caas_pulp_namespace: "{{ pulp_release_namespace | default('pulp') }}"
+azimuth_caas_pulp_sync_timeout: 15 # minutes
 #azimuth_caas_pulp_upstream_username:
 #azimuth_caas_pulp_upstream_password:

@@ -6,12 +6,13 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: pulp-repo-sync
+  generateName: pulp-repo-sync-
   namespace: "{{ azimuth_caas_pulp_namespace }}"
 # TODO: do we run this in the pulp namespace?
 spec:
   template:
     spec:
+      restartPolicy: Never
       containers:
       - name: pulp-repo-sync
         image: rockylinux/rockylinux:9.5 # TODO: can we replace this with whatever the execution environment is??
@@ -32,8 +33,18 @@ spec:
           # don't have an activate script in caas environment:
           export ANSIBLE_INVENTORY=environments/common/inventory,environments/.caas/inventory
           ansible-playbook -v ansible/adhoc/sync-pulp.yml -e ansible_python_interpreter="/ansible-slurm-appliance/venv/bin/python3"
-      restartPolicy: Never # FIXME: above why do we need to specify interpreter, is the environment odd?
-  backoffLimit: 4
+      # FIXME: above why do we need to specify interpreter, is the environment odd?
+  backoffLimit: 6
+  podFailurePolicy:
+    rules:
+    - action: FailJob
+      onExitCodes:
+        operator: NotIn
+        values: [0]
+    - action: Ignore             # one of: Ignore, FailJob, Count
+      onPodConditions:
+      - type: DisruptionTarget   # indicates Pod disruption
+      
 
 # # looks like we need to set:
 # pulp_site_url:
