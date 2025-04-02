@@ -1,12 +1,7 @@
-# Prototype/test using
-# kubectl run -i --tty --rm debug --image=rockylinux/rockylinux:9.5 --restart=Never -- bash
-#   https://github.com/stackhpc/ansible-slurm-appliance.git
-#   main - v1.155 doesn't have sync-pulp!
-
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: pulp-repo-sync-
+  name: pulp-repo-sync-{{ item | replace('.', '-') }}
   namespace: "{{ azimuth_caas_pulp_namespace }}"
 # TODO: do we run this in the pulp namespace?
 spec:
@@ -15,10 +10,15 @@ spec:
       restartPolicy: Never
       containers:
       - name: pulp-repo-sync
-        image: rockylinux/rockylinux:9.5 # TODO: can we replace this with whatever the execution environment is??
+        image: rockylinux/rockylinux:9.5
+        env:
+          - name: appliances_pulp_url
+            value: "http://{{ _pulp_api_service.spec.clusterIP }}:{{ _pulp_api_service.spec.ports[0].port }}"
+          - name: pulp_site_target_distribution_version
+            value: "{{ item }}"
+          - name: pulp_site_target_distribution_version_major
+            value: "{{ item | split('.') | first }}"
         envFrom:
-          - configMapRef:
-              name: pulp-sync-config
           - secretRef:
               name: pulp-sync-secret
         command: ["bash",  "-c", "--"]
@@ -41,14 +41,6 @@ spec:
       onExitCodes:
         operator: NotIn
         values: [0]
-    - action: Ignore             # one of: Ignore, FailJob, Count
+    - action: Ignore
       onPodConditions:
       - type: DisruptionTarget   # indicates Pod disruption
-      
-
-# # looks like we need to set:
-# pulp_site_url:
-# pulp_site_port: # although squeezer doesn't take this?
-# pulp_site_username
-# pulp_site_password
-# _cache_dir ?

@@ -1,35 +1,17 @@
 
 - name: Query Pulp API Service
   command: >-
-      kubectl get --namespace {{ azimuth_caas_pulp_namespace }}
-      service pulp-api-svc -o yaml
+    kubectl get --namespace {{ azimuth_caas_pulp_namespace }}
+    service pulp-api-svc -o yaml
   register: _pulp_api_service_query
   
 - name: Query Pulp admin password secret
   command: >-
-      kubectl get --namespace {{ azimuth_caas_pulp_namespace }}
-      secret pulp-admin-password -o yaml
+    kubectl get --namespace {{ azimuth_caas_pulp_namespace }}
+    secret pulp-admin-password -o yaml
   register: _pulp_admin_secret_query
-
-- name: Create ConfigMap for Pulp sync Job
-  command: kubectl apply -f -
-  args:
-    stdin: "{{ _pulp_sync_configmap_definition | to_nice_yaml }}"
-  vars:
-    _pulp_sync_configmap_definition:
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: pulp-sync-config
-        namespace: "{{ azimuth_caas_pulp_namespace }}"
-      data:
-        appliances_pulp_url: "http://{{ _pulp_api_service.spec.clusterIP }}:{{ _pulp_api_service.spec.ports[0].port }}"
-        # TODO: need to work out how to specify https or not
-        pulp_site_target_distribution_version: "9.5"
-        pulp_site_target_distribution_version_major: "9"
-    _pulp_api_service: "{{ _pulp_api_service_query.stdout | from_yaml }}"
-
-- name: Create Secret for Pulp sync Job
+  
+- name: Create Secret for Pulp sync Jobs
   command: kubectl apply -f -
   args:
     stdin: "{{ _pulp_sync_secret_definition | to_nice_yaml }}"
@@ -48,21 +30,70 @@
         pulp_site_upstream_password: "{{ azimuth_caas_pulp_upstream_password | b64encode }}"
     _pulp_admin_secret: "{{ _pulp_admin_secret_query.stdout | from_yaml }}"
 
-- name: Sync Pulp snapshots
-  command: kubectl create -o json -f  -
-  args:
-    stdin: "{{ lookup('template', 'pulp_sync_job.yaml.j2') }}"
-  register: _pulp_sync_job
+- name: Check for existing sync job
+  command: >-
+    kubectl get --namespace {{ azimuth_caas_pulp_namespace }} -o yaml
+    job pulp-repo-sync-{{ item | replace('.', '-') }}
+  register: _pulp_sync_job_old
+  failed_when:
+    - _pulp_sync_job_old.rc != 0
+    - '"not found" not in _pulp_sync_job_old.stderr'
+  loop: "{{ azimuth_caas_pulp_slurm_sync_job_versions }}"
 
+- name: Delete job template if existing job didn't succeed
+  file:
+    path: "/tmp/pulp_sync_job_{{ item.item | replace('.', '_') }}"
+    state: absent
+  # This makes the next step a change so the job runs again
+  loop: "{{ _pulp_sync_job_old.results }}"
+  when:
+    - item.stdout != '' # i.e. a job was found
+    - (item.stdout | from_yaml).status.succeeded | default(0) == 0
+
+- name: Create Pulp sync job templates
+  template:
+    src: pulp_sync_job.yaml.j2
+    dest: "/tmp/pulp_sync_job_{{ item }}.yaml"
+  loop: "{{ azimuth_caas_pulp_slurm_sync_job_versions }}"
+  vars:
+    _pulp_api_service: "{{ _pulp_api_service_query.stdout | from_yaml }}"
+  register: _pulp_sync_job_templates
+
+- name: Delete previous sync jobs
+  # b/c job names must be unique
+  command: >-
+    kubectl delete --namespace={{ azimuth_caas_pulp_namespace }}
+    job pulp-repo-sync-{{ item | replace('.', '-') }}
+  loop: "{{ azimuth_caas_pulp_slurm_sync_job_versions }}"
+  register: _pulp_sync_job_delete
+  failed_when:
+    - _pulp_sync_job_delete.rc != 0
+    - '"not found" not in _pulp_sync_job_delete.stderr'
+  changed_when: "'not found' not in _pulp_sync_job_delete.stderr"
+
+- name: Start Pulp sync jobs
+  # NB: only if template changed, so either re-created b/c of failure or changes to vars etc
+  command: >-
+    kubectl create --namespace={{ azimuth_caas_pulp_namespace }}
+    -o json -f {{ item.dest }}
+  loop: "{{ _pulp_sync_job_templates.results }}"
+  when: item.changed
+
+# TODO: could move later if we make this async...
 - name: Wait for sync to finish
-  command: "kubectl --namespace={{ azimuth_caas_pulp_namespace }} get --watch-only {{ _pulp_sync_jobname }}"
-  register: _pulp_sync_finished
-  until: _pulp_sync_finished.stdout != ''
-  retries: "{{ azimuth_caas_pulp_sync_timeout * 2 }}"
+  command: "kubectl --namespace={{ azimuth_caas_pulp_namespace }} get job {{ _pulp_sync_jobname }}"
+  loop: "{{ _pulp_sync_job_templates.results }}"
+  when: item.changed
+  changed_when: false
+  register: _pulp_sync_job_finished
+  until: "'Complete' in _pulp_sync_job_finished.stdout or 'Failed' in _pulp_sync_job_finished.stdout"
+  retries: "{{ azimuth_caas_pulp_slurm_sync_timeout * 2 }}"
   delay: 30
   vars:
-    _pulp_sync_jobname: "{{ (_pulp_sync_job.stdout | from_json).metadata.name }}"
+    _pulp_sync_jobname: "pulp-repo-sync-{{ item.item | replace('.', '-') }}"
 
-- name: Assert sync was successful
+- name: Check sync was successful
   assert:
-    that: "'Complete' in _pulp_sync_finished.stdout"
+    that: "'Complete' in item.stdout"
+  loop: "{{ _pulp_sync_job_finished.results }}"
+  when: not item.skipped
