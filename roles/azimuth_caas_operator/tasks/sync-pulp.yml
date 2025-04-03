@@ -38,7 +38,7 @@
   failed_when:
     - _pulp_sync_job_old.rc != 0
     - '"not found" not in _pulp_sync_job_old.stderr'
-  loop: "{{ azimuth_caas_pulp_slurm_sync_job_versions }}"
+  loop: "{{ azimuth_caas_pulp_slurm_distribution_versions }}"
 
 - name: Delete job template if existing job didn't succeed
   file:
@@ -54,7 +54,7 @@
   template:
     src: pulp_sync_job.yaml.j2
     dest: "/tmp/pulp_sync_job_{{ item }}.yaml"
-  loop: "{{ azimuth_caas_pulp_slurm_sync_job_versions }}"
+  loop: "{{ azimuth_caas_pulp_slurm_distribution_versions }}"
   vars:
     _pulp_api_service: "{{ _pulp_api_service_query.stdout | from_yaml }}"
   register: _pulp_sync_job_templates
@@ -64,7 +64,7 @@
   command: >-
     kubectl delete --namespace={{ azimuth_caas_pulp_namespace }}
     job pulp-repo-sync-{{ item | replace('.', '-') }}
-  loop: "{{ azimuth_caas_pulp_slurm_sync_job_versions }}"
+  loop: "{{ azimuth_caas_pulp_slurm_distribution_versions }}"
   register: _pulp_sync_job_delete
   failed_when:
     - _pulp_sync_job_delete.rc != 0
