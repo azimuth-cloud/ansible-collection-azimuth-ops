@@ -61,6 +61,7 @@
 
 - name: Delete previous sync jobs
   # b/c job names must be unique
+  # TODO: if we're not actually going to run a job, we shouldn't delete it
   command: >-
     kubectl delete --namespace={{ azimuth_caas_pulp_namespace }}
     job pulp-repo-sync-{{ item | replace('.', '-') }}
@@ -96,4 +97,4 @@
   assert:
     that: "'Complete' in item.stdout"
   loop: "{{ _pulp_sync_job_finished.results }}"
-  when: not item.skipped
+  when: not item.skipped | default(false)
