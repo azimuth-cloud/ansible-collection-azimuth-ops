@@ -25,7 +25,7 @@
     - role: azimuth_cloud.azimuth_ops.postgres_operator
       when: azimuth_apps_enabled
     - role: azimuth_cloud.azimuth_ops.pulp
-      when: azimuth_pulp_enabled # TODO: should this be azimuth_pulp_enabled ?
+      when: azimuth_pulp_enabled
     - role: azimuth_cloud.azimuth_ops.azimuth_caas_operator
       when: azimuth_clusters_enabled
     - role: azimuth_cloud.azimuth_ops.azimuth_schedule_operator

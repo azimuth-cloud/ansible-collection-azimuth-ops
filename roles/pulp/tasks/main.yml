@@ -119,18 +119,18 @@
         image_version: "{{ pulp_image_version }}"
         image_web_version: "{{ pulp_image_web_version }}"
         image: "{{ pulp_image }}"
-        api: # TODO: make these controllable
-          replicas: 2
+        api:
+          replicas: "{{ pulp_api_replicas }}"
           strategy:
-            type: Recreate # TODO: see below b/c RWO storage
+            type: "{{ pulp_update_strategy }}"
         content:
-          replicas: 2
+          replicas: "{{ pulp_content_replicas }}"
           strategy:
-            type: Recreate # TODO: see below b/c RWO storage
+            type: "{{ pulp_update_strategy }}"
         worker:
-          replicas: 3
+          replicas: "{{ pulp_worker_replicas }}"
           strategy:
-            type: Recreate # TODO: see below b/c RWO storage
+            type: "{{ pulp_update_strategy }}"
         database:
           external_db_secret: "{{ pulp_release_name }}-postgresql-auth"
         cache:
