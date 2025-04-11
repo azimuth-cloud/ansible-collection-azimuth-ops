@@ -170,6 +170,13 @@ azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type:
 # on each tenant cluster.
 azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations: true
 
+# Whether to enable the Longhorn CAPI addon
+azimuth_capi_operator_longhorn_enabled: false
+azimuth_capi_operator_longhorn_node_selector_enabled: false
+azimuth_capi_operator_longhorn_node_selector:
+azimuth_capi_operator_longhorn_default_data_path:
+azimuth_capi_operator_longhorn_default_data_locality:
+
 azimuth_capi_operator_capi_helm_values_defaults:
   machineMetadata: "{{ azimuth_capi_operator_capi_helm_machine_metadata }}"
   kubeNetwork:
@@ -349,6 +356,17 @@ azimuth_capi_operator_capi_helm_values_defaults:
           values:
             controller:
               allowSnippetAnnotations: "{{ azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations }}"
+    longhorn:
+      enabled: "{{ azimuth_capi_operator_longhorn_enabled }}"
+      release:
+          values:
+            persistence:
+              defaultNodeSelector:
+                enable: "{{ azimuth_capi_operator_longhorn_node_selector_enabled }}"
+                selector: "{{ azimuth_capi_operator_longhorn_node_selector | default(omit) }}"
+            defaultSettings:
+              defaultDataPath: "{{ azimuth_capi_operator_longhorn_default_data_path | default(omit) }}"
+              defaultDataLocality: "{{ azimuth_capi_operator_longhorn_default_data_locality | default(omit) }}"
   etcd: >-
     {{-
       {
