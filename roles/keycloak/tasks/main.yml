@@ -330,6 +330,29 @@
               first |
               json_query("id")
           }}
+
+    # Try to obtain a Keycloak admin token with the password from the config
+    - name: Get Keycloak admin token
+      uri:
+        url: "{{ keycloak_base_url }}/realms/master/protocol/openid-connect/token"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          grant_type: password
+          client_id: admin-cli
+          username: "{{ keycloak_admin_username }}"
+          password: "{{ keycloak_admin_password }}"
+        # An authentication error (401) is an expected status code here
+        status_code: [200, 401]
+        ca_path: "{{ keycloak_ca_path }}"
+        validate_certs: "{{ keycloak_validate_certs }}"
+      register: keycloak_admin_token_req
+      retries: 5
+      delay: 10
+
+    - name: Set Keycloak admin token fact
+      set_fact:
+        keycloak_admin_token: "{{ keycloak_admin_token_req.json.access_token }}"
   when: keycloak_admin_token_req.status != 200
 
 - name: Configure SSL requirement for master realm
