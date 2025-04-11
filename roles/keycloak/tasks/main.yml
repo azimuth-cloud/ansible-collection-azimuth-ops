@@ -219,16 +219,16 @@
 
 # If the token request fails with an auth error, try using the initial password to
 # update the password to the one from config
-- name: Update Keycloak admin password
+- name: Update Keycloak admin password and remove bootstrap admin user
   block:
-    - name: Get initial admin password
+    - name: Get bootstrap admin password
       command: >-
         kubectl get secret {{ keycloak_initial_admin_secret_name }}
           --namespace {{ keycloak_namespace }}
           --output go-template='{% raw %}{{ .data.password | base64decode }}{% endraw %}'
       register: keycloak_initial_admin_password_cmd
 
-    - name: Get Keycloak admin token using initial admin password
+    - name: Get Keycloak admin token using bootstrap admin password
       uri:
         url: "{{ keycloak_base_url }}/realms/master/protocol/openid-connect/token"
         method: POST
@@ -236,7 +236,7 @@
         body:
           grant_type: password
           client_id: admin-cli
-          username: "temp-admin"
+          username: "{{ keycloak_bootstrap_admin_username }}"
           password: "{{ keycloak_initial_admin_password_cmd.stdout }}"
         ca_path: "{{ keycloak_ca_path }}"
         validate_certs: "{{ keycloak_validate_certs }}"
@@ -245,6 +245,24 @@
     - name: Set Keycloak admin token fact
       set_fact:
         keycloak_admin_token: "{{ keycloak_admin_token_initial_req.json.access_token }}"
+
+    - name: Create Keycloak admin user
+      uri:
+        url: "{{ keycloak_base_url }}/admin/realms/master/users"
+        method: POST
+        headers:
+          authorization: "Bearer {{ keycloak_admin_token }}"
+        body_format: json
+        body:
+          username: "{{ keycloak_admin_username }}"
+          enabled: true
+          credentials:
+            - type: "password"
+              temporary: false
+              value: "{{ keycloak_admin_password }}"
+        ca_path: "{{ keycloak_ca_path }}"
+        validate_certs: "{{ keycloak_validate_certs }}"
+        status_code: [201]
 
     - name: Get Keycloak master realm users
       uri:
@@ -256,17 +274,26 @@
         validate_certs: "{{ keycloak_validate_certs }}"
       register: keycloak_realm_users_req
 
-    - name: Set Keycloak admin password
+    - name: Get Keycloak master realm roles
       uri:
-        url: "{{ keycloak_base_url }}/admin/realms/master/users/{{ keycloak_admin_user_id }}/reset-password"
-        method: PUT
+        url: "{{ keycloak_base_url }}/admin/realms/master/roles"
+        method: GET
+        headers:
+          authorization: "Bearer {{ keycloak_admin_token }}"
+        ca_path: "{{ keycloak_ca_path }}"
+        validate_certs: "{{ keycloak_validate_certs }}"
+      register: keycloak_realm_roles_req
+
+    - name: Add the Keycloak admin realm role to the admin user
+      uri:
+        url: "{{ keycloak_base_url }}/admin/realms/master/users/{{ keycloak_admin_user_id }}/role-mappings/realm"
+        method: POST
         headers:
           authorization: "Bearer {{ keycloak_admin_token }}"
         body_format: json
         body:
-          type: password
-          temporary: false
-          value: "{{ keycloak_admin_password }}"
+          - id: "{{ keycloak_admin_role_id }}"
+            name: "admin"
         ca_path: "{{ keycloak_ca_path }}"
         validate_certs: "{{ keycloak_validate_certs }}"
         status_code: [204]
@@ -275,6 +302,31 @@
           {{-
             keycloak_realm_users_req.json |
               selectattr("username", "eq", keycloak_admin_username) |
+              first |
+              json_query("id")
+          }}
+        keycloak_admin_role_id: >-
+          {{-
+            keycloak_realm_roles_req.json |
+              selectattr("name", "eq", "admin") |
+              first |
+              json_query("id")
+          }}
+
+    - name: Delete the Keycloak bootstrap admin user
+      uri:
+        url: "{{ keycloak_base_url }}/admin/realms/master/users/{{ keycloak_bootstrap_admin_user_id }}"
+        method: DELETE
+        headers:
+          authorization: "Bearer {{ keycloak_admin_token }}"
+        ca_path: "{{ keycloak_ca_path }}"
+        validate_certs: "{{ keycloak_validate_certs }}"
+        status_code: [204]
+      vars:
+        keycloak_bootstrap_admin_user_id: >-
+          {{-
+            keycloak_realm_users_req.json |
+              selectattr("username", "eq", keycloak_bootstrap_admin_username) |
               first |
               json_query("id")
           }}
