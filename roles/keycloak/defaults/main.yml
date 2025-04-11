@@ -45,7 +45,7 @@ keycloak_spec_defaults:
   http:
     httpEnabled: true
   hostname:
-    hostname: "{{ keycloak_ingress_host }}"
+    hostname: "{{ keycloak_base_url }}"
     strict: false
     strictBackchannel: false
   db: >-
