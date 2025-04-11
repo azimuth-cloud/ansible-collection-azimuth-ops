@@ -236,7 +236,7 @@
         body:
           grant_type: password
           client_id: admin-cli
-          username: "{{ keycloak_admin_username }}"
+          username: "temp-admin"
           password: "{{ keycloak_initial_admin_password_cmd.stdout }}"
         ca_path: "{{ keycloak_ca_path }}"
         validate_certs: "{{ keycloak_validate_certs }}"
