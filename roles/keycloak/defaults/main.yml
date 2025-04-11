@@ -241,6 +241,8 @@ keycloak_admin_password: "{{ undef(hint = 'keycloak_admin_password is not define
 keycloak_admin_creds_secret_name: "{{ keycloak_name }}-admin-creds"
 # The name of the secret containing the initial admin password
 keycloak_initial_admin_secret_name: "{{ keycloak_name }}-initial-admin"
+# The bootstrap admin username
+keycloak_bootstrap_admin_username: "temp-admin"
 
 # The base URL of Keycloak
 keycloak_base_url: >-
