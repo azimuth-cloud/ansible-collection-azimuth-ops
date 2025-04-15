@@ -45,7 +45,7 @@ keycloak_spec_defaults:
   http:
     httpEnabled: true
   hostname:
-    hostname: "{{ keycloak_ingress_host }}"
+    hostname: "{{ keycloak_base_url }}"
     strict: false
     strictBackchannel: false
   db: >-
@@ -98,12 +98,9 @@ keycloak_spec_defaults:
       if keycloak_trust_bundle
       else {}
     }}
-  # Use the additional options to disable strict HTTPS if TLS is disabled
   additionalOptions:
     - name: metrics-enabled
       value: "true"
-    - name: hostname-strict-https
-      value: "{{ 'true' if keycloak_ingress_tls_enabled else 'false' }}"
 keycloak_spec_overrides: {}
 keycloak_spec: "{{ keycloak_spec_defaults | combine(keycloak_spec_overrides, recursive = True) }}"
 
@@ -195,7 +192,7 @@ keycloak_ingress_spec: >-
   }}
 
 # The version of the Keycloak operator to install
-keycloak_operator_version: 25.0.6
+keycloak_operator_version: 26.2.0
 # The base URL for the Keycloak operator manifests
 keycloak_operator_base_url: https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources
 
@@ -244,6 +241,8 @@ keycloak_admin_password: "{{ undef(hint = 'keycloak_admin_password is not define
 keycloak_admin_creds_secret_name: "{{ keycloak_name }}-admin-creds"
 # The name of the secret containing the initial admin password
 keycloak_initial_admin_secret_name: "{{ keycloak_name }}-initial-admin"
+# The bootstrap admin username
+keycloak_bootstrap_admin_username: "temp-admin"
 
 # The base URL of Keycloak
 keycloak_base_url: >-

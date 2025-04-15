@@ -1,13 +1,20 @@
 ---
 
 - block:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+      register: cache_updated
+      changed_when: false
+      until:
+        - cache_updated is success
+
     - name: Ensure required packages are available
       apt:
         name:
           - python3-pip
           - qemu-utils
         state: present
-        update_cache: yes
 
     - name: Ensure OpenStack CLI (and SDK) are available
       pip:
