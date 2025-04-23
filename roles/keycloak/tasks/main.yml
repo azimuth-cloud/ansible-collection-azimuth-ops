@@ -338,7 +338,7 @@
     validate_certs: "{{ keycloak_validate_certs }}"
     status_code: [204]
   when:
-    - keycloak_realm_users_req is defined
+    - not keycloak_realm_users_req.skipped
     - keycloak_bootstrap_admin_username in (keycloak_realm_users_req.json | map(attribute="username"))
   vars:
     keycloak_bootstrap_admin_user_id: >-
