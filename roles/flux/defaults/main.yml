@@ -1,0 +1,55 @@
+---
+
+#####
+# Flux controller installation using Helm
+#####
+
+flux_chart_repo: https://fluxcd-community.github.io/helm-charts
+flux_chart_name: flux2
+flux_chart_version: 2.14.1
+
+flux_release_namespace: flux-system
+flux_release_name: flux
+
+# The timeout to wait for the dashboard to become ready
+flux_wait_timeout: 10m
+
+# The values for the release
+flux_release_defaults:
+  # Install the CRDs
+  installCRDs: true
+  # We don't need the image automation controllers
+  imageAutomationController:
+    create: false
+  imageReflectionController:
+    create: false
+flux_release_overrides: {}
+flux_release_values: >-
+  {{-
+    flux_release_defaults |
+      combine(flux_release_overrides, recursive = True)
+  }}
+
+
+#####
+# Flux CLI installation on the seed
+#####
+
+# The Flux repository
+flux_cli_repo: https://github.com/fluxcd/flux2
+# The Flux version to download
+flux_cli_version: v2.4.0
+# The OS variant and architecture to use
+flux_cli_os: "{{ ansible_system | lower }}"
+flux_cli_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+# The name of the Flux archive
+flux_cli_archive_name: >-
+  flux_{{ flux_cli_version.removeprefix('v') }}_{{ flux_cli_os }}_{{ flux_cli_architecture }}.tar.gz
+# The URL of the Flux archive to download
+flux_cli_archive_url: >-
+  https://github.com/fluxcd/flux2/releases/download/{{ flux_cli_version }}/{{ flux_cli_archive_name }}
+
+# The directory into which the Flux archive should be unpacked
+flux_cli_unpack_directory: "/opt/flux/{{ flux_cli_version }}"
+# The directory into which the Flux binary should be placed
+flux_cli_bin_directory: /usr/local/bin

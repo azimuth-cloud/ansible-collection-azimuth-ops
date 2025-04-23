@@ -44,6 +44,10 @@
         - include_role:
             name: azimuth_cloud.azimuth_ops.kustomize
 
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.flux
+            tasks_from: cli
+
         - name: Slurp kubeconfig file
           slurp:
             src: /etc/rancher/k3s/k3s.yaml
