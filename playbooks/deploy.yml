@@ -9,6 +9,7 @@
       when: >-
         alertmanager_config_slack_webhook_url is defined and
         alertmanager_config_slack_webhook_url
+    - role: azimuth_cloud.azimuth_ops.flux
     - role: azimuth_cloud.azimuth_ops.certmanager
       when: certmanager_enabled or azimuth_kubernetes_enabled
     - role: azimuth_cloud.azimuth_ops.kubernetes_dashboard

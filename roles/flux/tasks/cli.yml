@@ -1,0 +1,29 @@
+---
+
+- name: Ensure Flux CLI unpack directory exists
+  file:
+    path: "{{ flux_cli_unpack_directory }}"
+    state: directory
+
+- name: Download and extract Flux CLI archive
+  unarchive:
+    remote_src: yes
+    src: "{{ flux_cli_archive_url }}"
+    dest: "{{ flux_cli_unpack_directory }}"
+
+- name: Ensure Flux CLI binary directory exists
+  file:
+    path: "{{ flux_cli_bin_directory }}"
+    state: directory
+
+- name: Copy Flux CLI executable to binary directory
+  copy:
+    remote_src: yes
+    src: "{{ (flux_cli_unpack_directory, 'flux') | path_join }}"
+    dest: "{{ flux_cli_bin_directory }}"
+    mode: u=rwx,g=rw,o=rx
+
+- name: Ensure Flux CLI shell completions are in .bashrc
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: source <(flux completion bash)

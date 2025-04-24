@@ -133,6 +133,11 @@ jobs:
             prereleases: "yes"
             version_jsonpath: clusterapi_janitor_openstack_chart_version
 
+          - key: flux-cli
+            path: ./roles/flux/defaults/main.yml
+            repository: fluxcd/flux2
+            version_jsonpath: flux_cli_version
+
           - key: helm
             path: ./roles/helm/defaults/main.yml
             repository: helm/helm
@@ -232,6 +237,12 @@ jobs:
             chart_repo_jsonpath: cloud_metrics_grafana_chart_repo
             chart_name_jsonpath: cloud_metrics_grafana_chart_name
             chart_version_jsonpath: cloud_metrics_grafana_chart_version
+
+          - key: flux
+            path: ./roles/flux/defaults/main.yml
+            chart_repo_jsonpath: flux_chart_repo
+            chart_name_jsonpath: flux_chart_name
+            chart_version_jsonpath: flux_chart_version
 
           - key: harbor
             path: ./roles/harbor/defaults/main.yml
