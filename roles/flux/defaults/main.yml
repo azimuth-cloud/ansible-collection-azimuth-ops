@@ -4,6 +4,8 @@
 # Flux controller installation using Helm
 #####
 
+flux_enabled: false
+
 flux_chart_repo: https://fluxcd-community.github.io/helm-charts
 flux_chart_name: flux2
 flux_chart_version: 2.14.1
