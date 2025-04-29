@@ -61,6 +61,7 @@ jobs:
             generate_tests_kubernetes_apps_default_test_case_enabled: false
             generate_tests_kubernetes_apps_test_case_jupyterhub_enabled: true
             generate_tests_kubernetes_apps_test_case_daskhub_enabled: true
+            # Test Flux install in CI even when disabled in default config
             flux_enabled: true
         # GitHub terminates jobs after 6 hours
         # We don't want jobs to acquire the lock then get timed out before they can finish
