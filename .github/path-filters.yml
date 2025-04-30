@@ -1,0 +1,8 @@
+# This file is a list of path filters for the PR workflow in .github/workflows/stackhpc-pull-request.yml.
+playbooks: &playbooks
+  - 'playbooks/*.yml'
+roles: &roles
+  - 'roles/**/**/*.yml'
+azimuth-ops:
+  - *playbooks
+  - *roles
