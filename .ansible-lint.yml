@@ -1,0 +1,14 @@
+---
+skip_list:
+  - role-name
+  # Unresolved issues with parsing jinja in multiline strings
+  # https://github.com/ansible/ansible-lint/issues/3935
+  - jinja[spacing]
+  - galaxy[no-changelog]
+
+warn_list:
+  - var-naming
+
+exclude_paths:
+  - .ansible/**
+  - .github/**

@@ -18,3 +18,19 @@ It can function in three modes:
 This collection is designed to be used with a configuration repository that is forked
 from [azimuth-config](https://github.com/azimuth-cloud/azimuth-config), and user documentation
 for configuration options can be found in that project.
+
+## Developing locally
+
+To run the GitHub Actions linters locally, use:
+
+```sh
+docker run --rm \
+    -e RUN_LOCAL=true \
+    --env-file "super-linter.env" \
+    -v "$(pwd)":/tmp/lint \
+    ghcr.io/super-linter/super-linter:v7.3.0
+```
+
+```sh
+ansible-lint -c .ansible-lint.yml 
+```
