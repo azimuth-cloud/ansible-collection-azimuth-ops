@@ -47,6 +47,7 @@
         - include_role:
             name: azimuth_cloud.azimuth_ops.flux
             tasks_from: cli
+          when: flux_enabled
 
         - name: Slurp kubeconfig file
           slurp:
