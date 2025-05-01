@@ -1,72 +1,66 @@
 ---
+name: Lint 
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+      - reopened
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+  # To report GitHub Actions status checks
+  statuses: write
+  security-events: write
+  id-token: write
 
 concurrency:
-  group: azimuth-pull-request-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-name: Pull request
-'on':
-  pull_request:
 jobs:
-  # Detect which files have changed and use this to run jobs conditionally.
-  # Note that we can't use the workflow-level paths attribute since this
-  # would skip the workflow entirely, and would prevent us from making the
-  # selected jobs required to pass (a skip counts as a pass).
-  check-changes:
-    runs-on: ubuntu-24.04
-    permissions:
-      pull-requests: read
-    name: Check changed files
-    if: github.repository == 'azimuth-cloud/ansible-collection-azimuth-ops'
-    outputs:
-      playbooks: ${{ steps.changes.outputs.playbooks }}
-      roles: ${{ steps.changes.outputs.roles  }}
-      azimuth-ops: ${{ steps.changes.outputs.azimuth-ops }}
-    steps:
-      - name: GitHub Checkout
-        uses: actions/checkout@v4
-
-      - name: Check changed files
-        uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          # Filters are defined in this file.
-          filters: .github/path-filters.yml
-
   lint:
-    runs-on: ubuntu-24.04
-    permissions: {}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # NOTE: Keep these in sync with ansible.posix's supported Ansible version & Ansible Core's Python requirements.
-          # For ansible.posix 2.0.0, Ansible core 2.15 or later is required and Python 3.9 or later is required.
-          - ansible: "2.18"
-            python: "3.12"
-          - ansible: "2.17"
-            python: "3.10"
-    name: Ansible ${{ matrix.ansible }} lint with Python ${{ matrix.python }}
-    if: github.repository == 'azimuth-cloud/ansible-collection-azimuth-ops' && ${{ needs.check-changes.outputs.azimuth-ops == 'true' }}
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      # To report GitHub Actions status checks
+      statuses: write
+    if: github.repository == 'azimuth-cloud/ansible-collection-azimuth-ops'
+
     steps:
-      - name: GitHub Checkout 🛎
-        uses: actions/checkout@v4
-
-      - name: Setup Python ${{ matrix.python }} 🐍
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
         with:
-          python-version: ${{ matrix.python }}
+          # super-linter needs the full git history to get the
+          # list of files that changed across commits
+          fetch-depth: 0
+          submodules: true
 
-      - name: Install dependencies 📦
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-core==${{ matrix.ansible }}.* ansible-lint jmespath
+      - name: Run ansible-lint
+        uses: ansible/ansible-lint@v25.4.0
 
-      # - name: Install Ansible Galaxy collections and roles
-      #   run: |
-      #     ansible-galaxy collection install -r galaxy.yml
-      #     ansible-galaxy role install -r galaxy.yml
+      - name: Run super-linter
+        # This is a workaround if the ansible-lint step fails
+        if: always()
+        uses: super-linter/super-linter@v7.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_JSCPD: false
+          VALIDATE_JAVASCRIPT_STANDARD: false
+          VALIDATE_CHECKOV: false
+          VALIDATE_YAML_PRETTIER: false
+          VALIDATE_ANSIBLE: false
 
-      - name: Linting code 🧪
-        run: |
-          ansible-lint -v --force-color playbooks/. roles/.
+  # This job exists so that PRs from outside the main repo are rejected
+  fail_on_remote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR must be from a branch in the azimuth-cloud/ansible-collection-azimuth-ops repo
+        # yamllint disable-line rule:line-length
+        run: if [ "${{ github.repository }}" != "azimuth-cloud/ansible-collection-azimuth-ops" ]; then exit 1; fi
