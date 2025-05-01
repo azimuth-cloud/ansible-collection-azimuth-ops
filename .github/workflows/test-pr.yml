@@ -1,28 +1,11 @@
 name: Test Azimuth deployment
 
 on:
-  pull_request:
+  # Trigger on completion of pull request Lint workflow 
+  workflow_run: 
+    workflows: [Lint]
     types:
-      - opened
-      - synchronize
-      - ready_for_review
-      - reopened
-    branches:
-      - main
-    paths-ignore:
-      # Ignore any changes that are not actually code changes
-      - .gitignore
-      - CODEOWNERS
-      - LICENSE
-      - README.md
-      - .github/release.yml
-      - .github/workflows/update-dependencies.yml
-      # Ignore any changes that only affect the HA install
-      - playbooks/deploy_capi_mgmt.yml
-      - playbooks/provision_capi_mgmt.yml
-      - playbooks/restore.yml
-      - roles/capi_cluster/**
-      - roles/velero/**
+      - completed
 
 # Use the head ref for workflow concurrency, with cancellation
 # This should mean that any previous workflows for a PR get cancelled when a new commit is pushed
@@ -33,6 +16,9 @@ concurrency:
 jobs:
   # This job exists so that PRs from outside the main repo are rejected
   fail_on_remote:
+    # This job is only run if the Lint workflow was successful.
+    # The next job is dependent on this job, so it will not run if this job doesn't.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: PR must be from a branch in the azimuth-cloud/ansible-collection-azimuth-ops repo
