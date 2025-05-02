@@ -34,7 +34,7 @@ jobs:
         with:
           os-clouds: ${{ secrets.OS_CLOUDS }}
           environment-prefix: ops-ci
-          azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
+          azimuth-ops-version: ${{ github.event.workflow_run.head_commit.id }}
           target-cloud: ${{ vars.TARGET_CLOUD }}
           # Remove when https://github.com/stackhpc/azimuth-config/pull/129 merges
           extra-vars: |
