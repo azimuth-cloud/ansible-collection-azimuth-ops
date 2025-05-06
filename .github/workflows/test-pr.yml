@@ -39,7 +39,9 @@ jobs:
         run: exit ${{ github.repository == 'azimuth-cloud/ansible-collection-azimuth-ops' && '0' || '1' }}
 
   run_azimuth_tests:
-    needs: [fail_on_remote]
+    needs: 
+      - fail_on_remote
+      - lint
     runs-on: ubuntu-latest
     steps:
       # Check out the configuration repository
