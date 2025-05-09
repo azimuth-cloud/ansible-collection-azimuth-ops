@@ -1,0 +1,95 @@
+---
+name: Lint 
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+      - reopened
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+  # To report GitHub Actions status checks
+  statuses: write
+  security-events: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # JOB to run change detection
+  changes:
+    runs-on: ubuntu-latest
+    # Required permissions
+    permissions:
+      pull-requests: read
+    # Set job outputs to values from filter step
+    outputs:
+      no_code: ${{ steps.filter.outputs.no_code }}
+    steps:
+    # For pull requests it's not necessary to checkout the code
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          no_code:
+            # Ignore any changes that are not actually code changes
+            - "!.gitignore"
+            - "!CODEOWNERS"
+            - "!LICENSE"
+            - "!README.md"
+            - "!.github/release.yml"
+            - "!.github/workflows/update-dependencies.yml"
+            # Ignore any changes that only affect the HA install
+            - "!playbooks/deploy_capi_mgmt.yml"
+            - "!playbooks/provision_capi_mgmt.yml"
+            - "!playbooks/restore.yml"
+            - "!roles/capi_cluster/**"
+            - "!roles/velero/**"
+  lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      # To report GitHub Actions status checks
+      statuses: write
+    if: github.repository == 'azimuth-cloud/ansible-collection-azimuth-ops'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # super-linter needs the full git history to get the
+          # list of files that changed across commits
+          fetch-depth: 0
+          submodules: true
+
+      - name: Run ansible-lint
+        uses: ansible/ansible-lint@v25.4.0
+
+      - name: Run super-linter
+        # This is a workaround if the ansible-lint step fails
+        if: always()
+        uses: super-linter/super-linter@v7.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_JSCPD: false
+          VALIDATE_JAVASCRIPT_STANDARD: false
+          VALIDATE_CHECKOV: false
+          VALIDATE_YAML_PRETTIER: false
+          VALIDATE_ANSIBLE: false
+  
+  run_tests:
+    name: Run Azimuth Tests
+    uses: ./.github/workflows/test-pr.yml
+    if: needs.changes.outputs.no_code == 'true'
+    needs:
+      - changes
+      - lint
