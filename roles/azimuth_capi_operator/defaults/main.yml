@@ -665,12 +665,18 @@ azimuth_capi_operator_app_templates_jupyterhub_intel_sync_frequency: 86400
 azimuth_capi_operator_app_templates_jupyterhub_intel_default_values:
   jupyterhub:
     singleuser:
-      image:
-        name: ghcr.io/johngarbutt/jupyterhub-intel-gpu
-        tag: 6421ba1
-      extraResource:
-        limits:
-          gpu.intel.com/i915: 1
+      profileList:
+        - display_name: "CPU"
+          description: "Standard"
+        - display_name: "Pytorch environment with 1 x Intel XPUs"
+          description: "Intel XPU support"
+          kubespawner_override:
+            image: ghcr.io/johngarbutt/jupyterhub-intel-gpu:6421ba1
+            extra_resource_limits:
+              "gpu.intel.com/i915": "1"
+            supplemental_gids:
+              - "110"
+          default: true
 # The tenancy-based access controls for the app template
 # List of allowed tenancy IDs
 azimuth_capi_operator_app_templates_jupyterhub_intel_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
