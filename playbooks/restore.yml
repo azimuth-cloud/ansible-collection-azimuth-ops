@@ -1,21 +1,26 @@
+---
 #####
 # This playbook uses Terraform and Cluster API to restore an Azimuth management cluster from and existing backup source
 #####
 
 # Ensure CAPI management cluster is provisioned
-- import_playbook: azimuth_cloud.azimuth_ops.provision_cluster
+- name: Ensure CAPI management cluster is provisioned
+  import_playbook: azimuth_cloud.azimuth_ops.provision_cluster
 
 # Restore the backup
-- hosts: k3s
+- name: Restore Velero backup
+  hosts: k3s
   environment:
     KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
   tasks:
-    - include_role:
+    - name: Include tasks from Velero restore
+      ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.velero
         tasks_from: restore.yml
 
 # Install Azimuth components
-- import_playbook: azimuth_cloud.azimuth_ops.deploy
+- name: Install Azimuth components
+  import_playbook: azimuth_cloud.azimuth_ops.deploy
   vars:
     # In HA mode, use the kubeconfig for the HA cluster
     # In single node mode, use the default kubeconfig file

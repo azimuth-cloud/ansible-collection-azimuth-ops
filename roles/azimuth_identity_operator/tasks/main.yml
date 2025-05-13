@@ -1,7 +1,6 @@
 ---
-
 - name: Create Azimuth identity operator release namespace
-  command: kubectl create namespace {{ azimuth_identity_operator_release_namespace }}
+  ansible.builtin.command: kubectl create namespace {{ azimuth_identity_operator_release_namespace }}
   register: azimuth_identity_operator_create_namespace
   changed_when: azimuth_identity_operator_create_namespace.rc == 0
   failed_when: >-
@@ -9,7 +8,7 @@
     'AlreadyExists' not in azimuth_identity_operator_create_namespace.stderr
 
 - name: Install wildcard TLS certificate
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ azimuth_identity_operator_tls_wildcard_secret_definition | to_nice_yaml }}"
   vars:
@@ -24,6 +23,8 @@
         tls.crt: "{{ azimuth_identity_operator_tls_certificate }}"
         tls.key: "{{ azimuth_identity_operator_tls_key }}"
   when: azimuth_identity_operator_tls_certificate
+  register: kubectl_install_wildcard_cert
+  changed_when: kubectl_install_wildcard_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Azimuth identity operator on target Kubernetes cluster
   kubernetes.core.helm:
@@ -33,7 +34,7 @@
     release_namespace: "{{ azimuth_identity_operator_release_namespace }}"
     release_name: "{{ azimuth_identity_operator_release_name }}"
     release_values: "{{ azimuth_identity_operator_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ azimuth_identity_operator_wait_timeout }}"

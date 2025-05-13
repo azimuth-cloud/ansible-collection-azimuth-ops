@@ -1,7 +1,12 @@
 # This workflow proposes updates to the dependencies that dependabot cannot
 name: Update dependencies
 
-on:
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
+
+on:  # yamllint disable-line rule:truthy
   # Allow manual executions
   workflow_dispatch:
   # Run nightly

@@ -26,17 +26,17 @@ velero_cli_bin_directory: /usr/local/bin
 velero_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
 # The URL endpoint for the target object store
-velero_s3_url: "{{ undef(hint = 'velero_s3_url is required') }}"
+velero_s3_url: "{{ undef(hint='velero_s3_url is required') }}"
 
 # The name of a pre-existing bucket in the target object store
-velero_bucket_name: "{{ undef(hint = 'velero_bucket_name is required') }}"
+velero_bucket_name: "{{ undef(hint='velero_bucket_name is required') }}"
 
 # The name to use for the secret containing the object store credentials
 velero_s3_creds_secret_name: velero-s3-config
 
 # S3 credentials
-velero_aws_access_key_id: "{{ undef(hint = 'velero_aws_access_key_id is required') }}"
-velero_aws_secret_access_key: "{{ undef(hint = 'velero_aws_secret_access_key is required') }}"
+velero_aws_access_key_id: "{{ undef(hint='velero_aws_access_key_id is required') }}"
+velero_aws_secret_access_key: "{{ undef(hint='velero_aws_secret_access_key is required') }}"
 
 # Kubernetes CSI Snapshot Controller config
 velero_csi_snapshot_controller_chart_name: snapshot-controller
@@ -103,9 +103,11 @@ velero_release_defaults:
       spec:
         - alert: VeleroBackupPartialFailures
           annotations:
-            # Use the unsafe tag to prevent Ansible trying to render it as a template
-            message: !unsafe >-
+            # Use raw tags to prevent Ansible trying to render it as a template
+            message: >-
+              {%- raw -%}
               Velero schedule '{{ $labels.schedule }}' has partially failed backups in the last 24 hours.
+              {%- endraw -%}
           expr: |-
             sum(increase(velero_backup_partial_failure_total{schedule!=""}[24h])) by(schedule) > 0
           for: 15m
@@ -114,9 +116,11 @@ velero_release_defaults:
 
         - alert: VeleroBackupFailures
           annotations:
-            # Use the unsafe tag to prevent Ansible trying to render it as a template
-            message: !unsafe >-
+            # Use raw tags to prevent Ansible trying to render it as a template
+            message: >-
+              {%- raw -%}
               Velero schedule '{{ $labels.schedule }}' has failed backups in the last 24 hours.
+              {%- endraw -%}
           expr: |-
             sum(increase(velero_backup_failure_total{schedule!=""}[24h])) by(schedule) > 0
           for: 15m
@@ -242,7 +246,7 @@ velero_backup_schedule_spec: >-
 
 # Name of backup to use for restore process
 # If not given, the most recent successful backup for the schedule is used
-velero_restore_backup_name: "{{ undef(hint = 'velero_restore_backup_name is required') }}"
+velero_restore_backup_name: "{{ undef(hint='velero_restore_backup_name is required') }}"
 
 # Name of restore object to create
 velero_restore_name: >-

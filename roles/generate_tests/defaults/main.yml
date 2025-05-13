@@ -59,9 +59,7 @@ generate_tests_suite_name: Azimuth Tests
 # Indicates whether upgrade tests should be generated
 generate_tests_include_upgrade_tests: false
 
-#-----
 # Settings for the CaaS test suite
-#-----
 # Indicates whether to generate the CaaS test suite
 generate_tests_caas_suite_enabled: "{{ azimuth_clusters_enabled }}"
 
@@ -74,7 +72,8 @@ generate_tests_caas_test_case_template: caas_test_case.robot
 generate_tests_caas_suite_name: CaaS
 
 # The tags to apply to tests in the suite
-generate_tests_caas_default_test_tags: [caas]
+generate_tests_caas_default_test_tags:
+  - caas
 
 # The timeout to apply to tests in the suite
 # The default test timeout needs to be longer than the longest appliance job timeout
@@ -96,12 +95,12 @@ generate_tests_caas_test_case_workstation_service_monitoring_expected_title: Gra
 generate_tests_caas_test_case_workstation_ssh_enabled: false
 
 # Configuration for the Slurm test case, if enabled
-#   Parameter values to reduce the resource consumption
+# Parameter values to reduce the resource consumption
 generate_tests_caas_test_case_slurm_param_compute_count: 2
 generate_tests_caas_test_case_slurm_param_home_volume_size: 20
-#   Make sure that the post-deploy tests run
+# Make sure that the post-deploy tests run
 generate_tests_caas_test_case_slurm_param_cluster_run_validation: true
-#   Expected titles for the Slurm services
+# Expected titles for the Slurm services
 generate_tests_caas_test_case_slurm_service_ood_expected_title: Dashboard
 generate_tests_caas_test_case_slurm_service_monitoring_expected_title: Grafana
 
@@ -168,9 +167,7 @@ generate_tests_caas_test_cases: >-
   {{- generate_tests_caas_test_cases_default + generate_tests_caas_test_cases_extra }}
 
 
-#-----
 # Settings for the Kubernetes test suite
-#-----
 # Indicates whether to generate the Kubernetes test suite
 generate_tests_kubernetes_suite_enabled: "{{ azimuth_kubernetes_enabled }}"
 
@@ -183,7 +180,8 @@ generate_tests_kubernetes_test_case_template: kubernetes_test_case.robot
 generate_tests_kubernetes_suite_name: Kubernetes
 
 # The tags to apply to tests in the suite
-generate_tests_kubernetes_default_test_tags: [kubernetes]
+generate_tests_kubernetes_default_test_tags:
+  - kubernetes
 
 # The timeout to apply to tests in the suite
 generate_tests_kubernetes_default_test_timeout: "30 minutes"
@@ -192,7 +190,6 @@ generate_tests_kubernetes_default_test_timeout: "30 minutes"
 # By default, an appropriate flavor is guessed based on the required resources
 generate_tests_kubernetes_test_case_control_plane_size:
 generate_tests_kubernetes_test_case_worker_size:
-
 # The worker count for tests
 generate_tests_kubernetes_test_case_worker_count: 2
 
@@ -223,7 +220,6 @@ generate_tests_kubernetes_test_cases_include_tags: >-
       unique
   }}
 generate_tests_kubernetes_test_cases_exclude_tags: []
-
 # The test cases for the suite
 generate_tests_kubernetes_test_cases_default: >-
   [
@@ -257,9 +253,7 @@ generate_tests_kubernetes_test_cases: >-
   {{- generate_tests_kubernetes_test_cases_default + generate_tests_kubernetes_test_cases_extra }}
 
 
-#-----
 # Settings for the Kubernetes apps test suite
-#-----
 # Indicates whether to generate the suite
 generate_tests_kubernetes_apps_suite_enabled: "{{ azimuth_kubernetes_enabled }}"
 
@@ -272,7 +266,9 @@ generate_tests_kubernetes_apps_test_case_template: kubernetes_apps_test_case.rob
 generate_tests_kubernetes_apps_suite_name: Kubernetes Apps
 
 # The tags to apply to tests in the suite
-generate_tests_kubernetes_apps_default_test_tags: [kubernetes, kubeapps]
+generate_tests_kubernetes_apps_default_test_tags:
+  - kubernetes
+  - kubeapps
 
 # The timeouts to apply to the setup, verify and teardown of the Kubernetes cluster
 generate_tests_kubernetes_apps_setup_timeout: "15 minutes"
@@ -291,7 +287,8 @@ generate_tests_kubernetes_apps_k8s_name_prefix: testapps
 generate_tests_kubernetes_apps_k8s_template:
 #   If no template is given, use the latest template that matches these tags
 #   By default, we only consider the standard templates
-generate_tests_kubernetes_apps_k8s_template_tags: [standard]
+generate_tests_kubernetes_apps_k8s_template_tags:
+  - standard
 #   The ID of the flavors to use for control plane and worker nodes respectively
 #   By default, an appropriate flavor is guessed based on the required resources
 generate_tests_kubernetes_apps_k8s_control_plane_size:
@@ -306,13 +303,15 @@ generate_tests_kubernetes_apps_default_test_case_enabled: true
 
 # Configuration for the JupyterHub test case
 #   The services that will be produced by the JupyterHub app
-generate_tests_kubernetes_apps_test_case_jupyterhub_services: [jupyterhub-azimuth]
+generate_tests_kubernetes_apps_test_case_jupyterhub_services:
+  - jupyterhub-azimuth
 #   The expected title for the JupyterHub app
 generate_tests_kubernetes_apps_test_case_jupyterhub_service_jupyterhub_azimuth_expected_title: JupyterLab
 
 # Configuration for the DaskHub test case
 #   The services that will be produced by the DaskHub app
-generate_tests_kubernetes_apps_test_case_daskhub_services: [daskhub-azimuth]
+generate_tests_kubernetes_apps_test_case_daskhub_services:
+  - daskhub-azimuth
 #   The expected title for the DaskHub app
 generate_tests_kubernetes_apps_test_case_daskhub_service_daskhub_azimuth_expected_title: JupyterLab
 

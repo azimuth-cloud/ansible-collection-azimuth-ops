@@ -1,10 +1,9 @@
 ---
-
 # Crunchy Data do not publish Helm charts, so we use Kustomize (following the official documentation)
-# https://access.crunchydata.com/documentation/postgres-operator/latest/installation/kustomize/
+# https://access.crunchydata.com/documentation/postgres-operator/latest/installation/kustomize/
 
 - name: Create PGO namespace
-  command: kubectl create namespace {{ pgo_namespace }}
+  ansible.builtin.command: kubectl create namespace {{ pgo_namespace }}
   register: pgo_create_namespace
   changed_when: pgo_create_namespace.rc == 0
   failed_when: >-
@@ -12,7 +11,7 @@
     'AlreadyExists' not in pgo_create_namespace.stderr
 
 - name: Remove defunct upgrade controller resources
-  command: kubectl delete {{ item.kind }} {{ item.name }} --namespace {{ pgo_namespace }}
+  ansible.builtin.command: kubectl delete {{ item.kind }} {{ item.name }} --namespace {{ pgo_namespace }}
   register: pgo_remove_upgrade_component
   changed_when: pgo_remove_upgrade_component.rc == 0
   failed_when: >-
@@ -29,20 +28,24 @@
       name: postgres-operator-upgrade
 
 - name: Make kustomization directory
-  file:
+  ansible.builtin.file:
     path: "{{ pgo_kustomization_directory }}"
     state: directory
+    mode: "0755"
 
 - name: Write kustomization file
-  copy:
+  ansible.builtin.copy:
     content: "{{ pgo_kustomization | to_nice_yaml }}"
     dest: "{{ pgo_kustomization_directory }}/kustomization.yaml"
+    mode: "0644"
 
 - name: Install PGO resources
-  command: kubectl apply --server-side --force-conflicts -k {{ pgo_kustomization_directory }}
+  ansible.builtin.command: kubectl apply --server-side --force-conflicts -k {{ pgo_kustomization_directory }}
+  register: kubectl_pgo_resources
+  changed_when: kubectl_pgo_resources.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Wait for PGO controllers to become ready
-  command: >-
+  ansible.builtin.command: >-
     kubectl rollout status
       --namespace {{ watch.namespace }}
       --timeout 1s
@@ -58,7 +61,7 @@
     label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
 
 - name: Install monitoring dashboards
-  command: kubectl apply --server-side --force-conflicts -f -
+  ansible.builtin.command: kubectl apply --server-side --force-conflicts -f -
   args:
     stdin: "{{ pgo_dashboard_definition | to_nice_yaml }}"
   vars:
@@ -81,3 +84,5 @@
           {{ lookup("file", "grafana_dashboards/postgresql_service_health.json") | from_json | to_nice_json }}
         query_statistics.json: |-
           {{ lookup("file", "grafana_dashboards/query_statistics.json") | from_json | to_nice_json }}
+  register: kubectl_pgo_dashboards
+  changed_when: kubectl_pgo_dashboards.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

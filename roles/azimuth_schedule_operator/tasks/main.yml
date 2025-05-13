@@ -1,5 +1,4 @@
 ---
-
 - name: Install Azimuth schedule operator on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_schedule_operator_chart_name }}"

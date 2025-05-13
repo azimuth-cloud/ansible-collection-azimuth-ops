@@ -1,17 +1,16 @@
 ---
-
 - name: Create namespace for admin dashboard ingress
-  command: kubectl create namespace {{ item }}
+  ansible.builtin.command: kubectl create namespace {{ item }}
   register: admin_dashboard_ingress_create_namespace
   changed_when: admin_dashboard_ingress_create_namespace.rc == 0
   failed_when: >-
     admin_dashboard_ingress_create_namespace.rc != 0 and
     'AlreadyExists' not in admin_dashboard_ingress_create_namespace.stderr
-  loop: "{{ admin_dashboard_ingresses | map(attribute = 'namespace') | unique }}"
+  loop: "{{ admin_dashboard_ingresses | map(attribute='namespace') | unique }}"
 
 # Install the basic auth secret once per namespace
 - name: Install basic auth secret for admin dashboard ingress
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ admin_dashboard_ingress_basic_auth_secret_definition | to_nice_yaml }}"
   vars:
@@ -31,11 +30,13 @@
             )
           }
         }}
-  loop: "{{ admin_dashboard_ingresses | map(attribute = 'namespace') | unique }}"
+  loop: "{{ admin_dashboard_ingresses | map(attribute='namespace') | unique }}"
+  register: kubectl_basic_auth_secret
+  changed_when: kubectl_basic_auth_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 # If there is a wildcard certificate, install it once per namespace
 - name: Create TLS secret for dashboard
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ admin_dashboard_ingress_tls_wildcard_secret_definition | to_nice_yaml }}"
   vars:
@@ -49,13 +50,15 @@
       stringData:
         tls.crt: "{{ admin_dashboard_ingress_tls_wildcard_certificate }}"
         tls.key: "{{ admin_dashboard_ingress_tls_wildcard_key }}"
-  loop: "{{ admin_dashboard_ingresses | map(attribute = 'namespace') | unique }}"
+  loop: "{{ admin_dashboard_ingresses | map(attribute='namespace') | unique }}"
+  register: kubectl_basic_auth_secret_dashboard
+  changed_when: kubectl_basic_auth_secret_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
   when: >-
     admin_dashboard_ingress_tls_enabled and
     admin_dashboard_ingress_tls_wildcard_certificate
 
 - name: Install ingress for admin dashboard
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ admin_dashboard_ingress_definition | to_nice_yaml }}"
   vars:
@@ -108,3 +111,5 @@
   loop_control:
     label: "{{ item.name }}"
   loop: "{{ admin_dashboard_ingresses }}"
+  register: kubectl_ingress_admin_dashboard
+  changed_when: kubectl_ingress_admin_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

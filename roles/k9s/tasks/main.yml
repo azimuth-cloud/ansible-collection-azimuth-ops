@@ -1,29 +1,30 @@
 ---
-
 - name: Ensure unpack directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ k9s_unpack_directory }}"
     state: directory
+    mode: "0755"
 
 - name: Download and extract K9s archive
-  unarchive:
-    remote_src: yes
+  ansible.builtin.unarchive:
+    remote_src: true
     src: "{{ k9s_archive_url }}"
     dest: "{{ k9s_unpack_directory }}"
 
 - name: Ensure binary directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ k9s_bin_directory }}"
     state: directory
+    mode: "0755"
 
 - name: Copy executable to binary directory
-  copy:
-    remote_src: yes
+  ansible.builtin.copy:
+    remote_src: true
     src: "{{ (k9s_unpack_directory, 'k9s') | path_join }}"
     dest: "{{ k9s_bin_directory }}"
-    mode: u=rwx,g=rw,o=rx
+    mode: "0755"
 
 - name: Ensure K9s shell completions are in .bashrc
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ ansible_env.HOME }}/.bashrc"
     line: source <(k9s completion bash)

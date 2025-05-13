@@ -25,9 +25,7 @@
       "icon": "external link",
       "includeVars": true,
       "keepTime": true,
-      "tags": [
-        "vendor=crunchydata"
-      ],
+      "tags": ["vendor=crunchydata"],
       "title": "",
       "type": "dashboards"
     }
@@ -582,9 +580,7 @@
   ],
   "refresh": "5m",
   "schemaVersion": 39,
-  "tags": [
-    "vendor=crunchydata"
-  ],
+  "tags": ["vendor=crunchydata"],
   "templating": {
     "list": [
       {
@@ -652,17 +648,7 @@
     "to": "now"
   },
   "timepicker": {
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ]
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "browser",
   "title": "PostgreSQL / Service Health",

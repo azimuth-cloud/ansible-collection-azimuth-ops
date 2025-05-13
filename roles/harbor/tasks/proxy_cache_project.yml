@@ -1,45 +1,54 @@
 ---
-
 # First, try to find the project
 # If the project exists, we won't do anything else
 - name: Check if project exists
-  uri:
+  ansible.builtin.uri:
+    # checkov:skip=CKV2_ANSIBLE_1: TLS is optional
+    # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
     url: "{{ harbor_external_url }}/api/v2.0/projects?project_name={{ project.name }}"
     method: HEAD
     user: admin
     password: "{{ harbor_admin_password }}"
-    force_basic_auth: yes
+    force_basic_auth: true
     ca_path: "{{ harbor_ca_path }}"
     validate_certs: "{{ harbor_validate_certs }}"
     # 404 is an acceptable error code, indicating that we need to create the project
-    status_code: [200, 404]
+    status_code:
+      - 200
+      - 404
   register: harbor_project_exists
 
-- block:
+- name: Create Harbor proxy-cache registry
+  when: harbor_project_exists.status == 404
+  block:
     - name: Find existing registry
-      uri:
+      ansible.builtin.uri:
+        # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
         url: "{{ harbor_external_url }}/api/v2.0/registries?q=name%3D{{ project.name }}"
         method: GET
         user: admin
         password: "{{ harbor_admin_password }}"
-        force_basic_auth: yes
+        force_basic_auth: true
         ca_path: "{{ harbor_ca_path }}"
         validate_certs: "{{ harbor_validate_certs }}"
       register: harbor_registry_list
 
     - name: Extract registry from list
-      set_fact:
+      ansible.builtin.set_fact:
         harbor_registry: "{{ harbor_registry_list.json | first }}"
       when: harbor_registry_list.json | length > 0
 
-    - block:
+    - name: Create and get Harbor registry
+      when: harbor_registry_list.json | length == 0
+      block:
         - name: Create registry
-          uri:
+          ansible.builtin.uri:
+            # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
             url: "{{ harbor_external_url }}/api/v2.0/registries"
             method: POST
             user: admin
             password: "{{ harbor_admin_password }}"
-            force_basic_auth: yes
+            force_basic_auth: true
             body_format: json
             body:
               name: "{{ project.name }}"
@@ -47,34 +56,36 @@
               url: "{{ project.url }}"
             ca_path: "{{ harbor_ca_path }}"
             validate_certs: "{{ harbor_validate_certs }}"
-            status_code: [201]
+            status_code:
+              - 201
           changed_when: true
           register: harbor_registry_create
-        
+
         # The create endpoint doesn't return the representation, only a location to get it
         - name: Fetch newly created registry
-          uri:
+          ansible.builtin.uri:
+            # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
             url: "{{ harbor_registry_create.location }}"
             method: GET
             user: admin
             password: "{{ harbor_admin_password }}"
-            force_basic_auth: yes
+            force_basic_auth: true
             ca_path: "{{ harbor_ca_path }}"
             validate_certs: "{{ harbor_validate_certs }}"
           register: harbor_registry_created
-        
+
         - name: Extract created registry
-          set_fact:
+          ansible.builtin.set_fact:
             harbor_registry: "{{ harbor_registry_created.json }}"
-      when: harbor_registry_list.json | length == 0
 
     - name: Create proxy cache project for registry
-      uri:
+      ansible.builtin.uri:
+        # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
         url: "{{ harbor_external_url }}/api/v2.0/projects"
         method: POST
         user: admin
         password: "{{ harbor_admin_password }}"
-        force_basic_auth: yes
+        force_basic_auth: true
         body_format: json
         # Integers in the body are converted to strings, which causes the Harbor API to fail
         # https://github.com/ansible/ansible/issues/59732
@@ -90,6 +101,6 @@
           }
         ca_path: "{{ harbor_ca_path }}"
         validate_certs: "{{ harbor_validate_certs }}"
-        status_code: [201]
+        status_code:
+          - 201
       changed_when: true
-  when: harbor_project_exists.status == 404
