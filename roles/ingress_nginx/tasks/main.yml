@@ -1,5 +1,4 @@
 ---
-
 - name: Install NGINX Ingress Controller on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ ingress_nginx_chart_name }}"
@@ -8,13 +7,13 @@
     release_namespace: "{{ ingress_nginx_release_namespace }}"
     release_name: "{{ ingress_nginx_release_name }}"
     release_values: "{{ ingress_nginx_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ ingress_nginx_wait_timeout }}"
 
 - name: Configure custom alerting rules for certificate expiry
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ nginx_ingress_alert_rules_definition | to_nice_yaml }}"
   vars:
@@ -28,21 +27,23 @@
           release: kube-prometheus-stack
       spec:
         groups:
-        - name: ingress_nginx.rules
-          rules:
-            - alert: NginxIngressCertificateExpiresSoon
-              expr: |
-                nginx_ingress_controller_ssl_expire_time_seconds < (time() + (30 * 24 * 3600))
-              for: 1h
-              annotations:
-                message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
-              labels:
-                severity: warning
-            - alert: NginxIngressCertificateExpiresVerySoon
-              expr: |
-                nginx_ingress_controller_ssl_expire_time_seconds < (time() + (7 * 24 * 3600))
-              for: 1m
-              annotations:
-                message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
-              labels:
-                severity: critical
+          - name: ingress_nginx.rules
+            rules:
+              - alert: NginxIngressCertificateExpiresSoon
+                expr: |
+                  nginx_ingress_controller_ssl_expire_time_seconds < (time() + (30 * 24 * 3600))
+                for: 1h
+                annotations:
+                  message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
+                labels:
+                  severity: warning
+              - alert: NginxIngressCertificateExpiresVerySoon
+                expr: |
+                  nginx_ingress_controller_ssl_expire_time_seconds < (time() + (7 * 24 * 3600))
+                for: 1m
+                annotations:
+                  message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
+                labels:
+                  severity: critical
+  register: kubectl_ingress_cert_expiry
+  changed_when: kubectl_ingress_cert_expiry.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

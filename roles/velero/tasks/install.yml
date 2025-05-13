@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure CSI snapshot controller is installed
   kubernetes.core.helm:
     chart_ref: "{{ velero_csi_snapshot_controller_chart_name }}"
@@ -8,8 +7,8 @@
     release_namespace: "{{ velero_csi_snapshot_controller_release_namespace }}"
     release_name: "{{ velero_csi_snapshot_controller_release_name }}"
     release_values: "{{ velero_csi_snapshot_controller_release_values }}"
-    atomic: yes
-    wait: yes
+    atomic: true
+    wait: true
     wait_timeout: "{{ velero_csi_snapshot_controller_wait_timeout }}"
 
 - name: Install Cinder volume snapshot class
@@ -29,9 +28,11 @@
       parameters:
         # Must be true to allow snapshotting in-use volumes
         force-create: "true"
+  register: kubectl_velero_cinder_csi_snapshot_class
+  changed_when: kubectl_velero_cinder_csi_snapshot_class.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Create Velero release namespace
-  command: kubectl create namespace {{ velero_release_namespace }}
+  ansible.builtin.command: kubectl create namespace {{ velero_release_namespace }}
   register: velero_create_namespace
   changed_when: velero_create_namespace.rc == 0
   failed_when: >-
@@ -54,6 +55,8 @@
           [default]
           aws_access_key_id = {{ velero_aws_access_key_id }}
           aws_secret_access_key = {{ velero_aws_secret_access_key }}
+  register: kubectl_velero_s3_secret
+  changed_when: kubectl_velero_s3_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Ensure Velero is installed
   kubernetes.core.helm:
@@ -63,12 +66,12 @@
     release_namespace: "{{ velero_release_namespace }}"
     release_name: "{{ velero_release_name }}"
     release_values: "{{ velero_release_values }}"
-    atomic: yes
-    wait: yes
+    atomic: true
+    wait: true
     wait_timeout: "{{ velero_wait_timeout }}"
 
 - name: Install Grafana dashboard for Velero metrics
-  command: kubectl apply --server-side --force-conflicts -f -
+  ansible.builtin.command: kubectl apply --server-side --force-conflicts -f -
   args:
     stdin: "{{ velero_dashboard_definition | to_nice_yaml }}"
   vars:
@@ -82,17 +85,24 @@
           grafana_dashboard: "1"
       data:
         velero_dashboard.json: |-
-          {{ lookup('file', 'grafana_dashboard.json' ) | from_json | to_nice_json }}
+          {{ lookup('file', 'grafana_dashboard.json') | from_json | to_nice_json }}
+  register: kubectl_velero_dashboard
+  changed_when: kubectl_velero_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
-- block:
+- name: Download and extract Velero
+  become: true
+  block:
     - name: Ensure Velero CLI unpack directory exists
-      file:
+      ansible.builtin.file:
         path: "{{ velero_cli_unpack_directory }}"
         state: directory
+        owner: root
+        group: root
+        mode: "0755"
 
     - name: Download and extract Velero CLI archive
-      unarchive:
-        remote_src: yes
+      ansible.builtin.unarchive:
+        remote_src: true
         src: "{{ velero_cli_archive_url }}"
         dest: "{{ velero_cli_unpack_directory }}"
         extra_opts:
@@ -100,19 +110,21 @@
           - --show-stored-names
 
     - name: Ensure Velero CLI binary directory exists
-      file:
+      ansible.builtin.file:
         path: "{{ velero_cli_bin_directory }}"
         state: directory
+        owner: root
+        group: root
+        mode: "0755"
 
     - name: Copy executable to binary directory
-      copy:
-        remote_src: yes
+      ansible.builtin.copy:
+        remote_src: true
         src: "{{ (velero_cli_unpack_directory, 'velero') | path_join }}"
         dest: "{{ velero_cli_bin_directory }}"
         mode: u=rwx,g=rw,o=rx
-  become: yes
 
 - name: Ensure Velero CLI shell completions are in .bashrc
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ ansible_env.HOME }}/.bashrc"
     line: source <(velero completion bash)

@@ -1,18 +1,18 @@
 ---
-
 - name: Ensure bin directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ kubectl_bin_directory }}"
     state: directory
+    mode: "0755"
 
 - name: Download and install kubectl binary
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ kubectl_url }}"
     dest: "{{ (kubectl_bin_directory, 'kubectl') | path_join }}"
-    mode: u=rwx,g=rx,o=rx
-    force: yes
+    mode: "0755"
+    force: true
 
 - name: Ensure kubectl shell completions are in .bashrc
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ ansible_env.HOME }}/.bashrc"
     line: source <(kubectl completion bash)

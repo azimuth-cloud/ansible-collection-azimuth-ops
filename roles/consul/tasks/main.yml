@@ -1,21 +1,21 @@
 ---
-
 - name: Get Consul service information
-  command: >-
+  ansible.builtin.command: >-
     kubectl get service
       --namespace {{ consul_release_namespace }}
       --selector {{ consul_server_service_selector }}
       --output json
   register: consul_services_cmd
+  changed_when: false
   vars:
     consul_server_service_selector: "app={{ consul_release_name }},component=server"
 
 - name: Set Consul server services fact
-  set_fact:
+  ansible.builtin.set_fact:
     consul_server_services: "{{ (consul_services_cmd.stdout | from_json)['items'] }}"
 
 - name: Set Consul server facts
-  set_fact:
+  ansible.builtin.set_fact:
     consul_server_host: >-
       {{-
         consul_server_host

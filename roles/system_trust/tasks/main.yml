@@ -1,9 +1,11 @@
 ---
-
 - name: Install extra root CAs
-  copy:
+  ansible.builtin.copy:
     content: "{{ item.certificate }}"
     dest: /usr/local/share/ca-certificates/{{ item.name }}.crt
+    owner: root
+    group: root
+    mode: "0644"
   # Split the trust bundle into individual certificates
   loop: >-
     {{
@@ -14,15 +16,16 @@
     label: "{{ item.name }}"
   register: system_trust_install_extra_root_cas
 
-- name: Update system trust bundles
-  command: update-ca-certificates
+- name: Update system trust bundles  # noqa no-handler
+  ansible.builtin.command: update-ca-certificates
   when: system_trust_install_extra_root_cas is changed
+  changed_when: true
 
 - name: Slurp system CA bundle
-  slurp:
+  ansible.builtin.slurp:
     src: /etc/ssl/certs/ca-certificates.crt
   register: system_trust_slurp_ca_bundle
 
 - name: Set system CA bundle fact
-  set_fact:
+  ansible.builtin.set_fact:
     system_trust_ca_bundle: "{{ system_trust_slurp_ca_bundle.content | b64decode }}"

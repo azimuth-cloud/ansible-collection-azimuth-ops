@@ -1,22 +1,21 @@
 ---
-
 - name: Check if k3s storage device is attached
-  stat:
+  ansible.builtin.stat:
     path: "{{ k3s_storage_device }}"
   register: k3s_storage_device_stat
 
 - name: Fail if k3s storage device is missing
-  fail:
+  ansible.builtin.fail:
     msg: "K3s storage device not found at {{ k3s_storage_device }}"
   when: not k3s_storage_device_stat.stat.exists
 
 - name: Ensure filesystem exists on storage device
-  filesystem:
+  community.general.filesystem:
     fstype: "{{ k3s_storage_fstype }}"
     dev: "{{ k3s_storage_device }}"
 
 - name: Mount filesystem at required location
-  mount:
+  ansible.posix.mount:
     src: "{{ k3s_storage_device }}"
     fstype: "{{ k3s_storage_fstype }}"
     path: /var/lib/rancher/k3s
@@ -24,13 +23,13 @@
 
 # XFS requires the filesystem to be mounted to do this
 - name: Grow filesystem to fill available space
-  filesystem:
+  community.general.filesystem:
     fstype: "{{ k3s_storage_fstype }}"
     dev: "{{ k3s_storage_device }}"
     resizefs: true
 
 - name: Download k3s binary
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ k3s_binary_url }}"
     checksum: "{{ k3s_binary_checksum }}"
     dest: /usr/bin/k3s
@@ -38,18 +37,21 @@
   register: k3s_binary
 
 - name: Install k3s server systemd unit file
-  template:
+  ansible.builtin.template:
     src: k3s-server.service.j2
     dest: /etc/systemd/system/k3s-server.service
+    owner: root
+    group: root
+    mode: "0644"
   register: k3s_server_systemd_unit
 
-- name: Reload systemd units
-  systemd:
-    daemon_reload: yes
+- name: Reload systemd units  # noqa no-handler
+  ansible.builtin.systemd:
+    daemon_reload: true
   when: k3s_server_systemd_unit is changed
 
 - name: Ensure k3s server is started
-  service:
+  ansible.builtin.service:
     name: k3s-server
     state: >-
       {{-
@@ -57,4 +59,4 @@
         if k3s_binary is changed or k3s_server_systemd_unit is changed
         else 'started'
       }}
-    enabled: yes
+    enabled: true
