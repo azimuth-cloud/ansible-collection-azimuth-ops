@@ -1,7 +1,6 @@
 ---
-
 - name: Fail if legacy authentication settings are defined
-  fail:
+  ansible.builtin.fail:
     msg: |
       Legacy authentication parameters detected in environment.
       Please consult the docs and update your configuration accordingly.
@@ -10,7 +9,7 @@
     azimuth_authenticators_extra is defined
 
 - name: Create Azimuth release namespace
-  command: kubectl create namespace {{ azimuth_release_namespace }}
+  ansible.builtin.command: kubectl create namespace {{ azimuth_release_namespace }}
   register: azimuth_create_namespace
   changed_when: azimuth_create_namespace.rc == 0
   failed_when: >-
@@ -18,7 +17,7 @@
     'AlreadyExists' not in azimuth_create_namespace.stderr
 
 - name: Install wildcard TLS certificate
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ azimuth_ingress_tls_wildcard_secret_definition | to_nice_yaml }}"
   vars:
@@ -33,6 +32,8 @@
         tls.crt: "{{ azimuth_ingress_tls_certificate }}"
         tls.key: "{{ azimuth_ingress_tls_key }}"
   when: azimuth_ingress_tls_certificate
+  register: kubectl_wildcard_tls_cert
+  changed_when: kubectl_wildcard_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - block:
     - name: Ensure identity realm exists for Azimuth users
@@ -148,18 +149,19 @@
     release_namespace: "{{ azimuth_release_namespace }}"
     release_name: "{{ azimuth_release_name }}"
     release_values: "{{ azimuth_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ azimuth_wait_timeout }}"
 
 - name: List CaaS clusters
-  command: kubectl get clusters.caas -A -o json
+  ansible.builtin.command: kubectl get clusters.caas -A -o json
+  changed_when: false
   register: azimuth_caas_clusters_list
   when: azimuth_clusters_enabled
 
 - name: Move clusters that are in old-style namespaces
-  include_tasks:
+  ansible.builtin.include_tasks:
     file: move-caas-cluster.yml
   when: azimuth_clusters_enabled
   loop: >-
@@ -173,19 +175,22 @@
     loop_var: cluster
     label: "{{ cluster.metadata.namespace }}/{{ cluster.metadata.name }}"
 
-- block:
-    - debug:
-        msg: "Azimuth UI available at {{ scheme }}://{{ host }}"
-
-    - name: Write Azimuth URL to env file on localhost
-      local_action:
-        module: ansible.builtin.copy
-        content: >-
-          AZIMUTH_URL="{{ scheme }}://{{ host }}"
-        dest: "{{ azimuth_url_envfile }}"
-      when: azimuth_url_envfile != ""
-      vars:
-        azimuth_url_envfile: "{{ lookup('env', 'AZIMUTH_URL_ENVFILE') }}"
+- name: Print Azimuth URL and write it to a local env file
   vars:
     scheme: "{{ 'https' if azimuth_ingress_tls_enabled else 'http' }}"
     host: "{{ azimuth_ingress_host }}"
+  block:
+    - name: Print Azimuth URL
+      ansible.builtin.debug:
+        msg: "Azimuth UI available at {{ scheme }}://{{ host }}"
+
+    - name: Write Azimuth URL to env file on localhost
+      ansible.builtin.copy:
+        content: >-
+          AZIMUTH_URL="{{ scheme }}://{{ host }}"
+        dest: "{{ azimuth_url_envfile }}"
+        mode: "0600"
+      delegate_to: localhost
+      when: azimuth_url_envfile != ""
+      vars:
+        azimuth_url_envfile: "{{ lookup('env', 'AZIMUTH_URL_ENVFILE') }}"

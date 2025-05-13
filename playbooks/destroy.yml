@@ -1,22 +1,26 @@
+---
 #####
 # This playbook tears down infrastructure created by the provision playbook
 #####
 
 # Get the state information for the seed and adopt it
-- hosts: terraform_provision
+- name: Set facts from the Terraform state of the seed node
+  hosts: terraform_provision
   ignore_errors: "{{ force_destroy | default(False) }}"
   tasks:
     - name: Discover k3s host and adopt it
-      include_role:
+      ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.infra
       vars:
         infra_readonly: true
-        infra_ansible_groups: [k3s]
+        infra_ansible_groups:
+          - k3s
       when: install_mode == 'ha'
 
 # Tear down the Cluster API cluster
 # The k3s group will be empty if the install_mode is not 'ha'
-- hosts: k3s
+- name: Destroy the HA cluster using ClusterAPI
+  hosts: k3s
   ignore_unreachable: "{{ force_destroy | default(False) }}"
   ignore_errors: "{{ force_destroy | default(False) }}"
   roles:
@@ -24,9 +28,9 @@
       vars:
         capi_cluster_release_state: absent
 
-
-# Tear down the Terraform provisioned infrastructure
-- hosts: terraform_provision
+# Tear down the OpenTofu provisioned infrastructure
+- name: Destroy seed node using OpenTofu
+  hosts: terraform_provision
   roles:
     - role: azimuth_cloud.azimuth_ops.infra
       vars:

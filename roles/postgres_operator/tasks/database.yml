@@ -1,7 +1,6 @@
 ---
-
 - name: "Install PostgresCluster instance - {{ pgo_database_name }}"
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ pgo_database_definition | to_nice_yaml }}"
   vars:
@@ -12,9 +11,11 @@
         name: "{{ pgo_database_name }}"
         namespace: "{{ pgo_database_namespace }}"
       spec: "{{ pgo_database_spec }}"
+  register: kubectl_pgo_instance
+  changed_when: kubectl_pgo_instance.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: "Install PodMonitor for database metrics - {{ pgo_database_name }}"
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ pgo_database_servicemonitor_definition | to_nice_yaml }}"
   vars:
@@ -36,3 +37,5 @@
             postgres-operator.crunchydata.com/data: postgres
             postgres-operator.crunchydata.com/crunchy-postgres-exporter: "true"
             postgres-operator.crunchydata.com/cluster: "{{ pgo_database_name }}"
+  register: kubectl_pgo_podmon
+  changed_when: kubectl_pgo_podmon.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

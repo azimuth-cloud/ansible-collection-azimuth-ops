@@ -16,20 +16,6 @@ on:  # yamllint disable-line rule:truthy
       - reopened
     branches:
       - main
-    paths-ignore:
-      # Ignore any changes that are not actually code changes
-      - .gitignore
-      - CODEOWNERS
-      - LICENSE
-      - README.md
-      - .github/release.yml
-      - .github/workflows/update-dependencies.yml
-      # Ignore any changes that only affect the HA install
-      - playbooks/deploy_capi_mgmt.yml
-      - playbooks/provision_capi_mgmt.yml
-      - playbooks/restore.yml
-      - roles/capi_cluster/**
-      - roles/velero/**
 
 # Use the head ref for workflow concurrency, with cancellation
 # This should mean that any previous workflows for a PR get cancelled when a new commit is pushed
@@ -40,6 +26,7 @@ concurrency:
 jobs:
   # This job exists so that PRs from outside the main repo are rejected
   fail_on_remote:
+    name: Fail on Remote
     runs-on: ubuntu-latest
     steps:
       - name: PR must be from a branch in the azimuth-cloud/ansible-collection-azimuth-ops repo
@@ -48,51 +35,57 @@ jobs:
             exit 1
           fi
   lint:
+    name: Lint
     uses: ./.github/workflows/lint.yml
     needs:
       - fail_on_remote
 
-  run_azimuth_tests:
+  files_changed:
+    name: Detect Files Changed
     needs:
       - fail_on_remote
       - lint
     runs-on: ubuntu-latest
+    # Map a step output to a job output, this allows other jobs to be gated on the filter results
+    outputs:
+      paths: ${{ steps.filter.outputs.paths }}
     steps:
-      # Check out the configuration repository
-      - name: Set up Azimuth environment
-        uses: azimuth-cloud/azimuth-config/.github/actions/setup@devel
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Paths Filter
+        # For safety using commit of dorny/paths-filter@v3
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
+        id: filter
         with:
-          os-clouds: ${{ secrets.OS_CLOUDS }}
-          environment-prefix: ops-ci
-          azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
-          target-cloud: ${{ vars.TARGET_CLOUD }}
-          # Remove when https://github.com/stackhpc/azimuth-config/pull/129 merges
-          extra-vars: |
-            generate_tests_caas_default_test_case_enabled: false
-            generate_tests_caas_test_case_workstation_enabled: true
-            generate_tests_caas_test_case_slurm_enabled: true
-            generate_tests_caas_test_case_repo2docker_enabled: true
-            generate_tests_caas_test_case_rstudio_enabled: true
-            generate_tests_kubernetes_test_cases_latest_only: true
-            generate_tests_kubernetes_apps_default_test_case_enabled: false
-            generate_tests_kubernetes_apps_test_case_jupyterhub_enabled: true
-            generate_tests_kubernetes_apps_test_case_daskhub_enabled: true
-            # Test Flux install in CI even when disabled in default config
-            flux_enabled: true
-        # GitHub terminates jobs after 6 hours
-        # We don't want jobs to acquire the lock then get timed out before they can finish
-        # So wait a maximum of 3 hours to acquire the lock, leaving 3 hours for other tasks in the job
-        timeout-minutes: 180
+          # Default predicate is 'some' which gives a match if any one filter matches.
+          # Change the predicate to 'every' so the file has to match all filters,
+          # to model 'paths-ignore' we match only if we've exluded all unwanted files.
+          predicate-quantifier: 'every'
+          filters: |
+            paths:
+              # Ignore any changes that are not actually code changes
+              - "!.gitignore"
+              - "!CODEOWNERS"
+              - "!LICENSE"
+              - "!README.md"
+              - "!.github/release.yml"
+              - "!.github/workflows/update-dependencies.yml"
+              # Ignore any changes that only affect the HA install
+              - "!playbooks/deploy_capi_mgmt.yml"
+              - "!playbooks/provision_capi_mgmt.yml"
+              - "!playbooks/restore.yml"
+              - "!roles/capi_cluster/**"
+              - "!roles/velero/**"
 
-      # Provision Azimuth using the azimuth-ops version under test
-      - name: Provision Azimuth
-        uses: azimuth-cloud/azimuth-config/.github/actions/provision@devel
-
-      # # Run the tests
-      - name: Run Azimuth tests
-        uses: azimuth-cloud/azimuth-config/.github/actions/test@devel
-
-      # Tear down the environment
-      - name: Destroy Azimuth
-        uses: azimuth-cloud/azimuth-config/.github/actions/destroy@devel
-        if: ${{ always() }}
+  run_azimuth_tests:
+    # Use the output of the above filter to check if the files listed under "paths" have changed.
+    # We can negate this check to run an alternative job,
+    # we can add additional filters like "paths" and action on those.
+    # Example: https://github.com/getsentry/sentry/blob/2ebe01feab863d89aa7564e6d243b6d80c230ddc/.github/workflows/backend.yml#L36
+    name: Run Azimuth Tests
+    needs:
+      - files_changed
+    if: needs.files_changed.outputs.paths == 'true'
+    uses: ./.github/workflows/test-azimuth.yml
+    secrets: inherit
