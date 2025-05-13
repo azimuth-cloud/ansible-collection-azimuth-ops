@@ -1,8 +1,9 @@
 ---
-
-- block:
+- name: Install dependent system packages
+  become: true
+  block:
     - name: Update apt cache
-      apt:
+      ansible.builtin.apt:
         update_cache: true
       register: cache_updated
       changed_when: false
@@ -10,29 +11,31 @@
         - cache_updated is success
 
     - name: Ensure required packages are available
-      apt:
+      ansible.builtin.apt:
         name:
           - python3-pip
           - qemu-utils
         state: present
 
     - name: Ensure OpenStack CLI (and SDK) are available
-      pip:
+      ansible.builtin.pip:
         name: python-openstackclient
         executable: pip3
-  become: yes
 
 - name: Ensure OpenStack config directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ community_images_os_config_dir }}"
     state: directory
+    mode: "0755"
 
 - name: Install OpenStack credentials
-  copy:
+  ansible.builtin.copy:
     content: "{{ lookup('file', community_images_os_clouds_file_local) }}"
     dest: "{{ community_images_os_clouds_file }}"
+    mode: "0600"
 
-- include_tasks:
+- name: Upload image to Glance and store its UUID
+  ansible.builtin.include_tasks:
     file: upload_image_and_store_id.yml
     apply:
       environment:
@@ -43,5 +46,5 @@
     label: "{{ item.value.name }}"
 
 - name: Export community_images fact so it can be consumed from other roles
-  set_fact:
+  ansible.builtin.set_fact:
     community_images: "{{ community_images }}"

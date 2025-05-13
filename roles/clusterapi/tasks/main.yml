@@ -1,20 +1,23 @@
 ---
-
 - name: Make kustomization directory
-  file:
+  ansible.builtin.file:
     path: "{{ clusterapi_kustomization_directory }}"
     state: directory
+    mode: "0755"
 
 - name: Write kustomization file
-  copy:
+  ansible.builtin.copy:
     content: "{{ clusterapi_kustomization | to_nice_yaml }}"
     dest: "{{ clusterapi_kustomization_directory }}/kustomization.yaml"
+    mode: "0644"
 
 - name: Install Cluster API resources
-  command: kubectl apply -k {{ clusterapi_kustomization_directory }}
+  ansible.builtin.command: kubectl apply -k {{ clusterapi_kustomization_directory }}
+  register: kubectl_clusterapi_resources
+  changed_when: kubectl_clusterapi_resources.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Remove legacy CAPO mutating webhook
-  command: kubectl delete mutatingwebhookconfiguration capo-mutating-webhook-configuration
+  ansible.builtin.command: kubectl delete mutatingwebhookconfiguration capo-mutating-webhook-configuration
   register: clusterapi_capo_mutating_webhook_delete
   changed_when: clusterapi_capo_mutating_webhook_delete.rc == 0
   failed_when: >-
@@ -22,7 +25,7 @@
     "NotFound" not in clusterapi_capo_mutating_webhook_delete.stderr
 
 - name: Wait for Cluster API controllers to become ready
-  command: >-
+  ansible.builtin.command: >-
     kubectl rollout status
       --namespace {{ watch.namespace }}
       --timeout 1s
@@ -45,9 +48,9 @@
     release_namespace: "{{ clusterapi_addon_provider_release_namespace }}"
     release_name: "{{ clusterapi_addon_provider_release_name }}"
     release_values: "{{ clusterapi_addon_provider_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ clusterapi_addon_provider_wait_timeout }}"
 
 - name: Install Cluster API janitor
@@ -58,7 +61,7 @@
     release_namespace: "{{ clusterapi_janitor_openstack_release_namespace }}"
     release_name: "{{ clusterapi_janitor_openstack_release_name }}"
     release_values: "{{ clusterapi_janitor_openstack_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ clusterapi_janitor_openstack_wait_timeout }}"

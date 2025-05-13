@@ -1,8 +1,7 @@
 ---
-
 #####
 # This role generates a Robot Framework test suite for the current configuration
-#   https://robotframework.org/
+# https://robotframework.org/
 #
 # It utilises the keyword library for Azimuth
 #   https://github.com/azimuth-cloud/azimuth-robotframework
@@ -12,60 +11,67 @@
 #####
 
 - name: Check if test vars file exists
-  stat:
+  ansible.builtin.stat:
     path: "{{ generate_tests_vars_file }}"
   register: generate_tests_vars_file_stat
 
-- block:
+- name: Set facts from test variables
+  when: generate_tests_vars_file_stat.stat.exists
+  block:
     - name: Read the existing variables
-      slurp:
+      ansible.builtin.slurp:
         src: "{{ generate_tests_vars_file }}"
       register: generate_tests_slurp_vars
 
     - name: Set fact for existing test vars
-      set_fact:
+      ansible.builtin.set_fact:
         generate_tests_existing_vars: >-
           {{-
             generate_tests_slurp_vars.content |
               b64decode |
               from_yaml
           }}
-  when: generate_tests_vars_file_stat.stat.exists
 
 - name: Generate test vars
-  template:
+  ansible.builtin.template:
     src: "{{ generate_tests_vars_template }}"
     dest: "{{ generate_tests_vars_file }}"
+    mode: "0644"
 
 - name: Delete test suite directory if it exists
-  file:
+  ansible.builtin.file:
     path: "{{ generate_tests_suite_directory }}"
     state: absent
 
 - name: Ensure test suite directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ generate_tests_suite_directory }}"
     state: directory
+    mode: "0755"
 
 - name: Template test suite file
-  template:
+  ansible.builtin.template:
     src: "{{ generate_tests_suite_template }}"
     dest: "{{ (generate_tests_suite_directory, '__init__.robot') | path_join }}"
+    mode: "0644"
 
 - name: Generate test suite for CaaS appliances
-  template:
+  ansible.builtin.template:
     src: "{{ generate_tests_caas_suite_template }}"
     dest: "{{ (generate_tests_suite_directory, 'caas_suite.robot') | path_join }}"
+    mode: "0644"
   when: generate_tests_caas_suite_enabled
 
 - name: Generate test suite for Kubernetes templates
-  template:
+  ansible.builtin.template:
     src: "{{ generate_tests_kubernetes_suite_template }}"
     dest: "{{ (generate_tests_suite_directory, 'kubernetes_suite.robot') | path_join }}"
+    mode: "0644"
   when: generate_tests_kubernetes_suite_enabled
 
 - name: Generate test suite for Kubernetes apps
-  template:
+  ansible.builtin.template:
     src: "{{ generate_tests_kubernetes_apps_suite_template }}"
     dest: "{{ (generate_tests_suite_directory, 'kubernetes_apps_suite.robot') | path_join }}"
+    mode: "0644"
   when: generate_tests_kubernetes_apps_suite_enabled
