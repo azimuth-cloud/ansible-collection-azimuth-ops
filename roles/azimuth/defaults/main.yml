@@ -13,30 +13,37 @@ azimuth_release_name: azimuth
 azimuth_wait_timeout: 10m
 
 # Feature flags
-#   Indicates if the app proxy should be enabled
-azimuth_apps_enabled: yes
-#   Indicates if Cluster-as-a-Service should be enabled
-azimuth_clusters_enabled: yes
-#   Indicates if Kubernetes clusters should be enabled
-azimuth_kubernetes_enabled: yes
+## Indicates if the app proxy should be enabled
+azimuth_apps_enabled: true
+
+## Indicates if Cluster-as-a-Service should be enabled
+azimuth_clusters_enabled: true
+
+## Indicates if Kubernetes clusters should be enabled
+azimuth_kubernetes_enabled: true
 
 # Ingress settings
-#   The hostname to use for the ingress resource
+## The hostname to use for the ingress resource
 azimuth_ingress_host: >-
   {{-
     "{}.{}".format(ingress_azimuth_portal_subdomain, ingress_base_domain)
     if ingress_azimuth_portal_subdomain is defined and ingress_base_domain is defined
     else undef(hint = 'azimuth_ingress_host is required')
   }}
-#   Any annotations for the ingress
+
+## Any annotations for the ingress
 azimuth_ingress_annotations: "{{ ingress_annotations | default({}) }}"
-#   Indicates whether TLS should be enabled
+
+## Indicates whether TLS should be enabled
 azimuth_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
-#   The TLS secret name (can be null)
+
+## The TLS secret name (can be null)
 azimuth_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default(None) }}"
-#   Any TLS-specific annotations
+
+## Any TLS-specific annotations
 azimuth_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
-#   Wildcard TLS certificate, if available
+
+## Wildcard TLS certificate, if available
 azimuth_ingress_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
 azimuth_ingress_tls_key: >-
   {{-
@@ -49,14 +56,16 @@ azimuth_ingress_tls_key: >-
 azimuth_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
 # The Django secret key, used mainly for ensuring session cookies are not tampered with
-azimuth_secret_key: "{{ undef(hint = 'azimuth_secret_key is required') }}"
+azimuth_secret_key: "{{ undef(hint='azimuth_secret_key is required') }}"
 
 # Settings for the available clouds
-#   List of linked clouds - each item should contain name, label and url
+## List of linked clouds - each item should contain name, label and url
 azimuth_linked_clouds: []
-#   The name of this cloud
-azimuth_current_cloud_name: "{{ undef(hint = 'azimuth_current_cloud_name is required') }}"
-#   The label for this cloud
+
+## The name of this cloud
+azimuth_current_cloud_name: "{{ undef(hint='azimuth_current_cloud_name is required') }}"
+
+## The label for this cloud
 azimuth_current_cloud_label: >-
   {{ azimuth_current_cloud_name | regex_replace('[^a-z0-9]+', ' ') | capitalize }}
 
@@ -79,53 +88,57 @@ azimuth_metrics_tenant_metrics_url_template: >-
 # By default, we use the generic Azimuth docs
 azimuth_documentation_url: https://azimuth-cloud.github.io/azimuth-user-docs/
 azimuth_support_url:
-
 # A list of curated sizes, mapping a flavor ID to an alternative name and description
 # If no sizes are given, the sizes returned by the cloud provider are used
 azimuth_curated_sizes: []
-  # - # The ID of the flavor in the target cloud
-  #   id: "<id>"
-  #   # (OPTIONAL) The alternative name
-  #   name: "<name>"
-  #   # (OPTIONAL) The alternative description
-  #   # This is treated as a template with access to the "cpus", "ram", "disk"
-  #   # and "ephemeral_disk" for the target flavor, already formatted with units
-  #   # WARNING: To avoid Ansible trying to render the template, it must be wrapped in {% raw %}
-  #   description: >-
-  #     {% raw %}{{ cpus }} CPUs, {{ ram }} RAM, {{ disk }} disk, {{ ephemeral_disk }} ephemeral disk{% endraw %}
+# - # The ID of the flavor in the target cloud
+#   id: "<id>"
+#   # (OPTIONAL) The alternative name
+#   name: "<name>"
+#   # (OPTIONAL) The alternative description
+#   # This is treated as a template with access to the "cpus", "ram", "disk"
+#   # and "ephemeral_disk" for the target flavor, already formatted with units
+#   # WARNING: To avoid Ansible trying to render the template, it must be wrapped in {% raw %}
+#   description: >-
+#     {% raw %}{{ cpus }} CPUs, {{ ram }} RAM, {{ disk }} disk, {{ ephemeral_disk }} ephemeral disk{% endraw %}
 
 # Settings for OpenStack authentication
-#   The Keystone auth URL
-azimuth_openstack_auth_url: "{{ undef(hint = 'azimuth_openstack_auth_url is required') }}"
-#   The domain to use when authenticating with OpenStack
+## The Keystone auth URL
+azimuth_openstack_auth_url: "{{ undef(hint='azimuth_openstack_auth_url is required') }}"
+## The domain to use when authenticating with OpenStack
 azimuth_openstack_domain: default
-#   The region to use when discovering OpenStack services
+## The region to use when discovering OpenStack services
 azimuth_openstack_region:
-#   The interface - should rarely need to be changed from the default
+## The interface - should rarely need to be changed from the default
 azimuth_openstack_interface: public
-#   Whether or not to verify SSL
+## Whether or not to verify SSL
 azimuth_openstack_verify_ssl: true
-#   Configuration for the appcred authenticator
-#     The appcred authenticator is always enabled but hidden by default
-#     This is useful when using the SDK as automation can be given an appcred
-#     but the option is not presented to users in the choice form
+
+# Configuration for the appcred authenticator
+## The appcred authenticator is always enabled but hidden by default
+## This is useful when using the SDK as automation can be given an appcred
+## but the option is not presented to users in the choice form
 azimuth_authenticator_appcred_hidden: true
-#   Configuration for the password authenticator
+
+## Configuration for the password authenticator
 azimuth_authenticator_password_enabled: true
-#   Simplified configuration for a single domain
-#   These variables are not used if azimuth_authenticator_password_domains is specified
+
+## Simplified configuration for a single domain
+## These variables are not used if azimuth_authenticator_password_domains is specified
 azimuth_authenticator_password_domain: "{{ azimuth_openstack_domain }}"
 azimuth_authenticator_password_label: "Username + Password"
-#   The list of domains to make available as authentication options
+
+## The list of domains to make available as authentication options
 azimuth_authenticator_password_domains:
-    # The name of the domain
+  # The name of the domain
   - name: "{{ azimuth_authenticator_password_domain }}"
     # A human-readable label, used in the selection form
     label: "{{ azimuth_authenticator_password_label }}"
-#   Configuration for the federated authenticator
+## Configuration for the federated authenticator
 azimuth_authenticator_federated_enabled: false
-#   Simplified configuration for a single IDP
-#   These variables are not used if azimuth_authenticator_federated_identity_providers is specified
+
+## Simplified configuration for a single IDP
+## These variables are not used if azimuth_authenticator_federated_identity_providers is specified
 azimuth_authenticator_federated_label: "Federated"
 azimuth_authenticator_federated_protocol: >-
   {{-
@@ -134,19 +147,21 @@ azimuth_authenticator_federated_protocol: >-
     else None
   }}
 azimuth_authenticator_federated_provider:
-#   The list of identity providers to make available
+
+## The list of identity providers to make available
 azimuth_authenticator_federated_identity_providers:
-    # The Keystone identity provider and protocol to use
-    # The provider is optional, and if it IS NOT given, URLs will be of the form:
-    #   <auth url>/auth/OS-FEDERATION/websso/<protocol>
-    # If a provider IS given, URLs will be of the following form:
-    #   <auth_url>/auth/OS-FEDERATION/identity_providers/<provider>/protocols/<protocol>/websso
-    # It is recommended to specify a provider if known, as it redirects straight to the IdP
-    # instead of the Keystone selection page
+  # The Keystone identity provider and protocol to use
+  # The provider is optional, and if it IS NOT given, URLs will be of the form:
+  #   <auth url>/auth/OS-FEDERATION/websso/<protocol>
+  # If a provider IS given, URLs will be of the following form:
+  #   <auth_url>/auth/OS-FEDERATION/identity_providers/<provider>/protocols/<protocol>/websso
+  # It is recommended to specify a provider if known, as it redirects straight to the IdP
+  # instead of the Keystone selection page
   - protocol: "{{ azimuth_authenticator_federated_protocol }}"
     provider: "{{ azimuth_authenticator_federated_provider }}"
     # A human-readble label for the identity provider, used in the selection form
     label: "{{ azimuth_authenticator_federated_label }}"
+
 # The authentication settings, structured as defaults + overrides
 azimuth_authentication_defaults:
   type: openstack
@@ -196,7 +211,9 @@ azimuth_authentication_defaults:
           recursive = True
         )
     }}
+
 azimuth_authentication_overrides: {}
+
 azimuth_authentication: >-
   {{-
     azimuth_authentication_defaults |
@@ -204,23 +221,28 @@ azimuth_authentication: >-
   }}
 
 # OpenStack provider settings
-#   The template to use when searching for the internal network
-#   Only used if the internal network is not tagged
-#   If given, network auto-creation is disabled
-#   The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-internal"
+## The template to use when searching for the internal network
+## Only used if the internal network is not tagged
+## If given, network auto-creation is disabled
+## The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-internal"
 azimuth_openstack_internal_net_template:
-#   The template to use when searching for the external network
-#   Only used if the external network is not tagged
-#   If not given, there must be exactly one external network available to tenants
-#   The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-external"
+
+## The template to use when searching for the external network
+## Only used if the external network is not tagged
+## If not given, there must be exactly one external network available to tenants
+## The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-external"
 azimuth_openstack_external_net_template:
-#   If larger than zero, project specific manila share should be auto-created
+
+## If larger than zero, project specific manila share should be auto-created
 azimuth_openstack_manila_project_share_gb: 0
-#   Indicates whether tenant internal networks should be auto-created if not present
+
+## Indicates whether tenant internal networks should be auto-created if not present
 azimuth_openstack_create_internal_net: true
-#   The CIDR to use for auto-created tenant internal networks
+
+## The CIDR to use for auto-created tenant internal networks
 azimuth_openstack_internal_net_cidr: 192.168.3.0/24
-#   The nameservers to set on auto-created tenant internal networks
+
+## The nameservers to set on auto-created tenant internal networks
 azimuth_openstack_internal_net_dns_nameservers: []
 
 # Azimuth OpenStack provider configuration
@@ -249,7 +271,7 @@ azimuth_openstack_provider: >-
   }}
 
 # App proxy settings
-#   The base domain for apps
+## The base domain for apps
 azimuth_apps_base_domain: >-
   {{-
     ingress_base_domain
@@ -260,13 +282,15 @@ azimuth_apps_base_domain: >-
       else None
     )
   }}
-#   Indicates whether SSL should be verified when determining whether a service is ready
+
+## Indicates whether SSL should be verified when determining whether a service is ready
 azimuth_apps_verify_ssl: true
-#   Indicates whether SSL should be verified by clients when associating keys with the
-#   registrar using the external endpoint
-#   By default, clients will verify SSL when Azimuth itself does
-#   The exception to this is when custom CAs are specified, as there is currently no mechanism
-#   for propagating the custom CAs into the trust store of the appliance
+
+## Indicates whether SSL should be verified by clients when associating keys with the
+## registrar using the external endpoint
+## By default, clients will verify SSL when Azimuth itself does
+## The exception to this is when custom CAs are specified, as there is currently no mechanism
+## for propagating the custom CAs into the trust store of the appliance
 azimuth_apps_verify_ssl_clients: >-
   {{-
     azimuth_apps_verify_ssl and
@@ -275,7 +299,8 @@ azimuth_apps_verify_ssl_clients: >-
       (trust_bundle is defined and trust_bundle)
     )
   }}
-#   The external URL for the Zenith registrar
+
+## The external URL for the Zenith registrar
 azimuth_apps_registrar_external_url: >-
   {{-
     zenith_registrar_external_url
@@ -286,7 +311,8 @@ azimuth_apps_registrar_external_url: >-
       else None
     )
   }}
-#   The admin URL for the Zenith registrar
+
+## The admin URL for the Zenith registrar
 azimuth_apps_registrar_admin_url: >-
   {{-
     zenith_registrar_admin_url
@@ -297,7 +323,8 @@ azimuth_apps_registrar_admin_url: >-
       else None
     )
   }}
-#   The Zenith SSHD host
+
+## The Zenith SSHD host
 azimuth_apps_sshd_host: >-
   {{-
     zenith_sshd_host
@@ -308,11 +335,13 @@ azimuth_apps_sshd_host: >-
       else None
     )
   }}
-#   The Zenith SSHD port
+
+## The Zenith SSHD port
 azimuth_apps_sshd_port: "{{ zenith_sshd_port | default(22) }}"
-#   The query parameters to add to Zenith URLs when redirecting
-#   This is used to indicate to Keycloak that the Azimuth IdP should be
-#   used, since we know that the user is already authenticated with Azimuth
+
+## The query parameters to add to Zenith URLs when redirecting
+## This is used to indicate to Keycloak that the Azimuth IdP should be
+## used, since we know that the user is already authenticated with Azimuth
 azimuth_apps_query_params:
   kc_idp_hint: >-
     {{-
@@ -324,12 +353,13 @@ azimuth_apps_query_params:
 azimuth_scheduling_enabled: false
 
 # Theme settings
-#   Custom bootstrap CSS URL
+## Custom bootstrap CSS URL
 azimuth_theme_bootstrap_css_url:
-#   Custom CSS snippet
+
+## Custom CSS snippet
 azimuth_theme_custom_css:
 
-# The values for the release
+## The values for the release
 azimuth_release_defaults:
   tags:
     apps: "{{ azimuth_apps_enabled }}"

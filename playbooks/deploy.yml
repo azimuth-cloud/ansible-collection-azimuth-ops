@@ -1,8 +1,10 @@
+---
 #####
 # This playbook deploys the portal onto an existing Kubernetes cluster
 #####
 
-- hosts: azimuth_deploy
+- name: Deply Azimuth
+  hosts: azimuth_deploy
   roles:
     # Configure alerting
     - role: azimuth_cloud.azimuth_ops.alertmanager_config
@@ -43,7 +45,8 @@
     - azimuth_cloud.azimuth_ops.azimuth
   # Ensure that Consul is uninstalled
   post_tasks:
-    - include_role:
+    - name: Ensure Consul is uninstalled
+      ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.consul
         tasks_from: uninstall.yml
       when:

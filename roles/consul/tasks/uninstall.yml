@@ -1,7 +1,6 @@
 ---
-
 - name: Uninstall Consul monitoring resources
-  command: >-
+  ansible.builtin.command: >-
     kubectl delete {{ item.kind }} {{ item.name }} --namespace {{ consul_release_namespace }}
   register: consul_delete_monitoring_resource
   changed_when: consul_delete_monitoring_resource.rc == 0
@@ -21,7 +20,7 @@
     label: "{{ item.kind }}/{{ item.name }}"
 
 - name: Remove Consul ingress
-  command: >-
+  ansible.builtin.command: >-
     kubectl delete ingress
       {{ admin_dashboard_ingress_consul_name | default('consul') }}
       --namespace {{ admin_dashboard_ingress_consul_namespace | default('azimuth') }}
@@ -36,5 +35,5 @@
     release_namespace: "{{ consul_release_namespace }}"
     release_name: "{{ consul_release_name }}"
     state: absent
-    wait: yes
+    wait: true
     wait_timeout: "{{ consul_wait_timeout }}"

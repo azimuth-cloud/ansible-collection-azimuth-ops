@@ -1,6 +1,6 @@
-
+---
 - name: Ensure Velero components are installed
-  include_tasks: install.yml
+  ansible.builtin.include_tasks: install.yml
 
 - name: Apply backup schedule
   ansible.builtin.command: kubectl apply -f -
@@ -14,3 +14,5 @@
         name: "{{ velero_backup_schedule_name }}"
         namespace: "{{ velero_release_namespace }}"
       spec: "{{ velero_backup_schedule_spec }}"
+  register: kubectl_velero_backup_schedule
+  changed_when: kubectl_velero_backup_schedule.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

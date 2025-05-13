@@ -1,12 +1,12 @@
 ---
-
 - name: Ensure bin directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ kustomize_bin_directory }}"
     state: directory
+    mode: "0755"
 
 - name: Download and extract kustomize binary
-  unarchive:
-    remote_src: yes
+  ansible.builtin.unarchive:
+    remote_src: true
     src: "{{ kustomize_archive_url }}"
     dest: "{{ kustomize_bin_directory }}"

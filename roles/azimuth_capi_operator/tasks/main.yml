@@ -1,5 +1,4 @@
 ---
-
 - name: Install Azimuth CAPI operator on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_capi_operator_chart_name }}"
@@ -8,13 +7,13 @@
     release_namespace: "{{ azimuth_capi_operator_release_namespace }}"
     release_name: "{{ azimuth_capi_operator_release_name }}"
     release_values: "{{ azimuth_capi_operator_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ azimuth_capi_operator_wait_timeout }}"
 
 - name: Install Azimuth CAPI cluster templates
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ template_definition | to_nice_yaml }}"
   vars:
@@ -34,13 +33,16 @@
   loop_control:
     loop_var: template
     label: "{{ template.name }}"
+  register: kubectl_install_capi_cluster_templates
+  changed_when: kubectl_install_capi_cluster_templates.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: List Azimuth CAPI cluster templates
-  command: kubectl get clustertemplates.azimuth.stackhpc.com --output json
+  ansible.builtin.command: kubectl get clustertemplates.azimuth.stackhpc.com --output json
   register: azimuth_capi_operator_templates_cmd
+  changed_when: false
 
 - name: Apply ACL annotations to non-current templates
-  command: >-
+  ansible.builtin.command: >-
     kubectl patch clustertemplates.azimuth.stackhpc.com/{{ item.metadata.name }}
       --type merge
       --patch-file /dev/stdin
@@ -59,9 +61,11 @@
     }}
   loop_control:
     label: "{{ item.metadata.name }}"
+  register: kubectl_patch_acl_annotations
+  changed_when: kubectl_patch_acl_annotations.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
 
 - name: Deprecate non-current templates
-  command: >-
+  ansible.builtin.command: >-
     kubectl patch
       --type merge
       --patch '{"spec": {"deprecated": true}}'
@@ -76,9 +80,11 @@
     }}
   loop_control:
     label: "{{ item.metadata.name }}"
+  register: kubectl_patch_templates
+  changed_when: kubectl_patch_templates.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
 
 - name: Install Azimuth CAPI app templates
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ template_definition | to_nice_yaml }}"
   vars:
@@ -98,3 +104,5 @@
   loop_control:
     loop_var: template
     label: "{{ template.name }}"
+  register: kubectl_install_capi_app_templates
+  changed_when: kubectl_install_capi_app_templates.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

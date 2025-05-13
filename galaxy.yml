@@ -9,6 +9,10 @@ authors:
 license:
   - "Apache-2.0"
 repository: "https://github.com/azimuth-cloud/ansible-collection-azimuth-ops"
+tags:
+  - linux
+  - infrastructure
+  - cloud
 
 dependencies:
   ansible.posix: "2.0.0"

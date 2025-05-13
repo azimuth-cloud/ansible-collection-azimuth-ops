@@ -54,6 +54,7 @@ clusterapi_patches:
       labelSelector: cluster.x-k8s.io/provider=infrastructure-openstack
       name: openstack(cluster|machine).*
   # The manifests contain environment variable substitutions for feature gates that we do not need
+  # yamllint disable rule:line-length
   - patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/args
@@ -62,10 +63,12 @@ clusterapi_patches:
           - --diagnostics-address={{ clusterapi_diagnostics_address }}
           - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
           - --feature-gates={% for k, v in clusterapi_core_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
+  # yamllint enable rule:line-length
     target:
       kind: Deployment
       namespace: capi-system
       name: capi-controller-manager
+  # yamllint disable rule:line-length
   - patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/args
@@ -74,11 +77,14 @@ clusterapi_patches:
           - --diagnostics-address={{ clusterapi_diagnostics_address }}
           - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
           - --feature-gates={% for k, v in clusterapi_kubeadm_bootstrap_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
+    # yamllint enable rule:line-length
     target:
       kind: Deployment
       namespace: capi-kubeadm-bootstrap-system
       name: capi-kubeadm-bootstrap-controller-manager
+  # yamllint disable rule:line-length
   - patch: |-
+      # yamllint disable rule:line-length
       - op: replace
         path: /spec/template/spec/containers/0/args
         value:
@@ -86,6 +92,7 @@ clusterapi_patches:
           - --diagnostics-address={{ clusterapi_diagnostics_address }}
           - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
           - --feature-gates={% for k, v in clusterapi_kubeadm_control_plane_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
+    # yamllint enable rule:line-length
     target:
       kind: Deployment
       namespace: capi-kubeadm-control-plane-system

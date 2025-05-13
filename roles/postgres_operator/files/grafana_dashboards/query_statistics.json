@@ -23,9 +23,7 @@
   "links": [
     {
       "icon": "external link",
-      "tags": [
-        "vendor=crunchydata"
-      ],
+      "tags": ["vendor=crunchydata"],
       "type": "dashboards"
     }
   ],
@@ -188,9 +186,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -252,9 +248,7 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -509,9 +503,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -704,9 +696,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -950,9 +940,7 @@
   ],
   "refresh": "15m",
   "schemaVersion": 39,
-  "tags": [
-    "vendor=crunchydata"
-  ],
+  "tags": ["vendor=crunchydata"],
   "templating": {
     "list": [
       {
@@ -1082,17 +1070,7 @@
     "to": "now"
   },
   "timepicker": {
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ]
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "browser",
   "title": "PostgreSQL / Query Statistics",

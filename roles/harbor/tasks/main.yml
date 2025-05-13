@@ -1,7 +1,6 @@
 ---
-
 - name: Create Harbor release namespace
-  command: kubectl create namespace {{ harbor_release_namespace }}
+  ansible.builtin.command: kubectl create namespace {{ harbor_release_namespace }}
   register: harbor_create_namespace
   changed_when: harbor_create_namespace.rc == 0
   failed_when: >-
@@ -9,7 +8,7 @@
     'AlreadyExists' not in harbor_create_namespace.stderr
 
 - name: Install trust bundle
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ harbor_trust_bundle_secret_definition | to_nice_yaml }}"
   vars:
@@ -22,9 +21,11 @@
       stringData:
         ca.crt: "{{ harbor_trust_bundle }}"
   when: harbor_trust_bundle
+  register: kubectl_harbor_trust_bundle
+  changed_when: kubectl_harbor_trust_bundle.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install wildcard TLS certificate
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ harbor_tls_wildcard_secret_definition | to_nice_yaml }}"
   vars:
@@ -39,6 +40,8 @@
         tls.crt: "{{ harbor_tls_wildcard_certificate }}"
         tls.key: "{{ harbor_tls_wildcard_key }}"
   when: harbor_tls_wildcard_certificate
+  register: kubectl_harbor_tls_cert
+  changed_when: kubectl_harbor_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Harbor on target Kubernetes cluster
   kubernetes.core.helm:
@@ -48,18 +51,20 @@
     release_namespace: "{{ harbor_release_namespace }}"
     release_name: "{{ harbor_release_name }}"
     release_values: "{{ harbor_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ harbor_wait_timeout }}"
 
 - name: Wait for Harbor API to become available
-  uri:
+  # checkov:skip=CKV2_ANSIBLE_1: TLS is optional
+  # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
+  ansible.builtin.uri:
     url: "{{ harbor_external_url }}/api/v2.0/projects"
     method: GET
     user: admin
     password: "{{ harbor_admin_password }}"
-    force_basic_auth: yes
+    force_basic_auth: true
     timeout: 5
     ca_path: "{{ harbor_ca_path }}"
     validate_certs: "{{ harbor_validate_certs }}"
@@ -67,17 +72,16 @@
   until: harbor_api_available is succeeded
   retries: 60
   delay: 10
-  
 
 - name: Create proxy cache projects
-  include_tasks: proxy_cache_project.yml
+  ansible.builtin.include_tasks: proxy_cache_project.yml
   loop: "{{ harbor_proxy_cache_projects.values() }}"
   loop_control:
     loop_var: project
     label: "{{ project.name }}"
 
 - name: Set registry mirrors fact
-  set_fact:
+  ansible.builtin.set_fact:
     harbor_registry_mirrors: >-
       {
         {% for registry, project in harbor_proxy_cache_projects.items() %}
@@ -86,7 +90,7 @@
       }
 
 - name: Install Grafana dashboard for Harbor metrics
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ harbor_dashboard_definition | to_nice_yaml }}"
   vars:
@@ -100,10 +104,12 @@
           grafana_dashboard: "1"
       data:
         harbor_dashboard.json: |-
-          {{ lookup('file', 'grafana_dashboard.json' ) | from_json | to_nice_json }}
+          {{ lookup('file', 'grafana_dashboard.json') | from_json | to_nice_json }}
+  register: kubectl_harbor_grafana_dashboard
+  changed_when: kubectl_harbor_grafana_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Configure custom alerting rules for Harbor
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ harbor_alert_rules_definition | to_nice_yaml }}"
   vars:
@@ -112,17 +118,19 @@
       kind: PrometheusRule
       metadata:
         name: harbor-alerting-rules
-        namespace:  "{{ harbor_release_namespace }}"
+        namespace: "{{ harbor_release_namespace }}"
         labels:
           release: kube-prometheus-stack
       spec:
         groups:
-        - name: harbor.rules
-          rules:
-            - alert: HarborDeploymentUnhealthy
-              expr: harbor_health != 1
-              for: 30m
-              annotations:
-                message: "{% raw %}The Harbor deployment is reporting an unhealthy status (harbor_health = {{ $value }}){% endraw %}"
-              labels:
-                severity: warning
+          - name: harbor.rules
+            rules:
+              - alert: HarborDeploymentUnhealthy
+                expr: harbor_health != 1
+                for: 30m
+                annotations:
+                  message: "{% raw %}The Harbor deployment is reporting an unhealthy status (harbor_health = {{ $value }}){% endraw %}"
+                labels:
+                  severity: warning
+  register: kubectl_harbor_alert_rules
+  changed_when: kubectl_harbor_alert_rules.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

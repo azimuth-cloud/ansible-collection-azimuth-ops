@@ -15,7 +15,6 @@ pgo_kustomization_bases:
 
 # List of patches to apply to the resources in the manifests
 pgo_kustomization_patches: []
-
 # The kustomization to use for Cluster API
 pgo_kustomization:
   namespace: "{{ pgo_namespace }}"

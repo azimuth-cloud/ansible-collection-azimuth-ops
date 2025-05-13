@@ -1,29 +1,20 @@
 ---
-
 # Get the state information for the seed and adopt it
-- hosts: terraform_provision
+- name: Set facts from the Terraform state of the seed node
+  hosts: terraform_provision
   tasks:
     - name: Discover k3s host and adopt it
-      include_role:
+      ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.infra
       vars:
         infra_readonly: true
-        infra_ansible_groups: [k3s, azimuth_deploy]
+        infra_ansible_groups:
+          - k3s
+          - azimuth_deploy
 
 # Gather required facts from the seed
-- hosts: k3s
-  tasks:
-    - name: Get installed cluster types
-      command: kubectl get clustertypes -o json
-      register: generate_tests_cluster_types_cmd
-
-    - name: Get installed Kubernetes templates
-      command: kubectl get clustertemplates -o json
-      register: generate_tests_kubernetes_templates_cmd
-
-    - name: Get installed Kubernetes app templates
-      command: kubectl get apptemplates -o json
-      register: generate_tests_app_templates_cmd
+- name: Gather facts from the seed node
+  hosts: k3s
   environment:
     # In HA mode, use the kubeconfig for the HA cluster
     # In single node mode, use the default kubeconfig file
@@ -33,12 +24,28 @@
         if install_mode == 'ha'
         else ""
       }}
+  tasks:
+    - name: Get installed cluster types
+      ansible.builtin.command: kubectl get clustertypes -o json
+      register: generate_tests_cluster_types_cmd
+      changed_when: false
+
+    - name: Get installed Kubernetes templates
+      ansible.builtin.command: kubectl get clustertemplates -o json
+      register: generate_tests_kubernetes_templates_cmd
+      changed_when: false
+
+    - name: Get installed Kubernetes app templates
+      ansible.builtin.command: kubectl get apptemplates -o json
+      register: generate_tests_app_templates_cmd
+      changed_when: false
 
 # Generate the tests locally
-- hosts: terraform_provision
+- name: Generate Azimuth tests
+  hosts: terraform_provision
   tasks:
     - name: Copy required facts to current host
-      set_fact:
+      ansible.builtin.set_fact:
         generate_tests_installed_cluster_types: >-
           {{-
             hostvars[groups.k3s.0].generate_tests_cluster_types_cmd.stdout |
@@ -60,5 +67,5 @@
 
     # Generate the test suite based on the discovered information
     - name: Generate test suite
-      include_role:
+      ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.generate_tests

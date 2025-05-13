@@ -1,10 +1,9 @@
 ---
-
 - name: Set inotify sysctl options
-  sysctl:
+  ansible.posix.sysctl:
     name: "{{ item.name }}"
     value: "{{ item.value }}"
-    reload: yes
+    reload: true
   loop:
     - name: fs.inotify.max_queued_events
       value: "{{ sysctl_inotify_max_queued_events }}"

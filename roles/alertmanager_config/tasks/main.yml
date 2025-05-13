@@ -1,7 +1,6 @@
 ---
-
 - name: Install Slack webhook URL secret
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ alertmanager_config_slack_webhook_secret_definition | to_nice_yaml }}"
   vars:
@@ -16,9 +15,11 @@
         {{-
           { alertmanager_config_slack_webhook_secret_key: alertmanager_config_slack_webhook_url }
         }}
+  register: kubectl_slack_webhook_url
+  changed_when: kubectl_slack_webhook_url.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install alertmanager configuration for Slack alerts
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ alertmanager_config_slack_definition | to_nice_yaml }}"
   vars:
@@ -30,3 +31,5 @@
         namespace: "{{ alertmanager_config_namespace }}"
         labels: "{{ alertmanager_config_labels }}"
       spec: "{{ alertmanager_config_slack_spec }}"
+  register: kubectl_alertmanager_slack
+  changed_when: kubectl_alertmanager_slack.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

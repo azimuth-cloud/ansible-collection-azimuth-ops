@@ -1,14 +1,14 @@
+---
 #####
 # This playbook uses Terraform and Cluster API to provision infrastructure onto which Azimuth is deployed
 #####
-
-
 # Provision the Kubernetes cluster onto which Azimuth will be deployed
-- import_playbook: azimuth_cloud.azimuth_ops.provision_cluster
-
+- name: Provision Kubernetes cluster for Azimuth
+  import_playbook: azimuth_cloud.azimuth_ops.provision_cluster
 
 # Install Azimuth
-- import_playbook: azimuth_cloud.azimuth_ops.deploy
+- name: Install and configure Azimuth
+  import_playbook: azimuth_cloud.azimuth_ops.deploy
   vars:
     # In HA mode, use the kubeconfig for the HA cluster
     # In single node mode, use the default kubeconfig file
