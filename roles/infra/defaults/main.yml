@@ -30,6 +30,9 @@ infra_network_cidr: 192.168.100.0/24
 # The MTU of the internal network that should be created
 # (will be set to cloud default if left undefined)
 infra_network_mtu:
+# A list of DNS nameservers to use for the internal network
+# (will be set to cloud default if left undefined)
+infra_network_dns_nameservers: []
 # The ID of the external network to connect to via a router
 infra_external_network_id: >-
   {{-

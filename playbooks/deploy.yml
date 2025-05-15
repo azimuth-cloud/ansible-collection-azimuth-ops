@@ -10,6 +10,7 @@
         alertmanager_config_slack_webhook_url is defined and
         alertmanager_config_slack_webhook_url
     - role: azimuth_cloud.azimuth_ops.flux
+      when: flux_enabled
     - role: azimuth_cloud.azimuth_ops.sealed_secrets
     - role: azimuth_cloud.azimuth_ops.certmanager
       when: certmanager_enabled or azimuth_kubernetes_enabled

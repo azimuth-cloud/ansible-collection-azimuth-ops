@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.8.5
+azimuth_capi_operator_chart_version: 0.9.1
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -726,7 +726,7 @@ azimuth_capi_operator_app_templates_kubeflow_description:
 azimuth_capi_operator_app_templates_kubeflow_keep_versions: 3
 # The sync frequency for the kubeflow app template (default 24h)
 azimuth_capi_operator_app_templates_kubeflow_sync_frequency: 86400
-# Any defaultn values for the kubeflow app template
+# Any default values for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_default_values: {}
 # The tenancy-based access controls for the app template
 # List of allowed tenancy IDs
@@ -910,6 +910,171 @@ azimuth_capi_operator_app_templates_huggingface_llm_spec:
         )
     }}
 
+#####
+# Danswer/Onyx app template
+#####
+
+# Indicates whether the Danswer app template should be enabled
+azimuth_capi_operator_app_templates_danswer_enabled: false
+# The Helm chart to use for the danswer app template
+azimuth_capi_operator_app_templates_danswer_chart_name: danswer-stack
+# The Helm repository to use for the danswer app template
+azimuth_capi_operator_app_templates_danswer_chart_repo: https://stackhpc.github.io/danswer
+# The version range to use for the danswer Helm chart
+azimuth_capi_operator_app_templates_danswer_version_range: ">=0.0.0"
+# Overrides for the label, logo and description from the danswer Helm chart
+azimuth_capi_operator_app_templates_danswer_label: Danswer
+azimuth_capi_operator_app_templates_danswer_logo: https://raw.githubusercontent.com/danswer-ai/danswer/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png
+azimuth_capi_operator_app_templates_danswer_description: A self-service platform for Retrieval-Augmented Generation.
+# The number of versions to make available for the danswer app template
+azimuth_capi_operator_app_templates_danswer_keep_versions: 3
+# The sync frequency for the danswer app template (default 24h)
+azimuth_capi_operator_app_templates_danswer_sync_frequency: 86400
+# Any default values for the danswer app template
+azimuth_capi_operator_app_templates_danswer_default_values:
+  inferenceCapability:
+    pvc:
+      # Default 3GB volumes are too small for some
+      # embedding models to download correctly.
+      storage: 10Gi
+    deployment:
+      resources:
+        requests:
+          memory: 4Gi
+  indexCapability:
+    indexingModelPVC:
+      storage: 10Gi
+    deployment:
+      resources:
+        requests:
+          memory: 4Gi
+  background:
+    resources:
+      requests:
+        memory: 4Gi
+
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_danswer_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_danswer_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_danswer_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_danswer_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_danswer_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_deny_regex }}"
+# The spec for the danswer app template
+azimuth_capi_operator_app_templates_danswer_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_danswer_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_danswer_chart_repo,
+          "name": azimuth_capi_operator_app_templates_danswer_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_danswer_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_danswer_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_danswer_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_danswer_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_danswer_label }
+          if azimuth_capi_operator_app_templates_danswer_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_danswer_logo }
+          if azimuth_capi_operator_app_templates_danswer_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_danswer_description }
+          if azimuth_capi_operator_app_templates_danswer_description
+          else {}
+        )
+    }}
+
+
+#####
+# RAGFlow app template
+#####
+
+# Indicates whether the ragflow app template should be enabled
+azimuth_capi_operator_app_templates_ragflow_enabled: false
+# The Helm chart to use for the ragflow app template
+azimuth_capi_operator_app_templates_ragflow_chart_name: ragflow-azimuth
+# The Helm repository to use for the ragflow app template
+azimuth_capi_operator_app_templates_ragflow_chart_repo: https://stackhpc.github.io/ragflow
+# The version range to use for the ragflow Helm chart
+azimuth_capi_operator_app_templates_ragflow_version_range: ">=0.1.0"
+# Overrides for the label, logo and description from the ragflow Helm chart
+azimuth_capi_operator_app_templates_ragflow_label: RAGFlow
+azimuth_capi_operator_app_templates_ragflow_logo:
+azimuth_capi_operator_app_templates_ragflow_description:
+# The number of versions to make available for the ragflow app template
+azimuth_capi_operator_app_templates_ragflow_keep_versions: 3
+# The sync frequency for the ragflow app template (default 24h)
+azimuth_capi_operator_app_templates_ragflow_sync_frequency: 86400
+# Any default values for the ragflow app template
+azimuth_capi_operator_app_templates_ragflow_default_values: {}
+
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_ragflow_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_ragflow_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_ragflow_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_ragflow_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_ragflow_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_deny_regex }}"
+# The spec for the ragflow app template
+azimuth_capi_operator_app_templates_ragflow_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_ragflow_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_ragflow_chart_repo,
+          "name": azimuth_capi_operator_app_templates_ragflow_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_ragflow_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_ragflow_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_ragflow_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_ragflow_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_ragflow_label }
+          if azimuth_capi_operator_app_templates_ragflow_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_ragflow_logo }
+          if azimuth_capi_operator_app_templates_ragflow_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_ragflow_description }
+          if azimuth_capi_operator_app_templates_ragflow_description
+          else {}
+        )
+    }}
+
+
+#####
+# Argo CD app template
+#####
 
 # Indicates whether the Argo CD app template should be enabled
 azimuth_capi_operator_app_templates_argocd_enabled: true
@@ -976,6 +1141,8 @@ azimuth_capi_operator_app_templates_argocd_spec:
         )
     }}
 
+
+
 # The default templates
 azimuth_capi_operator_app_templates_default: >-
   {{-
@@ -1009,8 +1176,19 @@ azimuth_capi_operator_app_templates_default: >-
         { "huggingface-llm": azimuth_capi_operator_app_templates_huggingface_llm_spec }
         if azimuth_capi_operator_app_templates_huggingface_llm_enabled
         else {}
+      ) |
+            combine(
+        { "danswer": azimuth_capi_operator_app_templates_danswer_spec }
+        if azimuth_capi_operator_app_templates_danswer_enabled
+        else {}
+      ) |
+            combine(
+        { "ragflow": azimuth_capi_operator_app_templates_ragflow_spec }
+        if azimuth_capi_operator_app_templates_ragflow_enabled
+        else {}
       )
   }}
+
 # Allow extra templates to be defined using a separate variable
 azimuth_capi_operator_app_templates_extra: {}
 # The full list of Kubernetes app templates to install
