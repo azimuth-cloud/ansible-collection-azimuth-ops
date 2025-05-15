@@ -1,7 +1,6 @@
 ---
-
 - name: Deploy internal database
-  include_role:
+  ansible.builtin.include_role:
     name: azimuth_cloud.azimuth_ops.postgres_operator
     tasks_from: database.yml
     defaults_from: database.yml
@@ -14,20 +13,21 @@
     pgo_database_backup_volume_size: "{{ coral_credits_database_backup_volume_size }}"
 
 - name: Get database secret
-  command: >-
+  ansible.builtin.command: >-
     kubectl get secret coral-credits-db-pguser-coral-credits-db
     --namespace {{ coral_credits_release_namespace }}
     --output json
   register: coral_credits_raw_secret
+  changed_when: false
   no_log: true
 
 - name: Read database secret
-  set_fact:
+  ansible.builtin.set_fact:
     coral_credits_secret: "{{ coral_credits_raw_secret.stdout | from_json }}"
   no_log: true
 
 - name: Set database authentication variables
-  set_fact:
+  ansible.builtin.set_fact:
     coral_credits_database_user: "{{ coral_credits_secret.data.user | b64decode }}"
     coral_credits_database_password: "{{ coral_credits_secret.data.password | b64decode }}"
     coral_credits_database_host: "{{ coral_credits_secret.data.host | b64decode }}"
@@ -35,7 +35,7 @@
   no_log: true
 
 - name: Install wildcard TLS certificate
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ coral_credits_ingress_tls_wildcard_secret_definition | to_nice_yaml }}"
   vars:
@@ -50,6 +50,8 @@
         tls.crt: "{{ coral_credits_ingress_tls_certificate }}"
         tls.key: "{{ coral_credits_ingress_tls_key }}"
   when: coral_credits_ingress_tls_certificate
+  register: kubectl_coral_wildcard_cert
+  changed_when: kubectl_coral_wildcard_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Coral Credits API on target Kubernetes cluster
   kubernetes.core.helm:
@@ -59,7 +61,7 @@
     release_namespace: "{{ coral_credits_release_namespace }}"
     release_name: "{{ coral_credits_release_name }}"
     release_values: "{{ coral_credits_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ coral_credits_wait_timeout }}"

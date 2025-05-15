@@ -15,15 +15,15 @@ cloud_metrics_grafana_wait_timeout: 10m
 
 # Configuration for the external Prometheus
 cloud_metrics_prometheus_host: >-
-  {{ undef(hint = 'cloud_metrics_prometheus_host is required') }}
+  {{ undef(hint='cloud_metrics_prometheus_host is required') }}
 cloud_metrics_prometheus_ip: >-
-  {{ undef(hint = 'cloud_metrics_prometheus_ip is required') }}
+  {{ undef(hint='cloud_metrics_prometheus_ip is required') }}
 cloud_metrics_prometheus_port: >-
-  {{ undef(hint = 'cloud_metrics_prometheus_port is required') }}
+  {{ undef(hint='cloud_metrics_prometheus_port is required') }}
 cloud_metrics_prometheus_basic_auth_username: >-
-  {{ undef(hint = 'cloud_metrics_prometheus_basic_auth_username is required') }}
+  {{ undef(hint='cloud_metrics_prometheus_basic_auth_username is required') }}
 cloud_metrics_prometheus_basic_auth_password: >-
-  {{ undef(hint = 'cloud_metrics_prometheus_basic_auth_password is required') }}
+  {{ undef(hint='cloud_metrics_prometheus_basic_auth_password is required') }}
 
 # Configuration for the Prometheus scrape
 cloud_metrics_prometheus_auth_secret_name: cloud-metrics-os-capacity-auth
@@ -92,26 +92,33 @@ _azimuth_ingress_host: >-
   }}
 
 # Ingress settings for Grafana
-#   The name of the ingress class to use
+## The name of the ingress class to use
 cloud_metrics_grafana_ingress_class: nginx
-#   The hostname to use for the ingress resource
+
+## The hostname to use for the ingress resource
 cloud_metrics_grafana_ingress_host: >-
   {{
     _azimuth_ingress_host
     if _azimuth_ingress_host
     else undef(hint = 'cloud_metrics_grafana_ingress_host is required')
   }}
-#   The subpath to use for ingress
+
+## The subpath to use for ingress
 cloud_metrics_grafana_ingress_subpath: /dashboards
-#   Any annotations for the ingress
+
+## Any annotations for the ingress
 cloud_metrics_grafana_ingress_annotations: "{{ ingress_annotations | default({}) }}"
-#   Indicates whether TLS should be enabled
+
+## Indicates whether TLS should be enabled
 cloud_metrics_grafana_ingress_tls_enabled: "{{ _azimuth_ingress_tls_enabled }}"
-#   The TLS secret name (can be null)
+
+## The TLS secret name (can be null)
 cloud_metrics_grafana_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default('cloud-metrics-grafana-tls', True) }}"
-#   Any TLS-specific annotations
+
+## Any TLS-specific annotations
 cloud_metrics_grafana_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
-#   Wildcard TLS certificate, if available
+
+## Wildcard TLS certificate, if available
 cloud_metrics_grafana_ingress_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
 cloud_metrics_grafana_ingress_tls_key: >-
   {{-
@@ -121,8 +128,8 @@ cloud_metrics_grafana_ingress_tls_key: >-
   }}
 
 # Settings for the auth callout
-#   The URL for the auth callout
-#   If not set, no auth callout is configured
+## The URL for the auth callout
+## If not set, no auth callout is configured
 cloud_metrics_grafana_ingress_auth_url: >-
   {{
     "http://{}.{}.svc.cluster.local/api/session/verify/".format(
@@ -130,8 +137,9 @@ cloud_metrics_grafana_ingress_auth_url: >-
       azimuth_release_namespace | default('azimuth')
     )
   }}
-#   The URL to redirect to when the verify URL returns a 401
-#   If not set, the 401 will just be returned
+
+## The URL to redirect to when the verify URL returns a 401
+## If not set, the 401 will just be returned
 cloud_metrics_grafana_ingress_auth_signin_url: >-
   {{
     "{}://{}/auth/login".format(
@@ -141,15 +149,18 @@ cloud_metrics_grafana_ingress_auth_signin_url: >-
     if _azimuth_ingress_host
     else undef(hint = 'cloud_metrics_grafana_ingress_auth_signin_url is required')
   }}
-#   The URL parameter to contain the original URL when redirecting
+
+## The URL parameter to contain the original URL when redirecting
 cloud_metrics_grafana_ingress_auth_next_url_param: next
-#   Dictionary of headers to set for authentication requests
-#   These will override headers from the incoming request, which would otherwise be forwarded
-#   In particular, you may need to override the accepts header to suit the content types served
-#   by the external authentication service
+
+## Dictionary of headers to set for authentication requests
+## These will override headers from the incoming request, which would otherwise be forwarded
+## In particular, you may need to override the accepts header to suit the content types served
+## by the external authentication service
 cloud_metrics_grafana_ingress_auth_request_headers:
   accept: application/json
-#   The ingress annotations that configure the auth callout
+
+## The ingress annotations that configure the auth callout
 cloud_metrics_grafana_ingress_auth_annotations:
   nginx.ingress.kubernetes.io/auth-url: "{{ cloud_metrics_grafana_ingress_auth_url }}"
   nginx.ingress.kubernetes.io/auth-signin: "{{ cloud_metrics_grafana_ingress_auth_signin_url }}"
@@ -161,7 +172,7 @@ cloud_metrics_grafana_ingress_auth_annotations:
 
 # The admin username and password for Grafana
 cloud_metrics_grafana_admin_username: admin
-cloud_metrics_grafana_admin_password: "{{ undef(hint = 'cloud_metrics_grafana_admin_password is required') }}"
+cloud_metrics_grafana_admin_password: "{{ undef(hint='cloud_metrics_grafana_admin_password is required') }}"
 
 # Details for the Grafana admin secret
 cloud_metrics_grafana_admin_secret_name: "{{ cloud_metrics_grafana_release_name }}-grafana-admin"
@@ -169,17 +180,20 @@ cloud_metrics_grafana_admin_secret_user_key: username
 cloud_metrics_grafana_admin_secret_password_key: password
 
 # Configuration for persistent storage, so that changes to the Grafana DB are persistent
-#   Indicates whether persistence should be enabled
+# Indicates whether persistence should be enabled
 cloud_metrics_grafana_persistence_enabled: true
-#   The size of the PVC to use
+
+# The size of the PVC to use
 cloud_metrics_grafana_persistence_size: 10Gi
-#   The name of the storage class to use - leave blank for the default
+
+# The name of the storage class to use - leave blank for the default
 cloud_metrics_grafana_persistence_storage_class_name:
 
 # Configuration for the dashboards to add
 cloud_metrics_grafana_dashboard_home: "{{ lookup('file', 'cloud-metrics-dashboard.json') }}"
 cloud_metrics_grafana_dashboard_tenant: "{{ lookup('file', 'tenant-metrics-dashboard.json') }}"
-#   When the above variables are used, they are interpreted as datastructures
+
+# When the above variables are used, they are interpreted as datastructures
 cloud_metrics_grafana_dashboards:
   default:
     home:
@@ -247,7 +261,7 @@ cloud_metrics_grafana_datasources:
         isDefault: true
 
 # The deployment strategy for Grafana
-# If using persistence with RWO PVCs, this must be Recreate or the deployment gets stuck
+# If using persistence with RWO PVCs, this must be Recreate or the deployment gets stuck
 cloud_metrics_grafana_deployment_strategy:
   type: Recreate
 
@@ -256,7 +270,8 @@ cloud_metrics_grafana_release_defaults:
   deploymentStrategy: "{{ cloud_metrics_grafana_deployment_strategy }}"
   ingress:
     enabled: true
-    hosts: ["{{ cloud_metrics_grafana_ingress_host }}"]
+    hosts:
+      - "{{ cloud_metrics_grafana_ingress_host }}"
     path: "{{ cloud_metrics_grafana_ingress_subpath }}"
     ingressClassName: "{{ cloud_metrics_grafana_ingress_class }}"
     annotations: >-

@@ -1,7 +1,6 @@
 ---
-
 - name: Fetch services from Consul
-  command: >-
+  ansible.builtin.command: >-
     kubectl exec {{ zenith_migrate_consul_release_name }}-server-0
       --namespace {{ zenith_migrate_consul_release_namespace }}
       --
@@ -18,7 +17,7 @@
   register: zenith_migrate_consul_services_cmd
 
 - name: Create service CRDs
-  command: kubectl create -f -
+  ansible.builtin.command: kubectl create -f -
   args:
     stdin: "{{ zenith_migrate_service_definition | to_nice_yaml }}"
   vars:
@@ -40,7 +39,7 @@
     }}
 
 - name: Fetch public key associations from Consul
-  command: >-
+  ansible.builtin.command: >-
     kubectl exec {{ zenith_migrate_consul_release_name }}-server-0
       --namespace {{ zenith_migrate_consul_release_namespace }}
       --
@@ -57,7 +56,7 @@
   register: zenith_migrate_consul_keys_cmd
 
 - name: Attach public key to service CRD
-  command: >-
+  ansible.builtin.command: >-
     kubectl patch services.zenith {{ item.1 }}
       --namespace {{ zenith_target_namespace }}
       --type merge
@@ -82,3 +81,5 @@
         map("regex_replace", "^zenith/pubkeys/", "") |
         map("split", ":")
     }}
+  register: kubectl_patch_crd_pubkey
+  changed_when: kubectl_patch_crd_pubkey.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
