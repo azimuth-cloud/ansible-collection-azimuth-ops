@@ -10,6 +10,11 @@ clusterapi_openstack_repo: https://github.com/kubernetes-sigs/cluster-api-provid
 clusterapi_openstack_version: v0.10.5
 clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml"
 
+# The repo, version and manifest URL for the OpenStack Resource controller
+clusterapi_orc_repo: https://github.com/k-orc/openstack-resource-controller
+clusterapi_orc_version: v2.1.0
+clusterapi_orc_components: "{{ clusterapi_orc_repo }}/releases/download/{{ clusterapi_orc_version }}/install.yaml"
+
 # The diagnostics address for Cluster API components
 clusterapi_diagnostics_address: 0.0.0.0:8443
 clusterapi_insecure_diagnostics: false
