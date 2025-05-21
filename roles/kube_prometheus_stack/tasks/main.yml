@@ -1,19 +1,21 @@
 ---
-
 # Because of the way Helm handles CRDs, we upgrade them first
 - name: Get kube-prometheus-stack CRDs
-  command: >-
+  ansible.builtin.command: >-
     helm show crds
       {{ kube_prometheus_stack_chart_name }}
       --repo {{ kube_prometheus_stack_chart_repo }}
       --version {{ kube_prometheus_stack_chart_version }}
   register: kube_prometheus_stack_crds
+  changed_when: false
 
 - name: Install kube-prometheus-stack CRDs
   # Use server-side apply because some of the CRDs are too big to fit in the annotation
-  command: kubectl apply --server-side=true --force-conflicts=true -f -
+  ansible.builtin.command: kubectl apply --server-side=true --force-conflicts=true -f -
   args:
     stdin: "{{ kube_prometheus_stack_crds.stdout }}"
+  register: kubectl_kube_prom_stack_crds
+  changed_when: kubectl_kube_prom_stack_crds.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install kube-prometheus-stack on target Kubernetes cluster
   kubernetes.core.helm:
@@ -23,7 +25,7 @@
     release_namespace: "{{ kube_prometheus_stack_release_namespace }}"
     release_name: "{{ kube_prometheus_stack_release_name }}"
     release_values: "{{ kube_prometheus_stack_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ kube_prometheus_stack_wait_timeout }}"

@@ -1,21 +1,21 @@
 ---
 
 # The name of the database resource
-pgo_database_name: "{{ undef(hint = 'pgo_database_name is required') }}"
+pgo_database_name: "{{ undef(hint='pgo_database_name is required') }}"
 # The namespace in which to create the database resource
-pgo_database_namespace: "{{ undef(hint = 'pgo_database_namespace is required') }}"
-# The Postgres version to use for the database
+pgo_database_namespace: "{{ undef(hint='pgo_database_namespace is required') }}"
+# The Postgres version to use for the database
 pgo_database_version: 14
 # The storage class to use for the database volume
-# If left blank, the default storage class will be used
+# If left blank, the default storage class will be used
 pgo_database_data_volume_storage_class:
 # The storage class to use for the backup volume
-# By default, this is the same as the data volume
+# By default, this is the same as the data volume
 pgo_database_backup_volume_storage_class: "{{ pgo_database_data_volume_storage_class }}"
-# The size of the data volume for the database
+# The size of the data volume for the database
 pgo_database_data_volume_size: 8Gi
 # The size of the backup volume for the database
-# By default, this is the same as the data volume
+# By default, this is the same as the data volume
 pgo_database_backup_volume_size: "{{ pgo_database_data_volume_size }}"
 # The spec of the database resource
 pgo_database_spec_defaults:
@@ -81,24 +81,24 @@ pgo_servicemonitor_relabelings:
   - sourceLabels:
       - __meta_kubernetes_pod_label_postgres_operator_crunchydata_com_cluster
     targetLabel: cluster
-    replacement: '$1'
+    replacement: "$1"
   - sourceLabels:
       - namespace
       - cluster
     targetLabel: pg_cluster
     separator: ":"
-    replacement: '$1$2'
+    replacement: "$1$2"
   - sourceLabels:
       - __meta_kubernetes_pod_ip
     targetLabel: ip
-    replacement: '$1'
+    replacement: "$1"
   - sourceLabels:
       - __meta_kubernetes_pod_label_postgres_operator_crunchydata_com_instance
     targetLabel: deployment
-    replacement: '$1'
+    replacement: "$1"
     separator: ""
   - sourceLabels:
       - __meta_kubernetes_pod_label_postgres_operator_crunchydata_com_role
     targetLabel: role
-    replacement: '$1'
+    replacement: "$1"
     separator: ""

@@ -1,11 +1,11 @@
 ---
-
-- include_tasks: upload_image.yml
+- name: Include upload-image tasks
+  ansible.builtin.include_tasks: upload_image.yml
   vars:
     community_images_image_spec: "{{ item.value }}"
 
 - name: "Store image ID - {{ item.value.name }}"
-  set_fact:
+  ansible.builtin.set_fact:
     community_images_image_ids: >-
       {{-
         community_images_image_ids |

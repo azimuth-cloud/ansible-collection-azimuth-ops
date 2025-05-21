@@ -44,7 +44,7 @@ zenith_ingress_tls_wildcard_key: >-
   }}
 
 # The signing key for Zenith subdomain tokens
-zenith_registrar_subdomain_token_signing_key: "{{ undef(hint = 'zenith_registrar_subdomain_token_signing_key is required') }}"
+zenith_registrar_subdomain_token_signing_key: "{{ undef(hint='zenith_registrar_subdomain_token_signing_key is required') }}"
 # List of subdomains that are reserved and cannot be requested via Zenith
 # Note that the registrar subdomain is always added to this list
 # Make sure all the subdomains we are using are reserved
