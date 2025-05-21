@@ -1,5 +1,10 @@
 ---
 
+- name: Install OpenStack Resource Controller resources
+  ansible.builtin.command: kubectl apply --server-side -f {{ clusterapi_orc_components }}
+  register: kubectl_install_orc
+  changed_when: kubectl_install_orc.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
 - name: Make kustomization directory
   file:
     path: "{{ clusterapi_kustomization_directory }}"
