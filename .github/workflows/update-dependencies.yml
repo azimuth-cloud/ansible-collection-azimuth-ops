@@ -57,6 +57,12 @@ jobs:
             prereleases: "yes"
             version_jsonpath: azimuth_apps_operator_chart_version
 
+          - key: azimuth-authorization-webhook
+            path: ./roles/azimuth_authorization_webhook/defaults/main.yaml
+            repository: azimuth-cloud/azimuth-authorization-webhook
+            prereleases: "yes"
+            version_jsonpath: azimuth_authorization_webhook_chart_version
+
           - key: azimuth-caas-operator
             path: ./roles/azimuth_caas_operator/defaults/main.yml
             repository: azimuth-cloud/azimuth-caas-operator
