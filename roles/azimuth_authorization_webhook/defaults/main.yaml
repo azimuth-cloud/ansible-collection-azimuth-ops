@@ -1,0 +1,28 @@
+azimuth_authorization_webhook_chart_name: azimuth-authorization-webhook
+azimuth_authorization_webhook_chart_repo: https://azimuth-cloud.github.io/azimuth-authorization-webhook
+azimuth_authorization_webhook_chart_version: 0.1.0-dev.0.main.15
+azimuth_authorization_webhook_release_namespace: azimuth
+azimuth_authorization_webhook_release_name: azimuth-authorization-webhook
+
+azimuth_authorization_webhook_ingress_class_name: nginx
+azimuth_authorization_webhook_tls_enabled: true
+azimuth_authorization_webhook_tls_secret_name: azimuth-authorization-webhook-tls
+
+azimuth_authorization_webhook_release_defaults:
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt
+    ingressClassName: "{{ azimuth_authorization_webhook_ingress_class_name }}"
+    host:
+    tls:
+      enabled: "{{ azimuth_authorization_webhook_tls_enabled }}"
+      secretName: "{{ azimuth_authorization_webhook_tls_secret_name }}"
+
+azimuth_authorization_webhook_release_overrides: {}
+azimuth_authorization_webhook_release_values: >-
+  {{-
+    azimuth_authorization_webhook_release_defaults |
+      combine(azimuth_authorization_webhook_release_overrides, recursive = True)
+  }}
+azimuth_authorization_webhook_wait_timeout: 2m

@@ -1,0 +1,14 @@
+---
+
+- name: Install webhook server in management cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ azimuth_authorization_webhook_chart_name }}"
+    chart_repo_url: "{{ azimuth_authorization_webhook_chart_repo }}"
+    chart_version: "{{ azimuth_authorization_webhook_chart_version }}"
+    release_namespace: "{{ azimuth_authorization_webhook_release_namespace }}"
+    release_name: "{{ azimuth_authorization_webhook_release_name }}"
+    release_values: "{{ azimuth_authorization_webhook_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ azimuth_authorization_webhook_wait_timeout }}"
