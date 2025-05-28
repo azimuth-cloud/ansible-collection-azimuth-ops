@@ -12,3 +12,15 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ azimuth_authorization_webhook_wait_timeout }}"
+
+- name: Wait for certificate to be issued and get TLS cert
+  ansible.builtin.shell:
+    cmd: kubectl get secret {{ azimuth_authorization_webhook_tls_secret_name }} -n {{ azimuth_authorization_webhook_release_namespace }} -o 'jsonpath={.data.tls\.crt}'
+  register: _webhook_tls_cert_output
+  until: _webhook_tls_cert_output.rc == 0
+  retries: 20
+  delay: 6
+
+- name: Set webhook TLS facts
+  ansible.builtin.set_fact:
+    azimuth_authorization_webhook_tls_cert: "{{ _webhook_tls_cert_output.stdout | b64decode }}"

@@ -245,6 +245,10 @@ azimuth_capi_operator_capi_helm_values_defaults:
             else {}
           )
       }}
+  azimuthAuthorizationWebhook:
+    tls:
+      enabled: true
+      cert: "{{ hostvars[groups.azimuth_deploy.0]['azimuth_authorization_webhook_tls_cert'] }}"
   addons:
     openstack:
       # General OpenStack configuration
