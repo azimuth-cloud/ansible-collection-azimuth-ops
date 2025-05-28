@@ -11,6 +11,7 @@
         alertmanager_config_slack_webhook_url
     - role: azimuth_cloud.azimuth_ops.flux
       when: flux_enabled
+    - role: azimuth_cloud.azimuth_ops.sealed_secrets
     - role: azimuth_cloud.azimuth_ops.certmanager
       when: certmanager_enabled or azimuth_kubernetes_enabled
     - role: azimuth_cloud.azimuth_ops.kubernetes_dashboard
@@ -42,6 +43,8 @@
       when: azimuth_apps_enabled
     - role: azimuth_cloud.azimuth_ops.azimuth_capi_operator
       when: azimuth_kubernetes_enabled
+    - role: azimuth_cloud.azimuth_ops.azimuth_apps_operator
+      when: azimuth_apps_enabled
     - azimuth_cloud.azimuth_ops.azimuth
   # Ensure that Consul is uninstalled
   post_tasks:

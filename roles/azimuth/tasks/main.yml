@@ -34,6 +34,112 @@
         tls.key: "{{ azimuth_ingress_tls_key }}"
   when: azimuth_ingress_tls_certificate
 
+- block:
+    - name: Ensure identity realm exists for Azimuth users
+      command: kubectl apply -f -
+      args:
+        stdin: "{{ azimuth_oidc_users_realm_definition | to_nice_yaml }}"
+      vars:
+        azimuth_oidc_users_realm_definition:
+          apiVersion: identity.azimuth.stackhpc.com/v1alpha1
+          kind: Realm
+          metadata:
+            name: "{{ azimuth_oidc_users_realm_name }}"
+            namespace: "{{ azimuth_release_namespace }}"
+
+    - name: Wait for Azimuth users realm to become ready
+      command: >-
+        kubectl wait realm {{ azimuth_oidc_users_realm_name }}
+          --for=jsonpath='{.status.phase}'=Ready
+          --namespace {{ azimuth_release_namespace }}
+          --timeout=0
+      changed_when: false
+      register: azimuth_oidc_users_realm_ready
+      until: azimuth_oidc_users_realm_ready is succeeded
+      # Retry every 5s for 5m
+      retries: 60
+      delay: 5
+
+    - block:
+        - name: Ensure OIDC client exists for Azimuth
+          command: kubectl apply -f -
+          args:
+            stdin: "{{ azimuth_oidc_users_realm_definition | to_nice_yaml }}"
+          vars:
+            azimuth_oidc_users_realm_definition:
+              apiVersion: identity.azimuth.stackhpc.com/v1alpha1
+              kind: OIDCClient
+              metadata:
+                name: "{{ azimuth_oidc_client_id }}"
+                namespace: "{{ azimuth_release_namespace }}"
+              spec: "{{ azimuth_oidc_client_spec }}"
+
+        - name: Wait for Azimuth OIDC client to become ready
+          command: >-
+            kubectl wait oidcclient {{ azimuth_oidc_client_id }}
+              --for=jsonpath='{.status.phase}'=Ready
+              --namespace {{ azimuth_release_namespace }}
+              --timeout=0
+          changed_when: false
+          register: azimuth_oidc_users_realm_ready
+          until: azimuth_oidc_users_realm_ready is succeeded
+          # Retry every 5s for 5m
+          retries: 60
+          delay: 5
+
+        - name: Get credentials secret name for Azimuth OIDC client
+          command: >-
+            kubectl get oidcclient {{ azimuth_oidc_client_id }}
+              --namespace {{ azimuth_release_namespace }}
+              --output go-template={% raw %}'{{.status.credentialsSecretName}}'{% endraw %}
+          register: azimuth_oidc_client_credentials_secret_name
+          changed_when: false
+
+        - name: Get credentials secret data for Azimuth OIDC client
+          command: >-
+            kubectl get secret {{ azimuth_oidc_client_credentials_secret_name.stdout }}
+              --namespace {{ azimuth_release_namespace }}
+              --output json
+          register: azimuth_oidc_client_credentials_secret_data
+          changed_when: false
+
+        - name: Set Azimuth OIDC client and secret facts
+          set_fact:
+            azimuth_oidc_client_id: >-
+              {{-
+                azimuth_oidc_client_credentials_secret_data.stdout |
+                  from_json |
+                  json_query('data."client-id"') |
+                  b64decode
+              }}
+            azimuth_oidc_client_secret: >-
+              {{-
+                azimuth_oidc_client_credentials_secret_data.stdout |
+                  from_json |
+                  json_query('data."client-secret"') |
+                  b64decode
+              }}
+      when:
+        - azimuth_oidc_client_secret is not defined
+
+    - name: Get issuer URL for Azimuth users realm
+      command: >-
+        kubectl get realm {{ azimuth_oidc_users_realm_name }}
+          --namespace {{ azimuth_release_namespace }}
+          --output go-template={% raw %}'{{.status.oidcIssuerUrl}}'{% endraw %}
+      register: azimuth_oidc_users_realm_issuer_url
+      changed_when: false
+
+    # This MUST be the last task in the block as it makes the block condition false
+    # which means all subsequent tasks in the block are skipped, because a block is
+    # just syntactic sugar for adding a condition to all the tasks
+    - name: Set Azimuth OIDC issuer URL fact
+      set_fact:
+        azimuth_oidc_issuer_url: "{{ azimuth_oidc_users_realm_issuer_url.stdout }}"
+  when:
+    - azimuth_authentication_type == "oidc"
+    - not azimuth_oidc_issuer_url
+
 - name: Install Azimuth on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_chart_name }}"
@@ -47,23 +153,26 @@
     wait: yes
     wait_timeout: "{{ azimuth_wait_timeout }}"
 
-- name: List CaaS clusters
-  command: kubectl get clusters.caas -A -o json
-  register: azimuth_caas_clusters_list
+# Migrate CaaS clusters in old-style namespaces
+- block:
+    - name: List CaaS clusters
+      command: kubectl get clusters.caas -A -o json
+      register: azimuth_caas_clusters_list
 
-- name: Move clusters that are in old-style namespaces
-  include_tasks:
-    file: move-caas-cluster.yml
-  loop: >-
-    {{
-      azimuth_caas_clusters_list.stdout |
-        from_json |
-        json_query('items') |
-        selectattr('metadata.namespace', 'search', '^caas-')
-    }}
-  loop_control:
-    loop_var: cluster
-    label: "{{ cluster.metadata.namespace }}/{{ cluster.metadata.name }}"
+    - name: Move clusters that are in old-style namespaces
+      include_tasks:
+        file: move-caas-cluster.yml
+      loop: >-
+        {{
+          azimuth_caas_clusters_list.stdout |
+            from_json |
+            json_query('items') |
+            selectattr('metadata.namespace', 'search', '^caas-')
+        }}
+      loop_control:
+        loop_var: cluster
+        label: "{{ cluster.metadata.namespace }}/{{ cluster.metadata.name }}"
+  when: azimuth_clusters_enabled
 
 - block:
     - debug:

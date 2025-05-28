@@ -51,6 +51,12 @@ jobs:
             prereleases: "yes"
             version_jsonpath: azimuth_chart_version
 
+          - key: azimuth-apps-operator
+            path: ./roles/azimuth_apps_operator/defaults/main.yml
+            repository: azimuth-cloud/azimuth-apps-operator
+            prereleases: "yes"
+            version_jsonpath: azimuth_apps_operator_chart_version
+
           - key: azimuth-caas-operator
             path: ./roles/azimuth_caas_operator/defaults/main.yml
             repository: azimuth-cloud/azimuth-caas-operator
@@ -279,6 +285,12 @@ jobs:
             chart_repo_jsonpath: velero_csi_snapshot_controller_chart_repo
             chart_name_jsonpath: velero_csi_snapshot_controller_chart_name
             chart_version_jsonpath: velero_csi_snapshot_controller_chart_version
+
+          - key: sealed-secrets
+            path: ./roles/sealed_secrets/defaults/main.yml
+            chart_repo_jsonpath: sealed_secrets_chart_repo
+            chart_name_jsonpath: sealed_secrets_chart_name
+            chart_version_jsonpath: sealed_secrets_chart_version
 
           - key: velero
             path: ./roles/velero/defaults/main.yml
