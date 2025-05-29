@@ -37,6 +37,24 @@
     loop_var: watch
     label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
 
+- name: Install OpenStack Resource Controller
+  block:
+    - name: Install OpenStack Resource Controller resources
+      ansible.builtin.command: >-
+        kubectl apply
+          --server-side
+          -f {{ clusterapi_orc_components }}
+      changed_when: true
+
+  rescue:
+    - name: Install OpenStack Resource Controller resources [forcing conflicts]
+      ansible.builtin.command: >-
+        kubectl apply
+          --server-side
+          --force-conflicts
+          -f {{ clusterapi_orc_components }}
+      changed_when: true
+
 - name: Install Cluster API addon provider
   kubernetes.core.helm:
     chart_ref: "{{ clusterapi_addon_provider_chart_name }}"
