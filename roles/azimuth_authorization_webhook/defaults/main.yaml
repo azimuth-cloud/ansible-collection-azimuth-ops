@@ -1,6 +1,6 @@
 azimuth_authorization_webhook_chart_name: azimuth-authorization-webhook
 azimuth_authorization_webhook_chart_repo: https://azimuth-cloud.github.io/azimuth-authorization-webhook
-azimuth_authorization_webhook_chart_version: 0.1.0-dev.0.main.15
+azimuth_authorization_webhook_chart_version: 0.1.0-dev.0.main.17
 azimuth_authorization_webhook_release_namespace: azimuth
 azimuth_authorization_webhook_release_name: azimuth-authorization-webhook
 
@@ -8,13 +8,21 @@ azimuth_authorization_webhook_ingress_class_name: nginx
 azimuth_authorization_webhook_tls_enabled: true
 azimuth_authorization_webhook_tls_secret_name: azimuth-authorization-webhook-tls
 
+azimuth_authorization_webhook_ingress_subdomain: authorization
+azimuth_authorization_webhook_host: >-
+  {{-
+    "{}.{}".format(azimuth_authorization_webhook_ingress_subdomain, ingress_base_domain)
+    if azimuth_authorization_webhook_ingress_subdomain is defined and ingress_base_domain is defined
+    else undef(hint = 'azimuth_authorization_webhook_host is required')
+  }}
+
 azimuth_authorization_webhook_release_defaults:
   ingress:
     enabled: true
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt
     ingressClassName: "{{ azimuth_authorization_webhook_ingress_class_name }}"
-    host:
+    host: "{{ azimuth_authorization_webhook_host }}"
     tls:
       enabled: "{{ azimuth_authorization_webhook_tls_enabled }}"
       secretName: "{{ azimuth_authorization_webhook_tls_secret_name }}"

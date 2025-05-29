@@ -21,6 +21,7 @@
   retries: 20
   delay: 6
 
-- name: Set webhook TLS facts
+- name: Set webhook connection facts
   ansible.builtin.set_fact:
     azimuth_authorization_webhook_tls_cert: "{{ _webhook_tls_cert_output.stdout | b64decode }}"
+    azimuth_authorization_webhook_server: "https://{{ azimuth_authorization_webhook_host }}/authorize"
