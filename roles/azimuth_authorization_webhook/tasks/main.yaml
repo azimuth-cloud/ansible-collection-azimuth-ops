@@ -21,7 +21,8 @@
   retries: 20
   delay: 6
 
-- name: Set webhook connection facts
+- name: Set webhook facts for CAPI Helm
   ansible.builtin.set_fact:
     azimuth_authorization_webhook_tls_cert: "{{ _webhook_tls_cert_output.stdout | b64decode }}"
     azimuth_authorization_webhook_server: "https://{{ azimuth_authorization_webhook_host }}/authorize"
+    azimuth_authorization_webhook_filtered_namespaces: "{{ azimuth_authorization_webhook_protected_namespaces }}"

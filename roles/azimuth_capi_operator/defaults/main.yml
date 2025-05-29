@@ -150,6 +150,7 @@ azimuth_capi_operator_capi_helm_azimuth_authorization_webhook_config:
   tls:
     enabled: true
     cert: "{{ hostvars[groups.azimuth_deploy.0]['azimuth_authorization_webhook_tls_cert'] }}"
+  filteredNamespaces: "{{ hostvars[groups.azimuth_deploy.0]['azimuth_authorization_webhook_filtered_namespaces'] }}"
 
 azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider:
 azimuth_capi_operator_capi_helm_openstack_loadbalancer_create_monitor:
