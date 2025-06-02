@@ -1,6 +1,6 @@
 azimuth_authorization_webhook_chart_name: azimuth-authorization-webhook
 azimuth_authorization_webhook_chart_repo: https://azimuth-cloud.github.io/azimuth-authorization-webhook
-azimuth_authorization_webhook_chart_version: 0.1.0-dev.0.feat-system-users.31
+azimuth_authorization_webhook_chart_version: 0.1.0-dev.0.feat-system-users.40
 azimuth_authorization_webhook_release_namespace: azimuth
 azimuth_authorization_webhook_release_name: azimuth-authorization-webhook
 
@@ -21,9 +21,22 @@ azimuth_authorization_webhook_protected_namespaces:
   - openstack-system
   - tigera-operator
   - calico-system
+  - calico-apiserver
+  - csi-ceph-system
+  - ingress-nginx
+  - monitoring-system
+  - node-feature-discovery
+  - gpu-operator
+  - intel
+  - cert-manager
+  - network-operator
+  - node-problem-detector
 
 azimuth_authorization_webhook_release_defaults:
   protectedNamespaces: "{{ azimuth_authorization_webhook_protected_namespaces }}"
+  additionalPrivilegedUsers:
+    - kubernetes-admin
+    - kube-apiserver-kubelet-client
   ingress:
     enabled: true
     annotations:
