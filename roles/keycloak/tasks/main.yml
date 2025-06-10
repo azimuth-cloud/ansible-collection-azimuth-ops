@@ -348,3 +348,8 @@
           first |
           json_query("id")
       }}
+
+- name: Set facts for crossplane
+  ansible.builtin.set_fact:
+    keycloak_base_url: "{{ keycloak_base_url }}"
+    keycloak_admin_password: "{{ keycloak_admin_password }}"
