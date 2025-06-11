@@ -135,6 +135,11 @@ azimuth_capi_operator_capi_helm_etcd_blockdevice_type: "Volume"
 azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type: # e.g., 'SSD'
 # Default availability zone for the etcd block device if 'Volume' type is used
 azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az: "nova"
+azimuth_capi_operator_capi_helm_etcd_encryption_enabled: true
+azimuth_capi_operator_capi_helm_etcd_encryption_resources:
+  - "secrets"
+azimuth_capi_operator_capi_helm_etcd_encryption_provider: secretbox
+azimuth_capi_operator_capi_helm_etcd_encryption_key: "{{ undef(hint = 'azimuth_capi_operator_capi_helm_etcd_encryption_key is required') }}"
 
 # Options for LoadBalancer services
 # https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
@@ -351,26 +356,47 @@ azimuth_capi_operator_capi_helm_values_defaults:
               allowSnippetAnnotations: "{{ azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations }}"
   etcd: >-
     {{-
-      {
-        "blockDevice": (
+      {} |
+        combine(
           {
-            "size": azimuth_capi_operator_capi_helm_etcd_blockdevice_size,
-            "type": azimuth_capi_operator_capi_helm_etcd_blockdevice_type
-          } |
-            combine(
-              { "volumeType": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type }
-              if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type
-              else {}
-            ) |
-            combine(
-              { "availabilityZone": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az }
-              if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az
-              else {}
+            "blockDevice": (
+              {
+                "size": azimuth_capi_operator_capi_helm_etcd_blockdevice_size,
+                "type": azimuth_capi_operator_capi_helm_etcd_blockdevice_type
+              } |
+                combine(
+                  { "volumeType": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type }
+                  if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type
+                  else {}
+                ) |
+                combine(
+                  { "availabilityZone": azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az }
+                  if azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az
+                  else {}
+                )
             )
-        )
-      }
-      if azimuth_capi_operator_capi_helm_etcd_blockdevice_size > 0
-      else {}
+          }
+          if azimuth_capi_operator_capi_helm_etcd_blockdevice_size > 0
+          else {}
+        ) | combine(
+            {
+            "encryption": (
+              {
+                "enabled": true,
+                "provider": azimuth_capi_operator_capi_helm_etcd_encryption_provider,
+                "keys": [
+                  {
+                    "name": "key1",
+                    "secret": azimuth_capi_operator_capi_helm_etcd_encryption_key
+                  }
+                ],
+                "resources": azimuth_capi_operator_capi_helm_etcd_encryption_resources
+              }
+            )
+            }
+            if azimuth_capi_operator_capi_helm_etcd_encryption_enabled
+            else {}
+            )
     }}
 
 # Overrides for the CAPI Helm chart releases for all clusters
