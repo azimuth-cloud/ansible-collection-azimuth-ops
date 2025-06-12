@@ -50,10 +50,12 @@
 - name: List CaaS clusters
   command: kubectl get clusters.caas -A -o json
   register: azimuth_caas_clusters_list
+  when: azimuth_clusters_enabled
 
 - name: Move clusters that are in old-style namespaces
   include_tasks:
     file: move-caas-cluster.yml
+  when: azimuth_clusters_enabled
   loop: >-
     {{
       azimuth_caas_clusters_list.stdout |
