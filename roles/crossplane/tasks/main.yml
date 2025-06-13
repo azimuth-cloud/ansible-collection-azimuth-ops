@@ -50,6 +50,7 @@
 
 - name: Create crossplane provider config
   command: kubectl apply -f -
+  no_log: true
   args:
     stdin: "{{ crossplane_config_definition | to_nice_yaml }}"
   vars:
