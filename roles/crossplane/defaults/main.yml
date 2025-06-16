@@ -33,3 +33,6 @@ crossplane_provider_configurations_default:
     credentialsSecretKeyName: credentials
     credentialsContent: "{{ crossplane_keycloak_provider_config_creds | to_json }}"
 crossplane_provider_configurations_extra: []
+
+crossplane_provider_configuration_crds:
+  - providerconfigs.keycloak.crossplane.io
