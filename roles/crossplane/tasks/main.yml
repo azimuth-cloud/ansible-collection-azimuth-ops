@@ -1,0 +1,77 @@
+---
+
+- name: Install Crossplane on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ crossplane_chart_name }}"
+    chart_repo_url: "{{ crossplane_chart_repo }}"
+    chart_version: "{{ crossplane_chart_version }}"
+    release_namespace: "{{ crossplane_release_namespace }}"
+    release_name: "{{ crossplane_release_name }}"
+    release_values: "{{ crossplane_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ crossplane_wait_timeout }}"
+
+- name: Install Crossplane providers
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ crossplane_provider_definition | to_nice_yaml }}"
+  vars:
+    crossplane_provider_definition:
+      apiVersion: pkg.crossplane.io/v1
+      kind: Provider
+      metadata:
+        name: "{{ item.name }}"
+      spec:
+        package: "{{ item.package }}:{{ item.version }}"
+  with_items: "{{ crossplane_providers }}"
+
+- name: Create provider credentials
+  no_log: true
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ crossplane_credential_definition | to_nice_yaml }}"
+  vars:
+    crossplane_credential_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ item.credentialsSecretName }}"
+        namespace: "{{ crossplane_release_namespace }}"
+        labels:
+          type: provider-credentials
+      type: Opaque
+      stringData: "{{ _crossplane_cred_content | from_yaml }}"
+    _crossplane_cred_content: |
+      {{ item.credentialsSecretKeyName }}: |
+        {{ item.credentialsContent }}
+  with_items: "{{ crossplane_provider_configurations }}"
+
+- name: Ensure ProviderConfig CRD exists
+  command: kubectl get {{ item }}
+  register: result
+  with_items: "{{ crossplane_provider_configuration_crds }}"
+  until: result.rc == 0
+  retries: 10
+  delay: 2
+
+- name: Create crossplane provider config
+  command: kubectl apply -f -
+  no_log: true
+  args:
+    stdin: "{{ crossplane_config_definition | to_nice_yaml }}"
+  vars:
+    crossplane_config_definition:
+      apiVersion: "{{ item.providerApiVersion }}"
+      kind: ProviderConfig
+      metadata:
+        name: "{{ item.providerConfigName }}"
+      spec:
+        credentials:
+          source: Secret
+          secretRef:
+            name: "{{ item.credentialsSecretName }}"
+            key: "{{ item.credentialsSecretKeyName }}"
+            namespace: "{{ crossplane_release_namespace }}"
+  with_items: "{{ crossplane_provider_configurations }}"
