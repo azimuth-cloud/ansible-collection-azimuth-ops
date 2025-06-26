@@ -1,5 +1,4 @@
 ---
-
 - name: Install Kubernetes dashboard on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ kubernetes_dashboard_chart_name }}"

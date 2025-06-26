@@ -1,6 +1,13 @@
 name: Test Azimuth deployment
 
-on:
+permissions:
+  contents: read
+  packages: write
+  # To report GitHub Actions status checks
+  statuses: write
+  id-token: write
+
+on:  # yamllint disable-line rule:truthy
   pull_request:
     types:
       - opened
@@ -36,10 +43,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: PR must be from a branch in the azimuth-cloud/ansible-collection-azimuth-ops repo
-        run: exit ${{ github.repository == 'azimuth-cloud/ansible-collection-azimuth-ops' && '0' || '1' }}
+        run: |
+          if [ "${{ github.repository }}" != "azimuth-cloud/ansible-collection-azimuth-ops" ]; then
+            exit 1
+          fi
+  lint:
+    uses: ./.github/workflows/lint.yml
+    needs:
+      - fail_on_remote
 
   run_azimuth_tests:
-    needs: [fail_on_remote]
+    needs:
+      - fail_on_remote
+      - lint
     runs-on: ubuntu-latest
     steps:
       # Check out the configuration repository
@@ -76,7 +92,7 @@ jobs:
       - name: Run Azimuth tests
         uses: azimuth-cloud/azimuth-config/.github/actions/test@devel
 
-      # Tear down the environment
+      # Tear down the environment
       - name: Destroy Azimuth
         uses: azimuth-cloud/azimuth-config/.github/actions/destroy@devel
         if: ${{ always() }}

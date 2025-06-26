@@ -1,7 +1,6 @@
 ---
-
 - name: Check status of target backup
-  command: >-
+  ansible.builtin.command: >-
     kubectl get backup {{ velero_restore_backup_name }}
       --namespace {{ velero_release_namespace }}
       --output jsonpath='{.status.phase}'
@@ -9,14 +8,14 @@
   register: velero_target_backup_check
 
 - name: Fail if target backup is not in an allowable state
-  fail:
+  ansible.builtin.fail:
     msg: "Aborting restore of backup in state '{{ velero_target_backup_check.stdout }}'"
   when: >-
     velero_target_backup_check.stdout != "Completed" and
     (not velero_restore_allow_partial or velero_target_backup_check.stdout != "PartiallyFailed")
 
 - name: Apply restore config
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ velero_restore_definition | to_nice_yaml }}"
   vars:
@@ -27,9 +26,11 @@
         name: "{{ velero_restore_name }}"
         namespace: "{{ velero_release_namespace }}"
       spec: "{{ velero_restore_spec }}"
+  register: kubectl_velero_restore_conf
+  changed_when: kubectl_velero_restore_conf.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Wait for restore to complete
-  command: >-
+  ansible.builtin.command: >-
     kubectl wait restores.velero.io/{{ velero_restore_name }}
       --for=jsonpath='{.status.phase}'=Completed
       --namespace {{ velero_release_namespace }}
