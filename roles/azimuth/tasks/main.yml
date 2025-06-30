@@ -153,26 +153,25 @@
     wait: yes
     wait_timeout: "{{ azimuth_wait_timeout }}"
 
-# Migrate CaaS clusters in old-style namespaces
-- block:
-    - name: List CaaS clusters
-      command: kubectl get clusters.caas -A -o json
-      register: azimuth_caas_clusters_list
-
-    - name: Move clusters that are in old-style namespaces
-      include_tasks:
-        file: move-caas-cluster.yml
-      loop: >-
-        {{
-          azimuth_caas_clusters_list.stdout |
-            from_json |
-            json_query('items') |
-            selectattr('metadata.namespace', 'search', '^caas-')
-        }}
-      loop_control:
-        loop_var: cluster
-        label: "{{ cluster.metadata.namespace }}/{{ cluster.metadata.name }}"
+- name: List CaaS clusters
+  command: kubectl get clusters.caas -A -o json
+  register: azimuth_caas_clusters_list
   when: azimuth_clusters_enabled
+
+- name: Move clusters that are in old-style namespaces
+  include_tasks:
+    file: move-caas-cluster.yml
+  when: azimuth_clusters_enabled
+  loop: >-
+    {{
+      azimuth_caas_clusters_list.stdout |
+        from_json |
+        json_query('items') |
+        selectattr('metadata.namespace', 'search', '^caas-')
+    }}
+  loop_control:
+    loop_var: cluster
+    label: "{{ cluster.metadata.namespace }}/{{ cluster.metadata.name }}"
 
 - block:
     - debug:
