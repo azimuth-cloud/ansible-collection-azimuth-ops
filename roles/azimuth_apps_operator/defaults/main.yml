@@ -1,0 +1,103 @@
+---
+
+# The chart to use
+azimuth_apps_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-apps-operator
+azimuth_apps_operator_chart_name: azimuth-apps-operator
+azimuth_apps_operator_chart_version: 0.1.2
+
+# Release information for the apps operator release
+# Use the same namespace as Azimuth by default
+azimuth_apps_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
+azimuth_apps_operator_release_name: azimuth-apps-operator
+
+# The timeout to wait for apps operator to become ready
+azimuth_apps_operator_wait_timeout: 10m
+
+# Custom trust bundle for SSL verification
+azimuth_apps_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+
+# The Zenith registrar admin URL for Zenith support
+azimuth_apps_operator_zenith_registrar_admin_url: >-
+  {{-
+    azimuth_apps_registrar_admin_url
+    if azimuth_apps_registrar_admin_url is defined
+    else (
+      zenith_registrar_admin_url
+      if zenith_registrar_admin_url is defined
+      else undef(hint = "azimuth_apps_operator_zenith_registrar_admin_url is required")
+    )
+  }}
+# The host and port for the Zenith SSHD server
+azimuth_apps_operator_zenith_sshd_host: >-
+  {{-
+    azimuth_apps_sshd_host
+    if azimuth_apps_sshd_host is defined
+    else (
+      zenith_sshd_host
+      if zenith_sshd_host is defined
+      else undef(hint = "azimuth_apps_operator_zenith_sshd_host is required")
+    )
+  }}
+azimuth_apps_operator_zenith_sshd_port: >-
+  {{-
+    azimuth_apps_sshd_port
+    if azimuth_apps_sshd_port is defined
+    else (
+      zenith_sshd_port
+      if zenith_sshd_port is defined
+      else 22
+    )
+  }}
+# The chart, repository and version to use for Zenith operator instances
+# Leave blank for the operator defaults
+azimuth_apps_operator_zenith_operator_chart_repo:
+azimuth_apps_operator_zenith_operator_chart_name:
+azimuth_apps_operator_zenith_operator_chart_version:
+# Indicates whether Zenith clients should be created in debug mode
+azimuth_apps_operator_zenith_client_debug: false
+# Default values for the Zenith operator chart
+azimuth_apps_operator_zenith_operator_defaults:
+  config:
+    registrarAdminUrl: "{{ azimuth_apps_operator_zenith_registrar_admin_url }}"
+    sshdHost: "{{ azimuth_apps_operator_zenith_sshd_host }}"
+    sshdPort: "{{ azimuth_apps_operator_zenith_sshd_port }}"
+    defaultDebug: "{{ azimuth_apps_operator_zenith_client_debug }}"
+azimuth_apps_operator_zenith_operator_overrides: {}
+azimuth_apps_operator_zenith_operator_default_values: >-
+  {{-
+    azimuth_apps_operator_zenith_operator_defaults |
+      combine(azimuth_apps_operator_zenith_operator_overrides, recursive = True)
+  }}
+
+# The values for the release
+azimuth_apps_operator_release_defaults:
+  config:
+    zenithOperator: >-
+      {{-
+        {"defaultValues": azimuth_apps_operator_zenith_operator_default_values} |
+          combine(
+            {"chartRepo": azimuth_apps_operator_zenith_operator_chart_repo}
+            if azimuth_apps_operator_zenith_operator_chart_repo
+            else {}
+          ) |
+          combine(
+            {"chartName": azimuth_apps_operator_zenith_operator_chart_name}
+            if azimuth_apps_operator_zenith_operator_chart_name
+            else {}
+          ) |
+          combine(
+            {"chartVersion": azimuth_apps_operator_zenith_operator_chart_version}
+            if azimuth_apps_operator_zenith_operator_chart_version
+            else {}
+          )
+      }}
+  # Enable the metrics with the service monitor by default
+  metrics:
+    enabled: true
+  trustBundle: "{{ azimuth_apps_operator_trust_bundle }}"
+azimuth_apps_operator_release_overrides: {}
+azimuth_apps_operator_release_values: >-
+  {{-
+    azimuth_apps_operator_release_defaults |
+      combine(azimuth_apps_operator_release_overrides, recursive = True)
+  }}
