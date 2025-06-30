@@ -250,6 +250,12 @@ jobs:
             chart_name_jsonpath: cloud_metrics_grafana_chart_name
             chart_version_jsonpath: cloud_metrics_grafana_chart_version
 
+          - key: crossplane
+            path: ./roles/crossplane/defaults/main.yml
+            chart_repo_jsonpath: crossplane_chart_repo
+            chart_name_jsonpath: crossplane_chart_name
+            chart_version_jsonpath: crossplane_chart_version
+
           - key: flux
             path: ./roles/flux/defaults/main.yml
             chart_repo_jsonpath: flux_chart_repo
