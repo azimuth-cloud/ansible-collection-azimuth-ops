@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_apps_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-apps-operator
 azimuth_apps_operator_chart_name: azimuth-apps-operator
-azimuth_apps_operator_chart_version: 0.1.0
+azimuth_apps_operator_chart_version: 0.1.2
 
 # Release information for the apps operator release
 # Use the same namespace as Azimuth by default
