@@ -1,4 +1,11 @@
 ---
+# The path to the venv that python dependencies will be installed
+# in
+community_images_venv_path: /opt/community-images-venv
+
+# The path to the openstack cli executable
+community_images_openstack_cli_path: >-
+ {{ community_images_venv_path }}/bin/openstack
 
 # The directory into which images will be downloaded / converted
 # If not given, a temporary directory will be used

@@ -23,7 +23,10 @@
     mode: "0755"
 
 - name: "List images with name - {{ community_images_image_spec.name }}"
-  ansible.builtin.command: "openstack image list -f json --name {{ community_images_image_spec.name }}"
+  ansible.builtin.command: >-
+    {{ community_images_openstack_cli_path }}
+    image list -f json
+    --name {{ community_images_image_spec.name }}
   changed_when: false
   register: community_images_image_list_cmd
 
@@ -39,7 +42,10 @@
         community_images_image_id: "{{ community_images_image_list | map(attribute='ID') | first }}"
 
     - name: "Fetch pre-existing image - {{ community_images_image_spec.name }}"
-      ansible.builtin.command: "openstack image show -f json {{ community_images_image_id }}"
+      ansible.builtin.command: >-
+        {{ community_images_openstack_cli_path }}
+        image show -f json
+        {{ community_images_image_id }}
       changed_when: false
       register: community_images_image_info
 
@@ -109,7 +115,7 @@
     # Instead, we use the OpenStack CLI directly
     - name: "Upload image - {{ community_images_image_spec.name }}"
       ansible.builtin.command: >-
-        openstack image create
+        {{ community_images_openstack_cli_path }} image create
           -f json
           --container-format {{ community_images_image_spec.container_format }}
           --disk-format {{ community_images_disk_format }}
@@ -145,14 +151,18 @@
 
 - name: "Set image visibility - {{ community_images_image_spec.name }}"
   ansible.builtin.command: >-
-    openstack image set --{{ community_images_image_visibility }} {{ community_images_image_id }}
+    {{ community_images_openstack_cli_path }}
+    image set
+    --{{ community_images_image_visibility }}
+    {{ community_images_image_id }}
   when: community_images_image_visibility != community_images_image_current_visibility
   changed_when: true
 
 - name: "Set custom properties for image - {{ community_images_image_spec.name }}"
   ansible.builtin.command: >-
-    openstack image set
-    {%- for property in community_images_custom_properties %}
+    {{ community_images_openstack_cli_path }}
+      image set
+      {%- for property in community_images_custom_properties %}
       --property {{ property | quote }}
     {%- endfor %}
       {{ community_images_image_id }}
@@ -163,7 +173,10 @@
   when: "community_images_image_visibility == 'shared'"
   block:
     - name: "Share image with project - {{ community_images_image_spec.name }}"
-      ansible.builtin.command: "openstack image add project {{ community_images_image_id }} {{ project_id }}"
+      ansible.builtin.command: >-
+        {{ community_images_openstack_cli_path }}
+        image add project
+        {{ community_images_image_id }} {{ project_id }}
       register: community_images_image_add_project
       changed_when: community_images_image_add_project.rc == 0
       failed_when: >-
@@ -174,7 +187,10 @@
         loop_var: project_id
 
     - name: "Accept image into project - {{ community_images_image_spec.name }}"
-      ansible.builtin.command: "openstack image set --accept {{ community_images_image_id }}"
+      ansible.builtin.command: >-
+        {{ community_images_openstack_cli_path }}
+        image set
+        --accept {{ community_images_image_id }}
       environment:
         OS_CLOUD: "{{ project_key }}"
       loop: "{{ community_images_share_projects | map(attribute='key') | list }}"
