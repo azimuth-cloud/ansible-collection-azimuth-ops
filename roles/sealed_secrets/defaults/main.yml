@@ -1,0 +1,20 @@
+---
+
+sealed_secrets_chart_repo: https://bitnami-labs.github.io/sealed-secrets
+sealed_secrets_chart_name: sealed-secrets
+sealed_secrets_chart_version: 2.17.3
+
+sealed_secrets_release_namespace: sealed-secrets-system
+sealed_secrets_release_name: sealed-secrets
+
+# The timeout to wait for the dashboard to become ready
+sealed_secrets_wait_timeout: 10m
+
+# The values for the release
+sealed_secrets_release_defaults: {}
+sealed_secrets_release_overrides: {}
+sealed_secrets_release_values: >-
+  {{-
+    sealed_secrets_release_defaults |
+      combine(sealed_secrets_release_overrides, recursive = True)
+  }}
