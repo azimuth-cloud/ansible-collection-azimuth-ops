@@ -45,7 +45,7 @@
     mode: "0644"
   register: k3s_server_systemd_unit
 
-- name: Reload systemd units  # noqa no-handler
+- name: Reload systemd units # noqa no-handler
   ansible.builtin.systemd:
     daemon_reload: true
   when: k3s_server_systemd_unit is changed

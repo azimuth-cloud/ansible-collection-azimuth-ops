@@ -2,7 +2,7 @@
 # Terraform states are compressed, so fetch it as base64
 # It just so happens this is exactly what we need to put in the secret anyway
 # yamllint disable-line rule:line-length
-- name: Find TF state in Consul by ID - {{ azimuth_caas_operator_cluster_info.metadata.namespace }}/{{ azimuth_caas_operator_cluster_info.metadata.name }}  # noqa name[template]
+- name: Find TF state in Consul by ID - {{ azimuth_caas_operator_cluster_info.metadata.namespace }}/{{ azimuth_caas_operator_cluster_info.metadata.name }} # noqa name[template]
   ansible.builtin.command: >-
     kubectl exec {{ azimuth_caas_operator_consul_release_name }}-server-0
       --namespace {{ azimuth_caas_operator_consul_release_namespace }}
@@ -20,7 +20,7 @@
   register: azimuth_caas_operator_tf_state
 
 # yamllint disable-line rule:line-length
-- name: Write TF state to Kubernetes secret - {{ azimuth_caas_operator_cluster_info.metadata.namespace }}/{{ azimuth_caas_operator_cluster_info.metadata.name }}  # noqa name[template]
+- name: Write TF state to Kubernetes secret - {{ azimuth_caas_operator_cluster_info.metadata.namespace }}/{{ azimuth_caas_operator_cluster_info.metadata.name }} # noqa name[template]
   ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ azimuth_caas_operator_tf_secret_definition | to_nice_yaml }}"

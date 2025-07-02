@@ -35,9 +35,14 @@
   register: kubectl_wildcard_tls_cert
   changed_when: kubectl_wildcard_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
-- block:
+- name: Set Azimuth OIDC client and secret facts
+  when:
+    - azimuth_authentication_type == "oidc"
+    - not azimuth_oidc_issuer_url
+
+  block:
     - name: Ensure identity realm exists for Azimuth users
-      command: kubectl apply -f -
+      ansible.builtin.command: kubectl apply -f -
       args:
         stdin: "{{ azimuth_oidc_users_realm_definition | to_nice_yaml }}"
       vars:
@@ -47,9 +52,10 @@
           metadata:
             name: "{{ azimuth_oidc_users_realm_name }}"
             namespace: "{{ azimuth_release_namespace }}"
+      changed_when: false
 
     - name: Wait for Azimuth users realm to become ready
-      command: >-
+      ansible.builtin.command: >-
         kubectl wait realm {{ azimuth_oidc_users_realm_name }}
           --for=jsonpath='{.status.phase}'=Ready
           --namespace {{ azimuth_release_namespace }}
@@ -61,9 +67,13 @@
       retries: 60
       delay: 5
 
-    - block:
+    - name: Set Azimuth OIDC client and secret facts
+      when:
+        - azimuth_oidc_client_secret is not defined
+
+      block:
         - name: Ensure OIDC client exists for Azimuth
-          command: kubectl apply -f -
+          ansible.builtin.command: kubectl apply -f -
           args:
             stdin: "{{ azimuth_oidc_users_realm_definition | to_nice_yaml }}"
           vars:
@@ -74,9 +84,10 @@
                 name: "{{ azimuth_oidc_client_id }}"
                 namespace: "{{ azimuth_release_namespace }}"
               spec: "{{ azimuth_oidc_client_spec }}"
+          changed_when: false
 
         - name: Wait for Azimuth OIDC client to become ready
-          command: >-
+          ansible.builtin.command: >-
             kubectl wait oidcclient {{ azimuth_oidc_client_id }}
               --for=jsonpath='{.status.phase}'=Ready
               --namespace {{ azimuth_release_namespace }}
@@ -89,7 +100,7 @@
           delay: 5
 
         - name: Get credentials secret name for Azimuth OIDC client
-          command: >-
+          ansible.builtin.command: >-
             kubectl get oidcclient {{ azimuth_oidc_client_id }}
               --namespace {{ azimuth_release_namespace }}
               --output go-template={% raw %}'{{.status.credentialsSecretName}}'{% endraw %}
@@ -97,7 +108,7 @@
           changed_when: false
 
         - name: Get credentials secret data for Azimuth OIDC client
-          command: >-
+          ansible.builtin.command: >-
             kubectl get secret {{ azimuth_oidc_client_credentials_secret_name.stdout }}
               --namespace {{ azimuth_release_namespace }}
               --output json
@@ -105,7 +116,7 @@
           changed_when: false
 
         - name: Set Azimuth OIDC client and secret facts
-          set_fact:
+          ansible.builtin.set_fact:
             azimuth_oidc_client_id: >-
               {{-
                 azimuth_oidc_client_credentials_secret_data.stdout |
@@ -120,11 +131,8 @@
                   json_query('data."client-secret"') |
                   b64decode
               }}
-      when:
-        - azimuth_oidc_client_secret is not defined
-
     - name: Get issuer URL for Azimuth users realm
-      command: >-
+      ansible.builtin.command: >-
         kubectl get realm {{ azimuth_oidc_users_realm_name }}
           --namespace {{ azimuth_release_namespace }}
           --output go-template={% raw %}'{{.status.oidcIssuerUrl}}'{% endraw %}
@@ -135,12 +143,8 @@
     # which means all subsequent tasks in the block are skipped, because a block is
     # just syntactic sugar for adding a condition to all the tasks
     - name: Set Azimuth OIDC issuer URL fact
-      set_fact:
+      ansible.builtin.set_fact:
         azimuth_oidc_issuer_url: "{{ azimuth_oidc_users_realm_issuer_url.stdout }}"
-  when:
-    - azimuth_authentication_type == "oidc"
-    - not azimuth_oidc_issuer_url
-
 - name: Install Azimuth on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_chart_name }}"

@@ -124,7 +124,8 @@ azimuth_oidc_client_spec:
   realmName: "{{ azimuth_oidc_users_realm_name }}"
   # Azimuth uses a confidential client with the authcode grant
   public: false
-  grantTypes: [AuthorizationCode]
+  grantTypes:
+    - AuthorizationCode
   redirectUris:
     - >-
       {{

@@ -16,7 +16,7 @@
     label: "{{ item.name }}"
   register: system_trust_install_extra_root_cas
 
-- name: Update system trust bundles  # noqa no-handler
+- name: Update system trust bundles # noqa no-handler
   ansible.builtin.command: update-ca-certificates
   when: system_trust_install_extra_root_cas is changed
   changed_when: true
