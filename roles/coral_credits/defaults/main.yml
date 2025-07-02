@@ -13,32 +13,41 @@ coral_credits_release_name: coral-credits
 coral_credits_wait_timeout: 10m
 
 # Feature flags
-#   Indicates if coral credits should be enabled
-coral_credits_enabled: no
+# Indicates if coral credits should be enabled
+coral_credits_enabled: false
 
 # Database settings
-#   The name of the database resource
+# The name of the database resource
 coral_credits_database_name: "coral-credits-db"
-#   The username for the database
+
+# The username for the database
 coral_credits_database_user:
-#   The password for the database
+
+# The password for the database
 coral_credits_database_password:
-#   The hostname for the database
+
+# The hostname for the database
 coral_credits_database_host:
-#   The port for the database
+
+# The port for the database
 coral_credits_database_port:
-#   The Django engine for the database
+
+# The Django engine for the database
 coral_credits_database_engine: "django.db.backends.postgresql"
-#   The storage class to use for the database volume
-#   If left blank, the default storage class will be used
+
+# The storage class to use for the database volume
+# If left blank, the default storage class will be used
 coral_credits_database_data_volume_storage_class:
-#   The storage class to use for the backup volume
-#   By default, this is the same as the data volume
+
+# The storage class to use for the backup volume
+# By default, this is the same as the data volume
 coral_credits_database_backup_volume_storage_class: "{{ coral_credits_database_data_volume_storage_class }}"
-#   The size of the data volume for the database
+
+# The size of the data volume for the database
 coral_credits_database_data_volume_size: 8Gi
-#   The size of the backup volume for the database
-#   By default, this is the same as the data volume
+
+# The size of the backup volume for the database
+# By default, this is the same as the data volume
 coral_credits_database_backup_volume_size: "{{ coral_credits_database_data_volume_size }}"
 
 # Ingress settings
@@ -71,7 +80,7 @@ coral_credits_ingress_tls_key: >-
 # The admin username to use for coral credits
 coral_credits_admin_username: admin
 # The admin password to use for coral credits
-coral_credits_admin_password: "{{ undef(hint = 'coral_credits_admin_password is required') }}"
+coral_credits_admin_password: "{{ undef(hint='coral_credits_admin_password is required') }}"
 
 # The values for the release
 coral_credits_release_defaults:

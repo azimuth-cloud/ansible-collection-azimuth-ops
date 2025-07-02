@@ -24,24 +24,20 @@ azimuth_capi_operator_timer_interval: 60
 azimuth_capi_operator_capi_helm_chart_repo:
 azimuth_capi_operator_capi_helm_chart_name:
 azimuth_capi_operator_capi_helm_chart_version:
-
 # The ID of the external network to use if there are multiple external networks
 # If specified here, the network MUST be shared by all tenants
 # If not given the external network is discovered, which only works if there is exactly
-# one external network available to a project
+# one external network available to a project
 azimuth_capi_operator_external_network_id:
-
 # Indicates the CIDR blocks to use for pods and services of provisioned clusters respectively
 # Leave blank for the chart defaults
 azimuth_capi_operator_capi_helm_pods_cidr:
 azimuth_capi_operator_capi_helm_services_cidr:
-
 # The DNS nameservers for provisioned clusters
 # Leave blank for the chart defaults
 azimuth_capi_operator_capi_helm_dns_nameservers:
-
 # Bundle of certificates that should be added to the system trustroots for provisioned clusters
-# E.g. for pulling containers from a registry with a custom CA chain
+# e.g. for pulling containers from a registry with a custom CA chain
 azimuth_capi_operator_capi_helm_trust_bundle: >-
   {{ system_trust_extra_root_cas | default(trust_bundle) | default({}) }}
 # The registry mirrors for provisioned clusters
@@ -53,7 +49,6 @@ azimuth_capi_operator_capi_helm_registry_mirrors: >-
   }}
 # The additional packages for provisioned clusters
 azimuth_capi_operator_capi_helm_additional_packages: []
-
 # Work out the ansible-init collections to use for tenant clusters
 azimuth_capi_operator_ansible_init_collections_default: >-
   {{ ansible_init_default_collections | default([]) }}
@@ -137,7 +132,7 @@ azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_type: # e.g., 'SSD'
 azimuth_capi_operator_capi_helm_etcd_blockdevice_volume_az: "nova"
 
 # Options for LoadBalancer services
-# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
+# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
 azimuth_capi_operator_capi_helm_openstack_loadbalancer_method: >-
   {{-
     'SOURCE_IP_PORT'
@@ -156,7 +151,7 @@ azimuth_capi_operator_capi_helm_openstack_loadbalancer_max_shared_lb:
 # The metadata search order
 azimuth_capi_operator_capi_helm_openstack_metadata_search_order:
 # Options for OpenStack block storage
-# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/cinder-csi-plugin/using-cinder-csi-plugin.md#block-storage
+# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/cinder-csi-plugin/using-cinder-csi-plugin.md#block-storage
 azimuth_capi_operator_capi_helm_openstack_block_storage_node_volume_attach_limit:
 azimuth_capi_operator_capi_helm_openstack_block_storage_rescan_on_resize:
 azimuth_capi_operator_capi_helm_openstack_block_storage_ignore_volume_az: true
@@ -165,7 +160,6 @@ azimuth_capi_operator_capi_helm_openstack_block_storage_ignore_volume_az: true
 azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone: nova
 # The Cinder volume type for the default Cinder CSI storage class
 azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type:
-
 # Whether to allow config snippet annotations on individual ingress resources
 # on each tenant cluster.
 azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations: true
@@ -511,11 +505,12 @@ azimuth_capi_operator_release_values: >-
 #
 # These definitions represent the CURRENT Kubernetes templates
 # All other templates will be marked as DEPRECATED
-# azimuth-ops currently never removes templates
+# azimuth-ops currently never removes templates
 #####
 # Tags for the default Kubernetes apps
-azimuth_capi_operator_cluster_template_tags: [standard]
-# Settings for the default Kubernetes templates
+azimuth_capi_operator_cluster_template_tags:
+  - standard
+# Settings for the default Kubernetes templates
 azimuth_capi_operator_cluster_template_defaults:
   tags: "{{ azimuth_capi_operator_cluster_template_tags }}"
   values:
@@ -567,7 +562,6 @@ azimuth_capi_operator_cluster_templates_default: |-
   }
 # Allow extra templates to be defined using a separate variable
 azimuth_capi_operator_cluster_templates_extra: {}
-
 # The full list of Kubernetes cluster templates to install
 azimuth_capi_operator_cluster_templates: >-
   {{-
@@ -584,7 +578,7 @@ azimuth_capi_operator_cluster_templates: >-
 azimuth_capi_operator_app_templates_jupyterhub_enabled: true
 # The Helm chart to use for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_chart_name: jupyterhub-azimuth
-# The Helm repository to use for the JupyterHub app template
+# The Helm repository to use for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the JupyterHub Helm chart
 azimuth_capi_operator_app_templates_jupyterhub_version_range: ">=0.0.0"
@@ -649,7 +643,7 @@ azimuth_capi_operator_app_templates_jupyterhub_spec:
 azimuth_capi_operator_app_templates_daskhub_enabled: true
 # The Helm chart to use for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_chart_name: daskhub-azimuth
-# The Helm repository to use for the DaskHub app template
+# The Helm repository to use for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the DaskHub Helm chart
 azimuth_capi_operator_app_templates_daskhub_version_range: ">=0.0.0"
@@ -714,7 +708,7 @@ azimuth_capi_operator_app_templates_daskhub_spec:
 azimuth_capi_operator_app_templates_kubeflow_enabled: true
 # The Helm chart to use for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_chart_name: kubeflow-azimuth
-# The Helm repository to use for the kubeflow app template
+# The Helm repository to use for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the kubeflow Helm chart
 azimuth_capi_operator_app_templates_kubeflow_version_range: ">=0.0.0"
@@ -779,7 +773,7 @@ azimuth_capi_operator_app_templates_kubeflow_spec:
 azimuth_capi_operator_app_templates_binderhub_enabled: true
 # The Helm chart to use for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_chart_name: binderhub-azimuth
-# The Helm repository to use for the binderhub app template
+# The Helm repository to use for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the binderhub Helm chart
 azimuth_capi_operator_app_templates_binderhub_version_range: ">=0.0.0"
@@ -847,7 +841,7 @@ azimuth_capi_operator_app_templates_binderhub_spec:
 azimuth_capi_operator_app_templates_huggingface_llm_enabled: true
 # The Helm chart to use for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_chart_name: azimuth-llm-chat
-# The Helm repository to use for the huggingface_llm app template
+# The Helm repository to use for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_chart_repo: https://stackhpc.github.io/azimuth-llm
 # The version range to use for the huggingface_llm Helm chart
 azimuth_capi_operator_app_templates_huggingface_llm_version_range: ">=0.0.0"
@@ -924,7 +918,8 @@ azimuth_capi_operator_app_templates_danswer_chart_repo: https://stackhpc.github.
 azimuth_capi_operator_app_templates_danswer_version_range: ">=0.0.0"
 # Overrides for the label, logo and description from the danswer Helm chart
 azimuth_capi_operator_app_templates_danswer_label: Danswer
-azimuth_capi_operator_app_templates_danswer_logo: https://raw.githubusercontent.com/danswer-ai/danswer/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png
+azimuth_capi_operator_app_templates_danswer_logo: >-
+  https://raw.githubusercontent.com/danswer-ai/danswer/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png
 azimuth_capi_operator_app_templates_danswer_description: A self-service platform for Retrieval-Augmented Generation.
 # The number of versions to make available for the danswer app template
 azimuth_capi_operator_app_templates_danswer_keep_versions: 3
@@ -1023,7 +1018,6 @@ azimuth_capi_operator_app_templates_ragflow_keep_versions: 3
 azimuth_capi_operator_app_templates_ragflow_sync_frequency: 86400
 # Any default values for the ragflow app template
 azimuth_capi_operator_app_templates_ragflow_default_values: {}
-
 # The tenancy-based access controls for the app template
 # List of allowed tenancy IDs
 azimuth_capi_operator_app_templates_ragflow_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
@@ -1080,7 +1074,7 @@ azimuth_capi_operator_app_templates_ragflow_spec:
 azimuth_capi_operator_app_templates_argocd_enabled: true
 # The Helm chart to use for the argocd app template
 azimuth_capi_operator_app_templates_argocd_chart_name: argocd-azimuth
-# The Helm repository to use for the argocd app template
+# The Helm repository to use for the argocd app template
 azimuth_capi_operator_app_templates_argocd_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the argocd Helm chart
 azimuth_capi_operator_app_templates_argocd_version_range: ">=0.0.0"
@@ -1140,7 +1134,6 @@ azimuth_capi_operator_app_templates_argocd_spec:
           else {}
         )
     }}
-
 
 
 # The default templates
