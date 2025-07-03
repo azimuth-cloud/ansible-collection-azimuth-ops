@@ -75,3 +75,45 @@
             key: "{{ item.credentialsSecretKeyName }}"
             namespace: "{{ crossplane_release_namespace }}"
   with_items: "{{ crossplane_provider_configurations }}"
+
+- name: Install Keycloak federated auth flow
+  command: kubectl apply -f -
+  args:
+    stdin: "{{ item | to_nice_yaml }}"
+  loop:
+    - apiVersion: authenticationflow.keycloak.crossplane.io/v1alpha1
+      kind: Flow
+      metadata:
+        name: map-users-flow
+      spec:
+        forProvider:
+          alias: map-users-flow
+          realmId: azimuth-users
+        providerConfigRef:
+          name: "{{ crossplane_keycloak_provider_config_name }}"
+    - apiVersion: authenticationflow.keycloak.crossplane.io/v1alpha1
+      kind: Execution
+      metadata:
+        name: existing-broker-user-execution
+      spec:
+        forProvider:
+          parentFlowAlias: map-users-flow
+          realmId: azimuth-users
+          authenticator: idp-detect-existing-broker-user
+          requirement: REQUIRED
+          priority: 0
+        providerConfigRef:
+          name: "{{ crossplane_keycloak_provider_config_name }}"
+    - apiVersion: authenticationflow.keycloak.crossplane.io/v1alpha1
+      kind: Execution
+      metadata:
+        name: autolink-execution
+      spec:
+        forProvider:
+          parentFlowAlias: map-users-flow
+          realmId: azimuth-users
+          authenticator: idp-auto-link
+          requirement: REQUIRED
+          priority: 1
+        providerConfigRef:
+          name: "{{ crossplane_keycloak_provider_config_name }}"
