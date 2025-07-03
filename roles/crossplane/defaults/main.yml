@@ -16,7 +16,7 @@ crossplane_providers: "{{ crossplane_providers_defaults + crossplane_providers_e
 crossplane_providers_defaults:
   - name: keycloak
     package: xpkg.upbound.io/crossplane-contrib/provider-keycloak
-    version: v1.5.0
+    version: v2.1.0
 crossplane_providers_extra: []
 
 crossplane_keycloak_provider_config_creds:
@@ -25,9 +25,11 @@ crossplane_keycloak_provider_config_creds:
   password: "{{ hostvars[groups['azimuth_deploy'][0]].keycloak_admin_password }}"
   url: "{{ hostvars[groups['azimuth_deploy'][0]].keycloak_base_url }}"
 
+crossplane_keycloak_provider_config_name: keycloak-config
+
 crossplane_provider_configurations: "{{ crossplane_provider_configurations_default + crossplane_provider_configurations_extra }}"
 crossplane_provider_configurations_default:
-  - providerConfigName: keycloak-config
+  - providerConfigName: "{{ crossplane_keycloak_provider_config_name }}"
     credentialsSecretName: keycloak-credentials
     providerApiVersion: keycloak.crossplane.io/v1beta1
     credentialsSecretKeyName: credentials
