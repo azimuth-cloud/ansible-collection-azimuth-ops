@@ -587,7 +587,7 @@ magnum_service_account_namespace: magnum-service
 magnum_service_account_name: magnum-service-account
 magnum_service_secret_name: magnum-service-secret
 magnum_service_clusterrolebinding_name: magnum-service-clusterrolebinding
-magnum_service_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}-magnum-service-account.yaml
+magnum_service_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}-magnum-service-account.yaml"
 magnum_service_account_enabled: false
 
 # The volumes policy for the cluster (keep or delete)
