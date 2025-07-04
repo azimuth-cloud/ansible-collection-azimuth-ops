@@ -102,6 +102,7 @@
         content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
         dest: "{{ capi_cluster_kubeconfig_path }}"
         mode: u=rw,g=,o=
+        
     - name: Including magnum service account tasks to generate token-based kubeconfig 
       ansible.builtin.include_tasks: "magnum-service-account.yml"
       when: magnum_service_account_enabled
