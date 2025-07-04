@@ -1,6 +1,53 @@
 ---
 
 - block:
+
+    # This should only run on upgrade and not on initial provision
+    - name: Pause MachineHealthChecks prior to cluster upgrade
+      block:
+      # If this is a fresh provision or the seed VM has been upgraded
+      # the CAPI cluster's kubeconfig won't be available at
+      # ~/{{ capi_cluster_release_name }}-kubeconfig
+      # so need to refetch it from k8s secret
+      - name: Attempt to generate kubeconfig for existing cluster
+        command: >-
+          kubectl get secret {{ capi_cluster_release_name }}-kubeconfig
+            --namespace {{ capi_cluster_release_namespace }}
+            --output jsonpath='{.data.value}'
+        changed_when: false
+        register: capi_cluster_kubeconfig_cmd
+        # If this is an initial provision then secret won't yet exist so
+        # we can skip this and subsequent machine health check pause steps
+        failed_when: >-
+          capi_cluster_kubeconfig_cmd.rc != 0 and
+          "secrets \"{{ capi_cluster_release_name }}-kubeconfig\" not found"
+          not in capi_cluster_kubeconfig_cmd.stderr
+
+      - name: Write kubeconfig file for cluster
+        copy:
+          content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
+          dest: "{{ capi_cluster_kubeconfig_path }}"
+          mode: u=rw,g=,o=
+        when: capi_cluster_kubeconfig_cmd.rc == 0
+
+      - name: Ensure MachineHealthChecks are paused
+        command: >-
+          kubectl
+          --kubeconfig {{ capi_cluster_kubeconfig_path }}
+          annotate --all --all-namespaces
+          machinehealthchecks.cluster.x-k8s.io
+          cluster.x-k8s.io/paused=true
+        register: capi_cluster_mhc_pause
+        changed_when: false
+        # Allow for the case where this is the initial or partial provision
+        # so the cluster kubeconfig is not yet available or doesn't yet have
+        # the CAPI CRDs registered
+        when: capi_cluster_kubeconfig_cmd.rc == 0
+        failed_when: >-
+          capi_cluster_mhc_pause.rc != 0 and
+          "the server doesn't have a resource type"
+          not in capi_cluster_mhc_pause.stderr
+
     - name: Install or upgrade cluster
       kubernetes.core.helm:
         chart_ref: "{{ capi_cluster_chart_name }}"
@@ -102,6 +149,27 @@
         content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
         dest: "{{ capi_cluster_kubeconfig_path }}"
         mode: u=rw,g=,o=
+
+    # NOTE(sd109): It's not entirely clear whether unpausing MHCs here
+    # is sufficient or whether it would be better to wait until after
+    # Zenith role has run since this will also involve some downtime
+    # for Zenith-proxied tenant cluster API server connection.
+    - name: Ensure MachineHealthChecks are unpaused
+      command: >-
+        kubectl
+        --kubeconfig {{ capi_cluster_kubeconfig_path }}
+        annotate --all --all-namespaces
+        machinehealthchecks.cluster.x-k8s.io
+        cluster.x-k8s.io/paused-
+      register: capi_cluster_mhc_unpause
+      changed_when: false
+      # Allow for the case where this is the initial provision
+      # meaning that CAPI CRDs are not yet registered
+      failed_when: >-
+        capi_cluster_mhc_unpause.rc != 0 and
+        "the server doesn't have a resource type"
+        not in capi_cluster_mhc_unpause.stderr
+
   when: capi_cluster_release_state == 'present'
 
 - block:
