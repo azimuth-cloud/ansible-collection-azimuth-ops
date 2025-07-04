@@ -13,13 +13,15 @@
       apt:
         name:
           - python3-pip
+          - python3-venv
           - qemu-utils
         state: present
 
     - name: Ensure OpenStack CLI (and SDK) are available
       pip:
         name: python-openstackclient
-        executable: pip3
+        virtualenv: "{{ community_images_venv_path }}"
+        virtualenv_command: python3 -m venv
   become: yes
 
 - name: Ensure OpenStack config directory exists
