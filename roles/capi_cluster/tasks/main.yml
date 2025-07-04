@@ -102,7 +102,6 @@
         content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
         dest: "{{ capi_cluster_kubeconfig_path }}"
         mode: u=rw,g=,o=
-      when: capi_cluster_release_state == 'present'
       
     - name: Create namespace for a new service account
       kubernetes.core.k8s:
@@ -110,7 +109,8 @@
         kind: Namespace
         name: kubeconfig-sa-namespace
         state: present
-
+      delay: 10
+      
     - name: Create service account for generating kubeconfig
       kubernetes.core.k8s:
         api_version: v1
@@ -118,7 +118,8 @@
         namespace: kubeconfig-sa-namespace
         name: kubeconfig-service-account
         state: present
-
+      delay: 10
+      
     - name: Create secret for the service account
       kubernetes.core.k8s:
         state: present
@@ -131,7 +132,8 @@
             namespace: kubeconfig-sa-namespace
             annotations:
               kubernetes.io/service-account.name: kubeconfig-service-account
-
+      delay: 10
+      
     - name: Create clusterrole binding of cluster-admin configuration for kubeconfig service account
       kubernetes.core.k8s:
         state: present
@@ -149,17 +151,20 @@
             kind: ClusterRole
             name: cluster-admin
             apiGroup: rbac.authorization.k8s.io
-
+      delay: 10
+      
     - name: Extract token for the service account
       command: >-
         kubectl get secret kubeconfig-secret -n kubeconfig-sa-namespace -o jsonpath='{.data.token}'
       register: sa_token_encoded
       changed_when: false
-
+      delay: 10
+      
     - name: Decode token for service account
       set_fact:
         sa_token: "{{ sa_token_encoded.stdout | b64decode }}"
-
+      delay: 10
+      
     - name: Strip client cert/key and add token to create token-based kubeconfig
       vars:
         kubeconfig_data: "{{ capi_cluster_kubeconfig_path }}"
@@ -177,12 +182,14 @@
               ]
             }, recursive=True)
           }}
-
+      delay: 10
+      
     - name: Save token-based kubeconfig to capi cluster kubeconfig path
       copy:
         content: "{{ modified_kubeconfig | to_nice_yaml }}"
         dest: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}-magnum-service-account.yaml
         mode: '0600'
+      delay: 10
   when: capi_cluster_release_state == 'present'      
 - block:
     # Before deleting the cluster, update the annotation that indicates if volumes should be kept
