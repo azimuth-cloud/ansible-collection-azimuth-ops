@@ -102,8 +102,88 @@
         content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
         dest: "{{ capi_cluster_kubeconfig_path }}"
         mode: u=rw,g=,o=
-  when: capi_cluster_release_state == 'present'
+      when: capi_cluster_release_state == 'present'
+      
+    - name: Create namespace for a new service account
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: kubeconfig-sa-namespace
+        state: present
 
+    - name: Create service account for generating kubeconfig
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: ServiceAccount
+        namespace: kubeconfig-sa-namespace
+        name: kubeconfig-service-account
+        state: present
+
+    - name: Create secret for the service account
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: kubernetes.io/service-account-token
+          metadata:
+            name: kubeconfig-secret
+            namespace: kubeconfig-sa-namespace
+            annotations:
+              kubernetes.io/service-account.name: kubeconfig-service-account
+
+    - name: Create clusterrole binding of cluster-admin configuration for kubeconfig service account
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:  
+            name: kubeconfig-role-binding
+            namespace: kubeconfig-sa-namespace
+          subjects:
+            - kind: ServiceAccount
+              name: kubeconfig-service-account
+              namespace: kubeconfig-sa-namespace
+          roleRef:
+            kind: ClusterRole
+            name: cluster-admin
+            apiGroup: rbac.authorization.k8s.io
+
+    - name: Extract token for the service account
+      command: >-
+        kubectl get secret kubeconfig-secret -n kubeconfig-sa-namespace -o jsonpath='{.data.token}'
+      register: sa_token_encoded
+      changed_when: false
+
+    - name: Decode token for service account
+      set_fact:
+        sa_token: "{{ sa_token_encoded.stdout | b64decode }}"
+
+    - name: Strip client cert/key and add token to create token-based kubeconfig
+      vars:
+        kubeconfig_data: "{{ capi_cluster_kubeconfig_path }}"
+      set_fact:
+        modified_kubeconfig: >-
+          {{
+            kubeconfig_data | combine({
+              "users": [
+                {
+                  "name": kubeconfig_data.users[0].name,
+                  "user": {
+                    "token": sa_token
+                  }
+                }
+              ]
+            }, recursive=True)
+          }}
+
+    - name: Save token-based kubeconfig to capi cluster kubeconfig path
+      copy:
+        content: "{{ modified_kubeconfig | to_nice_yaml }}"
+        dest: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}-magnum-service-account.yaml
+        mode: '0600'
+        
 - block:
     # Before deleting the cluster, update the annotation that indicates if volumes should be kept
     - name: Set volumes policy annotation
