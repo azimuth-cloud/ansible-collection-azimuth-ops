@@ -57,6 +57,12 @@ jobs:
             prereleases: "yes"
             version_jsonpath: azimuth_apps_operator_chart_version
 
+          - key: azimuth-authorization-webhook
+            path: ./roles/azimuth_authorization_webhook/defaults/main.yaml
+            repository: azimuth-cloud/azimuth-authorization-webhook
+            prereleases: "yes"
+            version_jsonpath: azimuth_authorization_webhook_chart_version
+
           - key: azimuth-caas-operator
             path: ./roles/azimuth_caas_operator/defaults/main.yml
             repository: azimuth-cloud/azimuth-caas-operator
@@ -243,6 +249,12 @@ jobs:
             chart_repo_jsonpath: cloud_metrics_grafana_chart_repo
             chart_name_jsonpath: cloud_metrics_grafana_chart_name
             chart_version_jsonpath: cloud_metrics_grafana_chart_version
+
+          - key: crossplane
+            path: ./roles/crossplane/defaults/main.yml
+            chart_repo_jsonpath: crossplane_chart_repo
+            chart_name_jsonpath: crossplane_chart_name
+            chart_version_jsonpath: crossplane_chart_version
 
           - key: flux
             path: ./roles/flux/defaults/main.yml
