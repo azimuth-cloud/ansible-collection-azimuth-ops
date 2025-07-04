@@ -582,6 +582,14 @@ capi_cluster_release_values: >-
 # The name of the file into which the kubeconfig of the cluster should be output
 capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig"
 
+# Set variables for token-based kubeconfig - service accounts/namespace/secrets
+magnum_service_account_namespace: magnum-service
+magnum_service_account_name: magnum-service-account
+magnum_service_secret_name: magnum-service-secret
+magnum_service_clusterrolebinding_name: magnum-service-clusterrolebinding
+magnum_service_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}-magnum-service-account.yaml"
+magnum_service_account_enabled: false
+
 # The volumes policy for the cluster (keep or delete)
 # Determines what happens to Cinder volumes created for PVCs when the cluster is deleted
 capi_cluster_volumes_policy: keep
