@@ -1,0 +1,28 @@
+---
+
+- name: Install webhook server in management cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ azimuth_authorization_webhook_chart_name }}"
+    chart_repo_url: "{{ azimuth_authorization_webhook_chart_repo }}"
+    chart_version: "{{ azimuth_authorization_webhook_chart_version }}"
+    release_namespace: "{{ azimuth_authorization_webhook_release_namespace }}"
+    release_name: "{{ azimuth_authorization_webhook_release_name }}"
+    release_values: "{{ azimuth_authorization_webhook_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ azimuth_authorization_webhook_wait_timeout }}"
+
+- name: Wait for certificate to be issued and get TLS cert
+  ansible.builtin.shell:
+    cmd: kubectl get secret {{ azimuth_authorization_webhook_tls_secret_name }} -n {{ azimuth_authorization_webhook_release_namespace }} -o 'jsonpath={.data.tls\.crt}'
+  register: _webhook_tls_cert_output
+  until: _webhook_tls_cert_output.rc == 0
+  retries: 20
+  delay: 6
+
+- name: Set webhook facts for CAPI Helm
+  ansible.builtin.set_fact:
+    azimuth_authorization_webhook_tls_cert: "{{ _webhook_tls_cert_output.stdout | b64decode }}"
+    azimuth_authorization_webhook_server: "https://{{ azimuth_authorization_webhook_host }}/authorize"
+    azimuth_authorization_webhook_filtered_namespaces: "{{ azimuth_authorization_webhook_protected_namespaces }}"
