@@ -13,8 +13,8 @@
     wait: true
     wait_timeout: "{{ crossplane_wait_timeout }}"
 
-- name: Install Crossplane providers
-  command: kubectl apply -f -
+- name: Install Crossplane providers # noqa no-changed-when
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ crossplane_provider_definition | to_nice_yaml }}"
   vars:
@@ -27,9 +27,9 @@
         package: "{{ item.package }}:{{ item.version }}"
   with_items: "{{ crossplane_providers }}"
 
-- name: Create provider credentials
+- name: Create provider credentials # noqa no-changed-when
   no_log: true
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ crossplane_credential_definition | to_nice_yaml }}"
   vars:
@@ -48,16 +48,16 @@
         {{ item.credentialsContent }}
   with_items: "{{ crossplane_provider_configurations }}"
 
-- name: Ensure ProviderConfig CRD exists
-  command: kubectl get {{ item }}
+- name: Ensure ProviderConfig CRD exists # noqa no-changed-when
+  ansible.builtin.command: kubectl get {{ item }}
   register: result
   with_items: "{{ crossplane_provider_configuration_crds }}"
   until: result.rc == 0
   retries: 10
   delay: 2
 
-- name: Create crossplane provider config
-  command: kubectl apply -f -
+- name: Create crossplane provider config # noqa no-changed-when
+  ansible.builtin.command: kubectl apply -f -
   no_log: true
   args:
     stdin: "{{ crossplane_config_definition | to_nice_yaml }}"
@@ -76,8 +76,8 @@
             namespace: "{{ crossplane_release_namespace }}"
   with_items: "{{ crossplane_provider_configurations }}"
 
-- name: Install Keycloak federated auth flow
-  command: kubectl apply -f -
+- name: Install Keycloak federated auth flow # noqa no-changed-when
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ item | to_nice_yaml }}"
   loop:

@@ -19,13 +19,13 @@ azimuth_identity_operator_trust_bundle: "{{ system_trust_ca_bundle | default('')
 #####
 # TLS settings
 #####
-## Indicates whether TLS should be enabled
+# Indicates whether TLS should be enabled
 azimuth_identity_operator_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
 
-## The TLS secret name (can be null)
+# The TLS secret name (can be null)
 azimuth_identity_operator_tls_secret_name: "{{ ingress_tls_secret_name | default('azimuth-identity-operator-tls', True) }}"
 
-## Wildcard TLS certificate, if available
+# Wildcard TLS certificate, if available
 azimuth_identity_operator_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
 azimuth_identity_operator_tls_key: >-
   {{-
@@ -34,7 +34,7 @@ azimuth_identity_operator_tls_key: >-
     else undef(hint = 'azimuth_identity_operator_tls_key is required')
   }}
 
-## The issuer to use for the certificate, if no wilcard cert is available
+# The issuer to use for the certificate, if no wilcard cert is available
 azimuth_identity_operator_tls_issuer_group: cert-manager.io
 azimuth_identity_operator_tls_issuer_kind: ClusterIssuer
 azimuth_identity_operator_tls_issuer_name: "{{ certmanager_acmehttp01issuer_name | default('letsencrypt') }}"
@@ -42,7 +42,7 @@ azimuth_identity_operator_tls_issuer_name: "{{ certmanager_acmehttp01issuer_name
 #####
 # Dex settings
 #####
-## The host to use for Dex instances
+# The host to use for Dex instances
 azimuth_identity_operator_dex_host: >-
   {{-
     "{}.{}".format(ingress_azimuth_portal_subdomain, ingress_base_domain)
@@ -50,13 +50,13 @@ azimuth_identity_operator_dex_host: >-
     else undef(hint = 'azimuth_identity_operator_dex_host is required')
   }}
 
-## The ingress class to use for Dex ingress resources
+# The ingress class to use for Dex ingress resources
 azimuth_identity_operator_dex_ingress_class: nginx
 
-## The default annotations for the Dex ingress resources
+# The default annotations for the Dex ingress resources
 azimuth_identity_operator_ingress_default_annotations: "{{ ingress_annotations | default({}) }}"
 
-## The URL for the auth callout
+# The URL for the auth callout
 _azimuth_release_name: "{{ azimuth_release_name | default('azimuth') }}"
 _azimuth_api_service_name: >-
   {{
@@ -75,8 +75,8 @@ azimuth_identity_operator_dex_ingress_auth_url: >-
     )
   }}
 
-## The URL to redirect to when the auth URL returns a 401
-## If not set, the 401 will just be returned
+# The URL to redirect to when the auth URL returns a 401
+# If not set, the 401 will just be returned
 _azimuth_ingress_tls_enabled: >-
   {{-
     azimuth_ingress_tls_enabled
@@ -105,14 +105,14 @@ azimuth_identity_operator_dex_ingress_auth_signin_url: >-
     else undef(hint = 'azimuth_identity_operator_dex_ingress_auth_signin_url is required')
   }}
 
-## The URL parameter to contain the original URL when redirecting
+# The URL parameter to contain the original URL when redirecting
 azimuth_identity_operator_dex_ingress_auth_signin_redirect_param: next
 
 #####
 # Keycloak settings
 #####
-## The Keycloak base URL
-## By default, we use the Keycloak deployed by azimuth-ops
+# The Keycloak base URL
+# By default, we use the Keycloak deployed by azimuth-ops
 _keycloak_ingress_tls_enabled: >-
   {{-
     keycloak_ingress_tls_enabled
@@ -141,10 +141,10 @@ azimuth_identity_operator_keycloak_base_url: >-
     else undef(hint = 'azimuth_identity_operator_keycloak_base_url is required')
   }}
 
-## The client ID to use when authenticating with Keycloak
+# The client ID to use when authenticating with Keycloak
 azimuth_identity_operator_keycloak_client_id: admin-cli
 
-## The username and password to use when authenticating with Keycloak
+# The username and password to use when authenticating with Keycloak
 azimuth_identity_operator_keycloak_username: "{{ keycloak_admin_username | default('admin') }}"
 azimuth_identity_operator_keycloak_password: >-
   {{-
@@ -153,10 +153,10 @@ azimuth_identity_operator_keycloak_password: >-
     else undef(hint='azimuth_identity_operator_keycloak_password is not defined')
   }}
 
-## Indicates if SSL should be required for Keycloak clients
+# Indicates if SSL should be required for Keycloak clients
 azimuth_identity_operator_keycloak_ssl_required: "{{ ingress_tls_enabled | default(True) }}"
 
-## The scheme to use when building redirect URIs for Zenith services
+# The scheme to use when building redirect URIs for Zenith services
 azimuth_identity_operator_keycloak_zenith_redirect_uri_scheme: >-
   {{-
     "https"
@@ -164,14 +164,14 @@ azimuth_identity_operator_keycloak_zenith_redirect_uri_scheme: >-
     else "http"
   }}
 
-## The namespace to write Zenith discovery secrets to
+# The namespace to write Zenith discovery secrets to
 azimuth_identity_operator_keycloak_zenith_discovery_namespace: >-
   {{-
     zenith_target_namespace |
       default("zenith-services", True)
   }}
 
-## The values for the release
+# The values for the release
 azimuth_identity_operator_release_defaults:
   tls:
     enabled: "{{ azimuth_identity_operator_tls_enabled }}"

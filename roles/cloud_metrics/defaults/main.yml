@@ -92,10 +92,10 @@ _azimuth_ingress_host: >-
   }}
 
 # Ingress settings for Grafana
-## The name of the ingress class to use
+# The name of the ingress class to use
 cloud_metrics_grafana_ingress_class: nginx
 
-## The hostname to use for the ingress resource
+# The hostname to use for the ingress resource
 cloud_metrics_grafana_ingress_host: >-
   {{
     _azimuth_ingress_host
@@ -103,22 +103,22 @@ cloud_metrics_grafana_ingress_host: >-
     else undef(hint = 'cloud_metrics_grafana_ingress_host is required')
   }}
 
-## The subpath to use for ingress
+# The subpath to use for ingress
 cloud_metrics_grafana_ingress_subpath: /dashboards
 
-## Any annotations for the ingress
+# Any annotations for the ingress
 cloud_metrics_grafana_ingress_annotations: "{{ ingress_annotations | default({}) }}"
 
-## Indicates whether TLS should be enabled
+# Indicates whether TLS should be enabled
 cloud_metrics_grafana_ingress_tls_enabled: "{{ _azimuth_ingress_tls_enabled }}"
 
-## The TLS secret name (can be null)
+# The TLS secret name (can be null)
 cloud_metrics_grafana_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default('cloud-metrics-grafana-tls', True) }}"
 
-## Any TLS-specific annotations
+# Any TLS-specific annotations
 cloud_metrics_grafana_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
 
-## Wildcard TLS certificate, if available
+# Wildcard TLS certificate, if available
 cloud_metrics_grafana_ingress_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
 cloud_metrics_grafana_ingress_tls_key: >-
   {{-
@@ -128,8 +128,8 @@ cloud_metrics_grafana_ingress_tls_key: >-
   }}
 
 # Settings for the auth callout
-## The URL for the auth callout
-## If not set, no auth callout is configured
+# The URL for the auth callout
+# If not set, no auth callout is configured
 cloud_metrics_grafana_ingress_auth_url: >-
   {{
     "http://{}.{}.svc.cluster.local/api/session/verify/".format(
@@ -138,8 +138,8 @@ cloud_metrics_grafana_ingress_auth_url: >-
     )
   }}
 
-## The URL to redirect to when the verify URL returns a 401
-## If not set, the 401 will just be returned
+# The URL to redirect to when the verify URL returns a 401
+# If not set, the 401 will just be returned
 cloud_metrics_grafana_ingress_auth_signin_url: >-
   {{
     "{}://{}/auth/login".format(
@@ -150,17 +150,17 @@ cloud_metrics_grafana_ingress_auth_signin_url: >-
     else undef(hint = 'cloud_metrics_grafana_ingress_auth_signin_url is required')
   }}
 
-## The URL parameter to contain the original URL when redirecting
+# The URL parameter to contain the original URL when redirecting
 cloud_metrics_grafana_ingress_auth_next_url_param: next
 
-## Dictionary of headers to set for authentication requests
-## These will override headers from the incoming request, which would otherwise be forwarded
-## In particular, you may need to override the accepts header to suit the content types served
-## by the external authentication service
+# Dictionary of headers to set for authentication requests
+# These will override headers from the incoming request, which would otherwise be forwarded
+# In particular, you may need to override the accepts header to suit the content types served
+# by the external authentication service
 cloud_metrics_grafana_ingress_auth_request_headers:
   accept: application/json
 
-## The ingress annotations that configure the auth callout
+# The ingress annotations that configure the auth callout
 cloud_metrics_grafana_ingress_auth_annotations:
   nginx.ingress.kubernetes.io/auth-url: "{{ cloud_metrics_grafana_ingress_auth_url }}"
   nginx.ingress.kubernetes.io/auth-signin: "{{ cloud_metrics_grafana_ingress_auth_signin_url }}"

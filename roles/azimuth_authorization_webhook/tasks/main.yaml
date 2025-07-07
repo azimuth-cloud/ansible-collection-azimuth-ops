@@ -13,9 +13,11 @@
     wait: true
     wait_timeout: "{{ azimuth_authorization_webhook_wait_timeout }}"
 
-- name: Wait for certificate to be issued and get TLS cert
+- name: Wait for certificate to be issued and get TLS cert # noqa no-changed-when
+  # yamllint disable rule:line-length
   ansible.builtin.shell:
     cmd: kubectl get secret {{ azimuth_authorization_webhook_tls_secret_name }} -n {{ azimuth_authorization_webhook_release_namespace }} -o 'jsonpath={.data.tls\.crt}'
+  # yamllint enable rule:line-length
   register: _webhook_tls_cert_output
   until: _webhook_tls_cert_output.rc == 0
   retries: 20

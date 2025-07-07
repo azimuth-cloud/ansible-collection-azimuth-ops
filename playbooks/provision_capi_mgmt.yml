@@ -8,7 +8,7 @@
   import_playbook: azimuth_cloud.azimuth_ops.provision_cluster
 
 # Install Azimuth
-- name: Install and configure ClusterAPI management cluster
+- name: Install and configure Cluster API management cluster
   import_playbook: azimuth_cloud.azimuth_ops.deploy_capi_mgmt
   vars:
     # In HA mode, use the kubeconfig for the HA cluster

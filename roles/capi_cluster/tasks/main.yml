@@ -17,7 +17,7 @@
     # The CAPI and CAPO controllers take some time to react and update the Ready condition
     # However some kinds of update, e.g. only addons, do not affect the cluster conditions,
     # so we only allow up to two minutes for that to happen
-    - name: Wait for cluster to become unready  # noqa no-handler
+    - name: Wait for cluster to become unready # noqa no-handler
       ansible.builtin.command: >-
         kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
           --for=condition=Ready=false
@@ -126,7 +126,7 @@
       register: capi_cluster_helm_delete
       changed_when: true
 
-    - name: Wait for cluster to be deleted  # noqa no-handler
+    - name: Wait for cluster to be deleted # noqa no-handler
       ansible.builtin.command: >-
         kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
           --for=delete

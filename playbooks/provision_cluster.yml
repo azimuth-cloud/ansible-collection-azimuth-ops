@@ -110,7 +110,7 @@
             certmanager_monitoring_enabled: false
             certmanager_acmehttp01issuer_enabled: false
 
-        - name: Install ClusterAPI resources
+        - name: Install Cluster API resources
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.clusterapi
 
@@ -126,7 +126,6 @@
           environment:
             KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
           when: velero_enabled
-
           block:
             - name: Configure Velero schedule
               ansible.builtin.include_role:

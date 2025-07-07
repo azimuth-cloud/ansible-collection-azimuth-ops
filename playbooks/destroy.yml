@@ -19,7 +19,7 @@
 
 # Tear down the Cluster API cluster
 # The k3s group will be empty if the install_mode is not 'ha'
-- name: Destroy the HA cluster using ClusterAPI
+- name: Destroy the HA cluster using Cluster API
   hosts: k3s
   ignore_unreachable: "{{ force_destroy | default(False) }}"
   ignore_errors: "{{ force_destroy | default(False) }}"
