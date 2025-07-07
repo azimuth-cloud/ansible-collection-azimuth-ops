@@ -171,6 +171,11 @@ jobs:
             repository: kubernetes-sigs/kustomize
             version_jsonpath: kustomize_version
 
+          - key: openstack-resource-controller
+            path: ./roles/clusterapi/defaults/main.yml
+            repository: k-orc/openstack-resource-controller
+            version_jsonpath: clusterapi_orc_version
+
           - key: velero-cli
             path: ./roles/velero/defaults/main.yml
             repository: vmware-tanzu/velero
