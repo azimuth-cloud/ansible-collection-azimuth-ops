@@ -10,7 +10,7 @@
       changed_when: false
       register: azimuth_caas_operator_list_clusters
 
-    - name: Copy Tofu state to Kubernetes secret
+    - name: Copy OpenTofu state to Kubernetes secret
       ansible.builtin.include_tasks: copy_tf_state.yml
       loop: >-
         {{-

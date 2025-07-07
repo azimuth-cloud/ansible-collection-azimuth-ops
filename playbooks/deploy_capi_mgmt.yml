@@ -3,7 +3,7 @@
 # This playbook turns the target Kubernetes cluster into a CAPI management cluster
 #####
 
-- name: Configure ClusterAPI management cluster
+- name: Configure Cluster API management cluster
   hosts: azimuth_deploy
   roles:
     - role: azimuth_cloud.azimuth_ops.alertmanager_config

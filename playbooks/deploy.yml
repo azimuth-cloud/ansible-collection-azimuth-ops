@@ -3,7 +3,7 @@
 # This playbook deploys the portal onto an existing Kubernetes cluster
 #####
 
-- name: Deply Azimuth
+- name: Deploy Azimuth
   hosts: azimuth_deploy
   roles:
     # Configure alerting

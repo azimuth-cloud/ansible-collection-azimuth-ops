@@ -74,9 +74,9 @@ capi_cluster_registry_mirrors: {}
 
 # Any registry authentication to add to cluster nodes
 # This allows containerd to authenticate directly without requiring imagePullSecrets
-## registry-1.docker.io:
-##   username: "<username>"
-##   password: "<password>"
+# registry-1.docker.io:
+#   username: "<username>"
+#   password: "<password>"
 capi_cluster_registry_auth: {}
 
 # The internal network to use
@@ -165,16 +165,16 @@ capi_cluster_etcd_blockdevice_volume_type: # e.g., 'SSD'
 capi_cluster_etcd_blockdevice_volume_az: "nova"
 
 # Configuration for addons
-## Determines if the ingress controller should be enabled
+# Determines if the ingress controller should be enabled
 capi_cluster_addons_ingress_enabled: "{{ ingress_controller_enabled | default(true) }}"
 
-## A pre-allocated IP for the ingress load balancer
-## If given, this IP should have the wildcard domain assigned to it
+# A pre-allocated IP for the ingress load balancer
+# If given, this IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
   {{ undef(hint='capi_cluster_addons_ingress_load_balancer_ip is required') }}
 
-## Options for LoadBalancer services
-## https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
+# Options for LoadBalancer services
+# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md#load-balancer
 capi_cluster_addons_openstack_loadbalancer_method: >-
   {{-
     'SOURCE_IP_PORT'
@@ -189,25 +189,25 @@ capi_cluster_addons_openstack_loadbalancer_monitor_timeout:
 capi_cluster_addons_openstack_loadbalancer_flavor_id:
 capi_cluster_addons_openstack_loadbalancer_availability_zone:
 capi_cluster_addons_openstack_loadbalancer_max_shared_lb:
-## The metadata search order
+# The metadata search order
 capi_cluster_addons_openstack_metadata_search_order:
-## Options for OpenStack block storage
-## https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/cinder-csi-plugin/using-cinder-csi-plugin.md#block-storage
+# Options for OpenStack block storage
+# https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/cinder-csi-plugin/using-cinder-csi-plugin.md#block-storage
 capi_cluster_addons_openstack_block_storage_node_volume_attach_limit:
 capi_cluster_addons_openstack_block_storage_rescan_on_resize:
 capi_cluster_addons_openstack_block_storage_ignore_volume_az: true
-## The availability zone for the default Cinder CSI storage class
+# The availability zone for the default Cinder CSI storage class
 capi_cluster_addons_csi_cinder_availability_zone: nova
-## The Cinder volume type for the default Cinder CSI storage class
+# The Cinder volume type for the default Cinder CSI storage class
 capi_cluster_addons_csi_cinder_volume_type:
-## Retention settings for Alertmanager
+# Retention settings for Alertmanager
 capi_cluster_addons_monitoring_alertmanager_retention: 168h
 capi_cluster_addons_monitoring_alertmanager_volume_size: 10Gi
-## Retention settings for Prometheus metrics
-## The metrics will be retained either for the retention time or until the volume is full
+# Retention settings for Prometheus metrics
+# The metrics will be retained either for the retention time or until the volume is full
 capi_cluster_addons_monitoring_prometheus_retention: 90d
 capi_cluster_addons_monitoring_prometheus_volume_size: 10Gi
-## Retention settings for logs in Loki
+# Retention settings for logs in Loki
 capi_cluster_addons_monitoring_loki_retention: 744h
 capi_cluster_addons_monitoring_loki_volume_size: 10Gi
 

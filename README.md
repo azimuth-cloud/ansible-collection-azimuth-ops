@@ -34,3 +34,9 @@ docker run --rm \
 ```sh
 ansible-lint -c .ansible-lint.yml
 ```
+
+### MacOS
+
+The super-linter project does not currently build arm64 container images,
+therefore running locally on M-series Mac devices requires an additional
+`--platform linux/amd64` argument to the `docker run` command above.
