@@ -47,6 +47,10 @@
                   severity: critical
   register: kubectl_ingress_cert_expiry
   changed_when: kubectl_ingress_cert_expiry.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+<<<<<<< HEAD
 
   when: cloud_metrics_enabled
   
+=======
+  when: cloud_metrics_enabled
+>>>>>>> d27e268 (monitoring disable and streamlining)
