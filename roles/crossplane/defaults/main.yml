@@ -12,20 +12,20 @@ crossplane_release_values: >-
   }}
 crossplane_wait_timeout: 5m
 
-crossplane_providers: "{{ crossplane_providers_defaults + crossplane_providers_extra }}"
-crossplane_providers_defaults:
-  - name: keycloak
-    package: xpkg.upbound.io/crossplane-contrib/provider-keycloak
-    version: v2.1.0
-crossplane_providers_extra: []
-
+crossplane_keycloak_provider_config_name: keycloak-config
+crossplane_keycloak_provider_version: v2.1.0
 crossplane_keycloak_provider_config_creds:
   client_id: admin-cli
   username: admin
   password: "{{ hostvars[groups['azimuth_deploy'][0]].keycloak_admin_password }}"
   url: "{{ hostvars[groups['azimuth_deploy'][0]].keycloak_base_url }}"
 
-crossplane_keycloak_provider_config_name: keycloak-config
+crossplane_providers: "{{ crossplane_providers_defaults + crossplane_providers_extra }}"
+crossplane_providers_defaults:
+  - name: keycloak
+    package: xpkg.upbound.io/crossplane-contrib/provider-keycloak
+    version: "{{ crossplane_keycloak_provider_version }}"
+crossplane_providers_extra: []
 
 crossplane_provider_configurations: "{{ crossplane_provider_configurations_default + crossplane_provider_configurations_extra }}"
 crossplane_provider_configurations_default:
