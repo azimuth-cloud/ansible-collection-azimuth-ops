@@ -23,6 +23,11 @@ certmanager_monitoring_enabled: true
 
 # The values for the release
 certmanager_release_defaults:
+  # Disable the use of Exact PathType in Ingress resources, to work around a bug in ingress-nginx
+  # https://github.com/kubernetes/ingress-nginx/issues/11176
+  config:
+    featureGates:
+      ACMEHTTP01IngressPathTypeExact: false
   installCRDs: true
   prometheus:
     enabled: "{{ certmanager_monitoring_enabled }}"
