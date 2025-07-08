@@ -24,9 +24,9 @@ ingress_nginx_release_defaults:
     config:
       annotations-risk-level: Critical
     metrics:
-      enabled: true
+      enabled: "{{ cloud_metrics_enabled }}"
       serviceMonitor:
-        enabled: true
+        enabled: "{{ cloud_metrics_enabled }}"
 ingress_nginx_release_overrides: {}
 ingress_nginx_release_values: >-
   {{-

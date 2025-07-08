@@ -46,3 +46,4 @@
                 message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
               labels:
                 severity: critical
+  when: cloud_metrics_enabled

@@ -2,7 +2,7 @@
 # This playbook attempts to setup and install dependencies on an existing VM with k3s
 #####
 
-# Configure the node as a K3S cluster
+# Configure the k3s cluster and add tools 
 - name: Setup Node
   hosts: k3s
   tasks:
@@ -65,6 +65,7 @@
         # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
         - include_role:
             name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
+          when: cloud_metrics_enabled # service monitor dependent alerts use same conditional 
 
         - include_role:
             name: azimuth_cloud.azimuth_ops.ingress_nginx
@@ -100,3 +101,21 @@
           when: velero_enabled
 
       when: install_mode == 'ha'
+
+
+- import_playbook: azimuth_cloud.azimuth_ops.deploy
+  vars:
+    # In HA mode, use the kubeconfig for the HA cluster
+    # In single node mode, use the default kubeconfig file
+    kubeconfig_path: >-
+      {{-
+        "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
+        if install_mode == 'ha'
+        else ""
+      }}
+
+# - name: Setup ansible
+#  hosts: k3s
+#  tasks:
+#    - ansible.builtin.include_role:
+#        name: azimuth_cloud.azimuth_ops.tenancy_config
