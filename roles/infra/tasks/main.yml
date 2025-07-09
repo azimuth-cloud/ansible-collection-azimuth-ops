@@ -1,12 +1,15 @@
 ---
-
 - name: Install Terraform
-  include_role:
+  ansible.builtin.include_role:
     name: azimuth_cloud.terraform.install
 
-- block:
+- name: Upload infra image to Glance
+  when:
+    - not infra_image_id
+    - not infra_readonly
+  block:
     - name: Upload infra image
-      include_role:
+      ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.community_images
         tasks_from: upload_image
       vars:
@@ -18,21 +21,20 @@
           visibility: private
 
     - name: Set infra image ID fact
-      set_fact:
+      ansible.builtin.set_fact:
         infra_image_id: "{{ community_images_image_id }}"
-  when:
-    - not infra_image_id
-    - not infra_readonly
 
 - name: Make Terraform project directory
-  file:
+  ansible.builtin.file:
     path: "{{ terraform_project_path }}"
     state: directory
+    mode: "0755"
 
 - name: Template Terraform files into project directory
-  template:
+  ansible.builtin.template:
     src: "{{ item }}.j2"
     dest: "{{ terraform_project_path }}/{{ item }}"
+    mode: "0644"
   loop:
     - outputs.tf
     - providers.tf
@@ -41,7 +43,7 @@
     - not infra_readonly
 
 - name: Provision infrastructure
-  include_role:
+  ansible.builtin.include_role:
     name: azimuth_cloud.terraform.infra
   vars:
     terraform_readonly: "{{ infra_readonly }}"

@@ -1,3 +1,4 @@
+# yamllint disable-file
 caas:
   cluster_names:
     {% for test_case in generate_tests_caas_test_cases -%}

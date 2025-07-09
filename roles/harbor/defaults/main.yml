@@ -17,8 +17,8 @@ harbor_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 harbor_trust_bundle_secret_name: "{{ harbor_release_name }}-trust-bundle"
 
 # The Harbor admin password and secret key
-harbor_admin_password: "{{ undef(hint = 'harbor_admin_password is not set') }}"
-harbor_secret_key: "{{ undef(hint = 'harbor_secret_key is not set') }}"
+harbor_admin_password: "{{ undef(hint='harbor_admin_password is not set') }}"
+harbor_secret_key: "{{ undef(hint='harbor_secret_key is not set') }}"
 
 # The base domain when the core and notary share a common parent domain
 harbor_ingress_base_domain: >-
@@ -61,9 +61,9 @@ harbor_tls_wildcard_key: >-
   }}
 # Or separate certificates and keys for core and notary
 harbor_tls_core_certificate:
-harbor_tls_core_key: "{{ undef(hint = 'harbor_tls_core_key is required') }}"
-harbor_tls_notary_certificate: "{{ undef(hint = 'harbor_tls_notary_certificate is required') }}"
-harbor_tls_notary_key: "{{ undef(hint = 'harbor_tls_notary_key is required') }}"
+harbor_tls_core_key: "{{ undef(hint='harbor_tls_core_key is required') }}"
+harbor_tls_notary_certificate: "{{ undef(hint='harbor_tls_notary_certificate is required') }}"
+harbor_tls_notary_key: "{{ undef(hint='harbor_tls_notary_key is required') }}"
 
 # TLS-related annotations, e.g. for cert-manager
 # If used with the cert-manager role, the annotations set by that role will be picked up
@@ -90,7 +90,7 @@ harbor_tls_notary_secret_name: >-
 harbor_update_strategy: Recreate
 
 # Settings for persistence
-harbor_persistence_enabled: yes
+harbor_persistence_enabled: true
 harbor_persistence_image_chart_storage_type: filesystem
 harbor_persistence_pvc_chartmuseum_size: 5Gi
 harbor_persistence_pvc_database_size: 1Gi
@@ -166,7 +166,7 @@ harbor_release_values: >-
 # Path to a CA file to use when talking to the Harbor API
 harbor_ca_path: /etc/ssl/certs/ca-certificates.crt
 # Whether or not to validate SSL certificates when talking to the Harbor API
-harbor_validate_certs: yes
+harbor_validate_certs: true
 
 # The proxy cache projects to create
 harbor_proxy_cache_projects: {}

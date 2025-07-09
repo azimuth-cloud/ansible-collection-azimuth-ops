@@ -1,6 +1,7 @@
 ---
-
-- block:
+- name: Deploy CAPI cluster
+  when: capi_cluster_release_state == 'present'
+  block:
     - name: Install or upgrade cluster
       kubernetes.core.helm:
         chart_ref: "{{ capi_cluster_chart_name }}"
@@ -10,14 +11,14 @@
         release_name: "{{ capi_cluster_release_name }}"
         release_state: present
         release_values: "{{ capi_cluster_release_values }}"
-        create_namespace: yes
+        create_namespace: true
       register: capi_cluster_helm_release
 
     # The CAPI and CAPO controllers take some time to react and update the Ready condition
     # However some kinds of update, e.g. only addons, do not affect the cluster conditions,
     # so we only allow up to two minutes for that to happen
-    - name: Wait for cluster to become unready
-      command: >-
+    - name: Wait for cluster to become unready # noqa no-handler
+      ansible.builtin.command: >-
         kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
           --for=condition=Ready=false
           --namespace {{ capi_cluster_release_namespace }}
@@ -31,7 +32,7 @@
       ignore_errors: true
 
     - name: Wait for cluster to become ready
-      command: >-
+      ansible.builtin.command: >-
         kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
           --for=condition=Ready
           --namespace {{ capi_cluster_release_namespace }}
@@ -45,7 +46,7 @@
     # Note that because we waited for the cluster to become ready, we know
     # the control plane machines are at the correct version
     - name: Wait for all nodes to be at the same version
-      command: kubectl get machines --output json
+      ansible.builtin.command: kubectl get machines --output json
       changed_when: false
       register: capi_cluster_machines_list
       until: >-
@@ -62,7 +63,7 @@
       delay: 10
 
     - name: Wait for machine deployments to be running
-      command: >-
+      ansible.builtin.command: >-
         kubectl wait machinedeployments --all
           --for=jsonpath='{.status.phase}'=Running
           --namespace {{ capi_cluster_release_namespace }}
@@ -74,7 +75,7 @@
       delay: 10
 
     - name: Wait for addons to deploy
-      command: >-
+      ansible.builtin.command: >-
         kubectl wait {{ item }} --all
           --for=jsonpath='{.status.phase}'=Deployed
           --namespace {{ capi_cluster_release_namespace }}
@@ -90,7 +91,7 @@
         - helmreleases
 
     - name: Generate kubeconfig for cluster
-      command: >-
+      ansible.builtin.command: >-
         kubectl get secret {{ capi_cluster_release_name }}-kubeconfig
           --namespace {{ capi_cluster_release_namespace }}
           --output jsonpath='{.data.value}'
@@ -98,22 +99,24 @@
       register: capi_cluster_kubeconfig_cmd
 
     - name: Write kubeconfig file for cluster
-      copy:
+      ansible.builtin.copy:
         content: "{{ capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
         dest: "{{ capi_cluster_kubeconfig_path }}"
         mode: u=rw,g=,o=
-  when: capi_cluster_release_state == 'present'
 
-- block:
+- name: Delete CAPI cluster
+  when: capi_cluster_release_state == 'absent'
+  block:
     # Before deleting the cluster, update the annotation that indicates if volumes should be kept
     - name: Set volumes policy annotation
-      command: >-
+      ansible.builtin.command: >-
         kubectl annotate
           openstackclusters.infrastructure.cluster.x-k8s.io
           {{ capi_cluster_release_name }}
           janitor.capi.stackhpc.com/volumes-policy={{ capi_cluster_volumes_policy }}
           --overwrite
           --namespace {{ capi_cluster_release_namespace }}
+      changed_when: true
 
     - name: Delete cluster
       kubernetes.core.helm:
@@ -121,9 +124,10 @@
         release_name: "{{ capi_cluster_release_name }}"
         release_state: absent
       register: capi_cluster_helm_delete
+      changed_when: true
 
-    - name: Wait for cluster to be deleted
-      command: >-
+    - name: Wait for cluster to be deleted # noqa no-handler
+      ansible.builtin.command: >-
         kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
           --for=delete
           --namespace {{ capi_cluster_release_namespace }}
@@ -139,4 +143,3 @@
       # Wait up to 60 mins for the cluster to delete
       retries: 360
       delay: 10
-  when: capi_cluster_release_state == 'absent'

@@ -1,7 +1,6 @@
 ---
-
 - name: Create cert-manager release namespace
-  command: kubectl create namespace {{ certmanager_release_namespace }}
+  ansible.builtin.command: kubectl create namespace {{ certmanager_release_namespace }}
   register: certmanager_create_namespace
   changed_when: certmanager_create_namespace.rc == 0
   failed_when: >-
@@ -9,7 +8,7 @@
     'AlreadyExists' not in certmanager_create_namespace.stderr
 
 - name: Install trust bundle
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ certmanager_trust_bundle_configmap_definition | to_nice_yaml }}"
   vars:
@@ -22,6 +21,8 @@
       data:
         ca-certificates.crt: "{{ certmanager_trust_bundle }}"
   when: certmanager_trust_bundle
+  register: kubectl_install_trust_bundle
+  changed_when: kubectl_install_trust_bundle.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install cert-manager on target Kubernetes cluster
   kubernetes.core.helm:
@@ -31,14 +32,16 @@
     release_namespace: "{{ certmanager_release_namespace }}"
     release_name: "{{ certmanager_release_name }}"
     release_values: "{{ certmanager_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ certmanager_wait_timeout }}"
 
-- block:
+- name: Configure certmanager grafana dashboard
+  when: certmanager_monitoring_enabled
+  block:
     - name: Install Grafana dashboard for cert-manager metrics
-      command: kubectl apply -f -
+      ansible.builtin.command: kubectl apply -f -
       args:
         stdin: "{{ certmanager_dashboard_definition | to_nice_yaml }}"
       vars:
@@ -53,16 +56,24 @@
           data:
             certmanager_dashboard.json: |-
               {{ lookup("file", "grafana_dashboard.json") | from_json | to_nice_json }}
+      register: kubectl_install_certmanager_dashboard
+      changed_when: kubectl_install_certmanager_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
     - name: Configure custom alerting rules for cert-manager
-      command: kubectl apply -f -
+      ansible.builtin.command: kubectl apply -f -
       args:
         stdin: "{{ lookup('template', 'prometheusrule.yaml.j2') }}"
-  when: certmanager_monitoring_enabled
+      register: kubectl_install_certmanager_alert_rules
+      changed_when: kubectl_install_certmanager_alert_rules.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
-- block:
+- name: Configure EAB credentials
+  when: >-
+    certmanager_acmehttp01issuer_enabled and
+    certmanager_acmehttp01issuer_eab_required and
+    not certmanager_acmehttp01issuer_eab_kid
+  block:
     - name: Check if EAB secret exists
-      command: >-
+      ansible.builtin.command: >-
         kubectl get secret {{ certmanager_acmehttp01issuer_eab_secret_name }}
           --namespace {{ certmanager_release_name }}
           --output json
@@ -73,38 +84,38 @@
         "NotFound" not in certmanager_acmehttp01issuer_eab_secret_cmd.stderr
 
     - name: Set EAB credential facts from secret
-      set_fact:
+      ansible.builtin.set_fact:
         certmanager_acmehttp01issuer_eab_kid: >-
           {{ (certmanager_acmehttp01issuer_eab_secret_cmd.stdout | from_json).data.kid | b64decode }}
         certmanager_acmehttp01issuer_eab_key: >-
           {{ (certmanager_acmehttp01issuer_eab_secret_cmd.stdout | from_json).data.key | b64decode }}
       when: certmanager_acmehttp01issuer_eab_secret_cmd.rc == 0
 
-    - block:
+    - name: Generate EAB credentials and set facts based on response
+      when: certmanager_acmehttp01issuer_eab_secret_cmd.rc != 0
+      block:
         - name: Generate EAB credentials
-          uri:
+          ansible.builtin.uri:
             url: "{{ certmanager_acmehttp01issuer_eab_generate_url }}"
             method: POST
           register: certmanager_acmehttp01issuer_eab_credentials
 
         - name: Set EAB credential facts from response
-          set_fact:
+          ansible.builtin.set_fact:
             certmanager_acmehttp01issuer_eab_kid: "{{ certmanager_acmehttp01issuer_eab_credentials.json.eab_kid }}"
             certmanager_acmehttp01issuer_eab_key: "{{ certmanager_acmehttp01issuer_eab_credentials.json.eab_hmac_key }}"
-      when: certmanager_acmehttp01issuer_eab_secret_cmd.rc != 0
-  when: >-
-    certmanager_acmehttp01issuer_enabled and
-    certmanager_acmehttp01issuer_eab_required and
-    not certmanager_acmehttp01issuer_eab_kid
 
-- block:
+- name: Configure ACME HTTP01 cluster issuer and set ingress annotation fact
+  when: certmanager_acmehttp01issuer_enabled
+  block:
     - name: Install ACME HTTP01 cluster issuer
-      command: kubectl apply -f -
+      ansible.builtin.command: kubectl apply -f -
       args:
         stdin: "{{ lookup('template', 'acmehttp01issuer.yaml.j2') }}"
+      register: kubectl_install_http01_cluster_issuer
+      changed_when: kubectl_install_http01_cluster_issuer.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
     - name: Set auto-TLS facts
-      set_fact:
+      ansible.builtin.set_fact:
         certmanager_ingress_annotations:
           cert-manager.io/cluster-issuer: "{{ certmanager_acmehttp01issuer_name }}"
-  when: certmanager_acmehttp01issuer_enabled

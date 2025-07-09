@@ -1,5 +1,4 @@
 ---
-
 #####
 # These tasks deploy a Prometheus scrape config and a Grafana for showing
 # cloud metrics
@@ -15,7 +14,7 @@
 #####
 
 - name: Create Grafana release namespace
-  command: kubectl create namespace {{ cloud_metrics_grafana_release_namespace }}
+  ansible.builtin.command: kubectl create namespace {{ cloud_metrics_grafana_release_namespace }}
   register: cloud_metrics_grafana_create_namespace
   changed_when: cloud_metrics_grafana_create_namespace.rc == 0
   failed_when: >-
@@ -23,7 +22,7 @@
     'AlreadyExists' not in cloud_metrics_grafana_create_namespace.stderr
 
 - name: Install auth secret for remote Prometheus
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ cloud_metrics_prometheus_auth_secret_definition | to_nice_yaml }}"
   vars:
@@ -34,9 +33,11 @@
         name: "{{ cloud_metrics_prometheus_auth_secret_name }}"
         namespace: "{{ cloud_metrics_grafana_release_namespace }}"
       stringData: "{{ cloud_metrics_prometheus_auth_data }}"
+  register: kubectl_remote_prom_auth_secret
+  changed_when: kubectl_remote_prom_auth_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install headless service for remote Prometheus
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ cloud_metrics_prometheus_service_definition | to_nice_yaml }}"
   vars:
@@ -53,9 +54,11 @@
           - name: metrics
             port: "{{ cloud_metrics_prometheus_port }}"
             targetPort: "{{ cloud_metrics_prometheus_port }}"
+  register: kubectl_remote_prom_service
+  changed_when: kubectl_remote_prom_service.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install endpoints for remote Prometheus
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ cloud_metrics_prometheus_endpoints_definition | to_nice_yaml }}"
   vars:
@@ -71,9 +74,11 @@
           ports:
             - name: metrics
               port: "{{ cloud_metrics_prometheus_port }}"
+  register: kubectl_remote_prom_endpoints
+  changed_when: kubectl_remote_prom_endpoints.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install servicemonitor for remote Prometheus
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ cloud_metrics_prometheus_servicemonitor_definition | to_nice_yaml }}"
   vars:
@@ -84,9 +89,11 @@
         name: "{{ cloud_metrics_prometheus_servicemonitor_name }}"
         namespace: "{{ cloud_metrics_grafana_release_namespace }}"
       spec: "{{ cloud_metrics_prometheus_servicemonitor_spec }}"
+  register: kubectl_remote_prom_servicemonitor
+  changed_when: kubectl_remote_prom_servicemonitor.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install wildcard TLS certificate
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ cloud_metrics_grafana_ingress_tls_secret_definition | to_nice_yaml }}"
   vars:
@@ -101,9 +108,11 @@
         tls.crt: "{{ cloud_metrics_grafana_ingress_tls_certificate }}"
         tls.key: "{{ cloud_metrics_grafana_ingress_tls_key }}"
   when: cloud_metrics_grafana_ingress_tls_certificate
+  register: kubectl_grafana_tls_cert
+  changed_when: kubectl_grafana_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Grafana admin password secret
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ cloud_metrics_grafana_admin_secret_definition | to_nice_yaml }}"
   vars:
@@ -120,6 +129,8 @@
             cloud_metrics_grafana_admin_secret_password_key: cloud_metrics_grafana_admin_password,
           }
         }}
+  register: kubectl_grafana_password_secret
+  changed_when: kubectl_grafana_password_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Grafana on target Kubernetes cluster
   kubernetes.core.helm:
@@ -129,13 +140,13 @@
     release_namespace: "{{ cloud_metrics_grafana_release_namespace }}"
     release_name: "{{ cloud_metrics_grafana_release_name }}"
     release_values: "{{ cloud_metrics_grafana_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ cloud_metrics_grafana_wait_timeout }}"
 
 - name: Set Grafana dashboard URL facts
-  set_fact:
+  ansible.builtin.set_fact:
     cloud_metrics_grafana_home_dashboard_url: >-
       {{-
         "{scheme}://{host}{subpath}/d/{dashboard_uid}?kiosk=tv".format(

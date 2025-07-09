@@ -10,7 +10,7 @@ azimuth_schedule_operator_release_namespace: "{{ azimuth_release_namespace | def
 azimuth_schedule_operator_release_name: azimuth-schedule-operator
 
 # Indicates whether Blazar support should be enabled in the schedule operator
-azimuth_schedule_operator_blazar_enabled: no
+azimuth_schedule_operator_blazar_enabled: false
 # The interval at which Blazar leases are checked
 # If not specified, the operator default is used
 azimuth_schedule_operator_check_interval:

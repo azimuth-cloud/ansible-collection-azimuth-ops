@@ -83,7 +83,8 @@ kube_prometheus_stack_release_defaults:
     # Don't apply the namespace grouping by default
     config:
       route:
-        group_by: ['...']
+        group_by:
+          - "..."
     alertmanagerSpec:
       externalUrl: "{{ kube_prometheus_stack_alertmanager_external_url }}"
       # Make sure that alertmanager finds configurations with the alertmanager name as a label
@@ -95,7 +96,6 @@ kube_prometheus_stack_release_defaults:
         type: None
 
 kube_prometheus_stack_release_overrides: {}
-
 kube_prometheus_stack_release_values: >-
   {{-
     kube_prometheus_stack_release_defaults |

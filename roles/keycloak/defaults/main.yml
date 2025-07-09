@@ -11,27 +11,34 @@ keycloak_labels:
   app.kubernetes.io/managed-by: azimuth-ops
 
 # Keycloak database configuration
-#   Settings for an external database
-#     The JDBC URL for an external database
+# Settings for an external database
+# The JDBC URL for an external database
 keycloak_external_db_url:
-#     The username and password for an external database
+
+# The username and password for an external database
 keycloak_external_db_user:
 keycloak_external_db_password:
-#     The name of the secret to put the external database credentials in
+
+# The name of the secret to put the external database credentials in
 keycloak_external_db_secret_name: "{{ keycloak_name }}-postgresql-auth"
-#   Settings for an internal database
-#     The name of the database resource
+
+# Settings for an internal database
+# The name of the database resource
 keycloak_database_name: "{{ keycloak_name }}-db"
-#     The storage class to use for the database volume
-#     If left blank, the default storage class will be used
+
+# The storage class to use for the database volume
+# If left blank, the default storage class will be used
 keycloak_database_data_volume_storage_class:
-#     The storage class to use for the backup volume
-#     By default, this is the same as the data volume
+
+# The storage class to use for the backup volume
+# By default, this is the same as the data volume
 keycloak_database_backup_volume_storage_class: "{{ keycloak_database_data_volume_storage_class }}"
-#     The size of the data volume for the database
+
+# The size of the data volume for the database
 keycloak_database_data_volume_size: 8Gi
-#     The size of the backup volume for the database
-#     By default, this is the same as the data volume
+
+# The size of the backup volume for the database
+# By default, this is the same as the data volume
 keycloak_database_backup_volume_size: "{{ keycloak_database_data_volume_size }}"
 
 # Custom trust bundle for SSL verification
@@ -102,31 +109,39 @@ keycloak_spec_defaults:
     - name: metrics-enabled
       value: "true"
 keycloak_spec_overrides: {}
-keycloak_spec: "{{ keycloak_spec_defaults | combine(keycloak_spec_overrides, recursive = True) }}"
+keycloak_spec: "{{ keycloak_spec_defaults | combine(keycloak_spec_overrides, recursive=True) }}"
 
 # Details for the Keycloak ingress
-#   The name of the ingress
+# The name of the ingress
 keycloak_ingress_name: "{{ keycloak_name }}"
-#   The name of the ingress class to use
+
+# The name of the ingress class to use
 keycloak_ingress_class: nginx
-#   The hostname to use for the ingress resource
+
+# The hostname to use for the ingress resource
 keycloak_ingress_host: >-
   {{-
     "{}.{}".format(ingress_keycloak_subdomain, ingress_base_domain)
     if ingress_keycloak_subdomain is defined and ingress_base_domain is defined
     else undef(hint = 'keycloak_ingress_host is required')
   }}
-#   Any default annotations for the ingress
+
+# Any default annotations for the ingress
 keycloak_ingress_annotations_defaults: "{{ ingress_annotations | default({}) }}"
-#   Any extra annotations for the ingress
+
+# Any extra annotations for the ingress
 keycloak_ingress_annotations_overrides: {}
-#   Indicates whether TLS should be enabled
+
+# Indicates whether TLS should be enabled
 keycloak_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
-#   The TLS secret name (can be null)
+
+# The TLS secret name (can be null)
 keycloak_ingress_tls_secret_name: "{{ ingress_tls_secret_name | default('keycloak-tls', True) }}"
-#   Any TLS-specific annotations
+
+# Any TLS-specific annotations
 keycloak_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
-#   Wildcard TLS certificate, if available
+
+# Wildcard TLS certificate, if available
 keycloak_ingress_tls_certificate: "{{ ingress_tls_wildcard_certificate | default(None) }}"
 keycloak_ingress_tls_key: >-
   {{-
@@ -145,7 +160,8 @@ keycloak_ingress_annotations: >-
       ) |
       combine(keycloak_ingress_annotations_overrides)
   }}
-#   The spec for the Keycloak ingress
+
+# The spec for the Keycloak ingress
 keycloak_ingress_spec_defaults: >-
   {{-
     {
@@ -191,7 +207,7 @@ keycloak_ingress_spec: >-
       combine(keycloak_ingress_spec_overrides, recursive = True)
   }}
 
-# The version of the Keycloak operator to install
+# The version of the Keycloak operator to install
 keycloak_operator_version: 26.3.0
 # The base URL for the Keycloak operator manifests
 keycloak_operator_base_url: https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources
@@ -235,7 +251,7 @@ keycloak_operator_watches:
 # The Keycloak admin username
 keycloak_admin_username: admin
 # The Keycloak admin password
-keycloak_admin_password: "{{ undef(hint = 'keycloak_admin_password is not defined') }}"
+keycloak_admin_password: "{{ undef(hint='keycloak_admin_password is not defined') }}"
 
 # The name of the secret that we will store the admin creds in
 keycloak_admin_creds_secret_name: "{{ keycloak_name }}-admin-creds"
@@ -256,4 +272,4 @@ keycloak_base_url: >-
 # Path to a CA file to use when talking to the Keycloak API
 keycloak_ca_path: /etc/ssl/certs/ca-certificates.crt
 # Whether or not to validate SSL certificates when talking to the Keycloak API
-keycloak_validate_certs: yes
+keycloak_validate_certs: true

@@ -1,3 +1,4 @@
+---
 # The location into which the Terraform files should be templated
 terraform_project_path: "{{ inventory_dir }}/.terraform"
 
@@ -5,19 +6,19 @@ terraform_project_path: "{{ inventory_dir }}/.terraform"
 infra_readonly: false
 
 # The name of the provisioned node
-infra_name: "{{ undef(hint = 'infra_name is required') }}"
+infra_name: "{{ undef(hint='infra_name is required') }}"
 
 # The exposed port ranges for the provisioned node
 infra_exposed_port_ranges: []
-  # - name:
-  #   min:
-  #   max:
+# - name:
+#   min:
+#   max:
 
 #####
 # Configuration for the internal network onto which Kubernetes nodes will be provisioned
 #
 # This can use either a pre-existing network, which should already be connected to an
-# external network using a router, or a network and router can be provisioned
+# external network using a router, or a network and router can be provisioned
 #####
 # The ID of an existing network onto which the node should be provisioned
 # This network should be connected to an external network via a router
@@ -45,7 +46,7 @@ infra_external_network_id: >-
 # Configuration for the accessible endpoint for the seed node
 #
 # This can use one of:
-#   * A provisioning network
+#   * A provisioning network
 #   * A fixed floating IP
 #   * A floating IP from a pool
 #   * An infra network without exposing any services to public network
@@ -54,10 +55,10 @@ infra_external_network_id: >-
 # If none are given, the name of the external network is used as the floating IP pool
 #
 # In the case where a provisioning network is used, the seed has two NICs - one on the provisioning
-# network and one on the internal network above
+# network and one on the internal network above
 #####
 # Use floating IPs - default, unless infra network is to be used without exposing endpoints in public network.
-infra_use_floatingip: True
+infra_use_floatingip: true
 # The ID of the provisioning network to use
 infra_provisioning_network_id:
 # OR
@@ -67,11 +68,11 @@ infra_fixed_floatingip:
 # The name of the floating IP pool
 infra_floatingip_pool:
 #####
-# Configuration for the image to use for the seed node
+# Configuration for the image to use for the seed node
 #
 # This can either use an pre-existing image by ID or an image can be uploaded
 # The image is uploaded as a private image for the project in which Azimuth is being deployed
-# The image can be converted to a different disk format if required for the target cloud
+# The image can be converted to a different disk format if required for the target cloud
 #####
 # The ID of a pre-existing the image to use for the node
 infra_image_id:
@@ -86,22 +87,19 @@ infra_image_source_disk_format: qcow2
 infra_image_container_format: bare
 
 # The ID of the flavor to use for the node
-infra_flavor_id: "{{ undef(hint = 'infra_flavor_id is required') }}"
+infra_flavor_id: "{{ undef(hint='infra_flavor_id is required') }}"
 
 # Indicates whether to use a root volume for the seed node
 # This may be necessary in cases where the root volume is not large enough
-# to unpack and convert community images where necessary (40GB should be sufficient)
-infra_root_volume_enabled: no
+# to unpack and convert community images where necessary (40GB should be sufficient)
+infra_root_volume_enabled: false
 infra_root_volume_size: 40
 infra_root_volume_type:
-
 # The size in GB of the data volume
 infra_data_volume_size: 100
 # The volume type to use for the data volume
 infra_data_volume_type:
-
 # The Ansible groups to place the provisioned node into
 infra_ansible_groups: []
-
 # We support Ubuntu images only, and the default cloud user is 'ubuntu'
 cluster_ssh_user: ubuntu

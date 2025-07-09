@@ -1,5 +1,4 @@
 ---
-
 - name: Install Flux controllers on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ flux_chart_name }}"

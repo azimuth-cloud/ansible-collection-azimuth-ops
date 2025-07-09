@@ -1,7 +1,6 @@
 ---
-
 - name: Create Zenith release namespace
-  command: kubectl create namespace {{ zenith_release_namespace }}
+  ansible.builtin.command: kubectl create namespace {{ zenith_release_namespace }}
   register: zenith_create_namespace
   changed_when: zenith_create_namespace.rc == 0
   failed_when: >-
@@ -9,7 +8,7 @@
     'AlreadyExists' not in zenith_create_namespace.stderr
 
 - name: Install wildcard TLS certificate
-  command: kubectl apply -f -
+  ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ zenith_ingress_tls_wildcard_secret_definition | to_nice_yaml }}"
   vars:
@@ -24,6 +23,9 @@
         tls.crt: "{{ zenith_ingress_tls_wildcard_certificate }}"
         tls.key: "{{ zenith_ingress_tls_wildcard_key }}"
   when: zenith_ingress_tls_wildcard_certificate
+  register: zenith_ingress_tls_wildcard_certificate_install
+  changed_when: >-
+    zenith_ingress_tls_wildcard_certificate_install.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Zenith on target Kubernetes cluster
   kubernetes.core.helm:
@@ -33,18 +35,19 @@
     release_namespace: "{{ zenith_release_namespace }}"
     release_name: "{{ zenith_release_name }}"
     release_values: "{{ zenith_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ zenith_wait_timeout }}"
 
 - name: Get Zenith service information
-  command: >-
+  ansible.builtin.command: >-
     kubectl get services
       --namespace {{ zenith_release_namespace }}
       --selector {{ zenith_services_selector }}
       --output json
   register: zenith_services_cmd
+  changed_when: false
   vars:
     zenith_services_selectors:
       - app.kubernetes.io/name={{ zenith_chart_name }}
@@ -52,7 +55,7 @@
     zenith_services_selector: "{{ zenith_services_selectors | join(',') }}"
 
 - name: Set Zenith service facts
-  set_fact:
+  ansible.builtin.set_fact:
     zenith_registrar_service: >-
       {{
         zenith_services_cmd.stdout |
@@ -69,7 +72,7 @@
       }}
 
 - name: Set Zenith server facts
-  set_fact:
+  ansible.builtin.set_fact:
     zenith_registrar_external_url: >-
       {{-
         zenith_registrar_external_url
@@ -133,7 +136,7 @@
       }}
 
 - name: Migrate services from Consul to CRDs
-  include_tasks: migrate-services.yml
+  ansible.builtin.include_tasks: migrate-services.yml
   when:
     - consul_server_host is defined
     - consul_server_port is defined

@@ -4,41 +4,46 @@
 admin_dashboard_ingress_class_name: nginx
 
 # Labels for admin dashboard ingresses
-#   The default labels
+# The default labels
 admin_dashboard_ingress_labels_defaults:
   app.kubernetes.io/managed-by: azimuth-ops
-#   Additional labels
+# Additional labels
 admin_dashboard_ingress_labels_overrides: {}
-#   The dashboard labels
+# The dashboard labels
 admin_dashboard_ingress_labels: >-
   {{-
     admin_dashboard_ingress_labels_defaults |
       combine(admin_dashboard_ingress_labels_overrides)
   }}
 
-# TLS configuration for admin dashboard ingresses
-#   Indicates whether TLS should be enabled
+# TLS configuration for admin dashboard ingresses
+# Indicates whether TLS should be enabled
 admin_dashboard_ingress_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
-#   TLS-specific annotations
+
+# TLS-specific annotations
 admin_dashboard_ingress_tls_annotations: "{{ ingress_tls_annotations | default({}) }}"
-#   Wildcard TLS certificate, if available
+
+# Wildcard TLS certificate, if available
 admin_dashboard_ingress_tls_wildcard_certificate: >-
   {{ ingress_tls_wildcard_certificate | default(None) }}
+
 admin_dashboard_ingress_tls_wildcard_key: >-
   {{-
     ingress_tls_wildcard_key
     if ingress_tls_wildcard_key is defined
     else undef(hint = 'admin_dashboard_ingress_tls_wildcard_key is required')
   }}
-#   The TLS secret name when a wildcard certificate is used
-admin_dashboard_ingress_tls_wildcard_secret_name: admin-dashboard-tls
 
+# The TLS secret name when a wildcard certificate is used
+admin_dashboard_ingress_tls_wildcard_secret_name: admin-dashboard-tls
 
 # The basic auth username to use for admin dashboards
 admin_dashboard_ingress_basic_auth_username: admin
+
 # The basic auth password to use for admin dashboards
 admin_dashboard_ingress_basic_auth_password: >-
-  {{ undef(hint = 'admin_dashboard_ingress_basic_auth_password is required') }}
+  {{ undef(hint='admin_dashboard_ingress_basic_auth_password is required') }}
+
 # The name of the secret in each namespace that will contain basic auth credentials
 admin_dashboard_ingress_basic_auth_secret_name: admin-dashboard-auth
 
@@ -62,6 +67,7 @@ admin_dashboard_ingress_annotations_defaults: >-
       )
   }}
 admin_dashboard_ingress_annotations_overrides: {}
+
 admin_dashboard_ingress_annotations: >-
   {{-
     admin_dashboard_ingress_annotations_defaults |
@@ -69,29 +75,35 @@ admin_dashboard_ingress_annotations: >-
   }}
 
 # Settings for the Grafana ingress
-#   The namespace for the ingress
+# The namespace for the ingress
 admin_dashboard_ingress_grafana_namespace: monitoring-system
-#   The name for the ingress
+
+# The name for the ingress
 admin_dashboard_ingress_grafana_name: grafana
-#   The host for the ingress
+
+# The host for the ingress
 admin_dashboard_ingress_grafana_host: >-
   {{-
     "{}.{}".format(ingress_grafana_subdomain, ingress_base_domain)
     if ingress_grafana_subdomain is defined and ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_grafana_host is required')
   }}
-#   The name of the service for the ingress
+
+# The name of the service for the ingress
 admin_dashboard_ingress_grafana_service: kube-prometheus-stack-grafana
-#   The name of the service port for the ingress
+
+# The name of the service port for the ingress
 admin_dashboard_ingress_grafana_port: http-web
-#   The name of the secret containing the certificate for the ingress
+
+# The name of the secret containing the certificate for the ingress
 admin_dashboard_ingress_grafana_tls_secret_name: >-
   {{-
     admin_dashboard_ingress_tls_wildcard_secret_name
     if admin_dashboard_ingress_tls_wildcard_certificate
     else admin_dashboard_ingress_grafana_name ~ '-tls'
   }}
-#   The ingress definition
+
+# The ingress definition
 admin_dashboard_ingress_grafana:
   name: "{{ admin_dashboard_ingress_grafana_name }}"
   namespace: "{{ admin_dashboard_ingress_grafana_namespace }}"
@@ -101,29 +113,35 @@ admin_dashboard_ingress_grafana:
   tls_secret_name: "{{ admin_dashboard_ingress_grafana_tls_secret_name }}"
 
 # Settings for the Prometheus ingress
-#   The namespace for the ingress
+# The namespace for the ingress
 admin_dashboard_ingress_prometheus_namespace: monitoring-system
-#   The name for the ingress
+
+# The name for the ingress
 admin_dashboard_ingress_prometheus_name: prometheus
-#   The host for the ingress
+
+# The host for the ingress
 admin_dashboard_ingress_prometheus_host: >-
   {{-
     "{}.{}".format(ingress_prometheus_subdomain, ingress_base_domain)
     if ingress_prometheus_subdomain is defined and ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_prometheus_host is required')
   }}
-#   The name of the service for the ingress
+
+# The name of the service for the ingress
 admin_dashboard_ingress_prometheus_service: kube-prometheus-stack-prometheus
-#   The name of the service port for the ingress
+
+# The name of the service port for the ingress
 admin_dashboard_ingress_prometheus_port: http-web
-#   The name of the secret containing the certificate for the ingress
+
+# The name of the secret containing the certificate for the ingress
 admin_dashboard_ingress_prometheus_tls_secret_name: >-
   {{-
     admin_dashboard_ingress_tls_wildcard_secret_name
     if admin_dashboard_ingress_tls_wildcard_certificate
     else admin_dashboard_ingress_prometheus_name ~ '-tls'
   }}
-#   The ingress definition
+
+# The ingress definition
 admin_dashboard_ingress_prometheus:
   name: "{{ admin_dashboard_ingress_prometheus_name }}"
   namespace: "{{ admin_dashboard_ingress_prometheus_namespace }}"
@@ -133,29 +151,35 @@ admin_dashboard_ingress_prometheus:
   tls_secret_name: "{{ admin_dashboard_ingress_prometheus_tls_secret_name }}"
 
 # Settings for the Alertmanager ingress
-#   The namespace for the ingress
+# The namespace for the ingress
 admin_dashboard_ingress_alertmanager_namespace: monitoring-system
-#   The name for the ingress
+
+# The name for the ingress
 admin_dashboard_ingress_alertmanager_name: alertmanager
-#   The host for the ingress
+
+# The host for the ingress
 admin_dashboard_ingress_alertmanager_host: >-
   {{-
     "{}.{}".format(ingress_alertmanager_subdomain, ingress_base_domain)
     if ingress_alertmanager_subdomain is defined and ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_alertmanager_host is required')
   }}
-#   The name of the service for the ingress
+
+# The name of the service for the ingress
 admin_dashboard_ingress_alertmanager_service: kube-prometheus-stack-alertmanager
-#   The name of the service port for the ingress
+
+# The name of the service port for the ingress
 admin_dashboard_ingress_alertmanager_port: http-web
-#   The name of the secret containing the certificate for the ingress
+
+# The name of the secret containing the certificate for the ingress
 admin_dashboard_ingress_alertmanager_tls_secret_name: >-
   {{-
     admin_dashboard_ingress_tls_wildcard_secret_name
     if admin_dashboard_ingress_tls_wildcard_certificate
     else admin_dashboard_ingress_alertmanager_name ~ '-tls'
   }}
-#   The ingress definition
+
+# The ingress definition
 admin_dashboard_ingress_alertmanager:
   name: "{{ admin_dashboard_ingress_alertmanager_name }}"
   namespace: "{{ admin_dashboard_ingress_alertmanager_namespace }}"
@@ -165,29 +189,35 @@ admin_dashboard_ingress_alertmanager:
   tls_secret_name: "{{ admin_dashboard_ingress_alertmanager_tls_secret_name }}"
 
 # Settings for the ARA ingress
-#   The namespace for the ingress
+# The namespace for the ingress
 admin_dashboard_ingress_ara_namespace: azimuth
-#   The name for the ingress
+
+# The name for the ingress
 admin_dashboard_ingress_ara_name: ara
-#   The host for the ingress
+
+# The host for the ingress
 admin_dashboard_ingress_ara_host: >-
   {{-
     "{}.{}".format(ingress_ara_subdomain, ingress_base_domain)
     if ingress_ara_subdomain is defined and ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_ara_host is required')
   }}
-#   The name of the service for the ingress
+
+# The name of the service for the ingress
 admin_dashboard_ingress_ara_service: azimuth-caas-operator-ara
-#   The name of the service port for the ingress
+
+# The name of the service port for the ingress
 admin_dashboard_ingress_ara_port: http
-#   The name of the secret containing the certificate for the ingress
+
+# The name of the secret containing the certificate for the ingress
 admin_dashboard_ingress_ara_tls_secret_name: >-
   {{-
     admin_dashboard_ingress_tls_wildcard_secret_name
     if admin_dashboard_ingress_tls_wildcard_certificate
     else admin_dashboard_ingress_ara_name ~ '-tls'
   }}
-#   The ingress definition
+
+# The ingress definition
 admin_dashboard_ingress_ara: >-
   {{-
     {
@@ -203,29 +233,35 @@ admin_dashboard_ingress_ara: >-
   }}
 
 # Settings for the Helm dashboard ingress
-#   The namespace for the ingress
+# The namespace for the ingress
 admin_dashboard_ingress_helm_dashboard_namespace: monitoring-system
-#   The name for the ingress
+
+# The name for the ingress
 admin_dashboard_ingress_helm_dashboard_name: helm-dashboard
-#   The host for the ingress
+
+# The host for the ingress
 admin_dashboard_ingress_helm_dashboard_host: >-
   {{-
     "{}.{}".format(ingress_helm_dashboard_subdomain, ingress_base_domain)
     if ingress_helm_dashboard_subdomain is defined and ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_helm_dashboard_host is required')
   }}
-#   The name of the service for the ingress
+
+# The name of the service for the ingress
 admin_dashboard_ingress_helm_dashboard_service: helm-dashboard
-#   The name of the service port for the ingress
+
+# The name of the service port for the ingress
 admin_dashboard_ingress_helm_dashboard_port: http
-#   The name of the secret containing the certificate for the ingress
+
+# The name of the secret containing the certificate for the ingress
 admin_dashboard_ingress_helm_dashboard_tls_secret_name: >-
   {{-
     admin_dashboard_ingress_tls_wildcard_secret_name
     if admin_dashboard_ingress_tls_wildcard_certificate
     else admin_dashboard_ingress_helm_dashboard_name ~ '-tls'
   }}
-#   The ingress definition
+
+# The ingress definition
 admin_dashboard_ingress_helm_dashboard:
   name: "{{ admin_dashboard_ingress_helm_dashboard_name }}"
   namespace: "{{ admin_dashboard_ingress_helm_dashboard_namespace }}"
@@ -235,29 +271,35 @@ admin_dashboard_ingress_helm_dashboard:
   tls_secret_name: "{{ admin_dashboard_ingress_helm_dashboard_tls_secret_name }}"
 
 # Settings for the Kubernetes dashboard ingress
-#   The namespace for the ingress
+# The namespace for the ingress
 admin_dashboard_ingress_kubernetes_dashboard_namespace: kubernetes-dashboard
-#   The name for the ingress
+
+# The name for the ingress
 admin_dashboard_ingress_kubernetes_dashboard_name: kubernetes-dashboard
-#   The host for the ingress
+
+# The host for the ingress
 admin_dashboard_ingress_kubernetes_dashboard_host: >-
   {{-
     "{}.{}".format(ingress_kubernetes_dashboard_subdomain, ingress_base_domain)
     if ingress_kubernetes_dashboard_subdomain is defined and ingress_base_domain is defined
     else undef(hint = 'admin_dashboard_ingress_kubernetes_dashboard_host is required')
   }}
-#   The name of the service for the ingress
+
+# The name of the service for the ingress
 admin_dashboard_ingress_kubernetes_dashboard_service: kubernetes-dashboard
-#   The name of the service port for the ingress
+
+# The name of the service port for the ingress
 admin_dashboard_ingress_kubernetes_dashboard_port: http
-#   The name of the secret containing the certificate for the ingress
+
+# The name of the secret containing the certificate for the ingress
 admin_dashboard_ingress_kubernetes_dashboard_tls_secret_name: >-
   {{-
     admin_dashboard_ingress_tls_wildcard_secret_name
     if admin_dashboard_ingress_tls_wildcard_certificate
     else admin_dashboard_ingress_kubernetes_dashboard_name ~ '-tls'
   }}
-#   The ingress definition
+
+# The ingress definition
 admin_dashboard_ingress_kubernetes_dashboard:
   name: "{{ admin_dashboard_ingress_kubernetes_dashboard_name }}"
   namespace: "{{ admin_dashboard_ingress_kubernetes_dashboard_namespace }}"

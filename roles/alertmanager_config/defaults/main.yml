@@ -16,9 +16,9 @@ alertmanager_config_slack_webhook_url:
 # The name of the channel to send alerts to
 # If not given, the default channel for the webhook will be used
 alertmanager_config_slack_webhook_channel:
-
 # The name and key of the secret containing the Slack webhook URL
 alertmanager_config_slack_webhook_secret_name: alertmanager-slack-webhook
+# checkov:skip=CKV_SECRET_6: No secret in config
 alertmanager_config_slack_webhook_secret_key: slack-api-url
 
 # The name of the alertmanager config for the Slack webhook

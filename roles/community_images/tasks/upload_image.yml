@@ -1,54 +1,57 @@
 ---
-
 #####
 # This set of tasks downloads, decompresses, converts and uploads an image to the target cloud
 # The "output" of the tasks is a variable containing the image ID
 #####
 
 - name: Ensure working directory is ready
+  when: not community_images_workdir
   block:
     - name: Get temporary working directory
-      tempfile:
+      ansible.builtin.tempfile:
         state: directory
       register: community_images_tempdir
 
     - name: Set working directory fact
-      set_fact:
+      ansible.builtin.set_fact:
         community_images_workdir: "{{ community_images_tempdir.path }}"
-  when: not community_images_workdir
 
 - name: Ensure working directory exists
-  file:
+  ansible.builtin.file:
     state: directory
     path: "{{ community_images_workdir }}"
+    mode: "0755"
 
 - name: "List images with name - {{ community_images_image_spec.name }}"
-  command: "openstack image list -f json --name {{ community_images_image_spec.name }}"
+  ansible.builtin.command: "openstack image list -f json --name {{ community_images_image_spec.name }}"
   changed_when: false
   register: community_images_image_list_cmd
 
 - name: "Set image list fact - {{ community_images_image_spec.name }}"
-  set_fact:
+  ansible.builtin.set_fact:
     community_images_image_list: "{{ community_images_image_list_cmd.stdout | from_json }}"
 
-- block:
+- name: Get information on existing images from OpenStack
+  when: "community_images_image_list | length > 0"
+  block:
     - name: "Get ID fact from pre-existing image - {{ community_images_image_spec.name }}"
-      set_fact:
-        community_images_image_id: "{{ community_images_image_list | map(attribute = 'ID') | first }}"
+      ansible.builtin.set_fact:
+        community_images_image_id: "{{ community_images_image_list | map(attribute='ID') | first }}"
 
     - name: "Fetch pre-existing image - {{ community_images_image_spec.name }}"
-      command: "openstack image show -f json {{ community_images_image_id }}"
+      ansible.builtin.command: "openstack image show -f json {{ community_images_image_id }}"
       changed_when: false
       register: community_images_image_info
 
     - name: "Set visibility fact from pre-existing image - {{ community_images_image_spec.name }}"
-      set_fact:
+      ansible.builtin.set_fact:
         community_images_image_current_visibility: "{{ community_images_image_info.stdout | from_json | json_query('visibility') }}"
-  when: "community_images_image_list | length > 0"
 
-- block:
+- name: Download, convert and upload images to Glance
+  when: "community_images_image_list | length == 0"
+  block:
     - name: "Set image facts - {{ community_images_image_spec.name }}"
-      set_fact:
+      ansible.builtin.set_fact:
         community_images_image_download_path: >-
           {{ (community_images_workdir, community_images_image_spec.name + '.download') | path_join }}
         community_images_image_decompress_path: >-
@@ -59,7 +62,7 @@
           {{ community_images_image_spec.source_url.split('.')[-1] in ['bz2'] }}
 
     - name: "Set image facts (2) - {{ community_images_image_spec.name }}"
-      set_fact:
+      ansible.builtin.set_fact:
         community_images_image_convert_in_path: >-
           {{-
             community_images_image_decompress_path
@@ -68,7 +71,7 @@
           }}
 
     - name: "Set image facts (3) - {{ community_images_image_spec.name }}"
-      set_fact:
+      ansible.builtin.set_fact:
         community_images_image_upload_in_path: >-
           {{-
             community_images_image_convert_in_path
@@ -77,20 +80,21 @@
           }}
 
     - name: "Download image - {{ community_images_image_spec.name }}"
-      get_url:
+      ansible.builtin.get_url:
         url: "{{ community_images_image_spec.source_url }}"
         dest: "{{ community_images_image_download_path }}"
         checksum: "{{ community_images_image_spec.checksum | default(omit) }}"
         timeout: 600
+        mode: "0644"
 
     - name: "Uncompress image (bzip2) - {{ community_images_image_spec.name }}"
-      shell: "bunzip2 -dc {{ community_images_image_download_path }} > {{ community_images_image_decompress_path }}"
+      ansible.builtin.shell: "bunzip2 -dc {{ community_images_image_download_path }} > {{ community_images_image_decompress_path }}"
       args:
         creates: "{{ community_images_image_decompress_path }}"
       when: community_images_image_spec.source_url.endswith('bz2')
 
     - name: "Convert image - {{ community_images_image_spec.name }}"
-      command: >-
+      ansible.builtin.command: >-
         qemu-img convert
           -f {{ community_images_image_spec.source_disk_format }}
           -O {{ community_images_disk_format }}
@@ -104,7 +108,7 @@
     # https://storyboard.openstack.org/#!/story/2008740
     # Instead, we use the OpenStack CLI directly
     - name: "Upload image - {{ community_images_image_spec.name }}"
-      command: >-
+      ansible.builtin.command: >-
         openstack image create
           -f json
           --container-format {{ community_images_image_spec.container_format }}
@@ -112,9 +116,10 @@
           --file {{ community_images_image_upload_in_path }}
           {{ community_images_image_spec.name }}
       register: community_images_create_image_cmd
+      changed_when: true
 
     - name: "Clean up files - {{ community_images_image_spec.name }}"
-      file:
+      ansible.builtin.file:
         path: "{{ path }}"
         state: absent
       loop:
@@ -125,13 +130,12 @@
         loop_var: path
 
     - name: "Set image ID fact - {{ community_images_image_spec.name }}"
-      set_fact:
+      ansible.builtin.set_fact:
         community_images_image_id: "{{ community_images_create_image_cmd.stdout | from_json | json_query('id') }}"
         community_images_image_current_visibility: "{{ community_images_create_image_cmd.stdout | from_json | json_query('visibility') }}"
-  when: "community_images_image_list | length == 0"
 
 - name: "Set image visibility fact - {{ community_images_image_spec.name }}"
-  set_fact:
+  ansible.builtin.set_fact:
     community_images_image_visibility: >-
       {{-
         community_images_image_spec.get('visibility', community_images_default_visibility)
@@ -140,36 +144,40 @@
       }}
 
 - name: "Set image visibility - {{ community_images_image_spec.name }}"
-  command: >-
+  ansible.builtin.command: >-
     openstack image set --{{ community_images_image_visibility }} {{ community_images_image_id }}
   when: community_images_image_visibility != community_images_image_current_visibility
+  changed_when: true
 
 - name: "Set custom properties for image - {{ community_images_image_spec.name }}"
-  command: >-
+  ansible.builtin.command: >-
     openstack image set
-      {%- for property in community_images_custom_properties %}
+    {%- for property in community_images_custom_properties %}
       --property {{ property | quote }}
-      {%- endfor %}
+    {%- endfor %}
       {{ community_images_image_id }}
   when: "community_images_custom_properties | length > 0"
+  changed_when: true
 
-- block:
+- name: Share and accept images with OpenStack projects
+  when: "community_images_image_visibility == 'shared'"
+  block:
     - name: "Share image with project - {{ community_images_image_spec.name }}"
-      command: "openstack image add project {{ community_images_image_id }} {{ project_id }}"
+      ansible.builtin.command: "openstack image add project {{ community_images_image_id }} {{ project_id }}"
       register: community_images_image_add_project
       changed_when: community_images_image_add_project.rc == 0
       failed_when: >-
         community_images_image_add_project.rc != 0 and
         not community_images_image_add_project.stderr.startswith("ConflictException")
-      loop: "{{ community_images_share_projects | map(attribute = 'id') | list }}"
+      loop: "{{ community_images_share_projects | map(attribute='id') | list }}"
       loop_control:
         loop_var: project_id
 
     - name: "Accept image into project - {{ community_images_image_spec.name }}"
-      command: "openstack image set --accept {{ community_images_image_id }}"
+      ansible.builtin.command: "openstack image set --accept {{ community_images_image_id }}"
       environment:
         OS_CLOUD: "{{ project_key }}"
-      loop: "{{ community_images_share_projects | map(attribute = 'key') | list }}"
+      loop: "{{ community_images_share_projects | map(attribute='key') | list }}"
       loop_control:
         loop_var: project_key
-  when: "community_images_image_visibility == 'shared'"
+      changed_when: true

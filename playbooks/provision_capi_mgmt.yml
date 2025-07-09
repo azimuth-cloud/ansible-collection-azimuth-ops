@@ -1,15 +1,15 @@
+---
 #####
-# This playbook uses Terraform and Cluster API to provision a CAPI management cluster
+# This playbook uses OpenTofu and Cluster API to provision a CAPI management cluster
 # The CAPI management cluster can be either single-node or HA
 #####
-
-
 # Provision the Kubernetes cluster onto which Azimuth will be deployed
-- import_playbook: azimuth_cloud.azimuth_ops.provision_cluster
-
+- name: Provision Kubernetes cluster for Azimuth
+  import_playbook: azimuth_cloud.azimuth_ops.provision_cluster
 
 # Install Azimuth
-- import_playbook: azimuth_cloud.azimuth_ops.deploy_capi_mgmt
+- name: Install and configure Cluster API management cluster
+  import_playbook: azimuth_cloud.azimuth_ops.deploy_capi_mgmt
   vars:
     # In HA mode, use the kubeconfig for the HA cluster
     # In single node mode, use the default kubeconfig file

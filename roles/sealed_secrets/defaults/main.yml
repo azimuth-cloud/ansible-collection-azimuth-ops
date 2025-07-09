@@ -4,6 +4,7 @@ sealed_secrets_chart_repo: https://bitnami-labs.github.io/sealed-secrets
 sealed_secrets_chart_name: sealed-secrets
 sealed_secrets_chart_version: 2.17.3
 
+# checkov:skip=CKV_SECRET_6: No secret in config
 sealed_secrets_release_namespace: sealed-secrets-system
 sealed_secrets_release_name: sealed-secrets
 

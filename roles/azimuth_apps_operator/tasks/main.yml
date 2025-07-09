@@ -8,7 +8,7 @@
     release_namespace: "{{ azimuth_apps_operator_release_namespace }}"
     release_name: "{{ azimuth_apps_operator_release_name }}"
     release_values: "{{ azimuth_apps_operator_release_values }}"
-    atomic: yes
-    create_namespace: yes
-    wait: yes
+    atomic: true
+    create_namespace: true
+    wait: true
     wait_timeout: "{{ azimuth_apps_operator_wait_timeout }}"
