@@ -1,0 +1,120 @@
+#####
+# This playbook attempts to setup and install dependencies on an existing VM with k3s
+#####
+
+# Configure the k3s cluster and add tools 
+- name: Setup Node
+  hosts: k3s
+  tasks:
+    - name: Check CLI tools
+      become: true
+      block:
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.system_trust
+
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.sysctl_inotify
+
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.k9s
+
+        - name: Get installed Kubernetes version
+          command: k3s kubectl version --output json
+          changed_when: false
+          register: k3s_kubectl_version
+
+        - name: Set kubectl version fact
+          set_fact:
+            kubectl_version: "{{ (k3s_kubectl_version.stdout | from_json).serverVersion.gitVersion.split('+') | first }}"
+
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.kubectl
+
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.helm
+
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.kustomize
+
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.flux
+            tasks_from: cli
+          when: flux_enabled
+
+        - name: Slurp kubeconfig file
+          slurp:
+            src: /etc/rancher/k3s/k3s.yaml
+          register: k3s_kubeconfig
+
+    - name: Ensure kube config directory exists
+      file:
+        path: "{{ ansible_env.HOME }}/.kube"
+        state: directory
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Write kubeconfig file
+      copy:
+        content: "{{ k3s_kubeconfig.content | b64decode }}"
+        dest: "{{ ansible_env.HOME }}/.kube/config"
+        mode: u=rwx,g=,o=
+    #- include_role:
+    #    name: azimuth_cloud.azimuth_ops.community_images
+    
+    # For a single node install, we put the monitoring and ingress controller on the K3S cluster
+    - block:
+        # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
+         
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.ingress_nginx
+          when: "ingress_controller_enabled | default(true)"
+      when: install_mode == 'singlenode'
+
+
+    # None of this block should really run, HA mode has not been tested
+    # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
+    - block:
+        - include_role:
+            name: azimuth_cloud.azimuth_ops.certmanager
+          vars:
+            certmanager_monitoring_enabled: no
+            certmanager_acmehttp01issuer_enabled: no
+
+        # - include_role:
+        #    name: azimuth_cloud.azimuth_ops.clusterapi
+
+        # - include_role:
+        #    name: azimuth_cloud.azimuth_ops.capi_cluster
+        #  vars:
+        #    capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+
+        # Install the Velero components on the capi cluster and configure the backup schedule
+        # NOTE(sd109): Need to use block so that we can set `environment` variables
+        - block:
+            - include_role:
+                name: azimuth_cloud.azimuth_ops.velero
+                tasks_from: schedule.yml
+          environment:
+            KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+          when: velero_enabled
+
+      when: install_mode == 'ha'
+
+
+- import_playbook: azimuth_cloud.azimuth_ops.deploy
+  vars:
+    # In HA mode, use the kubeconfig for the HA cluster
+    # In single node mode, use the default kubeconfig file
+    kubeconfig_path: >-
+      {{-
+        "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
+        if install_mode == 'ha'
+        else ""
+      }}
+
+# - name: Setup ansible
+#  hosts: k3s
+#  tasks:
+#    - ansible.builtin.include_role:
+#        name: azimuth_cloud.azimuth_ops.tenancy_config
