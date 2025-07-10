@@ -469,6 +469,8 @@ azimuth_capi_operator_release_defaults:
             else {}
           )
       }}
+    identity:
+      oidcEnabled: "{{ true if azimuth_authentication_type == 'oidc' else false }}"
     zenith: >-
       {{-
         {} |
