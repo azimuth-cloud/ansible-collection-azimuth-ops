@@ -65,8 +65,7 @@
         # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
         - include_role:
             name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
-          when: cloud_metrics_enabled # service monitor dependent alerts use same conditional 
-
+         
         - include_role:
             name: azimuth_cloud.azimuth_ops.ingress_nginx
           when: "ingress_controller_enabled | default(true)"
