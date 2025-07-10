@@ -106,12 +106,12 @@
 
     - name: Include service account tasks with kubeconfig env
       block:
-        - name: Including magnum service account tasks to generate token-based kubeconfig 
-          include_tasks: "magnum-service-account.yml"
-          when: magnum_service_account_enabled 
+        - name: Including token-based kubeconfig tasks to generate token-based kubeconfig
+          include_tasks: "capi-cluster-service-account.yml"
+          when: capi_cluster_service_account_enabled
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
-  
+
 - name: Delete CAPI cluster
   when: capi_cluster_release_state == 'absent'
   block:
