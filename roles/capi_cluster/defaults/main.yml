@@ -581,6 +581,15 @@ capi_cluster_release_values: >-
 # The name of the file into which the kubeconfig of the cluster should be output
 capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig"
 
+# Set variables for token-based kubeconfig - service accounts/namespace/secrets
+capi_cluster_service_account_namespace: capi-cluster-service
+capi_cluster_service_account_name: capi-cluster-service-account
+capi_cluster_service_account_secret_name: capi-cluster-service-account-secret
+capi_cluster_clusterrolebinding_name: capi-cluster-service-account-clusterrolebinding
+capi_cluster_service_account_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}-capi-cluster-service-account.yml"
+capi_cluster_service_account_role_name: cluster-admin
+capi_cluster_service_account_enabled: false
+capi_cluster_service_account_rotate_secret: false
 # The volumes policy for the cluster (keep or delete)
 # Determines what happens to Cinder volumes created for PVCs when the cluster is deleted
 capi_cluster_volumes_policy: keep
