@@ -38,7 +38,7 @@ flux_release_values: >-
 # The Flux repository
 flux_cli_repo: https://github.com/fluxcd/flux2
 # The Flux version to download
-flux_cli_version: v2.6.3
+flux_cli_version: v2.6.4
 # The OS variant and architecture to use
 flux_cli_os: "{{ ansible_system | lower }}"
 flux_cli_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
