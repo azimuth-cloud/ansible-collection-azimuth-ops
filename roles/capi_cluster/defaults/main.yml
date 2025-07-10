@@ -583,17 +583,23 @@ capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig"
 
 # Optional configuration for the creation of service account, secret and a clusterrole
 # to generate a long-lived, token-based kubeconfig
-capi_cluster_service_account_namespace: capi-cluster-service
-capi_cluster_service_account_name: capi-cluster-service-account
-capi_cluster_service_account_secret_name: capi-cluster-service-account-secret
-capi_cluster_clusterrolebinding_name: capi-cluster-service-account-clusterrolebinding
+capi_cluster_service_account_enabled: false
+capi_cluster_service_account_name: capi-cluster-service-accountcapi_cluster_service_account_namespace: capi-cluster-service
+capi_cluster_service_account_secret_name: capi-mgmt-service-account
+capi_cluster_clusterrolebinding_name: capi-mgmt-service-account
+
 # Name of an existing cluster role which the service account should be bound to
 # Note: This defaults to the cluster-admin role since capi-helm-charts needs permission to
 # create a role and role binding anyway (for the CAPI autoscaler deployment). Therefore,
 # restricting to anything less privileged than admin still allows trivial privilege escalation via
 # the creation of new roles and role bindings.
 capi_cluster_service_account_role_name: cluster-admin
-capi_cluster_service_account_enabled: false
+
+# Optional flag to delete the existing service account and generate
+# a new service account and token instead. This should only be used
+# if the existing token is leaked needs to be rotated.
+# The token rotation method is to set this variable at run time with
+# `ansible-playbook -e capi_cluster_service_account_rotate_secret=true ...`
 capi_cluster_service_account_rotate_secret: false
 
 # The file path on the seed to which the token-based kubeconfig file should be written
