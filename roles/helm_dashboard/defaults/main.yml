@@ -2,7 +2,7 @@
 
 helm_dashboard_chart_repo: https://helm-charts.komodor.io
 helm_dashboard_chart_name: helm-dashboard
-helm_dashboard_chart_version: 2.0.3
+helm_dashboard_chart_version: 2.0.4
 
 helm_dashboard_release_namespace: monitoring-system
 helm_dashboard_release_name: helm-dashboard
