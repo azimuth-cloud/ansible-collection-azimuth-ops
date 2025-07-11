@@ -1,0 +1,132 @@
+#####
+# This playbook attempts to setup and install dependencies on an existing VM with k3s
+#####
+
+# Configure the k3s cluster and add tools
+- name: Setup Node
+  hosts: k3s
+  tasks:
+    - name: Check CLI tools
+      become: true
+      block:
+        - name: Configure system trust store
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.system_trust
+
+        - name: Set sysctls
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.sysctl_inotify
+
+        - name: Install and configure k9s
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.k9s
+
+        - name: Get installed Kubernetes version
+          ansible.builtin.command: k3s kubectl version --output json
+          changed_when: false
+          register: k3s_kubectl_version
+
+        - name: Set kubectl version fact
+          ansible.builtin.set_fact:
+            kubectl_version: "{{ (k3s_kubectl_version.stdout | from_json).serverVersion.gitVersion.split('+') | first }}"
+
+        - name: Install Kubectl
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.kubectl
+
+        - name: Install Helm
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.helm
+
+        - name: Install Kustomize
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.kustomize
+
+        - name: Install Flux
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.flux
+            tasks_from: cli
+          when: flux_enabled
+
+        - name: Slurp kubeconfig file
+          ansible.builtin.slurp:
+            src: /etc/rancher/k3s/k3s.yaml
+          register: k3s_kubeconfig
+
+    - name: Ensure kube config directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.kube"
+        state: directory
+        mode: u=rwx,g=rx,o=rx
+
+    - name: Write kubeconfig file
+      ansible.builtin.copy:
+        content: "{{ k3s_kubeconfig.content | b64decode }}"
+        dest: "{{ ansible_env.HOME }}/.kube/config"
+        mode: u=rwx,g=,o=
+    # - include_role:
+    #    name: azimuth_cloud.azimuth_ops.community_images
+
+
+    # For a single node install, we put the monitoring and ingress controller on the K3S cluster
+    - name: Install monitoring stack and ingress controller
+      when: install_mode == 'singlenode'
+
+      # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
+      block:
+        # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
+        - name: Install Kube-Prometheus-Stack
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
+
+        - name: Install Nginx ingress controller
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.ingress_nginx
+          when: "ingress_controller_enabled | default(true)"
+
+
+    # HA mode has not been tested and will probably break
+    - name: Configure Azimuth HA cluster
+      when: install_mode == 'ha'
+      block:
+        - name: Install CertManager
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.certmanager
+          vars:
+            certmanager_monitoring_enabled: false
+            certmanager_acmehttp01issuer_enabled: false
+
+        # - name: Install Cluster API resources
+        #   ansible.builtin.include_role:
+        #     name: azimuth_cloud.azimuth_ops.clusterapi
+
+        # - name: Provision Azimuth HA cluster using Cluster API
+        #   ansible.builtin.include_role:
+        #     name: azimuth_cloud.azimuth_ops.capi_cluster
+        #   vars:
+        #     capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+
+        # Install the Velero components on the capi cluster and configure the backup schedule
+        # NOTE(sd109): Need to use block so that we can set `environment` variables
+        - name: Configure Velero schedule
+          environment:
+            KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+          when: velero_enabled
+          block:
+            - name: Configure Velero schedule
+              ansible.builtin.include_role:
+                name: azimuth_cloud.azimuth_ops.velero
+                tasks_from: schedule.yml
+
+# Install Azimuth
+- name: Install and configure Azimuth
+  import_playbook: azimuth_cloud.azimuth_ops.deploy
+  vars:
+    # In HA mode, use the kubeconfig for the HA cluster
+    # In single node mode, use the default kubeconfig file
+    kubeconfig_path: >-
+      {{-
+        "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
+        if install_mode == 'ha'
+        else ""
+      }}
