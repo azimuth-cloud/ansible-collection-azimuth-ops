@@ -584,7 +584,8 @@ capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig"
 # Optional configuration for the creation of service account, secret and a clusterrole
 # to generate a long-lived, token-based kubeconfig
 capi_cluster_service_account_enabled: false
-capi_cluster_service_account_name: capi-cluster-service-accountcapi_cluster_service_account_namespace: capi-cluster-service
+capi_cluster_service_account_name: capi-cluster-service-account
+capi_cluster_service_account_namespace: capi-cluster-service
 capi_cluster_service_account_secret_name: capi-mgmt-service-account
 capi_cluster_clusterrolebinding_name: capi-mgmt-service-account
 
