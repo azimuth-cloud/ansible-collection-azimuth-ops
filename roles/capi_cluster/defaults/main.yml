@@ -607,9 +607,6 @@ capi_cluster_service_account_role_name: cluster-admin
 # `ansible-playbook -e capi_cluster_service_account_rotate_secret=true ...`
 capi_cluster_service_account_rotate_secret: false
 
-# The file path on the seed to which the token-based kubeconfig file should be written
-capi_cluster_service_account_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}-capi-mgmt-service-account.yml"
-
 # The volumes policy for the cluster (keep or delete)
 # Determines what happens to Cinder volumes created for PVCs when the cluster is deleted
 capi_cluster_volumes_policy: keep
