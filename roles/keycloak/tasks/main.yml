@@ -71,6 +71,7 @@
     pgo_database_backup_volume_storage_class: "{{ keycloak_database_backup_volume_storage_class }}"
     pgo_database_data_volume_size: "{{ keycloak_database_data_volume_size }}"
     pgo_database_backup_volume_size: "{{ keycloak_database_backup_volume_size }}"
+    pgo_database_metrics: "{{ keycloak_metrics }}"
   when: not keycloak_external_db_url
 
 - name: Install trust bundle
@@ -180,6 +181,8 @@
           app: "{{ keycloak_name }}"
   register: kubectl_keycloak_metrics
   changed_when: kubectl_keycloak_metrics.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  when: keycloak_metrics
+
 
 - name: Install ServiceMonitor for Keycloak metrics
   ansible.builtin.command: kubectl apply -f -
@@ -205,6 +208,7 @@
             instance: "{{ keycloak_name }}"
   register: kubectl_keycloak_servicemonitor
   changed_when: kubectl_keycloak_servicemonitor.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  when: keycloak_metrics
 
 # Try to obtain a Keycloak admin token with the password from the config
 - name: Get Keycloak admin token
