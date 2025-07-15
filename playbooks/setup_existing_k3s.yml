@@ -6,8 +6,9 @@
 - name: Setup Node
   hosts: k3s
   tasks:
-    - name: Check CLI tools
+    - name: Install CLI tools
       become: true
+      when: install_cli_tools
       block:
         - name: Configure system trust store
           ansible.builtin.include_role:
@@ -48,25 +49,25 @@
             tasks_from: cli
           when: flux_enabled
 
+    - name: Setup Kubeconfig
+      when: slurp_k3s_kubeconfig
+      block:
         - name: Slurp kubeconfig file
           ansible.builtin.slurp:
             src: /etc/rancher/k3s/k3s.yaml
           register: k3s_kubeconfig
 
-    - name: Ensure kube config directory exists
-      ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.kube"
-        state: directory
-        mode: u=rwx,g=rx,o=rx
+        - name: Ensure kube config directory exists
+          ansible.builtin.file:
+            path: "{{ ansible_env.HOME }}/.kube"
+            state: directory
+            mode: u=rwx,g=rx,o=rx
 
-    - name: Write kubeconfig file
-      ansible.builtin.copy:
-        content: "{{ k3s_kubeconfig.content | b64decode }}"
-        dest: "{{ ansible_env.HOME }}/.kube/config"
-        mode: u=rwx,g=,o=
-    # - include_role:
-    #    name: azimuth_cloud.azimuth_ops.community_images
-
+        - name: Write kubeconfig file
+          ansible.builtin.copy:
+            content: "{{ k3s_kubeconfig.content | b64decode }}"
+            dest: "{{ ansible_env.HOME }}/.kube/config"
+            mode: u=rwx,g=,o=
 
     # For a single node install, we put the monitoring and ingress controller on the K3S cluster
     - name: Install monitoring stack and ingress controller
@@ -84,39 +85,14 @@
             name: azimuth_cloud.azimuth_ops.ingress_nginx
           when: "ingress_controller_enabled | default(true)"
 
-
-    # HA mode has not been tested and will probably break
+    # HA mode relies on openstack
     - name: Configure Azimuth HA cluster
       when: install_mode == 'ha'
       block:
-        - name: Install CertManager
-          ansible.builtin.include_role:
-            name: azimuth_cloud.azimuth_ops.certmanager
-          vars:
-            certmanager_monitoring_enabled: false
-            certmanager_acmehttp01issuer_enabled: false
+        - name: Fail to install HA
+          ansible.builtin.fail:
+            msg: "HA mode without openstack is unsupported"
 
-        # - name: Install Cluster API resources
-        #   ansible.builtin.include_role:
-        #     name: azimuth_cloud.azimuth_ops.clusterapi
-
-        # - name: Provision Azimuth HA cluster using Cluster API
-        #   ansible.builtin.include_role:
-        #     name: azimuth_cloud.azimuth_ops.capi_cluster
-        #   vars:
-        #     capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
-
-        # Install the Velero components on the capi cluster and configure the backup schedule
-        # NOTE(sd109): Need to use block so that we can set `environment` variables
-        - name: Configure Velero schedule
-          environment:
-            KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
-          when: velero_enabled
-          block:
-            - name: Configure Velero schedule
-              ansible.builtin.include_role:
-                name: azimuth_cloud.azimuth_ops.velero
-                tasks_from: schedule.yml
 
 # Install Azimuth
 - name: Install and configure Azimuth
