@@ -20,7 +20,7 @@
     - role: azimuth_cloud.azimuth_ops.helm_dashboard
     - role: azimuth_cloud.azimuth_ops.admin_dashboard_ingress
     - role: azimuth_cloud.azimuth_ops.azimuth_authorization_webhook
-      when: azimuth_authentication_type == "oidc" and ingress_tls_enabled
+      when: azimuth_authentication_type == "oidc" and azimuth_cloud_provider_type != "null"
     - role: azimuth_cloud.azimuth_ops.harbor
       when: harbor_enabled
     - role: azimuth_cloud.azimuth_ops.cloud_metrics
