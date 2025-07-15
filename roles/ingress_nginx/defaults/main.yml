@@ -24,9 +24,9 @@ ingress_nginx_release_defaults:
     config:
       annotations-risk-level: Critical
     metrics:
-      enabled: "{{ cloud_metrics_enabled }}"
+      enabled: "{{ deploy_prometheus_stack }}"
       serviceMonitor:
-        enabled: "{{ cloud_metrics_enabled }}"
+        enabled: "{{ deploy_prometheus_stack }}"
 ingress_nginx_release_overrides: {}
 ingress_nginx_release_values: >-
   {{-

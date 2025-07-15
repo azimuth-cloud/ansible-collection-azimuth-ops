@@ -29,4 +29,3 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ kube_prometheus_stack_wait_timeout }}"
-  when: cloud_metrics_enabled

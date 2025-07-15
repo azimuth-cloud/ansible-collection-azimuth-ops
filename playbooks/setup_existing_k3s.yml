@@ -79,6 +79,7 @@
         - name: Install Kube-Prometheus-Stack
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
+          when: deploy_prometheus_stack
 
         - name: Install Nginx ingress controller
           ansible.builtin.include_role:
