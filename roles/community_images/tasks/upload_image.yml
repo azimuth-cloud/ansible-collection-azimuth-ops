@@ -102,6 +102,9 @@
           --bundle "{{ community_images_image_cosign_download_path }}" \
           --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
           --certificate-identity-regexp="https://github.com/azimuth-cloud/azimuth-images/.github/.*"
+      register: community_images_verify_blob_cmd
+      changed_when: false
+      failed_when: community_images_verify_blob_cmd.rc != 0
 
     - name: "Uncompress image (bzip2) - {{ community_images_image_spec.name }}"
       ansible.builtin.shell: "bunzip2 -dc {{ community_images_image_download_path }} > {{ community_images_image_decompress_path }}"
