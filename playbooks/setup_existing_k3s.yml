@@ -79,11 +79,13 @@
         - name: Install Kube-Prometheus-Stack
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
-          when: deploy_prometheus_stack
+          when: deploy_prometheus_stack | default(false)
 
         - name: Install Nginx ingress controller
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.ingress_nginx
+          vars:
+            ingress_ngnix_pometheus_stack_enabled: "{{ deploy_prometheus_stack | default(false) }}"
           when: "ingress_controller_enabled | default(true)"
 
     # HA mode relies on openstack
