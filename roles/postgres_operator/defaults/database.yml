@@ -18,6 +18,11 @@ pgo_database_data_volume_size: 8Gi
 # By default, this is the same as the data volume
 pgo_database_backup_volume_size: "{{ pgo_database_data_volume_size }}"
 # The spec of the database resource
+
+# variable to toggle monitoring pods
+pgo_database_metrics: true
+
+
 pgo_database_spec_defaults:
   postgresVersion: "{{ pgo_database_version }}"
   # TODO(mkjpryor)

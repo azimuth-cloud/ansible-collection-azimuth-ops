@@ -69,6 +69,9 @@ azimuth_current_cloud_name: "{{ undef(hint='azimuth_current_cloud_name is requir
 azimuth_current_cloud_label: >-
   {{ azimuth_current_cloud_name | regex_replace('[^a-z0-9]+', ' ') | capitalize }}
 
+# toggle for metrics
+azimuth_metrics: true
+
 # Settings for the metrics dashboards, if available
 # By default, these are provided by the cloud_metrics role
 azimuth_metrics_cloud_metrics_url: >-
@@ -513,7 +516,7 @@ azimuth_release_defaults:
   # Enable the API monitoring by default
   api:
     monitoring:
-      enabled: true
+      enabled: "{{ azimuth_metrics }}"
 azimuth_release_overrides: {}
 azimuth_release_values: >-
   {{-
