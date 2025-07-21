@@ -78,9 +78,9 @@ infra_floatingip_pool:
 infra_image_id:
 # OR
 # The name of the image to upload (should be changed when the image changes)
-infra_image_name: ubuntu-jammy-20250508
+infra_image_name: ubuntu-jammy-20250626
 # The source URL for the image
-infra_image_source_url: https://cloud-images.ubuntu.com/releases/jammy/release-20250508/ubuntu-22.04-server-cloudimg-amd64.img
+infra_image_source_url: https://cloud-images.ubuntu.com/releases/jammy/release-20250626/ubuntu-22.04-server-cloudimg-amd64.img
 # The disk format of the image as downloaded
 infra_image_source_disk_format: qcow2
 # The container format for the image
