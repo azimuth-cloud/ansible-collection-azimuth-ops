@@ -89,7 +89,7 @@ community_images_slurm:
     source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-250506-1259-abb6394b"
     source_disk_format: qcow2
     container_format: bare
-    cosign_bundle_url: "todo"
+    cosign_bundle_url: ""
 
 # The default community images to upload
 community_images_default: >-
