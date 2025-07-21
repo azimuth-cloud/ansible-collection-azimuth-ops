@@ -31,8 +31,6 @@
         - name: Install and configure k3s
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.k3s
-          vars:
-            k3s_configure_filesystem: false
 
     - name: Install CLI tools
       become: true
@@ -105,8 +103,6 @@
         - name: Install Nginx ingress controller
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.ingress_nginx
-          vars:
-            ingress_nginx_prometheus_stack_enabled: "{{ deploy_prometheus_stack | default(false) }}"
           when: "ingress_controller_enabled | default(true)"
 
     # HA mode relies on openstack
