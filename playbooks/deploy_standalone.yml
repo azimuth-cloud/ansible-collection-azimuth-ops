@@ -3,14 +3,13 @@
 #####
 
 - name: Setup groups
-  hosts: standalone
+  hosts: azimuth_deploy
   tasks:
     - name: Setup host groups
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups:
           - k3s
-          - azimuth_deploy
       loop: "{{ ansible_play_hosts }}"
 
 # Configure the k3s cluster and add tools
