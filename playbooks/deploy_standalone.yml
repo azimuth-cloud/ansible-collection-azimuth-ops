@@ -1,5 +1,5 @@
 #####
-# This playbook attempts to setup and install dependencies on an existing VM with k3s
+# This playbook attempts to setup and install Azimuth on a fresh ubuntu VM
 #####
 
 - name: Setup groups
