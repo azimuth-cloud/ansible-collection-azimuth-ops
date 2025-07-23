@@ -116,23 +116,12 @@
           when: "ingress_controller_enabled | default(true)"
 
     # HA mode relies on openstack
-    - name: Configure Azimuth HA cluster
-      when: install_mode == 'ha'
-      block:
-        - name: Fail to install HA
-          ansible.builtin.fail:
-            msg: "HA mode without openstack is unsupported"
+    - name: Fail if install_mode is not standalone
+      ansible.builtin.fail:
+        msg: "Install modes other than 'standalone' are not supported for this playbook"
+      when: install_mode != 'standalone'
 
 
 # Install Azimuth
 - name: Install and configure Azimuth
   import_playbook: azimuth_cloud.azimuth_ops.deploy
-  vars:
-    # In HA mode, use the kubeconfig for the HA cluster
-    # In single node mode, use the default kubeconfig file
-    kubeconfig_path: >-
-      {{-
-        "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
-        if install_mode == 'ha'
-        else ""
-      }}
