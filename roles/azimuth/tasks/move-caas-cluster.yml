@@ -45,7 +45,7 @@
       --type merge
       --patch '{"spec": {"paused": true}}'
   register: kubectl_patch_pause_cluster
-  changed_when: kubectl_patch_pause_cluster.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
+  changed_when: kubectl_patch_pause_cluster.stdout_lines | select('match', '(?!.*\\(no change\\)$)') | length > 0
 
 - name: Copy cloud credentials secret to new namespace
   ansible.builtin.command: kubectl apply -f -
@@ -120,7 +120,7 @@
     azimuth_cluster_status_patch:
       status: "{{ cluster.status }}"
   register: kubectl_patch_cluster_status
-  changed_when: kubectl_patch_cluster_status.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
+  changed_when: kubectl_patch_cluster_status.stdout_lines | select('match', '(?!.*\\(no change\\)$)') | length > 0
 
 - name: Get UID of new cluster object
   ansible.builtin.command: >-
@@ -148,7 +148,7 @@
             uid: "{{ azimuth_cluster_new_uid.stdout }}"
             blockOwnerDeletion: true
   register: kubectl_patch_owner_refs
-  changed_when: kubectl_patch_owner_refs.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
+  changed_when: kubectl_patch_owner_refs.stdout_lines | select('match', '(?!.*\\(no change\\)$)') | length > 0
 
 - name: Resume new cluster
   ansible.builtin.command: >-
@@ -157,7 +157,7 @@
       --type merge
       --patch '{"spec": {"paused": false}}'
   register: kubectl_patch_resume_cluster
-  changed_when: kubectl_patch_resume_cluster.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
+  changed_when: kubectl_patch_resume_cluster.stdout_lines | select('match', '(?!.*\\(no change\\)$)') | length > 0
 
 - name: Remove old cluster resources
   ansible.builtin.command: kubectl delete -f -

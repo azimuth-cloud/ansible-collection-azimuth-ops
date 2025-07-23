@@ -82,4 +82,4 @@
         map("split", ":")
     }}
   register: kubectl_patch_crd_pubkey
-  changed_when: kubectl_patch_crd_pubkey.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
+  changed_when: kubectl_patch_crd_pubkey.stdout_lines | select('match', '(?!.*\\(no change\\)$)') | length > 0
