@@ -1,0 +1,125 @@
+#####
+# This playbook attempts to setup and install Azimuth on a fresh ubuntu VM
+#####
+
+- name: Setup
+  hosts: azimuth_deploy
+  tasks:
+    # HA mode relies on openstack
+    - name: Fail if install_mode is not standalone
+      ansible.builtin.fail:
+        msg: "Install modes other than 'standalone' are not supported for this playbook"
+      when: install_mode != 'standalone'
+
+    - name: Setup host groups
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups:
+          - k3s
+      loop: "{{ ansible_play_hosts }}"
+
+# Configure the k3s cluster and add tools
+- name: Setup Node
+  hosts: k3s
+  tasks:
+
+    - name: System setup
+      become: true
+      when: configure_system_resources | default (false)
+      block:
+        - name: Update packages
+          ansible.builtin.apt:
+            update_cache: true
+            upgrade: true
+
+        - name: Configure system trust store
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.system_trust
+
+        - name: Set sysctls
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.sysctl_inotify
+
+    - name: Install k3s
+      when: install_k3s
+      become: true
+      block:
+        - name: Install and configure k3s
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.k3s
+
+    - name: Install CLI tools
+      become: true
+      when: install_cli_tools
+      block:
+        - name: Install and configure k9s
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.k9s
+
+        - name: Get installed Kubernetes version
+          ansible.builtin.command: k3s kubectl version --output json
+          changed_when: false
+          register: k3s_kubectl_version
+
+        - name: Set kubectl version fact
+          ansible.builtin.set_fact:
+            kubectl_version: "{{ (k3s_kubectl_version.stdout | from_json).serverVersion.gitVersion.split('+') | first }}"
+
+        - name: Install Kubectl
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.kubectl
+
+        - name: Install Helm
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.helm
+
+        - name: Install Kustomize
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.kustomize
+
+        - name: Install Flux
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.flux
+            tasks_from: cli
+          when: flux_enabled
+
+    - name: Setup Kubeconfig
+      when: slurp_k3s_kubeconfig
+      become: true
+      block:
+        - name: Slurp kubeconfig file
+          ansible.builtin.slurp:
+            src: /etc/rancher/k3s/k3s.yaml
+          register: k3s_kubeconfig
+
+        - name: Ensure kube config directory exists
+          ansible.builtin.file:
+            path: "{{ ansible_env.HOME }}/.kube"
+            state: directory
+            mode: u=rwx,g=rx,o=rx
+
+        - name: Write kubeconfig file
+          ansible.builtin.copy:
+            content: "{{ k3s_kubeconfig.content | b64decode }}"
+            dest: "{{ ansible_env.HOME }}/.kube/config"
+            mode: u=rwx,g=r,o=r
+
+    # For a single node install, we put the monitoring and ingress controller on the K3S cluster
+    - name: Install monitoring stack and ingress controller
+
+      # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
+      block:
+        # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
+        - name: Install Kube-Prometheus-Stack
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
+          when: deploy_prometheus_stack | default(false)
+
+        - name: Install Nginx ingress controller
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.ingress_nginx
+          when: "ingress_controller_enabled | default(true)"
+
+# Install Azimuth
+- name: Install and configure Azimuth
+  import_playbook: azimuth_cloud.azimuth_ops.deploy

@@ -39,3 +39,4 @@
             postgres-operator.crunchydata.com/cluster: "{{ pgo_database_name }}"
   register: kubectl_pgo_podmon
   changed_when: kubectl_pgo_podmon.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  when: pgo_database_metrics
