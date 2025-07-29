@@ -12,3 +12,6 @@ k3s_storage_fstype: xfs
 
 # Indicates if the Traefik ingress controller should be enabled
 k3s_traefik_enabled: false
+
+# Variable to disable filesystem setup (for running on existing systems)
+k3s_configure_filesystem: true

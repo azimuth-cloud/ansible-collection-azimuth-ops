@@ -19,6 +19,9 @@ azimuth_capi_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 # The timer interval to use for the CAPI operator
 azimuth_capi_operator_timer_interval: 60
 
+# variable to toggle metrics
+azimuth_capi_operator_metrics: true
+
 # The repo, name and version for the CAPI Helm charts
 # Leave blank to use the operator defaults
 azimuth_capi_operator_capi_helm_chart_repo:
@@ -502,7 +505,7 @@ azimuth_capi_operator_release_defaults:
       }}
   # Enable the metrics with the service monitor by default
   metrics:
-    enabled: true
+    enabled: "{{ azimuth_capi_operator_metrics }}"
   trustBundle: "{{ azimuth_capi_operator_trust_bundle }}"
 azimuth_capi_operator_release_overrides: {}
 azimuth_capi_operator_release_values: >-
