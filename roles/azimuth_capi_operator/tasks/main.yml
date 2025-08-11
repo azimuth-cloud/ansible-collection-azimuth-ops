@@ -62,7 +62,7 @@
   loop_control:
     label: "{{ item.metadata.name }}"
   register: kubectl_patch_acl_annotations
-  changed_when: kubectl_patch_acl_annotations.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
+  changed_when: kubectl_patch_acl_annotations.stdout_lines | select('match', '(?!.*\\(no change\\)$)') | length > 0
 
 - name: Deprecate non-current templates
   ansible.builtin.command: >-
@@ -81,7 +81,7 @@
   loop_control:
     label: "{{ item.metadata.name }}"
   register: kubectl_patch_templates
-  changed_when: kubectl_patch_templates.stdout_lines | select('match', '(?!.*\\(no change\\)$') | length > 0
+  changed_when: kubectl_patch_templates.stdout_lines | select('match', '(?!.*\\(no change\\)$)') | length > 0
 
 - name: Install Azimuth CAPI app templates
   ansible.builtin.command: kubectl apply -f -

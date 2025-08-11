@@ -104,6 +104,15 @@
         dest: "{{ capi_cluster_kubeconfig_path }}"
         mode: u=rw,g=,o=
 
+- name: Including token-based kubeconfig tasks to generate token-based kubeconfig
+  when: capi_cluster_service_account_enabled
+  environment:
+    KUBECONFIG: "{{ capi_cluster_kubeconfig_path }}"
+  block:
+    - name: Include token-based kubeconfig task file
+      ansible.builtin.include_tasks: capi-cluster-service-account.yml
+
+
 - name: Delete CAPI cluster
   when: capi_cluster_release_state == 'absent'
   block:
