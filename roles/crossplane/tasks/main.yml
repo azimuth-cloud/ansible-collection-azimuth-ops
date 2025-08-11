@@ -19,7 +19,7 @@
   register: result
   until: result.rc == 0
   retries: 10
-  delay: 2
+  delay: 30
 
 - name: Install Crossplane providers # noqa no-changed-when
   ansible.builtin.command: kubectl apply -f -
