@@ -38,7 +38,7 @@
     - role: azimuth_cloud.azimuth_ops.keycloak
       when: azimuth_apps_enabled
     - role: azimuth_cloud.azimuth_ops.crossplane
-      when: azimuth_apps_enabled and azimuth_authentication_type == "oidc"
+      when: azimuth_apps_enabled
     - role: azimuth_cloud.azimuth_ops.zenith
       when: azimuth_apps_enabled
     - role: azimuth_cloud.azimuth_ops.coral_credits
