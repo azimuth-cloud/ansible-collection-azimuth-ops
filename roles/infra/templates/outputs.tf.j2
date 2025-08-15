@@ -32,7 +32,7 @@ output "cluster_nodes" {
 {% endfor %}
         ]
         facts  = {
-          k3s_storage_device = openstack_compute_volume_attach_v2.data_volume_attach.device
+          k3s_storage_volume_id = openstack_compute_volume_attach_v2.data_volume_attach.volume_id
 
           # Set the gateway IP as a fact that can be consumed
 {% if not infra_provisioning_network_id and infra_use_floatingip %}

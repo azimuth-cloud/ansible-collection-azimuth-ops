@@ -1,13 +1,41 @@
 ---
-- name: Check if k3s storage device is attached
-  ansible.builtin.stat:
-    path: "{{ k3s_storage_device }}"
-  register: k3s_storage_device_stat
+- name: Find the block device for the k3s storage volume
+  block:
+    - name: Stat candidate device paths
+      ansible.builtin.stat:
+        path: "/dev/disk/by-id/{{ item }}"
+      loop:
+        # KVM
+        - "{{ 'virtio-{}'.format(k3s_storage_volume_id[:20]) }}"
+        # KVM #852
+        - "{{ 'virtio-{}'.format(k3s_storage_volume_id) }}"
+        # KVM virtio-scsi
+        - "{{ 'scsi-0QEMU_QEMU_HARDDISK_{}'.format(k3s_storage_volume_id[:20]) }}"
+        # KVM virtio-scsi #852
+        - "{{ 'scsi-0QEMU_QEMU_HARDDISK_{}'.format(k3s_storage_volume_id) }}"
+        # ESXi
+        - "{{ 'wwn-0x{}'.format(k3s_storage_volume_id | replace('-', '')) }}"
+      register: candidate_device_paths_stat
 
-- name: Fail if k3s storage device is missing
-  ansible.builtin.fail:
-    msg: "K3s storage device not found at {{ k3s_storage_device }}"
-  when: not k3s_storage_device_stat.stat.exists
+    - name: Set volume block device name
+      ansible.builtin.set_fact:
+        k3s_storage_device: >-
+          /dev/{{
+            candidate_device_paths_stat.results |
+              selectattr("stat.exists") |
+              map(attribute = "stat.lnk_source") |
+              first |
+              default("") |
+              trim("/") |
+              split("/") |
+              last
+          }}
+
+    - name: Fail if block device was not found
+      ansible.builtin.fail:
+        msg: "Could not locate block device for volume {{ k3s_storage_volume_id }}."
+      when: k3s_storage_device == "/dev/"
+
 
 - name: Ensure filesystem exists on storage device
   community.general.filesystem:
