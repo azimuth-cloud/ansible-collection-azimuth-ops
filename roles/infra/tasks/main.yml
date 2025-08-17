@@ -19,6 +19,7 @@
           source_disk_format: "{{ infra_image_source_disk_format }}"
           container_format: "{{ infra_image_container_format }}"
           visibility: private
+          cosign_bundle_url: ""
 
     - name: Set infra image ID fact
       ansible.builtin.set_fact:
