@@ -167,6 +167,7 @@ jobs:
 
           - key: k9s
             path: ./roles/k9s/defaults/main.yml
+
             repository: derailed/k9s
             version_jsonpath: k9s_version
 
