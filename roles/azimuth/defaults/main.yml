@@ -130,13 +130,7 @@ azimuth_oidc_client_spec:
   grantTypes:
     - AuthorizationCode
   redirectUris:
-    - >-
-      {{
-        "{}://{}/auth/oidc/complete/".format(
-          'https' if azimuth_ingress_tls_enabled else 'http',
-          azimuth_ingress_host
-        )
-      }}
+    "{{ ['https://' + azimuth_ingress_host +'/auth/oidc/complete/'] +( ['http://' + azimuth_ingress_host + '/auth/oidc/complete/'] if not azimuth_ingress_tls_enabled else [])}}"
 #   The client secret
 #   If not given and an identity realm is being used, a client is created - see above
 azimuth_oidc_client_secret: "{{ undef(hint = 'azimuth_oidc_client_secret is required') }}"
