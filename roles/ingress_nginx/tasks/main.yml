@@ -47,3 +47,4 @@
                   severity: critical
   register: kubectl_ingress_cert_expiry
   changed_when: kubectl_ingress_cert_expiry.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  when: ingress_nginx_prometheus_stack_enabled

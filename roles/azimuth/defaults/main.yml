@@ -61,13 +61,15 @@ azimuth_secret_key: "{{ undef(hint='azimuth_secret_key is required') }}"
 # Settings for the available clouds
 # List of linked clouds - each item should contain name, label and url
 azimuth_linked_clouds: []
-
 # The name of this cloud
 azimuth_current_cloud_name: "{{ undef(hint='azimuth_current_cloud_name is required') }}"
 
 # The label for this cloud
 azimuth_current_cloud_label: >-
   {{ azimuth_current_cloud_name | regex_replace('[^a-z0-9]+', ' ') | capitalize }}
+
+# toggle for metrics
+azimuth_metrics: true
 
 # Settings for the metrics dashboards, if available
 # By default, these are provided by the cloud_metrics role
@@ -126,14 +128,8 @@ azimuth_oidc_client_spec:
   public: false
   grantTypes:
     - AuthorizationCode
-  redirectUris:
-    - >-
-      {{
-        "{}://{}/auth/oidc/complete/".format(
-          'https' if azimuth_ingress_tls_enabled else 'http',
-          azimuth_ingress_host
-        )
-      }}
+  redirectUris: "{{ ['https://' + azimuth_ingress_host +'/auth/oidc/complete/'] +( ['http://' + azimuth_ingress_host + '/auth/oidc/complete/']
+   if not azimuth_ingress_tls_enabled else [])}}"
 #   The client secret
 #   If not given and an identity realm is being used, a client is created - see above
 azimuth_oidc_client_secret: "{{ undef(hint = 'azimuth_oidc_client_secret is required') }}"
@@ -204,7 +200,6 @@ azimuth_authenticator_federated_protocol: >-
     else None
   }}
 azimuth_authenticator_federated_provider:
-
 # The list of identity providers to make available
 azimuth_authenticator_federated_identity_providers:
   # The Keystone identity provider and protocol to use
@@ -282,7 +277,6 @@ azimuth_authentication_defaults: >-
       )
   }}
 azimuth_authentication_overrides: {}
-
 azimuth_authentication: >-
   {{-
     azimuth_authentication_defaults |
@@ -300,13 +294,11 @@ azimuth_cloud_provider_type: openstack
 # If given, network auto-creation is disabled
 # The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-internal"
 azimuth_openstack_internal_net_template:
-
 # The template to use when searching for the external network
 # Only used if the external network is not tagged
 # If not given, there must be exactly one external network available to tenants
 # The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-external"
 azimuth_openstack_external_net_template:
-
 # If larger than zero, project specific manila share should be auto-created
 azimuth_openstack_manila_project_share_gb: 0
 
@@ -428,10 +420,8 @@ azimuth_scheduling_enabled: false
 # Theme settings
 # Custom bootstrap CSS URL
 azimuth_theme_bootstrap_css_url:
-
 # Custom CSS snippet
 azimuth_theme_custom_css:
-
 # The values for the release
 azimuth_release_defaults:
   tags:
@@ -513,7 +503,7 @@ azimuth_release_defaults:
   # Enable the API monitoring by default
   api:
     monitoring:
-      enabled: true
+      enabled: "{{ azimuth_metrics }}"
 azimuth_release_overrides: {}
 azimuth_release_values: >-
   {{-

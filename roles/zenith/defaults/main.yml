@@ -16,6 +16,9 @@ zenith_wait_timeout: 10m
 # Custom trust bundle for SSL verification
 zenith_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
+# zenith metrics (tied to prometheus)
+zenith_metrics: true
+
 # Ingress settings
 #   The base domain for Zenith ingress resources
 zenith_ingress_base_domain: >-
@@ -138,7 +141,7 @@ zenith_release_defaults:
       }}
   # Enable the metrics by default
   metrics:
-    enabled: true
+    enabled: "{{ zenith_metrics }}"
 zenith_release_overrides: {}
 zenith_release_values: >-
   {{-
