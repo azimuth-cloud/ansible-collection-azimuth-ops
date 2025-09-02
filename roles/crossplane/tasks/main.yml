@@ -14,7 +14,7 @@
     wait_timeout: "{{ crossplane_wait_timeout }}"
 
 - name: Debug
-  ansible.builtin.command: kubectl logs -n crossplane-system deployment/crossplane
+  ansible.builtin.command: kubectl describe deployment crossplane -n crossplane-system
   register: dbg_output
 
 - name: Show debug
