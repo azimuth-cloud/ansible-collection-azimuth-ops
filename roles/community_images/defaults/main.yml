@@ -34,7 +34,7 @@ community_images_disk_format: qcow2
 # The repository to use for azimuth-images
 community_images_azimuth_images_repo: https://github.com/azimuth-cloud/azimuth-images
 # The version of azimuth-images to use to populate the default community images
-community_images_azimuth_images_version: 0.20.1
+community_images_azimuth_images_version: 0.20.2
 # The azimuth-images manifest URL
 community_images_azimuth_images_manifest_url: >-
   {{ community_images_azimuth_images_repo }}/releases/download/{{ community_images_azimuth_images_version }}/manifest.json
