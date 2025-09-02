@@ -7,7 +7,6 @@ k3s_binary_checksum_url: "{{ k3s_repo }}/releases/download/{{ k3s_version }}/sha
 k3s_binary_checksum: "sha256:{{ lookup('url', k3s_binary_checksum_url, wantlist=True) | first | split | first }}"
 
 # Settings for an additional block device that will hold the k3s state, if present
-k3s_storage_device: /dev/sdb
 k3s_storage_fstype: xfs
 
 # Indicates if the Traefik ingress controller should be enabled
