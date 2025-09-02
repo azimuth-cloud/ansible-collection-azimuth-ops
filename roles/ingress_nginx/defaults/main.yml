@@ -12,6 +12,9 @@ ingress_nginx_release_name: ingress-nginx
 # The timeout to wait for NGINX ingress controller to become ready
 ingress_nginx_wait_timeout: 10m
 
+# enables the monitoring stack
+ingress_nginx_prometheus_stack_enabled: true
+
 # The values for the release
 ingress_nginx_release_defaults:
   controller:
@@ -24,9 +27,9 @@ ingress_nginx_release_defaults:
     config:
       annotations-risk-level: Critical
     metrics:
-      enabled: true
+      enabled: "{{ ingress_nginx_prometheus_stack_enabled }}"
       serviceMonitor:
-        enabled: true
+        enabled: "{{ ingress_nginx_prometheus_stack_enabled }}"
 ingress_nginx_release_overrides: {}
 ingress_nginx_release_values: >-
   {{-

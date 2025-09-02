@@ -45,6 +45,9 @@ keycloak_database_backup_volume_size: "{{ keycloak_database_data_volume_size }}"
 keycloak_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 keycloak_trust_bundle_secret_name: "{{ keycloak_name }}-trust-bundle"
 
+# monitoring for keycloak and its postgress database
+keycloak_metrics: true
+
 # The spec for the Keycloak instance
 keycloak_spec_defaults:
   instances: 1
