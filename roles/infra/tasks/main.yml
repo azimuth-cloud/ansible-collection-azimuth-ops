@@ -13,6 +13,7 @@
         name: azimuth_cloud.azimuth_ops.community_images
         tasks_from: upload_image
       vars:
+        community_images_openstack_cli_path: openstack
         community_images_image_spec:
           name: "{{ infra_image_name }}"
           source_url: "{{ infra_image_source_url }}"
