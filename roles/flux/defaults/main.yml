@@ -6,7 +6,7 @@
 
 flux_chart_repo: https://fluxcd-community.github.io/helm-charts
 flux_chart_name: flux2
-flux_chart_version: 2.16.3
+flux_chart_version: 2.16.4
 
 flux_release_namespace: flux-system
 flux_release_name: flux
