@@ -14,7 +14,7 @@ crossplane_release_values: >-
 crossplane_wait_timeout: 5m
 
 crossplane_keycloak_provider_config_name: keycloak-config
-crossplane_keycloak_provider_version: v2.1.0
+crossplane_keycloak_provider_version: v2.6.0
 crossplane_keycloak_provider_config_creds:
   client_id: admin-cli
   username: admin
