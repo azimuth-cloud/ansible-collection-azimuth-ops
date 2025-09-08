@@ -119,7 +119,23 @@ azimuth_caas_stackhpc_slurm_appliance_metadata_url: >-
 # The ID of the image to use with the StackHPC Slurm appliance
 # Support the old name for backwards compatibility
 # By default, use the openhpc image from community images if available
-azimuth_caas_stackhpc_slurm_appliance_image: 7ca99016-c342-4557-8a8d-9a856e934b58
+azimuth_caas_stackhpc_slurm_appliance_image: >-
+  {{-
+    azimuth_caas_stackhpc_slurm_appliance_rocky8_image
+    if azimuth_caas_stackhpc_slurm_appliance_rocky8_image is defined
+    else (
+      community_images_image_ids.openhpc
+      if (
+        community_images_image_ids is defined and
+        'openhpc' in community_images_image_ids
+      )
+      else (
+        undef(hint = 'azimuth_caas_stackhpc_slurm_appliance_image is required')
+        if azimuth_caas_stackhpc_slurm_appliance_enabled
+        else None
+      )
+    )
+  }}
 # Combine default and any extra workstation ansible collections
 azimuth_caas_stackhpc_slurm_appliance_init_collections_default: >-
   {{ ansible_init_default_collections | default([]) }}
