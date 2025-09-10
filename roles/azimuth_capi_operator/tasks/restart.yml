@@ -1,0 +1,3 @@
+---
+- name: Restart deployment
+  ansible.builtin.command: "kubectl rollout restart deployment {{ azimuth_capi_operator_release_name }} -n {{ azimuth_capi_operator_release_namespace }}"
