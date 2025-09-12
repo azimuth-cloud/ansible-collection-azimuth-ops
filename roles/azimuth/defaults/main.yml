@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://azimuth-cloud.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.15.0
+azimuth_chart_version: 0.16.0
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -128,8 +128,7 @@ azimuth_oidc_client_spec:
   public: false
   grantTypes:
     - AuthorizationCode
-  redirectUris: "{{ ['https://' + azimuth_ingress_host +'/auth/oidc/complete/'] +( ['http://' + azimuth_ingress_host + '/auth/oidc/complete/']
-   if not azimuth_ingress_tls_enabled else [])}}"
+  redirectUris: "{{ ['https://' + azimuth_ingress_host +'/auth/oidc/complete/'] +( ['http://' + azimuth_ingress_host + '/auth/oidc/complete/'] if not azimuth_ingress_tls_enabled else [])}}"
 #   The client secret
 #   If not given and an identity realm is being used, a client is created - see above
 azimuth_oidc_client_secret: "{{ undef(hint = 'azimuth_oidc_client_secret is required') }}"
