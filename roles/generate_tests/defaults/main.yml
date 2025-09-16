@@ -1,5 +1,4 @@
 ---
-
 # The path for the test vars file
 generate_tests_vars_file: "{{ (ansible_env.HOME, 'testvars.yaml') | path_join }}"
 
@@ -166,7 +165,6 @@ generate_tests_caas_test_cases_extra: []
 generate_tests_caas_test_cases: >-
   {{- generate_tests_caas_test_cases_default + generate_tests_caas_test_cases_extra }}
 
-
 # Settings for the Kubernetes test suite
 # Indicates whether to generate the Kubernetes test suite
 generate_tests_kubernetes_suite_enabled: "{{ azimuth_kubernetes_enabled }}"
@@ -205,6 +203,7 @@ generate_tests_kubernetes_test_cases_latest_only: false
 _generate_tests_kubernetes_latest_available_version: >-
   {{-
     generate_tests_installed_kubernetes_templates |
+      selectattr('spec.deprecated', 'undefined') |
       map(attribute = 'spec.values.kubernetesVersion') |
       community.general.version_sort(reverse = True) |
       first
@@ -251,7 +250,6 @@ generate_tests_kubernetes_test_cases_default: >-
 generate_tests_kubernetes_test_cases_extra: []
 generate_tests_kubernetes_test_cases: >-
   {{- generate_tests_kubernetes_test_cases_default + generate_tests_kubernetes_test_cases_extra }}
-
 
 # Settings for the Kubernetes apps test suite
 # Indicates whether to generate the suite
