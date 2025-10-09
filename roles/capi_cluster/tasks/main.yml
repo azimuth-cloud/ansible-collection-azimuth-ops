@@ -112,9 +112,20 @@
     - name: Include token-based kubeconfig task file
       ansible.builtin.include_tasks: capi-cluster-service-account.yml
 
+- name: Check that the cluster exists
+  ansible.builtin.command: >-
+    kubectl get
+      openstackclusters.infrastructure.cluster.x-k8s.io
+      {{ capi_cluster_release_name }}
+  ignore_errors: true
+  changed_when: false
+  register: cluster_check
+  when: capi_cluster_release_state == 'absent'
 
 - name: Delete CAPI cluster
-  when: capi_cluster_release_state == 'absent'
+  when:
+    - capi_cluster_release_state == 'absent'
+    - cluster_check.rc == 0
   block:
     # Before deleting the cluster, update the annotation that indicates if volumes should be kept
     - name: Set volumes policy annotation
