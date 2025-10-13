@@ -35,18 +35,15 @@ capi_cluster_openstack_ca_cert: >-
 
 # The Kubernetes version of the cluster and the id of the matching image
 # Default, wire these up with an image from community images when available
-capi_cluster_kubernetes_version: >-
-  {{-
-    community_images.kube_1_31.kubernetes_version
-    if community_images is defined and 'kube_1_31' in community_images
-    else undef(hint = 'capi_cluster_kubernetes_version is required')
-  }}
+capi_cluster_kubernetes_version: "{{ undef(hint='capi_cluster_kubernetes_version is required') }}"
+# Extract minor and major version and filter into format of community images key
+_capi_cluster_community_images_key: "kube_{{ capi_cluster_kubernetes_version[1:5] | regex_replace('\\.', '_') }}"
 capi_cluster_machine_image_id: >-
   {{-
-    community_images_image_ids.kube_1_31
+    community_images_image_ids[_capi_cluster_community_images_key]
     if (
       community_images_image_ids is defined and
-      'kube_1_31' in community_images_image_ids
+      _capi_cluster_community_images_key in community_images_image_ids
     )
     else undef(hint = 'capi_cluster_machine_image_id is required')
   }}
