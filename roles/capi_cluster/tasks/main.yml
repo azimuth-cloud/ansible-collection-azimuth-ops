@@ -116,6 +116,7 @@
   ansible.builtin.command: >-
     kubectl get
       openstackclusters.infrastructure.cluster.x-k8s.io
+      -n {{ capi_cluster_release_namespace }}
       {{ capi_cluster_release_name }}
   ignore_errors: true
   changed_when: false
