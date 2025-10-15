@@ -104,17 +104,37 @@
         dest: "{{ capi_cluster_kubeconfig_path }}"
         mode: u=rw,g=,o=
 
-- name: Including token-based kubeconfig tasks to generate token-based kubeconfig
-  when: capi_cluster_service_account_enabled
-  environment:
-    KUBECONFIG: "{{ capi_cluster_kubeconfig_path }}"
-  block:
-    - name: Include token-based kubeconfig task file
-      ansible.builtin.include_tasks: capi-cluster-service-account.yml
+    - name: Including token-based kubeconfig tasks to generate token-based kubeconfig
+      when: capi_cluster_service_account_enabled
+      environment:
+        KUBECONFIG: "{{ capi_cluster_kubeconfig_path }}"
+      block:
+        - name: Include token-based kubeconfig task file
+          ansible.builtin.include_tasks: capi-cluster-service-account.yml
 
+- name: Check that the cluster exists
+  ansible.builtin.command: >-
+    kubectl get
+      openstackclusters.infrastructure.cluster.x-k8s.io
+      -n {{ capi_cluster_release_namespace }}
+      {{ capi_cluster_release_name }}
+      --ignore-not-found true
+      -o json
+  changed_when: false
+  register: cluster_check
+  when: capi_cluster_release_state == 'absent'
+
+- name: Set fact from cluster check
+  ansible.builtin.set_fact:
+    cluster_details: "{{ cluster_check.stdout | from_json if cluster_check.stdout != '' else {} }}"
+  changed_when: false
+  when: capi_cluster_release_state == 'absent'
 
 - name: Delete CAPI cluster
-  when: capi_cluster_release_state == 'absent'
+  when:
+    - capi_cluster_release_state == 'absent'
+    - cluster_details != {}
+    - cluster_details['items'] | length == 1
   block:
     # Before deleting the cluster, update the annotation that indicates if volumes should be kept
     - name: Set volumes policy annotation
