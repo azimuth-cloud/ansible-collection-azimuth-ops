@@ -126,14 +126,15 @@
 
 - name: Set fact from cluster check
   ansible.builtin.set_fact:
-    cluster_details: "{{ cluster_check.stdout | from_json }}"
+    cluster_details: "{{ cluster_check.stdout | from_json if cluster_check.stdout != '' else {} }}"
   changed_when: false
   when: capi_cluster_release_state == 'absent'
 
 - name: Delete CAPI cluster
   when:
     - capi_cluster_release_state == 'absent'
-    - cluster_details.items is defined and cluster_details.items | length == 1
+    - cluster_details != {}
+    - cluster_details['items'] | length == 1
   block:
     # Before deleting the cluster, update the annotation that indicates if volumes should be kept
     - name: Set volumes policy annotation
