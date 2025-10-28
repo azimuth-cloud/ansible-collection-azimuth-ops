@@ -1,5 +1,4 @@
 ---
-
 # Disable by default so that existing deployments don't break when bucket isn't configured
 # Can be overwritten in azimuth-config as needed
 velero_enabled: false
@@ -89,7 +88,7 @@ velero_default_backup_storage_location: >-
 # Velero Helm chart config
 velero_chart_name: velero
 velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
-velero_chart_version: 10.1.1
+velero_chart_version: 10.1.2
 velero_release_namespace: velero
 velero_release_name: velero
 velero_wait_timeout: 10m
