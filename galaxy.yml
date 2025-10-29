@@ -14,4 +14,4 @@ dependencies:
   ansible.posix: "2.0.0"
   community.general: "10.6.0"
   kubernetes.core: "5.3.0"
-  "git+https://github.com/azimuth-cloud/ansible-collection-terraform.git": "0.6.0"
+  "git+https://github.com/azimuth-cloud/ansible-collection-terraform.git": "b94ee3462955917b09cadab1790766dc5716db9a"
