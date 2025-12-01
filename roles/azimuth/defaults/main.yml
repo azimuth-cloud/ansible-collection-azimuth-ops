@@ -104,6 +104,24 @@ azimuth_curated_sizes: []
 #   description: >-
 #     {% raw %}{{ cpus }} CPUs, {{ ram }} RAM, {{ disk }} disk, {{ ephemeral_disk }} ephemeral disk{% endraw %}
 
+azimuth_coral_credits_secret_name: coral-token
+azimuth_coral_credits_secret_key: token
+
+azimuth_coral_credits: >-
+  {{-
+    {} |
+       combine({
+         "uri": hostvars[groups.azimuth_deploy.0].coral_credits_uri,
+         "tokenSecretRef": {
+           "name": azimuth_coral_credits_secret_name,
+           "namespace": azimuth_release_namespace,
+           "key": azimuth_coral_credits_secret_key
+         }
+       }
+       if coral_credits_enabled
+       else {})
+  }}
+
 # The authentication type to use - oidc and openstack are supported
 azimuth_authentication_type: openstack
 
@@ -463,6 +481,7 @@ azimuth_release_defaults:
             else {}
           )
       }}
+    coralCredits: "{{ azimuth_coral_credits }}"
     documentationUrl: "{{ azimuth_documentation_url }}"
     supportUrl: "{{ azimuth_support_url }}"
     curatedSizes: "{{ azimuth_curated_sizes }}"
