@@ -153,6 +153,7 @@
       -n {{ azimuth_release_namespace }}
   register: _coral_token_exists_reg
   failed_when: false
+  changed_when: false
 
 - name: Generate Coral credits token
   when: coral_credits_enabled and _coral_token_exists_reg.rc != 0
@@ -176,6 +177,7 @@
           kubectl create secret generic {{ azimuth_coral_credits_secret_name }}
           -n {{ azimuth_release_namespace }}
           --from-literal {{ azimuth_coral_credits_secret_key }}={{ _coral_api_response.json.token }}
+      changed_when: true
 
 - name: Install Azimuth on target Kubernetes cluster
   kubernetes.core.helm:
