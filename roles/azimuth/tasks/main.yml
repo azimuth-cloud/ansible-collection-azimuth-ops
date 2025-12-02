@@ -169,7 +169,7 @@
           username: "admin"
           password: "{{ coral_credits_admin_password }}"
       register: _coral_api_response
-    
+
     - name: Generate secret with token
       ansible.builtin.shell:
         cmd: >-
