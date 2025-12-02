@@ -147,7 +147,7 @@
         azimuth_oidc_issuer_url: "{{ azimuth_oidc_users_realm_issuer_url.stdout }}"
 
 - name: Check for existing Coral token
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: >-
       kubectl get secret {{ azimuth_coral_credits_secret_name }}
       -n {{ azimuth_release_namespace }}
@@ -171,7 +171,7 @@
       register: _coral_api_response
 
     - name: Generate secret with token
-      ansible.builtin.shell:
+      ansible.builtin.command:
         cmd: >-
           kubectl create secret generic {{ azimuth_coral_credits_secret_name }}
           -n {{ azimuth_release_namespace }}
