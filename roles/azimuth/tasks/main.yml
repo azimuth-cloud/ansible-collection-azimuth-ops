@@ -160,7 +160,7 @@
   block:
     - name: Request token from API
       ansible.builtin.uri:
-        url: "{{ hostvars[groups.azimuth_deploy.0].coral_credits_uri }}/api-token-auth/"
+        url: "{{ azimuth_coral_credits_uri }}/api-token-auth/"
         method: POST
         headers:
           Content-Type: "application/json"

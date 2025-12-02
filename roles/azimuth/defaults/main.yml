@@ -104,6 +104,7 @@ azimuth_curated_sizes: []
 #   description: >-
 #     {% raw %}{{ cpus }} CPUs, {{ ram }} RAM, {{ disk }} disk, {{ ephemeral_disk }} ephemeral disk{% endraw %}
 
+azimuth_coral_credits_uri: "{{ hostvars[groups.azimuth_deploy.0].coral_credits_uri }}"
 azimuth_coral_credits_secret_name: coral-token
 azimuth_coral_credits_secret_key: token
 
@@ -111,7 +112,7 @@ azimuth_coral_credits: >-
   {{-
     {} |
        combine({
-         "uri": hostvars[groups.azimuth_deploy.0].coral_credits_uri,
+         "uri": azimuth_coral_credits_uri,
          "tokenSecretRef": {
            "name": azimuth_coral_credits_secret_name,
            "namespace": azimuth_release_namespace,
@@ -442,6 +443,10 @@ azimuth_apps_query_params:
 # Indicates whether the smart scheduling should be enabled
 azimuth_scheduling_enabled: false
 
+# Maximum duration users can specify for platforms. Unlimited if
+# 0<=
+azimuth_max_platform_duration_hours: -1
+
 # Theme settings
 # Custom bootstrap CSS URL
 azimuth_theme_bootstrap_css_url:
@@ -510,8 +515,15 @@ azimuth_release_defaults:
       if azimuth_apps_enabled
       else {}
     }}
-  scheduling:
-    enabled: "{{ azimuth_scheduling_enabled }}"
+  scheduling: >-
+    {{-
+      { "enabled": azimuth_scheduling_enabled } |
+        combine(
+          { "maxPlatformDurationHours": azimuth_max_platform_duration_hours }
+          if azimuth_max_platform_duration_hours > 0 and azimuth_scheduling_enabled
+          else {}
+        )
+    }}
   theme: >-
     {{-
       {} |
