@@ -443,9 +443,9 @@ azimuth_apps_query_params:
 # Indicates whether the smart scheduling should be enabled
 azimuth_scheduling_enabled: false
 
-# Maximum duration users can specify for platforms. Unlimited if
-# 0<=
-azimuth_max_platform_duration_hours: -1
+# Maximum duration users can specify for platforms. Unlimited
+# if undefined
+# azimuth_max_platform_duration_hours:
 
 # Theme settings
 # Custom bootstrap CSS URL
@@ -520,7 +520,7 @@ azimuth_release_defaults:
       { "enabled": azimuth_scheduling_enabled } |
         combine(
           { "maxPlatformDurationHours": azimuth_max_platform_duration_hours }
-          if azimuth_max_platform_duration_hours > 0 and azimuth_scheduling_enabled
+          if azimuth_max_platform_duration_hours is defined and azimuth_scheduling_enabled
           else {}
         )
     }}
