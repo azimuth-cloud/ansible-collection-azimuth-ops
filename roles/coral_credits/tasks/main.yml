@@ -65,3 +65,7 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ coral_credits_wait_timeout }}"
+
+- name: Set ingress host fact
+  ansible.builtin.set_fact:
+    coral_credits_uri: "{{ ('https://' if ingress_tls_enabled else 'http://') + coral_credits_ingress_host }}"

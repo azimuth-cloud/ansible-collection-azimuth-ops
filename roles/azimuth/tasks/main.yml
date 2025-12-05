@@ -145,6 +145,40 @@
     - name: Set Azimuth OIDC issuer URL fact
       ansible.builtin.set_fact:
         azimuth_oidc_issuer_url: "{{ azimuth_oidc_users_realm_issuer_url.stdout }}"
+
+- name: Check for existing Coral token
+  ansible.builtin.command:
+    cmd: >-
+      kubectl get secret {{ azimuth_coral_credits_secret_name }}
+      -n {{ azimuth_release_namespace }}
+  register: _coral_token_exists_reg
+  failed_when: false
+  changed_when: false
+
+- name: Generate Coral credits token
+  when: coral_credits_enabled and _coral_token_exists_reg.rc != 0
+  no_log: true
+  block:
+    - name: Request token from API
+      ansible.builtin.uri:
+        url: "{{ azimuth_coral_credits_uri }}/api-token-auth/"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          username: "admin"
+          password: "{{ coral_credits_admin_password }}"
+      register: _coral_api_response
+
+    - name: Generate secret with token
+      ansible.builtin.command:
+        cmd: >-
+          kubectl create secret generic {{ azimuth_coral_credits_secret_name }}
+          -n {{ azimuth_release_namespace }}
+          --from-literal {{ azimuth_coral_credits_secret_key }}={{ _coral_api_response.json.token }}
+      changed_when: true
+
 - name: Install Azimuth on target Kubernetes cluster
   kubernetes.core.helm:
     chart_ref: "{{ azimuth_chart_name }}"
