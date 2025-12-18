@@ -443,6 +443,16 @@ capi_cluster_release_defaults:
                   retention_period: "{{ capi_cluster_addons_monitoring_loki_retention }}"
               persistence:
                 size: "{{ capi_cluster_addons_monitoring_loki_volume_size }}"
+      loki_v2:
+        release:
+          values:
+            loki:
+              limits_config:
+                retention_period: "{{ capi_cluster_addons_monitoring_loki_retention }}"
+            singleBinary:
+              persistence:
+                size: "{{ capi_cluster_addons_monitoring_loki_volume_size }}"
+
     # Configure the OpenStack integrations
     openstack:
       cloudConfig:
