@@ -3,7 +3,7 @@
 # The K9s repo
 k9s_repo: https://github.com/derailed/k9s
 # The K9s version to download
-k9s_version: v0.50.16
+k9s_version: v0.50.18
 # The OS variant and architecture to use
 # See https://github.com/derailed/k9s/releases for the available options
 k9s_os: "{{ ansible_system }}"
