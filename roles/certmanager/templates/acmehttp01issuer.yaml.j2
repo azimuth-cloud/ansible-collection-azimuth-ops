@@ -16,6 +16,9 @@ metadata:
 spec:
   acme:
     server: "{{ certmanager_acmehttp01issuer_server }}"
+{% if certmanager_acmehttp01issuer_email %}
+    email: "{{ certmanager_acmehttp01issuer_email }}"
+{% endif %}
 {% if certmanager_acmehttp01issuer_eab_required %}
     externalAccountBinding:
       keyID: "{{ certmanager_acmehttp01issuer_eab_kid }}"
