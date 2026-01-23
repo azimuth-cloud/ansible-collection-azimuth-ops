@@ -72,6 +72,8 @@ certmanager_acmehttp01issuer_enabled: true
 certmanager_acmehttp01issuer_name: letsencrypt
 # The ACME server to use
 certmanager_acmehttp01issuer_server: https://acme-v02.api.letsencrypt.org/directory
+# The email address to use for ACME registration
+certmanager_acmehttp01issuer_email:
 # The ingress class to use for resolving HTTP01 challenges
 certmanager_acmehttp01issuer_ingress_class: nginx
 # Indicates whether an External Account Binding (EAB) is required
