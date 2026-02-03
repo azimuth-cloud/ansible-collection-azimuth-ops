@@ -1,6 +1,6 @@
 ---
 
-kubernetes_dashboard_chart_repo: https://kubernetes.github.io/dashboard
+kubernetes_dashboard_chart_repo: https://kubernetes-retired.github.io/dashboard
 kubernetes_dashboard_chart_name: kubernetes-dashboard
 kubernetes_dashboard_chart_version: 6.0.8
 
