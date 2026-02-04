@@ -72,6 +72,14 @@ kube_prometheus_stack_release_defaults:
       serviceMonitorSelectorNilUsesHelmValues: false
       probeSelectorNilUsesHelmValues: false
       ruleSelectorNilUsesHelmValues: false
+  nodeExporter:
+    operatingSystems:
+      linux:
+        enabled: true
+      aix:
+        enabled: false
+      darwin:
+        enabled: false
   grafana:
     sidecar:
       dashboards:
