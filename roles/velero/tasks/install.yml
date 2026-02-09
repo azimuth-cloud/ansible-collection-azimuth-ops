@@ -1,4 +1,7 @@
 ---
+- name: Ensure existing CSI snapshot controller CRDs have the correct annotations and labels
+  ansible.builtin.include_tasks: annotate-crds.yml
+
 - name: Ensure CSI snapshot controller is installed
   kubernetes.core.helm:
     chart_ref: "{{ velero_csi_snapshot_controller_chart_name }}"
