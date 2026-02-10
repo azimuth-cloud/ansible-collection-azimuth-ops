@@ -52,6 +52,14 @@ velero_csi_snapshot_controller_release_values: >-
       combine(velero_csi_snapshot_controller_release_overrides, recursive = True)
   }}
 
+velero_csi_snapshot_controller_crds:
+  - volumegroupsnapshotclasses.groupsnapshot.storage.k8s.io
+  - volumegroupsnapshotcontents.groupsnapshot.storage.k8s.io
+  - volumegroupsnapshots.groupsnapshot.storage.k8s.io
+  - volumesnapshotclasses.snapshot.storage.k8s.io
+  - volumesnapshotcontents.snapshot.storage.k8s.io
+  - volumesnapshots.snapshot.storage.k8s.io
+
 # The name of the volume snapshot class
 velero_cinder_snapshot_class_name: cinder-csi-snapshot
 
