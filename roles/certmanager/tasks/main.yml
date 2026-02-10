@@ -111,9 +111,12 @@
     - name: Install ACME HTTP01 cluster issuer
       ansible.builtin.command: kubectl apply -f -
       args:
-        stdin: "{{ lookup('template', 'acmehttp01issuer.yaml.j2') }}"
+        stdin: "{{ item | to_nice_yaml }}"
       register: kubectl_install_http01_cluster_issuer
       changed_when: kubectl_install_http01_cluster_issuer.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+      loop: "{{ certmanager_acmehttp01issuer_manifests }}"
+      loop_control:
+        label: "{{ item.kind }}"
 
     - name: Set auto-TLS facts
       ansible.builtin.set_fact:
