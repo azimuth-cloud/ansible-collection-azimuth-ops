@@ -85,7 +85,9 @@
     harbor_registry_mirrors: >-
       {
         {% for registry, project in harbor_proxy_cache_projects.items() %}
-        "{{ registry }}": ["{{ "{}/v2/{}".format(harbor_external_url, project.name) }}"],
+        "{{ registry }}":
+        - url: "{{ "{}/v2/{}".format(harbor_external_url, project.name) }}"
+          skipVerify: "{{ not harbor_tls_enabled }}"
         {% endfor %}
       }
 
