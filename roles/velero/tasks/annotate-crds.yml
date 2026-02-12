@@ -1,0 +1,24 @@
+---
+
+- name: List CRDs
+  ansible.builtin.command: >-
+    kubectl get crds -o custom-columns=NAME:.metadata.name
+  register: cluster_crds
+  changed_when: false
+
+- name: Annotate snapshot controller CRDs deployed with <v5.0 Helm chart
+  ansible.builtin.command: >-
+    kubectl annotate crds {{ item }}
+    meta.helm.sh/release-name={{ velero_csi_snapshot_controller_release_name }}
+    meta.helm.sh/release-namespace={{ velero_csi_snapshot_controller_release_namespace }}
+  when: item in cluster_crds.stdout_lines
+  loop: "{{ velero_csi_snapshot_controller_crds }}"
+  changed_when: true
+
+- name: Label snapshot controller CRDs deployed with <v5.0 Helm chart
+  ansible.builtin.command: >-
+    kubectl label crds {{ item }}
+    app.kubernetes.io/managed-by=Helm
+  loop: "{{ velero_csi_snapshot_controller_crds }}"
+  register: label_crds
+  changed_when: label_crds.stdout_lines | select('match', '(?!.*not labeled$)') | length < 1
