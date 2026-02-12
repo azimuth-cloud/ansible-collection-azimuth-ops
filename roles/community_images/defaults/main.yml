@@ -88,8 +88,8 @@ community_images_slurm_base_url: >-
 community_images_slurm:
   # from https://github.com/stackhpc/ansible-slurm-appliance/releases/tag/v2.9
   openhpc:
-    name: openhpc-RL9-251119-1834-cb477455
-    source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-251119-1834-cb477455"
+    name: openhpc-RL9-260210-0941-ccf0e76b
+    source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-260210-0941-ccf0e76b"
     source_disk_format: qcow2
     container_format: bare
 
