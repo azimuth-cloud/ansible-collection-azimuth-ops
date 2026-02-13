@@ -19,6 +19,7 @@
   ansible.builtin.command: >-
     kubectl label crds {{ item }}
     app.kubernetes.io/managed-by=Helm
+  when: item in cluster_crds.stdout_lines
   loop: "{{ velero_csi_snapshot_controller_crds }}"
   register: label_crds
   changed_when: label_crds.stdout_lines | select('match', '(?!.*not labeled$)') | length < 1
