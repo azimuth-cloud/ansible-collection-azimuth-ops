@@ -25,9 +25,6 @@ Create {{ test_case_name }}
     ...  name=md-0
     ...  machine_size=${worker_size.id}
     ...  count={{ test_case.worker_count }}
-{% if test_case.dashboard_enabled is not defined or test_case.dashboard_enabled %}
-    ${config} =  Enable Dashboard For Kubernetes Config  ${config}
-{% endif %}
 {% if test_case.monitoring_enabled is not defined or test_case.monitoring_enabled %}
     ${config} =  Enable Monitoring For Kubernetes Config  ${config}
 {% endif %}
@@ -51,11 +48,6 @@ Verify {{ test_case_name }}
 {% endif %}
     ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
     ${cluster} =  Wait For Kubernetes Cluster Ready  ${cluster.id}
-{% if test_case.dashboard_enabled is not defined or test_case.dashboard_enabled %}
-    ${dashboard} =  Get Kubernetes Cluster Service Url  ${cluster}  dashboard
-    Open Zenith Service  ${dashboard}
-    Wait Until Page Title Contains  Kubernetes Dashboard
-{% endif %}
 {% if test_case.monitoring_enabled is not defined or test_case.monitoring_enabled %}
     ${monitoring} =  Get Kubernetes Cluster Service Url  ${cluster}  monitoring
     Open Zenith Service  ${monitoring}
