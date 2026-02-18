@@ -54,12 +54,14 @@
         community_images_image_current_visibility: "{{ community_images_image_info.stdout | from_json | json_query('visibility') }}"
 
 - name: Download, convert and upload images to Glance
-  when: "community_images_image_list | length == 0"
+  # todo when: "community_images_image_list | length == 0"
   block:
     - name: "Set image facts - {{ community_images_image_spec.name }}"
       ansible.builtin.set_fact:
         community_images_image_download_path: >-
           {{ (community_images_workdir, community_images_image_spec.name + '.download') | path_join }}
+        community_images_image_cosign_download_path: >-
+          {{ (community_images_workdir, community_images_image_spec.name + '.bundle') | path_join }}
         community_images_image_decompress_path: >-
           {{ (community_images_workdir, community_images_image_spec.name + '.decompress') | path_join }}
         community_images_image_convert_path: >-
@@ -92,6 +94,25 @@
         checksum: "{{ community_images_image_spec.checksum | default(omit) }}"
         timeout: 600
         mode: "0644"
+
+    - name: "Download cosign bundle - {{ community_images_image_spec.name }}"
+      ansible.builtin.get_url:
+        url: "{{ community_images_image_spec.cosign_bundle_url }}"
+        dest: "{{ community_images_image_cosign_download_path }}"
+        timeout: 120
+        mode: "0644"
+      when: community_images_image_spec.cosign_bundle_url
+
+    - name: "Validate downloaded image with sigstore - {{ community_images_image_spec.name }}"
+      ansible.builtin.shell: >-
+        cosign verify-blob "{{ community_images_image_download_path }}" \
+          --bundle "{{ community_images_image_cosign_download_path }}" \
+          --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+          --certificate-identity-regexp="https://github.com/azimuth-cloud/azimuth-images/.github/.*"
+      register: community_images_verify_blob_cmd
+      changed_when: false
+      failed_when: community_images_verify_blob_cmd.rc != 0
+      when: community_images_image_spec.cosign_bundle_url
 
     - name: "Uncompress image (bzip2) - {{ community_images_image_spec.name }}"
       ansible.builtin.shell: "bunzip2 -dc {{ community_images_image_download_path }} > {{ community_images_image_decompress_path }}"
@@ -130,6 +151,7 @@
         state: absent
       loop:
         - "{{ community_images_image_download_path }}"
+        - "{{ community_images_image_cosign_download_path }}"
         - "{{ community_images_image_decompress_path }}"
         - "{{ community_images_image_convert_path }}"
       loop_control:

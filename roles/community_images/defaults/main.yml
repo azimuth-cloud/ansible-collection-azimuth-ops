@@ -71,6 +71,7 @@ community_images_azimuth_images: |-
     "{{ dest_key }}": {
       "name": "{{ image.name }}",
       "source_url": "{{ image.url }}",
+      "cosign_bundle_url": "{{ image.get("cosign-bundle-url", "todo-missing") }}",
       "checksum": "{{ image.checksum }}",
       "source_disk_format": "qcow2",
       "container_format": "bare",
@@ -82,6 +83,9 @@ community_images_azimuth_images: |-
     {% endfor %}
   }
 
+community_images_certificate_oidc_issuer: "https://token.actions.githubusercontent.com"
+community_images_certificate_identity_regexp: "https://github.com/azimuth-cloud/azimuth-images/.github/.*"
+
 # Slurm images are published by the ansible-slurm-appliance repo - https://github.com/stackhpc/ansible-slurm-appliance/
 community_images_slurm_base_url: >-
   https://leafcloud.store/swift/v1/AUTH_f39848421b2747148400ad8eeae8d536/openhpc-images
@@ -92,6 +96,7 @@ community_images_slurm:
     source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-260210-0941-ccf0e76b"
     source_disk_format: qcow2
     container_format: bare
+    cosign_bundle_url: ""
 
 # The default community images to upload
 community_images_default: >-

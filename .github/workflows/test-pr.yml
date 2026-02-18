@@ -53,6 +53,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # TODO: move this into the ansible!
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
       - name: Paths Filter
         # For safety using commit of dorny/paths-filter@v3
         uses: dorny/paths-filter@668c092af3649c4b664c54e4b704aa46782f6f7c
