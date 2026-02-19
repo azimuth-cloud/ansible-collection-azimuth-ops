@@ -1,0 +1,24 @@
+---
+#####
+# A minimal playbook to just download/convert/upload the community images
+#####
+# Get the state information for the seed and adopt it
+- name: Set facts from the Terraform state of the seed node
+  hosts: terraform_provision
+  tasks:
+    - name: Discover k3s host and adopt it
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.infra
+      vars:
+        infra_readonly: true
+        infra_ansible_groups:
+          - k3s
+          - azimuth_deploy
+
+# Download, convert, and upload community images
+- name: Download, convert, and upload community images
+  hosts: k3s
+  tasks:
+    - name: Download, convert, and upload community images
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.community_images

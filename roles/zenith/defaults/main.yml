@@ -3,7 +3,7 @@
 # The chart to use
 zenith_chart_repo: https://azimuth-cloud.github.io/zenith
 zenith_chart_name: zenith-server
-zenith_chart_version: 0.15.1
+zenith_chart_version: 0.16.3
 
 # Release information for the Zenith release
 # Use the same namespace as the Azimuth release by default
@@ -15,6 +15,9 @@ zenith_wait_timeout: 10m
 
 # Custom trust bundle for SSL verification
 zenith_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
+
+# zenith metrics (tied to prometheus)
+zenith_metrics: true
 
 # Ingress settings
 #   The base domain for Zenith ingress resources
@@ -138,7 +141,7 @@ zenith_release_defaults:
       }}
   # Enable the metrics by default
   metrics:
-    enabled: true
+    enabled: "{{ zenith_metrics }}"
 zenith_release_overrides: {}
 zenith_release_values: >-
   {{-

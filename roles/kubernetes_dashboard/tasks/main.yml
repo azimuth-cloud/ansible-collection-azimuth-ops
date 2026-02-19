@@ -1,13 +1,19 @@
 ---
-- name: Install Kubernetes dashboard on target Kubernetes cluster
+- name: Uninstall Kubernetes dashboard on target Kubernetes cluster
   kubernetes.core.helm:
-    chart_ref: "{{ kubernetes_dashboard_chart_name }}"
-    chart_repo_url: "{{ kubernetes_dashboard_chart_repo }}"
-    chart_version: "{{ kubernetes_dashboard_chart_version }}"
     release_namespace: "{{ kubernetes_dashboard_release_namespace }}"
     release_name: "{{ kubernetes_dashboard_release_name }}"
-    release_values: "{{ kubernetes_dashboard_release_values }}"
-    atomic: true
-    create_namespace: true
+    state: absent
     wait: true
     wait_timeout: "{{ kubernetes_dashboard_wait_timeout }}"
+
+- name: Remove Kubernetes dashboard ingress
+  ansible.builtin.command: >-
+    kubectl delete ingress
+      {{ admin_dashboard_ingress_kubernetes_dashboard_name | default('kubernetes-dashboard') }}
+      --namespace {{ admin_dashboard_ingress_kubernetes_dashboard_namespace | default('kubernetes-dashboard') }}
+  register: kubernetes_dashboard_delete_ingress
+  changed_when: kubernetes_dashboard_delete_ingress.rc == 0
+  failed_when: >-
+    kubernetes_dashboard_delete_ingress.rc != 0 and
+    "NotFound" not in kubernetes_dashboard_delete_ingress.stderr

@@ -16,11 +16,12 @@
     - role: azimuth_cloud.azimuth_ops.sealed_secrets
     - role: azimuth_cloud.azimuth_ops.certmanager
       when: certmanager_enabled or azimuth_kubernetes_enabled
+    # NOTE: this is kept to remove existing dashboard installs
     - role: azimuth_cloud.azimuth_ops.kubernetes_dashboard
     - role: azimuth_cloud.azimuth_ops.helm_dashboard
     - role: azimuth_cloud.azimuth_ops.admin_dashboard_ingress
     - role: azimuth_cloud.azimuth_ops.azimuth_authorization_webhook
-      when: azimuth_authentication_type == "oidc"
+      when: azimuth_authentication_type == "oidc" and azimuth_cloud_provider_type != "null"
     - role: azimuth_cloud.azimuth_ops.harbor
       when: harbor_enabled
     - role: azimuth_cloud.azimuth_ops.cloud_metrics
@@ -49,9 +50,10 @@
       when: azimuth_kubernetes_enabled
     - role: azimuth_cloud.azimuth_ops.azimuth_apps_operator
       when: azimuth_apps_enabled
-    - azimuth_cloud.azimuth_ops.azimuth
-  # Ensure that Consul is uninstalled
+    - role: azimuth_cloud.azimuth_ops.azimuth
+
   post_tasks:
+    # Ensure that Consul is uninstalled
     - name: Ensure Consul is uninstalled
       ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.consul
@@ -59,5 +61,13 @@
       when:
         - consul_server_host is defined
         - consul_server_port is defined
+    # Workaround for new services on existing Clusters not getting added
+    # to Platforms after upgrades
+    - name: Restart CAPI Operator
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.azimuth_capi_operator
+        tasks_from: restart.yml
+      when: azimuth_kubernetes_enabled
+
   environment:
     KUBECONFIG: "{{ kubeconfig_path | default('') }}"

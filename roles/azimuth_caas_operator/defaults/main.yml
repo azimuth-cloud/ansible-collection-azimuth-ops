@@ -2,7 +2,7 @@
 # The chart to use
 azimuth_caas_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-caas-operator
 azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: 0.17.6
+azimuth_caas_operator_chart_version: 0.19.1
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -97,7 +97,7 @@ azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 # The git URL for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/ansible-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
-azimuth_caas_stackhpc_slurm_appliance_git_version: v1.160
+azimuth_caas_stackhpc_slurm_appliance_git_version: v2.13
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
@@ -196,7 +196,7 @@ azimuth_caas_stackhpc_slurm_appliance_template:
     jobTimeout: "{{ azimuth_caas_stackhpc_slurm_appliance_job_timeout_seconds }}"
     envVars:
       # Normally set through environment's activate script:
-      ANSIBLE_INVENTORY: environments/common/inventory,environments/.caas/inventory # NB: Relative to runner project dir
+      ANSIBLE_INVENTORY: environments/common/inventory,environments/site/inventory,environments/.caas/inventory # NB: Relative to runner project dir
 
 # Indicates if the workstation should be enabled
 azimuth_caas_workstation_enabled: >-

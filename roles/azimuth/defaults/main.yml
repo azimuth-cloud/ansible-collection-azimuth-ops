@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://azimuth-cloud.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.15.0
+azimuth_chart_version: 0.19.0
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -61,13 +61,15 @@ azimuth_secret_key: "{{ undef(hint='azimuth_secret_key is required') }}"
 # Settings for the available clouds
 # List of linked clouds - each item should contain name, label and url
 azimuth_linked_clouds: []
-
 # The name of this cloud
 azimuth_current_cloud_name: "{{ undef(hint='azimuth_current_cloud_name is required') }}"
 
 # The label for this cloud
 azimuth_current_cloud_label: >-
   {{ azimuth_current_cloud_name | regex_replace('[^a-z0-9]+', ' ') | capitalize }}
+
+# toggle for metrics
+azimuth_metrics: true
 
 # Settings for the metrics dashboards, if available
 # By default, these are provided by the cloud_metrics role
@@ -102,6 +104,25 @@ azimuth_curated_sizes: []
 #   description: >-
 #     {% raw %}{{ cpus }} CPUs, {{ ram }} RAM, {{ disk }} disk, {{ ephemeral_disk }} ephemeral disk{% endraw %}
 
+azimuth_coral_credits_uri: "{{ hostvars[groups.azimuth_deploy.0].coral_credits_uri }}"
+azimuth_coral_credits_secret_name: coral-token
+azimuth_coral_credits_secret_key: token
+
+azimuth_coral_credits: >-
+  {{-
+    {} |
+       combine({
+         "uri": azimuth_coral_credits_uri,
+         "tokenSecretRef": {
+           "name": azimuth_coral_credits_secret_name,
+           "namespace": azimuth_release_namespace,
+           "key": azimuth_coral_credits_secret_key
+         }
+       }
+       if coral_credits_enabled
+       else {})
+  }}
+
 # The authentication type to use - oidc and openstack are supported
 azimuth_authentication_type: openstack
 
@@ -126,12 +147,13 @@ azimuth_oidc_client_spec:
   public: false
   grantTypes:
     - AuthorizationCode
-  redirectUris:
-    - >-
-      {{
-        "{}://{}/auth/oidc/complete/".format(
-          'https' if azimuth_ingress_tls_enabled else 'http',
-          azimuth_ingress_host
+  redirectUris: >-
+    {{
+      ['https://' + azimuth_ingress_host + '/auth/oidc/complete/'] +
+      (
+        ['http://' + azimuth_ingress_host + '/auth/oidc/complete/']
+        if not azimuth_ingress_tls_enabled
+        else []
         )
       }}
 #   The client secret
@@ -204,7 +226,6 @@ azimuth_authenticator_federated_protocol: >-
     else None
   }}
 azimuth_authenticator_federated_provider:
-
 # The list of identity providers to make available
 azimuth_authenticator_federated_identity_providers:
   # The Keystone identity provider and protocol to use
@@ -282,7 +303,6 @@ azimuth_authentication_defaults: >-
       )
   }}
 azimuth_authentication_overrides: {}
-
 azimuth_authentication: >-
   {{-
     azimuth_authentication_defaults |
@@ -300,13 +320,11 @@ azimuth_cloud_provider_type: openstack
 # If given, network auto-creation is disabled
 # The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-internal"
 azimuth_openstack_internal_net_template:
-
 # The template to use when searching for the external network
 # Only used if the external network is not tagged
 # If not given, there must be exactly one external network available to tenants
 # The fragment '{tenant_name}' is replaced with the current tenancy name, e.g. "{tenant_name}-external"
 azimuth_openstack_external_net_template:
-
 # If larger than zero, project specific manila share should be auto-created
 azimuth_openstack_manila_project_share_gb: 0
 
@@ -425,13 +443,15 @@ azimuth_apps_query_params:
 # Indicates whether the smart scheduling should be enabled
 azimuth_scheduling_enabled: false
 
+# Maximum duration users can specify for platforms. Unlimited
+# if undefined
+# azimuth_max_platform_duration_hours:
+
 # Theme settings
 # Custom bootstrap CSS URL
 azimuth_theme_bootstrap_css_url:
-
 # Custom CSS snippet
 azimuth_theme_custom_css:
-
 # The values for the release
 azimuth_release_defaults:
   tags:
@@ -466,6 +486,7 @@ azimuth_release_defaults:
             else {}
           )
       }}
+    coralCredits: "{{ azimuth_coral_credits }}"
     documentationUrl: "{{ azimuth_documentation_url }}"
     supportUrl: "{{ azimuth_support_url }}"
     curatedSizes: "{{ azimuth_curated_sizes }}"
@@ -494,8 +515,15 @@ azimuth_release_defaults:
       if azimuth_apps_enabled
       else {}
     }}
-  scheduling:
-    enabled: "{{ azimuth_scheduling_enabled }}"
+  scheduling: >-
+    {{-
+      { "enabled": azimuth_scheduling_enabled } |
+        combine(
+          { "maxPlatformDurationHours": azimuth_max_platform_duration_hours }
+          if azimuth_max_platform_duration_hours is defined and azimuth_scheduling_enabled
+          else {}
+        )
+    }}
   theme: >-
     {{-
       {} |
@@ -513,7 +541,7 @@ azimuth_release_defaults:
   # Enable the API monitoring by default
   api:
     monitoring:
-      enabled: true
+      enabled: "{{ azimuth_metrics }}"
 azimuth_release_overrides: {}
 azimuth_release_values: >-
   {{-

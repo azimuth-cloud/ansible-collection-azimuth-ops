@@ -1,10 +1,10 @@
 ---
 
 k3s_repo: https://github.com/k3s-io/k3s
-k3s_version: v1.33.1+k3s1
+k3s_version: v1.33.7+k3s1
 k3s_binary_url: "{{ k3s_repo }}/releases/download/{{ k3s_version }}/k3s"
 k3s_binary_checksum_url: "{{ k3s_repo }}/releases/download/{{ k3s_version }}/sha256sum-amd64.txt"
-k3s_binary_checksum: "sha256:{{ lookup('url', k3s_binary_checksum_url, wantlist=True) | first | split | first }}"
+k3s_binary_checksum: "sha256:{{ lookup('url', k3s_binary_checksum_url, wantlist=True) | select('match', '.+k3s$') | first | split | first }}"
 
 # Settings for an additional block device that will hold the k3s state, if present
 k3s_storage_device: /dev/sdb
@@ -12,3 +12,6 @@ k3s_storage_fstype: xfs
 
 # Indicates if the Traefik ingress controller should be enabled
 k3s_traefik_enabled: false
+
+# Variable to disable filesystem setup (for running on existing systems)
+k3s_configure_filesystem: true

@@ -1,5 +1,4 @@
 ---
-
 # Disable by default so that existing deployments don't break when bucket isn't configured
 # Can be overwritten in azimuth-config as needed
 velero_enabled: false
@@ -10,7 +9,7 @@ velero_enabled: false
 
 # Velero CLI archive URL
 velero_cli_repo: https://github.com/vmware-tanzu/velero
-velero_cli_version: v1.16.1
+velero_cli_version: v1.17.2
 velero_cli_os: "{{ ansible_system | lower }}"
 velero_cli_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
 velero_cli_archive_name: >-
@@ -41,7 +40,7 @@ velero_aws_secret_access_key: "{{ undef(hint='velero_aws_secret_access_key is re
 # Kubernetes CSI Snapshot Controller config
 velero_csi_snapshot_controller_chart_name: snapshot-controller
 velero_csi_snapshot_controller_chart_repo: https://piraeus.io/helm-charts/
-velero_csi_snapshot_controller_chart_version: 4.1.0
+velero_csi_snapshot_controller_chart_version: 5.0.3
 velero_csi_snapshot_controller_release_namespace: kube-system
 velero_csi_snapshot_controller_release_name: csi-snapshot-controller
 velero_csi_snapshot_controller_wait_timeout: 10m
@@ -53,12 +52,20 @@ velero_csi_snapshot_controller_release_values: >-
       combine(velero_csi_snapshot_controller_release_overrides, recursive = True)
   }}
 
+velero_csi_snapshot_controller_crds:
+  - volumegroupsnapshotclasses.groupsnapshot.storage.k8s.io
+  - volumegroupsnapshotcontents.groupsnapshot.storage.k8s.io
+  - volumegroupsnapshots.groupsnapshot.storage.k8s.io
+  - volumesnapshotclasses.snapshot.storage.k8s.io
+  - volumesnapshotcontents.snapshot.storage.k8s.io
+  - volumesnapshots.snapshot.storage.k8s.io
+
 # The name of the volume snapshot class
 velero_cinder_snapshot_class_name: cinder-csi-snapshot
 
 # Velero plugin config
 velero_s3_plugin_image_source: velero/velero-plugin-for-aws
-velero_s3_plugin_image_version: v1.12.1
+velero_s3_plugin_image_version: v1.13.2
 
 # The default backup storage location
 # We disable checksums because older Ceph doesn't implement them properly
@@ -89,7 +96,7 @@ velero_default_backup_storage_location: >-
 # Velero Helm chart config
 velero_chart_name: velero
 velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
-velero_chart_version: 10.0.10
+velero_chart_version: 11.3.2
 velero_release_namespace: velero
 velero_release_name: velero
 velero_wait_timeout: 10m

@@ -34,7 +34,7 @@
                   nginx_ingress_controller_ssl_expire_time_seconds < (time() + (30 * 24 * 3600))
                 for: 1h
                 annotations:
-                  message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
+                  message: "{% raw %}The cert {{ $labels.host }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
                 labels:
                   severity: warning
               - alert: NginxIngressCertificateExpiresVerySoon
@@ -42,8 +42,9 @@
                   nginx_ingress_controller_ssl_expire_time_seconds < (time() + (7 * 24 * 3600))
                 for: 1m
                 annotations:
-                  message: "{% raw %}The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
+                  message: "{% raw %}The cert {{ $labels.host }} is {{ $value | humanizeDuration }} from expiry.{% endraw %}"
                 labels:
                   severity: critical
   register: kubectl_ingress_cert_expiry
   changed_when: kubectl_ingress_cert_expiry.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  when: ingress_nginx_prometheus_stack_enabled

@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.12.1
+azimuth_capi_operator_chart_version: 0.16.0
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -18,6 +18,9 @@ azimuth_capi_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
 # The timer interval to use for the CAPI operator
 azimuth_capi_operator_timer_interval: 60
+
+# variable to toggle metrics
+azimuth_capi_operator_metrics: true
 
 # The repo, name and version for the CAPI Helm charts
 # Leave blank to use the operator defaults
@@ -167,9 +170,6 @@ azimuth_capi_operator_capi_helm_openstack_block_storage_ignore_volume_az: true
 azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone: nova
 # The Cinder volume type for the default Cinder CSI storage class
 azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type:
-# Whether to allow config snippet annotations on individual ingress resources
-# on each tenant cluster.
-azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations: true
 
 azimuth_capi_operator_capi_helm_values_defaults:
   machineMetadata: "{{ azimuth_capi_operator_capi_helm_machine_metadata }}"
@@ -345,13 +345,6 @@ azimuth_capi_operator_capi_helm_values_defaults:
     monitoring:
       blackboxExporter:
         enabled: false
-    # Allow nginx ingress config snippets as ingress resource annotations
-    ingress:
-      nginx:
-        release:
-          values:
-            controller:
-              allowSnippetAnnotations: "{{ azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations }}"
   etcd: >-
     {{-
       {
@@ -502,7 +495,7 @@ azimuth_capi_operator_release_defaults:
       }}
   # Enable the metrics with the service monitor by default
   metrics:
-    enabled: true
+    enabled: "{{ azimuth_capi_operator_metrics }}"
   trustBundle: "{{ azimuth_capi_operator_trust_bundle }}"
 azimuth_capi_operator_release_overrides: {}
 azimuth_capi_operator_release_values: >-

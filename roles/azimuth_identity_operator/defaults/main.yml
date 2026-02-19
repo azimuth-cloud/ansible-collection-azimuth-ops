@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_identity_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-identity-operator
 azimuth_identity_operator_chart_name: azimuth-identity-operator
-azimuth_identity_operator_chart_version: 0.9.1
+azimuth_identity_operator_chart_version: 0.9.8
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
@@ -12,6 +12,9 @@ azimuth_identity_operator_release_name: azimuth-identity-operator
 
 # The timeout to wait for CAPI operator to become ready
 azimuth_identity_operator_wait_timeout: 10m
+
+# toggle for metrics
+azimuth_identity_operator_metrics: true
 
 # Custom trust bundle for SSL verification
 azimuth_identity_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
@@ -208,7 +211,7 @@ azimuth_identity_operator_release_defaults:
       zenithDiscoveryNamespace: "{{ azimuth_identity_operator_keycloak_zenith_discovery_namespace }}"
   # Enable the metrics with the service monitor by default
   metrics:
-    enabled: true
+    enabled: "{{ azimuth_identity_operator_metrics }}"
   trustBundle: "{{ azimuth_identity_operator_trust_bundle }}"
 azimuth_identity_operator_release_overrides: {}
 azimuth_identity_operator_release_values: >-
