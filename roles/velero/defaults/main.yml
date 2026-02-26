@@ -40,7 +40,7 @@ velero_aws_secret_access_key: "{{ undef(hint='velero_aws_secret_access_key is re
 # Kubernetes CSI Snapshot Controller config
 velero_csi_snapshot_controller_chart_name: snapshot-controller
 velero_csi_snapshot_controller_chart_repo: https://piraeus.io/helm-charts/
-velero_csi_snapshot_controller_chart_version: 5.0.2
+velero_csi_snapshot_controller_chart_version: 5.0.3
 velero_csi_snapshot_controller_release_namespace: kube-system
 velero_csi_snapshot_controller_release_name: csi-snapshot-controller
 velero_csi_snapshot_controller_wait_timeout: 10m
@@ -51,6 +51,14 @@ velero_csi_snapshot_controller_release_values: >-
     velero_csi_snapshot_controller_release_defaults |
       combine(velero_csi_snapshot_controller_release_overrides, recursive = True)
   }}
+
+velero_csi_snapshot_controller_crds:
+  - volumegroupsnapshotclasses.groupsnapshot.storage.k8s.io
+  - volumegroupsnapshotcontents.groupsnapshot.storage.k8s.io
+  - volumegroupsnapshots.groupsnapshot.storage.k8s.io
+  - volumesnapshotclasses.snapshot.storage.k8s.io
+  - volumesnapshotcontents.snapshot.storage.k8s.io
+  - volumesnapshots.snapshot.storage.k8s.io
 
 # The name of the volume snapshot class
 velero_cinder_snapshot_class_name: cinder-csi-snapshot
@@ -88,7 +96,7 @@ velero_default_backup_storage_location: >-
 # Velero Helm chart config
 velero_chart_name: velero
 velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
-velero_chart_version: 11.3.2
+velero_chart_version: 11.4.0
 velero_release_namespace: velero
 velero_release_name: velero
 velero_wait_timeout: 10m
