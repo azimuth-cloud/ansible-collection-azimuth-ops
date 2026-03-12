@@ -14,27 +14,10 @@
         create_namespace: true
       register: capi_cluster_helm_release
 
-    # The CAPI and CAPO controllers take some time to react and update the Ready condition
-    # However some kinds of update, e.g. only addons, do not affect the cluster conditions,
-    # so we only allow up to two minutes for that to happen
-    - name: Wait for cluster to become unready # noqa no-handler
+    - name: Wait for cluster to become Available
       ansible.builtin.command: >-
         kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
-          --for=condition=Ready=false
-          --namespace {{ capi_cluster_release_namespace }}
-          --timeout 0s
-      changed_when: false
-      register: capi_cluster_not_ready
-      until: capi_cluster_not_ready is succeeded
-      retries: 12
-      delay: 10
-      when: capi_cluster_helm_release is changed
-      ignore_errors: true
-
-    - name: Wait for cluster to become ready
-      ansible.builtin.command: >-
-        kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
-          --for=condition=Ready
+          --for=condition=Available
           --namespace {{ capi_cluster_release_namespace }}
           --timeout 0s
       changed_when: false
@@ -43,22 +26,63 @@
       retries: 360
       delay: 10
 
-    # Note that because we waited for the cluster to become ready, we know
-    # the control plane machines are at the correct version
-    - name: Wait for all nodes to be at the same version
-      ansible.builtin.command: kubectl get machines --output json
+    - name: Wait for cluster to finish RollingOut
+      ansible.builtin.command: >-
+        kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
+          --for=condition=RollingOut=false
+          --namespace {{ capi_cluster_release_namespace }}
+          --timeout 0s
       changed_when: false
-      register: capi_cluster_machines_list
-      until: >-
-        (
-          capi_cluster_machines_list.stdout |
-            from_json |
-            json_query('items') |
-            map(attribute = "status.nodeInfo.kubeletVersion", default = "NA") |
-            unique |
-            list |
-            length
-        ) == 1
+      register: capi_cluster_rollout
+      until: capi_cluster_rollout is succeeded
+      retries: 360
+      delay: 10
+
+    - name: Wait for cluster ControlPlaneMachinesUpToDate
+      ansible.builtin.command: >-
+        kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
+          --for=condition=ControlPlaneMachinesUpToDate
+          --namespace {{ capi_cluster_release_namespace }}
+          --timeout 0s
+      changed_when: false
+      register: capi_cluster_control_plane_up_to_date
+      until: capi_cluster_control_plane_up_to_date is succeeded
+      retries: 360
+      delay: 10
+
+    - name: Wait for cluster ControlPlaneAvailable
+      ansible.builtin.command: >-
+        kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
+          --for=condition=ControlPlaneAvailable
+          --namespace {{ capi_cluster_release_namespace }}
+          --timeout 0s
+      changed_when: false
+      register: capi_cluster_control_plane_available
+      until: capi_cluster_control_plane_available is succeeded
+      retries: 360
+      delay: 10
+
+    - name: Wait for cluster WorkerMachinesUpToDate
+      ansible.builtin.command: >-
+        kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
+          --for=condition=WorkerMachinesUpToDate
+          --namespace {{ capi_cluster_release_namespace }}
+          --timeout 0s
+      changed_when: false
+      register: capi_cluster_workers_up_to_date
+      until: capi_cluster_workers_up_to_date is succeeded
+      retries: 360
+      delay: 10
+
+    - name: Wait for cluster WorkersAvailable
+      ansible.builtin.command: >-
+        kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
+          --for=condition=WorkersAvailable
+          --namespace {{ capi_cluster_release_namespace }}
+          --timeout 0s
+      changed_when: false
+      register: capi_cluster_workers_available
+      until: capi_cluster_workers_available is succeeded
       retries: 360
       delay: 10
 

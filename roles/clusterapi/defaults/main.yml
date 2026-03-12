@@ -2,32 +2,45 @@
 
 # The repo, version and manifest URL for the Cluster API core components
 clusterapi_core_repo: https://github.com/kubernetes-sigs/cluster-api
-clusterapi_core_version: v1.10.4
+clusterapi_core_version: v1.12.2
 clusterapi_core_components: "{{ clusterapi_core_repo }}/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml"
 
 # The repo, version and manifest URL for the Cluster API OpenStack provider components
 clusterapi_openstack_repo: https://github.com/kubernetes-sigs/cluster-api-provider-openstack
-clusterapi_openstack_version: v0.10.5
+clusterapi_openstack_version: v0.14.1
 clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml"
+
+# The repo, version and manifest URL for the OpenStack Resource Controller components
+clusterapi_openstack_resource_controller_repo: https://github.com/k-orc/openstack-resource-controller
+clusterapi_openstack_resource_controller_version: v2.4.0
+clusterapi_openstack_resource_controller_components: >-
+  {{ clusterapi_openstack_resource_controller_repo }}/releases/download/{{ clusterapi_openstack_resource_controller_version }}/install.yaml
 
 # The diagnostics address for Cluster API components
 clusterapi_diagnostics_address: 0.0.0.0:8443
 clusterapi_insecure_diagnostics: false
 
+# The diagnostics address for CAPO components
+clusterapi_openstack_diagnostics_address: 127.0.0.1:8080
+clusterapi_openstack_insecure_diagnostics: false
+
 # Variables for toggling feature gates for experimental features
 clusterapi_feature_gate_machine_pool: false
-clusterapi_feature_gate_cluster_resource_set: true
 clusterapi_feature_gate_cluster_topology: true
 clusterapi_feature_gate_runtime_sdk: true
 clusterapi_feature_gate_machine_set_preflight_checks: true
 clusterapi_feature_gate_kubeadm_bootstrap_format_ignition: false
+clusterapi_feature_gate_openstack_priority_queue: true
+clusterapi_feature_gate_openstack_autoscale_from_zero: true
 
 clusterapi_core_feature_gates:
   MachinePool: "{{ clusterapi_feature_gate_machine_pool }}"
-  ClusterResourceSet: "{{ clusterapi_feature_gate_cluster_resource_set }}"
   ClusterTopology: "{{ clusterapi_feature_gate_cluster_topology }}"
   RuntimeSDK: "{{ clusterapi_feature_gate_runtime_sdk }}"
   MachineSetPreflightChecks: "{{ clusterapi_feature_gate_machine_set_preflight_checks }}"
+clusterapi_openstack_feature_gates:
+  PriorityQueue: "{{ clusterapi_feature_gate_openstack_priority_queue }}"
+  AutoScaleFromZero: "{{ clusterapi_feature_gate_openstack_autoscale_from_zero }}"
 clusterapi_kubeadm_bootstrap_feature_gates:
   MachinePool: "{{ clusterapi_feature_gate_machine_pool }}"
   KubeadmBootstrapFormatIgnition: "{{ clusterapi_feature_gate_kubeadm_bootstrap_format_ignition }}"
@@ -38,21 +51,11 @@ clusterapi_kubeadm_control_plane_feature_gates:
 # List of Cluster API component manifests to install
 clusterapi_manifests:
   - "{{ clusterapi_core_components }}"
+  - "{{ clusterapi_openstack_resource_controller_components }}"
   - "{{ clusterapi_openstack_components }}"
 
 # List of patches to apply to the resources in the manifests
 clusterapi_patches:
-  # Remove the caBundle from the CAPO custom resource definitions
-  # It is injected by cert-manager and causes validation issues if set outside of that
-  # The CAPI CRDs do not have the field set in the manifests that are shipped
-  # The caBundle exists on every CRD _except_ openstackfloatingippools
-  - patch: |-
-      - op: remove
-        path: /spec/conversion/webhook/clientConfig/caBundle
-    target:
-      kind: CustomResourceDefinition
-      labelSelector: cluster.x-k8s.io/provider=infrastructure-openstack
-      name: openstack(cluster|machine).*
   # The manifests contain environment variable substitutions for feature gates that we do not need
   # yamllint disable rule:line-length
   - patch: |-
@@ -63,12 +66,10 @@ clusterapi_patches:
           - --diagnostics-address={{ clusterapi_diagnostics_address }}
           - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
           - --feature-gates={% for k, v in clusterapi_core_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
-  # yamllint enable rule:line-length
     target:
       kind: Deployment
       namespace: capi-system
       name: capi-controller-manager
-  # yamllint disable rule:line-length
   - patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/args
@@ -77,14 +78,11 @@ clusterapi_patches:
           - --diagnostics-address={{ clusterapi_diagnostics_address }}
           - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
           - --feature-gates={% for k, v in clusterapi_kubeadm_bootstrap_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
-    # yamllint enable rule:line-length
     target:
       kind: Deployment
       namespace: capi-kubeadm-bootstrap-system
       name: capi-kubeadm-bootstrap-controller-manager
-  # yamllint disable rule:line-length
   - patch: |-
-      # yamllint disable rule:line-length
       - op: replace
         path: /spec/template/spec/containers/0/args
         value:
@@ -92,11 +90,24 @@ clusterapi_patches:
           - --diagnostics-address={{ clusterapi_diagnostics_address }}
           - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
           - --feature-gates={% for k, v in clusterapi_kubeadm_control_plane_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
-    # yamllint enable rule:line-length
     target:
       kind: Deployment
       namespace: capi-kubeadm-control-plane-system
       name: capi-kubeadm-control-plane-controller-manager
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - --leader-elect
+          - --v=2
+          - --diagnostics-address={{ clusterapi_openstack_diagnostics_address }}
+          - --insecure-diagnostics={{ clusterapi_openstack_insecure_diagnostics }}
+          - --feature-gates={% for k, v in clusterapi_openstack_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
+    target:
+      kind: Deployment
+      namespace: capo-system
+      name: capo-controller-manager
+  # yamllint enable rule:line-length
 
 # The kustomization to use for Cluster API
 clusterapi_kustomization:
