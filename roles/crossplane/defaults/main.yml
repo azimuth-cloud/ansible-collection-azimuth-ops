@@ -1,7 +1,7 @@
 ---
 crossplane_chart_name: crossplane
 crossplane_chart_repo: https://charts.crossplane.io/stable
-crossplane_chart_version: 2.1.4
+crossplane_chart_version: 2.2.0
 crossplane_release_namespace: crossplane-system
 crossplane_release_name: crossplane
 crossplane_release_defaults: {}
