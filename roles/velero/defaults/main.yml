@@ -9,7 +9,7 @@ velero_enabled: false
 
 # Velero CLI archive URL
 velero_cli_repo: https://github.com/vmware-tanzu/velero
-velero_cli_version: v1.17.2
+velero_cli_version: v1.18.0
 velero_cli_os: "{{ ansible_system | lower }}"
 velero_cli_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
 velero_cli_archive_name: >-
@@ -65,7 +65,7 @@ velero_cinder_snapshot_class_name: cinder-csi-snapshot
 
 # Velero plugin config
 velero_s3_plugin_image_source: velero/velero-plugin-for-aws
-velero_s3_plugin_image_version: v1.13.2
+velero_s3_plugin_image_version: v1.14.0
 
 # The default backup storage location
 # We disable checksums because older Ceph doesn't implement them properly
