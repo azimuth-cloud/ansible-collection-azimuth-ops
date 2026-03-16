@@ -87,8 +87,14 @@
       {%- for registry, project in harbor_proxy_cache_projects.items() -%}
         {%- set _ = mirrors.update({
           registry: {
-            "url": "{}/v2/{}".format(harbor_external_url, project.name),
-            "skipVerify": not harbor_tls_enabled | bool
+            "upstream": project.url,
+            "mirrors": [
+                {
+                "url": "{}/v2/{}".format(harbor_external_url, project.name),
+                "skipVerify": not harbor_tls_enabled | bool,
+                "capabilities": ["pull", "resolve"],
+              }
+            ]
           },
         }) -%}
       {%- endfor -%}
