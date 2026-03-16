@@ -350,6 +350,9 @@ azimuth_capi_operator_capi_helm_values_defaults:
         enabled: false
       traefik:
         enabled: true
+        release:
+          values:
+            kubernetesIngressNGINX: true
   etcd: >-
     {{-
       {
