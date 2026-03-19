@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.17.0
+azimuth_capi_operator_chart_version: 0.17.1-dev.0.feat-traefik.2
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -345,6 +345,14 @@ azimuth_capi_operator_capi_helm_values_defaults:
     monitoring:
       blackboxExporter:
         enabled: false
+    ingress:
+      nginx:
+        enabled: false
+      traefik:
+        enabled: true
+        release:
+          values:
+            kubernetesIngressNGINX: true
   etcd: >-
     {{-
       {
