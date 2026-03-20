@@ -98,7 +98,16 @@
         - name: Install Nginx ingress controller
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.ingress_nginx
-          when: "ingress_controller_enabled | default(true)"
+          when:
+            - ingress_controller_enabled | default(true)
+            - ingress_controller_type | default('nginx') == 'nginx'
+
+        - name: Install Traefik ingress controller
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.ingress_traefik
+          when:
+            - ingress_controller_enabled | default(true)
+            - ingress_controller_type | default('nginx') == 'traefik'
 
     - name: Configure Azimuth HA cluster
       when: install_mode == 'ha'
