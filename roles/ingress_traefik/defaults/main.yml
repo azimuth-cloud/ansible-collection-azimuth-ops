@@ -1,0 +1,30 @@
+---
+
+# The chart to use
+ingress_traefik_chart_repo: https://traefik.github.io/charts
+ingress_traefik_chart_name: traefik
+ingress_traefik_chart_version: "39.0.5"
+
+# Release information for the Traefik ingress controller release
+ingress_traefik_release_namespace: ingress-traefik
+ingress_traefik_release_name: traefik
+
+# The timeout to wait for Traefik ingress controller to become ready
+ingress_traefik_wait_timeout: 2m
+
+# Enables the monitoring stack integration
+ingress_traefik_prometheus_stack_enabled: true
+
+# The values for the release
+ingress_traefik_release_defaults:
+  metrics:
+    prometheus:
+      enabled: "{{ ingress_traefik_prometheus_stack_enabled }}"
+      serviceMonitor:
+        enabled: "{{ ingress_traefik_prometheus_stack_enabled }}"
+ingress_traefik_release_overrides: {}
+ingress_traefik_release_values: >-
+  {{-
+    ingress_traefik_release_defaults |
+      combine(ingress_traefik_release_overrides, recursive = True)
+  }}
