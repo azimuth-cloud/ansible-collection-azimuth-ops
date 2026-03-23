@@ -69,6 +69,6 @@
                   message: "{% raw %}The cert {{ $labels.cn }} expires in {{ $value | humanizeDuration }}.{% endraw %}"
                 labels:
                   severity: critical
-  register: kubectl_traefik_cert_expiry
-  changed_when: kubectl_traefik_cert_expiry.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: ingress_traefik_ingress_traefik_kubectl_cert_expiry
+  changed_when: ingress_traefik_ingress_traefik_kubectl_cert_expiry.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
   when: ingress_traefik_prometheus_stack_enabled

@@ -61,8 +61,8 @@
   loop_control:
     loop_var: template
     label: "{{ template.name }}"
-  register: kubectl_install_caas_cluster_templates
-  changed_when: kubectl_install_caas_cluster_templates.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: azimuth_caas_operator_kubectl_install_caas_cluster_templates
+  changed_when: azimuth_caas_operator_kubectl_install_caas_cluster_templates.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Update secrets for Azimuth CaaS ssh key
   ansible.builtin.command: kubectl apply -f -
@@ -78,8 +78,8 @@
       type: Opaque
       data: "{{ azimuth_caas_operator_default_ssh_secret_files }}"
   when: azimuth_caas_operator_default_ssh_secret_files
-  register: kubectl_caas_ssh_key
-  changed_when: kubectl_caas_ssh_key.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: azimuth_caas_operator_kubectl_caas_ssh_key
+  changed_when: azimuth_caas_operator_kubectl_caas_ssh_key.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Create Traefik Middleware
   ansible.builtin.command: kubectl apply -f -
@@ -97,8 +97,8 @@
           secret: admin-dashboard-auth
           realm: "Azimuth admin dashboards"
           removeHeader: true
-  register: kubectl_install_caas_cluster_middleware
-  changed_when: kubectl_install_caas_cluster_middleware.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: azimuth_caas_operator_kubectl_middleware
+  changed_when: azimuth_caas_operator_kubectl_middleware.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Create HTTPRoute
   ansible.builtin.command: kubectl apply -f -

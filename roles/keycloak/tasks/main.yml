@@ -21,8 +21,8 @@
 
 - name: Install Keycloak operator resources
   ansible.builtin.command: kubectl apply -k {{ keycloak_operator_kustomization_directory }}
-  register: kubectl_keycloak_operator
-  changed_when: kubectl_keycloak_operator.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: keycloak_kubectl_keycloak_operator
+  changed_when: keycloak_kubectl_keycloak_operator.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Wait for Keycloak operator to become ready
   ansible.builtin.command: >-
@@ -56,8 +56,8 @@
         user: "{{ keycloak_external_db_user }}"
         password: "{{ keycloak_external_db_password }}"
   when: keycloak_external_db_url
-  register: kubectl_keycloak_db_secret
-  changed_when: kubectl_keycloak_db_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: keycloak_kubectl_keycloak_db_secret
+  changed_when: keycloak_kubectl_keycloak_db_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Deploy internal database for Keycloak
   ansible.builtin.include_role:
@@ -88,8 +88,8 @@
       stringData:
         trust-bundle.pem: "{{ keycloak_trust_bundle }}"
   when: keycloak_trust_bundle
-  register: kubectl_keycloak_trust_bundle
-  changed_when: kubectl_keycloak_trust_bundle.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: keycloak_kubectl_keycloak_trust_bundle
+  changed_when: keycloak_kubectl_keycloak_trust_bundle.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Keycloak instance
   ansible.builtin.command: kubectl apply -f -
@@ -104,8 +104,8 @@
         namespace: "{{ keycloak_namespace }}"
         labels: "{{ keycloak_labels }}"
       spec: "{{ keycloak_spec }}"
-  register: kubectl_keycloak_instance
-  changed_when: kubectl_keycloak_instance.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: keycloak_kubectl_keycloak_instance
+  changed_when: keycloak_kubectl_keycloak_instance.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Keycloak TLS certificate
   ansible.builtin.command: kubectl apply -f -
@@ -123,8 +123,8 @@
         tls.crt: "{{ keycloak_ingress_tls_certificate }}"
         tls.key: "{{ keycloak_ingress_tls_key }}"
   when: keycloak_ingress_tls_certificate
-  register: kubectl_keycloak_tls_cert
-  changed_when: kubectl_keycloak_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: keycloak_kubectl_keycloak_tls_cert
+  changed_when: keycloak_kubectl_keycloak_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Create GatewayAPI objects from templates
   ansible.builtin.template:
@@ -155,8 +155,8 @@
 #        labels: "{{ keycloak_labels }}"
 #        annotations: "{{ keycloak_ingress_annotations }}"
 #      spec: "{{ keycloak_ingress_spec }}"
-#  register: kubectl_keycloak_ingress
-#  changed_when: kubectl_keycloak_ingress.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+#  register: keycloak_kubectl_keycloak_ingress
+#  changed_when: keycloak_kubectl_keycloak_ingress.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Wait for Keycloak to become available
   ansible.builtin.command: >-
@@ -194,8 +194,8 @@
         selector:
           app.kubernetes.io/managed-by: keycloak-operator
           app: "{{ keycloak_name }}"
-  register: kubectl_keycloak_metrics
-  changed_when: kubectl_keycloak_metrics.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: keycloak_kubectl_keycloak_metrics
+  changed_when: keycloak_kubectl_keycloak_metrics.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
   when: keycloak_metrics
 
 
@@ -221,8 +221,8 @@
             app.kubernetes.io/managed-by: azimuth-ops
             app: keycloak
             instance: "{{ keycloak_name }}"
-  register: kubectl_keycloak_servicemonitor
-  changed_when: kubectl_keycloak_servicemonitor.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: keycloak_kubectl_keycloak_servicemonitor
+  changed_when: keycloak_kubectl_keycloak_servicemonitor.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
   when: keycloak_metrics
 
 # Try to obtain a Keycloak admin token with the password from the config

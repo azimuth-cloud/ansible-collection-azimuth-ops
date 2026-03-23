@@ -241,7 +241,7 @@ admin_dashboard_ingress_helm_dashboard:
   tls_secret_name: "{{ admin_dashboard_ingress_helm_dashboard_tls_secret_name }}"
 
 # The list of ingresses to create
-admin_dashboard_ingresses: >-
+admin_dashboard_ingress_ingresses: >-
   {{-
     [
       admin_dashboard_ingress_grafana,
