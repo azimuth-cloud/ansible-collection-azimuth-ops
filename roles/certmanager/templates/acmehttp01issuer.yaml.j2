@@ -27,5 +27,22 @@ spec:
       name: {{ certmanager_acmehttp01issuer_name }}-privkey
     solvers:
       - http01:
-          ingress:
-            class: {{ certmanager_acmehttp01issuer_ingress_class }}
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: traefik-gateway
+                namespace: {{ ingress_traefik_release_namespace }}
+                kind: Gateway
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-certmanager
+  namespace: {{ ingress_traefik_release_namespace }}
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: {{ certmanager_release_namespace }}
+  to:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
