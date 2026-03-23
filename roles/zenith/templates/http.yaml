@@ -1,0 +1,27 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: zenith-server-registrar
+  namespace: azimuth
+  labels:
+    app.kubernetes.io/component: registrar
+    app.kubernetes.io/instance: zenith-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: zenith-server
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace: ingress-traefik
+  hostnames:
+    - "registrar.apps.{{ azimuth_ingress_host }}"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /associate
+      timeouts:
+        request: 600s
+        backendRequest: 600s
+      backendRefs:
+        - name: zenith-server-registrar
+          port: 80

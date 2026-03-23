@@ -116,6 +116,9 @@ zenith_release_defaults:
                 allow:
                   - pattern: ".*"
   registrar:
+    service:
+      annotations:
+        traefik.ingress.kubernetes.io/service.servertransport: azimuth-transport@kubernetescrd
     ingress:
       subdomain: "{{ zenith_ingress_registrar_subdomain }}"
     config:
