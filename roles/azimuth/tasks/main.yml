@@ -192,6 +192,91 @@
     wait: true
     wait_timeout: "{{ azimuth_wait_timeout }}"
 
+- name: Create HTTPRoute for Azimuth
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ httproute_definition | to_nice_yaml }}"
+  vars:
+    httproute_definition:
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata:
+        name: azimuth
+        namespace: azimuth
+        labels:
+          app.kubernetes.io/instance: azimuth
+          app.kubernetes.io/managed-by: Helm
+          app.kubernetes.io/name: azimuth
+      spec:
+        parentRefs:
+          - name: traefik-gateway
+            namespace: ingress-traefik
+        hostnames:
+          - "{{ azimuth_ingress_host }}"
+        rules:
+          # /api → azimuth-api
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /api
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            backendRefs:
+              - name: azimuth-api
+                port: 80
+          # /auth → azimuth-api
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /auth
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            backendRefs:
+              - name: azimuth-api
+                port: 80
+          # /static → azimuth-api
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /static
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            backendRefs:
+              - name: azimuth-api
+                port: 80
+          # / → azimuth-ui
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            backendRefs:
+              - name: azimuth-ui
+                port: 80
+
+- name: Create ServersTransport for Azimuth
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ httproute_definition | to_nice_yaml }}"
+  vars:
+    httproute_definition:
+      apiVersion: traefik.io/v1alpha1
+      kind: ServersTransport
+      metadata:
+        name: azimuth-transport
+        namespace: azimuth
+      spec:
+        forwardingTimeouts:
+          dialTimeout: 600s
+          responseHeaderTimeout: 600s
+  register: kubectl_httproute
+  changed_when: kubectl_httproute.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
 - name: List CaaS clusters
   ansible.builtin.command: kubectl get clusters.caas -A -o json
   changed_when: false
