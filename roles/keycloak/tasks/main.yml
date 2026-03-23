@@ -126,22 +126,37 @@
   register: kubectl_keycloak_tls_cert
   changed_when: kubectl_keycloak_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
-- name: Install Keycloak ingress
-  ansible.builtin.command: kubectl apply -f -
-  args:
-    stdin: "{{ keycloak_ingress_definition | to_nice_yaml }}"
-  vars:
-    keycloak_ingress_definition:
-      apiVersion: networking.k8s.io/v1
-      kind: Ingress
-      metadata:
-        name: "{{ keycloak_ingress_name }}"
-        namespace: "{{ keycloak_namespace }}"
-        labels: "{{ keycloak_labels }}"
-        annotations: "{{ keycloak_ingress_annotations }}"
-      spec: "{{ keycloak_ingress_spec }}"
-  register: kubectl_keycloak_ingress
-  changed_when: kubectl_keycloak_ingress.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+- name: Create GatewayAPI objects from templates
+  ansible.builtin.template:
+    src: "{{ item  }}.yaml"
+    dest: "/tmp/GatewayAPI-{{ item }}.yaml"
+    mode: "0644"
+  loop:
+    - keycloak
+
+- name: Apply GatewayAPI objects
+  ansible.builtin.command: kubectl apply -f /tmp/GatewayAPI-{{ item }}.yaml
+  loop:
+    - keycloak
+  register: kubectl_gatewayapi
+  changed_when: kubectl_gatewayapi.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+#- name: Install Keycloak ingress
+#  ansible.builtin.command: kubectl apply -f -
+#  args:
+#    stdin: "{{ keycloak_ingress_definition | to_nice_yaml }}"
+#  vars:
+#    keycloak_ingress_definition:
+#      apiVersion: networking.k8s.io/v1
+#      kind: Ingress
+#      metadata:
+#        name: "{{ keycloak_ingress_name }}"
+#        namespace: "{{ keycloak_namespace }}"
+#        labels: "{{ keycloak_labels }}"
+#        annotations: "{{ keycloak_ingress_annotations }}"
+#      spec: "{{ keycloak_ingress_spec }}"
+#  register: kubectl_keycloak_ingress
+#  changed_when: kubectl_keycloak_ingress.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Wait for Keycloak to become available
   ansible.builtin.command: >-

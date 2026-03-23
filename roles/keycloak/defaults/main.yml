@@ -54,6 +54,8 @@ keycloak_spec_defaults:
   # This is OK because we are behind an ingress that is handling TLS
   http:
     httpEnabled: true
+    annotations:
+      traefik.ingress.kubernetes.io/service.servertransport: keycloak-transport@kubernetescrd
   hostname:
     hostname: "{{ keycloak_base_url }}"
     strict: false
@@ -119,7 +121,7 @@ keycloak_spec: "{{ keycloak_spec_defaults | combine(keycloak_spec_overrides, rec
 keycloak_ingress_name: "{{ keycloak_name }}"
 
 # The name of the ingress class to use
-keycloak_ingress_class: nginx
+keycloak_ingress_class: traefik
 
 # The hostname to use for the ingress resource
 keycloak_ingress_host: >-
