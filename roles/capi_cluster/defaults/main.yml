@@ -166,6 +166,12 @@ capi_cluster_etcd_blockdevice_volume_az: "nova"
 # Determines if the ingress controller should be enabled
 capi_cluster_addons_ingress_enabled: "{{ ingress_controller_enabled | default(true) }}"
 
+# NOTE: cluster-addons does not yet support Traefik natively.
+# Until https://github.com/azimuth-cloud/capi-helm-charts is updated, nginx remains
+# the ingress controller for CAPI workload clusters.
+# Set to false once native Traefik support is available upstream.
+capi_cluster_addons_ingress_nginx_enabled: true
+
 # A pre-allocated IP for the ingress load balancer
 # If given, this IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
@@ -378,10 +384,11 @@ capi_cluster_release_defaults:
     # The Mellanox operator is only required for high-performance networking
     mellanoxNetworkOperator:
       enabled: false
-    # The NGINX ingress controller is required
+    # TODO: migrate to Traefik once cluster-addons supports it natively
     ingress:
       enabled: "{{ capi_cluster_addons_ingress_enabled }}"
       nginx:
+        enabled: "{{ capi_cluster_addons_ingress_nginx_enabled }}"
         release:
           values:
             controller:
