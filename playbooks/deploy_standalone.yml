@@ -109,25 +109,16 @@
 
       # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
       block:
-        # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
+        # Must be done before Traefik ingress so that the ServiceMonitor CRD exists
         - name: Install Kube-Prometheus-Stack
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
           when: deploy_prometheus_stack | default(false)
 
-        - name: Install Nginx ingress controller
-          ansible.builtin.include_role:
-            name: azimuth_cloud.azimuth_ops.ingress_nginx
-          when:
-            - ingress_controller_enabled | default(true)
-            - ingress_controller_type | default('nginx') == 'nginx'
-
         - name: Install Traefik ingress controller
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.ingress_traefik
-          when:
-            - ingress_controller_enabled | default(true)
-            - ingress_controller_type | default('nginx') == 'traefik'
+          when: ingress_controller_enabled | default(true)
 
 # Install Azimuth
 - name: Install and configure Azimuth
