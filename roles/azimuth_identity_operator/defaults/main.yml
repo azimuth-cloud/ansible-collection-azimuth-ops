@@ -54,7 +54,7 @@ azimuth_identity_operator_dex_host: >-
   }}
 
 # The ingress class to use for Dex ingress resources
-azimuth_identity_operator_dex_ingress_class: nginx
+azimuth_identity_operator_dex_ingress_class: traefik
 
 # The default annotations for the Dex ingress resources
 azimuth_identity_operator_ingress_default_annotations: "{{ ingress_annotations | default({}) }}"
