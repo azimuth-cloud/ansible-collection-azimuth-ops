@@ -1,0 +1,66 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: alertmanager-transport
+  namespace: monitoring-system
+spec:
+  forwardingTimeouts:
+    dialTimeout: 600s
+    responseHeaderTimeout: 600s
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: admin-dashboard-auth
+  namespace: monitoring-system
+spec:
+  basicAuth:
+    secret: admin-dashboard-auth
+    realm: "Azimuth admin dashboards"
+    removeHeader: true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: alertmanager
+  namespace: monitoring-system
+  labels:
+    app.kubernetes.io/managed-by: azimuth-ops
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace: ingress-traefik
+  hostnames:
+    - "alertmanager.apps.{{ ingress_base_domain }}"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      timeouts:
+        request: 600s
+        backendRequest: 600s
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: admin-dashboard-auth
+      backendRefs:
+        - name: kube-prometheus-stack-alertmanager
+          port: 9093
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-traefik-monitoring
+  namespace: monitoring-system
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: monitoring-system
+  to:
+    - group: ""
+      kind: Service

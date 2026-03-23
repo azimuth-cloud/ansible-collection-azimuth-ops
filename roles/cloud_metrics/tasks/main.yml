@@ -145,6 +145,27 @@
     wait: true
     wait_timeout: "{{ cloud_metrics_grafana_wait_timeout }}"
 
+- name: Create GatewayAPI objects from templates
+  ansible.builtin.template:
+    src: "{{ item  }}.yaml"
+    dest: "/tmp/GatewayAPI-{{ item }}.yaml"
+    mode: "0644"
+  loop:
+    - alertmanager
+    - grafana
+    - helm-dashboard
+    - prometheus
+
+- name: Apply GatewayAPI objects
+  ansible.builtin.command: kubectl apply -f /tmp/GatewayAPI-{{ item }}.yaml
+  loop:
+    - alertmanager
+    - grafana
+    - helm-dashboard
+    - prometheus
+  register: kubectl_gatewayapi
+  changed_when: kubectl_gatewayapi.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
 - name: Set Grafana dashboard URL facts
   ansible.builtin.set_fact:
     cloud_metrics_grafana_home_dashboard_url: >-
