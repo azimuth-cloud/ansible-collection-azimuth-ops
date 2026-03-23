@@ -17,11 +17,88 @@ ingress_traefik_prometheus_stack_enabled: true
 
 # The values for the release
 ingress_traefik_release_defaults:
+  # Make the service run on every node
+  deployment:
+    kind: DaemonSet
+
+  # Configure Network Ports and EntryPoints
+  # EntryPoints are the network listeners for incoming traffic.
+  ports:
+    web:
+      port: 80
+    websecure:
+      port: 443
+
+  # Enables the dashboard in Secure Mode
+  api:
+    dashboard: true
+
+  ingressRoute:
+    dashboard:
+      enabled: true
+      matchRule: Host(`metrics.{{ ingress_base_domain }}`)
+      entryPoints:
+        - web
+      middlewares:
+        - name: dashboard-auth
+
+  # Creates a BasicAuth Middleware and Secret for the Dashboard Security
+  extraObjects:
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: dashboard-auth-secret
+        namespace: "{{ ingress_traefik_release_namespace }}"
+      type: kubernetes.io/basic-auth
+      stringData:
+        username: admin
+        password: "P@ssw0rd"      # TODO: Replace with an Actual Password
+    - apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      metadata:
+        name: dashboard-auth
+        namespace: "{{ ingress_traefik_release_namespace }}"
+      spec:
+        basicAuth:
+          secret: dashboard-auth-secret
+
+  # We will route with Gateway API instead.
+  ingressClass:
+    enabled: false
+
+  # Enable Gateway API Provider & Disables the KubernetesIngress provider
+  # Providers tell Traefik where to find routing configuration.
+  providers:
+    kubernetesIngress:
+      enabled: false
+    kubernetesGateway:
+      enabled: true
+
+  ## Gateway Listeners
+  gateway:
+    listeners:
+      web:           # HTTP listener that matches entryPoint
+        port: 80
+        protocol: HTTP
+        namespacePolicy:
+          from: All
+
+  # Enable Observability
+  logs:
+    general:
+      level: INFO
+    # This enables access logs, outputting them to Traefik's standard output by default.
+    # The [Access Logs Documentation](https://doc.traefik.io/traefik/observability/access-logs/) covers formatting, filtering, and output options.
+    access:
+      enabled: true
+
+  # Enables Prometheus for Metrics
   metrics:
     prometheus:
       enabled: "{{ ingress_traefik_prometheus_stack_enabled }}"
       serviceMonitor:
         enabled: "{{ ingress_traefik_prometheus_stack_enabled }}"
+
 ingress_traefik_release_overrides: {}
 ingress_traefik_release_values: >-
   {{-

@@ -7,10 +7,34 @@
     release_namespace: "{{ ingress_traefik_release_namespace }}"
     release_name: "{{ ingress_traefik_release_name }}"
     release_values: "{{ ingress_traefik_release_values }}"
-    atomic: false
+    atomic: true
     create_namespace: true
-    wait: false
+    namespace: "{{ ingress_traefik_release_namespace }}"
+    wait: true
     wait_timeout: "{{ ingress_traefik_wait_timeout }}"
+
+- name: Configure Traefik as a Gateway
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ network_gateway_definition | to_nice_yaml }}"
+  vars:
+    network_gateway_definition:
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: Gateway
+      metadata:
+        name: traefik-gateway
+        namespace: "{{ ingress_traefik_release_namespace }}"
+      spec:
+        gatewayClassName: traefik
+        listeners:
+          - name: web
+            port: 80
+            protocol: HTTP
+            allowedRoutes:
+              namespaces:
+                from: All
+  register: ingress_traefik_gateway
+  changed_when: ingress_traefik_gateway.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Configure custom alerting rules for certificate expiry
   ansible.builtin.command: kubectl apply -f -
