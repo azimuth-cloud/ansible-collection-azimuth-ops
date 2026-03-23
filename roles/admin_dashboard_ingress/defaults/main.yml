@@ -1,8 +1,5 @@
 ---
 
-# The ingress class to use for admin dashboard ingresses
-admin_dashboard_ingress_class_name: nginx
-
 # Labels for admin dashboard ingresses
 # The default labels
 admin_dashboard_ingress_labels_defaults:
@@ -46,33 +43,6 @@ admin_dashboard_ingress_basic_auth_password: >-
 
 # The name of the secret in each namespace that will contain basic auth credentials
 admin_dashboard_ingress_basic_auth_secret_name: admin-dashboard-auth
-
-# Annotations for the admin dashboard ingresses
-admin_dashboard_ingress_annotations_defaults: >-
-  {{-
-    ingress_annotations |
-      default({}) |
-      combine(
-        admin_dashboard_ingress_tls_annotations
-        if admin_dashboard_ingress_tls_enabled
-        else {}
-      ) |
-      combine(
-        {
-          "nginx.ingress.kubernetes.io/auth-type": "basic",
-          "nginx.ingress.kubernetes.io/auth-secret": admin_dashboard_ingress_basic_auth_secret_name,
-          "nginx.ingress.kubernetes.io/auth-secret-type": "auth-map",
-          "nginx.ingress.kubernetes.io/auth-realm": "Azimuth admin dashboards",
-        }
-      )
-  }}
-admin_dashboard_ingress_annotations_overrides: {}
-
-admin_dashboard_ingress_annotations: >-
-  {{-
-    admin_dashboard_ingress_annotations_defaults |
-      combine(admin_dashboard_ingress_annotations_overrides)
-  }}
 
 # Settings for the Grafana ingress
 # The namespace for the ingress
