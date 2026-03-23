@@ -56,6 +56,20 @@
     wait: true
     wait_timeout: "{{ harbor_wait_timeout }}"
 
+- name: Create GatewayAPI objects from templates
+  ansible.builtin.template:
+    src: "{{ item  }}.yaml"
+    dest: "/tmp/GatewayAPI-{{ item }}.yaml"
+    mode: "0644"
+  loop:
+    - harbor
+
+- name: Apply GatewayAPI objects
+  ansible.builtin.command: kubectl apply -f /tmp/GatewayAPI-{{ item }}.yaml
+  loop:
+    - harbor
+  register: kubectl_gatewayapi
+  changed_when: kubectl_gatewayapi.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 - name: Wait for Harbor API to become available
   # checkov:skip=CKV2_ANSIBLE_1: TLS is optional
   # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
@@ -134,3 +148,4 @@
                   severity: warning
   register: kubectl_harbor_alert_rules
   changed_when: kubectl_harbor_alert_rules.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
