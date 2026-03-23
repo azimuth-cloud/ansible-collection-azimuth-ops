@@ -148,4 +148,3 @@
                   severity: warning
   register: kubectl_harbor_alert_rules
   changed_when: kubectl_harbor_alert_rules.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
-

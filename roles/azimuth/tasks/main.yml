@@ -196,6 +196,8 @@
   ansible.builtin.command: kubectl apply -f -
   args:
     stdin: "{{ httproute_definition | to_nice_yaml }}"
+  register: azimuth_kubectl_httproute
+  changed_when: azimuth_kubectl_httproute.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
   vars:
     httproute_definition:
       apiVersion: gateway.networking.k8s.io/v1
@@ -274,8 +276,8 @@
         forwardingTimeouts:
           dialTimeout: 600s
           responseHeaderTimeout: 600s
-  register: kubectl_httproute
-  changed_when: kubectl_httproute.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: azimuth_kubectl_servertransport
+  changed_when: azimuth_kubectl_servertransport.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: List CaaS clusters
   ansible.builtin.command: kubectl get clusters.caas -A -o json

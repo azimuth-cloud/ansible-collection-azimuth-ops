@@ -141,7 +141,7 @@
   register: kubectl_gatewayapi
   changed_when: kubectl_gatewayapi.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
-#- name: Install Keycloak ingress
+# - name: Install Keycloak ingress
 #  ansible.builtin.command: kubectl apply -f -
 #  args:
 #    stdin: "{{ keycloak_ingress_definition | to_nice_yaml }}"
