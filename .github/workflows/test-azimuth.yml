@@ -8,7 +8,7 @@ permissions:
   statuses: write
   id-token: write
 
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_call:
 
 jobs:
