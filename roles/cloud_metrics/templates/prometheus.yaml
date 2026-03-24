@@ -10,7 +10,7 @@ spec:
     - name: traefik-gateway
       namespace: ingress-traefik
   hostnames:
-    - "prometheus.apps.45-135-59-165.sslip.io"
+    - "prometheus.{{ ingress_base_domain }}"
   rules:
     - matches:
         - path:
