@@ -141,23 +141,6 @@
   register: kubectl_gatewayapi
   changed_when: kubectl_gatewayapi.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
-# - name: Install Keycloak ingress
-#  ansible.builtin.command: kubectl apply -f -
-#  args:
-#    stdin: "{{ keycloak_ingress_definition | to_nice_yaml }}"
-#  vars:
-#    keycloak_ingress_definition:
-#      apiVersion: networking.k8s.io/v1
-#      kind: Ingress
-#      metadata:
-#        name: "{{ keycloak_ingress_name }}"
-#        namespace: "{{ keycloak_namespace }}"
-#        labels: "{{ keycloak_labels }}"
-#        annotations: "{{ keycloak_ingress_annotations }}"
-#      spec: "{{ keycloak_ingress_spec }}"
-#  register: keycloak_kubectl_keycloak_ingress
-#  changed_when: keycloak_kubectl_keycloak_ingress.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
-
 - name: Wait for Keycloak to become available
   ansible.builtin.command: >-
     kubectl rollout status
