@@ -56,3 +56,61 @@
   when: >-
     admin_dashboard_ingress_tls_enabled and
     admin_dashboard_ingress_tls_wildcard_certificate
+
+- name: Create Traefik Middleware
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ middlewane_definition | to_nice_yaml }}"
+  vars:
+    middlewane_definition:
+      apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      metadata:
+        name: admin-dashboard-auth
+        namespace: azimuth
+      spec:
+        basicAuth:
+          secret: admin-dashboard-auth
+          realm: "Azimuth admin dashboards"
+          removeHeader: true
+  register: admin_dashboard_ingress_kubectl__middleware
+  changed_when: admin_dashboard_ingress_kubectl__middleware.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+- name: Create HTTPRoute
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ httproute_definition | to_nice_yaml }}"
+  vars:
+    httproute_definition:
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata:
+        name: ara
+        namespace: azimuth
+        labels:
+          app.kubernetes.io/managed-by: azimuth-ops
+      spec:
+        parentRefs:
+          - name: traefik-gateway
+            namespace: ingress-traefik
+        hostnames:
+          - "ara.{{ azimuth_ingress_host }}"
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            filters:
+              - type: ExtensionRef
+                extensionRef:
+                  group: traefik.io
+                  kind: Middleware
+                  name: admin-dashboard-auth   # ← basicAuth
+            backendRefs:
+              - name: azimuth-caas-operator-ara
+                port: 8000
+  register: admin_dashboard_ingress_kubectl_httproute
+  changed_when: admin_dashboard_ingress_kubectl_httproute.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
