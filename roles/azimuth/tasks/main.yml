@@ -156,7 +156,7 @@
   changed_when: false
 
 - name: Generate Coral credits token
-  when: coral_credits_enabled and azimuthazimuth_coral_token_exists_reg.rc != 0
+  when: coral_credits_enabled and azimuth_azimuth_coral_token_exists_reg.rc != 0
   no_log: true
   block:
     - name: Request token from API
