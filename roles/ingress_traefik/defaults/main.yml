@@ -75,6 +75,12 @@ ingress_traefik_release_defaults:
             allowedRoutes:
               namespaces:
                 from: All
+          - name: websecure
+            port: 443
+            protocol: HTTPS
+            allowedRoutes:
+              namespaces:
+                from: All
 
   # We will route with Gateway API instead.
   ingressClass:
@@ -94,6 +100,11 @@ ingress_traefik_release_defaults:
       web:           # HTTP listener that matches entryPoint
         port: 80
         protocol: HTTP
+        namespacePolicy:
+          from: All
+      websecure:     # HTTPS listener that matches entryPoint
+        port: 443
+        protocol: HTTPS
         namespacePolicy:
           from: All
 
