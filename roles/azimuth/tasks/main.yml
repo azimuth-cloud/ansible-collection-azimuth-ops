@@ -151,7 +151,7 @@
     cmd: >-
       kubectl get secret {{ azimuth_coral_credits_secret_name }}
       -n {{ azimuth_release_namespace }}
-  register: azimuthazimuth_coral_token_exists_reg
+  register: azimuth_azimuth_coral_token_exists_reg
   failed_when: false
   changed_when: false
 
