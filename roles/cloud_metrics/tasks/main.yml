@@ -152,7 +152,6 @@
     mode: "0644"
   loop:
     - alertmanager
-    - grafana
     - helm-dashboard
     - prometheus
 
@@ -160,7 +159,6 @@
   ansible.builtin.command: kubectl apply -f /tmp/GatewayAPI-{{ item }}.yaml
   loop:
     - alertmanager
-    - grafana
     - helm-dashboard
     - prometheus
   register: kubectl_gatewayapi

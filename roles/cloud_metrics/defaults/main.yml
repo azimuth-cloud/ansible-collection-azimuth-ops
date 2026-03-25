@@ -259,35 +259,30 @@ cloud_metrics_grafana_deployment_strategy:
 cloud_metrics_grafana_release_defaults:
   deploymentStrategy: "{{ cloud_metrics_grafana_deployment_strategy }}"
   ingress:
-    enabled: true
-    hosts:
-      - "{{ cloud_metrics_grafana_ingress_host }}"
-    path: "{{ cloud_metrics_grafana_ingress_subpath }}"
-    ingressClassName: "{{ cloud_metrics_grafana_ingress_class }}"
-    annotations: >-
-      {{-
-        cloud_metrics_grafana_ingress_annotations |
-          combine(cloud_metrics_grafana_ingress_auth_annotations) |
-          combine(
-            cloud_metrics_grafana_ingress_tls_annotations
-            if (
-              cloud_metrics_grafana_ingress_tls_enabled and
-              not cloud_metrics_grafana_ingress_tls_certificate
-            )
-            else {}
-          )
-      }}
-    tls: >-
-      {{-
-        [
-          {
-            "hosts": [cloud_metrics_grafana_ingress_host],
-            "secretName": cloud_metrics_grafana_ingress_tls_secret_name,
-          }
-        ]
-        if cloud_metrics_grafana_ingress_tls_enabled
-        else []
-      }}
+    enabled: false
+  route:
+    main:
+      enabled: true
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      parentRefs:
+        - name: traefik-gateway
+          namespace: "{{ ingress_traefik_release_namespace }}"
+      hostnames:
+        - "{{ cloud_metrics_grafana_ingress_host }}"
+      matches:
+        - path:
+            type: PathPrefix
+            value: "{{ cloud_metrics_grafana_ingress_subpath }}"
+      timeouts:
+        request: 600s
+        backendRequest: 600s
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: admin-dashboard-auth
   persistence:
     enabled: "{{ cloud_metrics_grafana_persistence_enabled }}"
     size: "{{ cloud_metrics_grafana_persistence_size }}"
