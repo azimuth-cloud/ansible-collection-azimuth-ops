@@ -104,6 +104,10 @@ zenith_release_defaults:
     config:
       kubernetes:
         ingress:
+          # Use Traefik IngressRoute CRD instead of Kubernetes Ingress resources,
+          # since Traefik is configured with kubernetesIngress disabled and
+          # kubernetesCRD (always enabled by default) processes IngressRoute resources
+          routingType: ingressroute
           oidc:
             # Enable OIDC discovery
             # The identity operator will provide the secrets
