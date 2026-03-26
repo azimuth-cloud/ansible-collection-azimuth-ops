@@ -73,7 +73,7 @@
           secret: "{{ admin_dashboard_ingress_basic_auth_secret_name }}"
           realm: "Azimuth admin dashboards"
           removeHeader: true
-  register: admin_dashboard_ingress_kubectl__middleware
+  register: admin_dashboard_ingress_kubectl_middleware
   changed_when: admin_dashboard_ingress_kubectl_middleware.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Create HTTPRoute
