@@ -70,7 +70,7 @@
         namespace: azimuth
       spec:
         basicAuth:
-          secret: admin-dashboard-auth
+          secret: "{{ admin_dashboard_ingress_basic_auth_secret_name }}"
           realm: "Azimuth admin dashboards"
           removeHeader: true
   register: admin_dashboard_ingress_kubectl__middleware
