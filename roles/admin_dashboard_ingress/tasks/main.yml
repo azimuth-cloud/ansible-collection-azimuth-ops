@@ -74,7 +74,7 @@
           realm: "Azimuth admin dashboards"
           removeHeader: true
   register: admin_dashboard_ingress_kubectl__middleware
-  changed_when: admin_dashboard_ingress_kubectl__middleware.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  changed_when: admin_dashboard_ingress_kubectl_middleware.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Create HTTPRoute
   ansible.builtin.command: kubectl apply -f -
