@@ -40,21 +40,6 @@
     wait: true
     wait_timeout: "{{ zenith_wait_timeout }}"
 
-- name: Create GatewayAPI objects from templates
-  ansible.builtin.template:
-    src: "{{ item }}.yaml"
-    dest: "/tmp/GatewayAPI-{{ item }}.yaml"
-    mode: "0644"
-  loop:
-    - http
-
-- name: Apply GatewayAPI objects
-  ansible.builtin.command: kubectl apply -f /tmp/GatewayAPI-{{ item }}.yaml
-  loop:
-    - http
-  register: kubectl_gatewayapi
-  changed_when: kubectl_gatewayapi.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
-
 - name: Get Zenith service information
   ansible.builtin.command: >-
     kubectl get services

@@ -89,6 +89,15 @@ zenith_sshd_service_load_balancer_ip: >-
 
 # The values for the release
 zenith_release_defaults:
+  global:
+    ingress:
+      # Use Gateway API HTTPRoute instead of Kubernetes Ingress for the registrar,
+      # since Traefik is configured with kubernetesIngress disabled and
+      # kubernetesGateway (Gateway API) processes HTTPRoute resources
+      routingType: httproute
+      gateway:
+        name: traefik-gateway
+        namespace: "{{ ingress_traefik_release_namespace }}"
   common:
     trustBundle: "{{ zenith_trust_bundle }}"
     ingress:
