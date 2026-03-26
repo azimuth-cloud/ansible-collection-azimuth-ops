@@ -36,13 +36,6 @@ harbor_ingress_subdomain_notary: "{{ ingress_harbor_notary_subdomain | default('
 # The host to use for the notary service
 harbor_ingress_host_notary: "{{ harbor_ingress_subdomain_notary }}.{{ harbor_ingress_base_domain }}"
 
-# At the time of writing, the Harbor chart doesn't support setting the ingress class
-# So we have to do it via the annotation
-_harbor_ingress_annotations:
-  kubernetes.io/ingress.class: "traefik"
-# Annotations to use for the ingress resources
-harbor_ingress_annotations: "{{ _harbor_ingress_annotations | combine(ingress_annotations | default({})) }}"
-
 # Indicates if TLS should be enabled
 harbor_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
 
@@ -114,16 +107,19 @@ harbor_release_defaults:
   secretKey: "{{ harbor_secret_key }}"
   updateStrategy:
     type: "{{ harbor_update_strategy }}"
-  core:
-    serviceAnnotations:
-      traefik.ingress.kubernetes.io/service.servertransport: harbor-transport@kubernetescrd
-  portal:
-    serviceAnnotations:
-      traefik.ingress.kubernetes.io/service.servertransport: harbor-transport@kubernetescrd
   expose:
-    type: clusterIP
+    type: route
     tls:
       enabled: false
+    route:
+      parentRefs:
+        - name: traefik-gateway
+          namespace: "{{ ingress_traefik_release_namespace | default('ingress-traefik') }}"
+      hosts:
+        - "{{ harbor_ingress_host_core }}"
+      annotations:
+        # Attach the buffering middleware (unlimited body size for image push/pull)
+        traefik.io/router.middlewares: "harbor-harbor-buffering@kubernetescrd"
   persistence:
     enabled: "{{ harbor_persistence_enabled }}"
     imageChartStorage:

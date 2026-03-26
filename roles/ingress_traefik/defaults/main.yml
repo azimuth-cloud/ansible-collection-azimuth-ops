@@ -28,6 +28,11 @@ ingress_traefik_release_defaults:
       port: 80
     websecure:
       port: 443
+      transport:
+        respondingTimeouts:
+          # Allow long-running uploads (e.g. Harbor image push)
+          readTimeout: "600s"
+          writeTimeout: "600s"
 
   # Enables the dashboard in Secure Mode
   api:
