@@ -1,0 +1,149 @@
+---
+
+# The chart to use
+ingress_traefik_chart_repo: https://traefik.github.io/charts
+ingress_traefik_chart_name: traefik
+ingress_traefik_chart_version: "39.0.5"
+
+# Release information for the Traefik ingress controller release
+ingress_traefik_release_namespace: ingress-traefik
+ingress_traefik_release_name: traefik
+
+# The timeout to wait for Traefik ingress controller to become ready
+ingress_traefik_wait_timeout: 2m
+
+# Enables the monitoring stack integration
+ingress_traefik_prometheus_stack_enabled: true
+
+# The certificate is stored as a Secret in the ingress-traefik namespace and referenced
+# by the Gateway websecure listener via certificateRefs (chart-native support)
+ingress_traefik_tls_wildcard_certificate: >-
+  {{
+    ingress_tls_wildcard_certificate
+    if ingress_tls_wildcard_certificate is defined
+    else undef(hint='ingress_traefik_tls_wildcard_certificate is required')
+  }}
+ingress_traefik_tls_wildcard_key: >-
+  {{
+    ingress_tls_wildcard_key
+    if ingress_tls_wildcard_key is defined
+    else undef(hint='ingress_traefik_tls_wildcard_key is required')
+  }}
+ingress_traefik_tls_secret_name: traefik-tls-wildcard
+
+# Extra objects always added to the Helm release
+ingress_traefik_extra_objects:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: "{{ ingress_traefik_tls_secret_name }}"
+      namespace: "{{ ingress_traefik_release_namespace }}"
+    type: kubernetes.io/tls
+    stringData:
+      tls.crt: "{{ ingress_traefik_tls_wildcard_certificate }}"
+      tls.key: "{{ ingress_traefik_tls_wildcard_key }}"
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: dashboard-auth-secret
+      namespace: "{{ ingress_traefik_release_namespace }}"
+    type: kubernetes.io/basic-auth
+    stringData:
+      username: admin
+      password: "{{ admin_dashboard_ingress_basic_auth_password }}"
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: dashboard-auth
+      namespace: "{{ ingress_traefik_release_namespace }}"
+    spec:
+      basicAuth:
+        secret: dashboard-auth-secret
+
+# The values for the release
+ingress_traefik_release_defaults:
+  # Make the service run on every node
+  deployment:
+    kind: DaemonSet
+
+  # Configure Network Ports and EntryPoints
+  # EntryPoints are the network listeners for incoming traffic.
+  ports:
+    web:
+      port: 80
+    websecure:
+      port: 443
+      transport:
+        respondingTimeouts:
+          # Allow long-running uploads (e.g. Harbor image push)
+          readTimeout: "600s"
+          writeTimeout: "600s"
+
+  # Enables the dashboard in Secure Mode
+  api:
+    dashboard: true
+
+  ingressRoute:
+    dashboard:
+      enabled: true
+      matchRule: Host(`metrics.{{ ingress_base_domain }}`)
+      entryPoints:
+        - web
+      middlewares:
+        - name: dashboard-auth
+
+  extraObjects: "{{ ingress_traefik_extra_objects }}"
+
+  # We will route with Gateway API instead.
+  ingressClass:
+    enabled: false
+
+  # Enable Gateway API Provider & Disables the KubernetesIngress provider
+  # Providers tell Traefik where to find routing configuration.
+  providers:
+    kubernetesIngress:
+      enabled: false
+    kubernetesGateway:
+      enabled: true
+
+  # Gateway created and managed by the chart
+  # certificateRefs points to the wildcard TLS secret created via extraObjects above
+  gateway:
+    listeners:
+      web:
+        port: 80
+        protocol: HTTP
+        namespacePolicy:
+          from: All
+      websecure:
+        port: 443
+        protocol: HTTPS
+        namespacePolicy:
+          from: All
+        certificateRefs:
+          - kind: Secret
+            name: "{{ ingress_traefik_tls_secret_name }}"
+            namespace: "{{ ingress_traefik_release_namespace }}"
+
+  # Enable Observability
+  logs:
+    general:
+      level: INFO
+    # This enables access logs, outputting them to Traefik's standard output by default.
+    # The [Access Logs Documentation](https://doc.traefik.io/traefik/observability/access-logs/) covers formatting, filtering, and output options.
+    access:
+      enabled: true
+
+  # Enables Prometheus for Metrics
+  metrics:
+    prometheus:
+      enabled: "{{ ingress_traefik_prometheus_stack_enabled }}"
+      serviceMonitor:
+        enabled: "{{ ingress_traefik_prometheus_stack_enabled }}"
+
+ingress_traefik_release_overrides: {}
+ingress_traefik_release_values: >-
+  {{-
+    ingress_traefik_release_defaults |
+      combine(ingress_traefik_release_overrides, recursive = True)
+  }}

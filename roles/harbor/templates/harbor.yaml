@@ -1,0 +1,12 @@
+---
+# Unlimited body size for image push/pull — referenced via
+# traefik.io/router.middlewares annotation on the chart-native HTTPRoute
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: harbor-buffering
+  namespace: harbor
+spec:
+  buffering:
+    maxRequestBodyBytes: 0
+    maxResponseBodyBytes: 0

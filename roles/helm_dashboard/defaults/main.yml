@@ -12,6 +12,9 @@ helm_dashboard_wait_timeout: 10m
 
 # The values for the release
 helm_dashboard_release_defaults:
+  service:
+    annotations:
+      traefik.ingress.kubernetes.io/service.servertransport: alertmanager-transport@kubernetescrd
   extraArgs:
     - --no-browser
     - --bind=0.0.0.0

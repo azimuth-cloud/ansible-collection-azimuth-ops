@@ -200,7 +200,7 @@ velero_backup_excluded_namespaces:
   - cert-manager
   - default
   - harbor
-  - ingress-nginx
+  - ingress-traefik
   - kube-node-lease
   - kube-public
   - kube-system

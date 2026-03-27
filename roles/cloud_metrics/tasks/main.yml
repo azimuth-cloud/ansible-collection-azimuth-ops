@@ -33,8 +33,8 @@
         name: "{{ cloud_metrics_prometheus_auth_secret_name }}"
         namespace: "{{ cloud_metrics_grafana_release_namespace }}"
       stringData: "{{ cloud_metrics_prometheus_auth_data }}"
-  register: kubectl_remote_prom_auth_secret
-  changed_when: kubectl_remote_prom_auth_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: cloud_metrics_kubectl_remote_prom_auth_secret
+  changed_when: cloud_metrics_kubectl_remote_prom_auth_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install headless service for remote Prometheus
   ansible.builtin.command: kubectl apply -f -
@@ -54,8 +54,8 @@
           - name: metrics
             port: "{{ cloud_metrics_prometheus_port }}"
             targetPort: "{{ cloud_metrics_prometheus_port }}"
-  register: kubectl_remote_prom_service
-  changed_when: kubectl_remote_prom_service.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: cloud_metrics_kubectl_remote_prom_service
+  changed_when: cloud_metrics_kubectl_remote_prom_service.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install endpoints for remote Prometheus
   ansible.builtin.command: kubectl apply -f -
@@ -74,8 +74,8 @@
           ports:
             - name: metrics
               port: "{{ cloud_metrics_prometheus_port }}"
-  register: kubectl_remote_prom_endpoints
-  changed_when: kubectl_remote_prom_endpoints.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: cloud_metrics_kubectl_remote_prom_endpoints
+  changed_when: cloud_metrics_kubectl_remote_prom_endpoints.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install servicemonitor for remote Prometheus
   ansible.builtin.command: kubectl apply -f -
@@ -89,8 +89,8 @@
         name: "{{ cloud_metrics_prometheus_servicemonitor_name }}"
         namespace: "{{ cloud_metrics_grafana_release_namespace }}"
       spec: "{{ cloud_metrics_prometheus_servicemonitor_spec }}"
-  register: kubectl_remote_prom_servicemonitor
-  changed_when: kubectl_remote_prom_servicemonitor.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: cloud_metrics_cloud_metrics_kubectl_remote_prom_servicemonitor
+  changed_when: cloud_metrics_cloud_metrics_kubectl_remote_prom_servicemonitor.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install wildcard TLS certificate
   ansible.builtin.command: kubectl apply -f -
@@ -108,8 +108,8 @@
         tls.crt: "{{ cloud_metrics_grafana_ingress_tls_certificate }}"
         tls.key: "{{ cloud_metrics_grafana_ingress_tls_key }}"
   when: cloud_metrics_grafana_ingress_tls_certificate
-  register: kubectl_grafana_tls_cert
-  changed_when: kubectl_grafana_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: cloud_metrics_kubectl_grafana_tls_cert
+  changed_when: cloud_metrics_kubectl_grafana_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Grafana admin password secret
   ansible.builtin.command: kubectl apply -f -
@@ -129,8 +129,8 @@
             cloud_metrics_grafana_admin_secret_password_key: cloud_metrics_grafana_admin_password,
           }
         }}
-  register: kubectl_grafana_password_secret
-  changed_when: kubectl_grafana_password_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: cloud_metrics_kubectl_grafana_password_secret
+  changed_when: cloud_metrics_kubectl_grafana_password_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Install Grafana on target Kubernetes cluster
   kubernetes.core.helm:
@@ -144,6 +144,25 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ cloud_metrics_grafana_wait_timeout }}"
+
+- name: Create GatewayAPI objects from templates
+  ansible.builtin.template:
+    src: "{{ item  }}.yaml"
+    dest: "/tmp/GatewayAPI-{{ item }}.yaml"
+    mode: "0644"
+  loop:
+    - alertmanager
+    - helm-dashboard
+    - prometheus
+
+- name: Apply GatewayAPI objects
+  ansible.builtin.command: kubectl apply -f /tmp/GatewayAPI-{{ item }}.yaml
+  loop:
+    - alertmanager
+    - helm-dashboard
+    - prometheus
+  register: kubectl_gatewayapi
+  changed_when: kubectl_gatewayapi.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Set Grafana dashboard URL facts
   ansible.builtin.set_fact:
