@@ -15,6 +15,51 @@ ingress_traefik_wait_timeout: 2m
 # Enables the monitoring stack integration
 ingress_traefik_prometheus_stack_enabled: true
 
+# The certificate is stored as a Secret in the ingress-traefik namespace and referenced
+# by the Gateway websecure listener via certificateRefs (chart-native support)
+ingress_traefik_tls_wildcard_certificate: >-
+  {{
+    ingress_tls_wildcard_certificate
+    if ingress_tls_wildcard_certificate is defined
+    else undef(hint='ingress_traefik_tls_wildcard_certificate is required')
+  }}
+ingress_traefik_tls_wildcard_key: >-
+  {{
+    ingress_tls_wildcard_key
+    if ingress_tls_wildcard_key is defined
+    else undef(hint='ingress_traefik_tls_wildcard_key is required')
+  }}
+ingress_traefik_tls_secret_name: traefik-tls-wildcard
+
+# Extra objects always added to the Helm release
+ingress_traefik_extra_objects:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: "{{ ingress_traefik_tls_secret_name }}"
+      namespace: "{{ ingress_traefik_release_namespace }}"
+    type: kubernetes.io/tls
+    stringData:
+      tls.crt: "{{ ingress_traefik_tls_wildcard_certificate }}"
+      tls.key: "{{ ingress_traefik_tls_wildcard_key }}"
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: dashboard-auth-secret
+      namespace: "{{ ingress_traefik_release_namespace }}"
+    type: kubernetes.io/basic-auth
+    stringData:
+      username: admin
+      password: "{{ admin_dashboard_ingress_basic_auth_password }}"
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: dashboard-auth
+      namespace: "{{ ingress_traefik_release_namespace }}"
+    spec:
+      basicAuth:
+        secret: dashboard-auth-secret
+
 # The values for the release
 ingress_traefik_release_defaults:
   # Make the service run on every node
@@ -47,45 +92,7 @@ ingress_traefik_release_defaults:
       middlewares:
         - name: dashboard-auth
 
-  # Creates a BasicAuth Middleware and Secret for the Dashboard Security
-  extraObjects:
-    - apiVersion: v1
-      kind: Secret
-      metadata:
-        name: dashboard-auth-secret
-        namespace: "{{ ingress_traefik_release_namespace }}"
-      type: kubernetes.io/basic-auth
-      stringData:
-        username: admin
-        password: "{{ admin_dashboard_ingress_basic_auth_password }}"
-    - apiVersion: traefik.io/v1alpha1
-      kind: Middleware
-      metadata:
-        name: dashboard-auth
-        namespace: "{{ ingress_traefik_release_namespace }}"
-      spec:
-        basicAuth:
-          secret: dashboard-auth-secret
-    - apiVersion: gateway.networking.k8s.io/v1
-      kind: Gateway
-      metadata:
-        name: traefik-gateway
-        namespace: "{{ ingress_traefik_release_namespace }}"
-      spec:
-        gatewayClassName: traefik
-        listeners:
-          - name: web
-            port: 80
-            protocol: HTTP
-            allowedRoutes:
-              namespaces:
-                from: All
-          - name: websecure
-            port: 443
-            protocol: HTTPS
-            allowedRoutes:
-              namespaces:
-                from: All
+  extraObjects: "{{ ingress_traefik_extra_objects }}"
 
   # We will route with Gateway API instead.
   ingressClass:
@@ -99,19 +106,24 @@ ingress_traefik_release_defaults:
     kubernetesGateway:
       enabled: true
 
-  ## Gateway Listeners
+  # Gateway created and managed by the chart
+  # certificateRefs points to the wildcard TLS secret created via extraObjects above
   gateway:
     listeners:
-      web:           # HTTP listener that matches entryPoint
+      web:
         port: 80
         protocol: HTTP
         namespacePolicy:
           from: All
-      websecure:     # HTTPS listener that matches entryPoint
+      websecure:
         port: 443
         protocol: HTTPS
         namespacePolicy:
           from: All
+        certificateRefs:
+          - kind: Secret
+            name: "{{ ingress_traefik_tls_secret_name }}"
+            namespace: "{{ ingress_traefik_release_namespace }}"
 
   # Enable Observability
   logs:
