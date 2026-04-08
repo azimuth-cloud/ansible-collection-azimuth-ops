@@ -120,6 +120,11 @@
           --container-format {{ community_images_image_spec.container_format }}
           --disk-format {{ community_images_disk_format }}
           --file {{ community_images_image_upload_in_path }}
+          --property os_distro=ubuntu
+          --property os_version=22.04
+          {% if 'kubernetes_version' in community_images_image_spec %}
+          --property kube_version={{ community_images_image_spec.kubernetes_version }}
+          {% endif %}
           {{ community_images_image_spec.name }}
       register: community_images_create_image_cmd
       changed_when: true
