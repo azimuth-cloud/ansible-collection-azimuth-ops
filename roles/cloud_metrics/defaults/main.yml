@@ -93,7 +93,7 @@ _azimuth_ingress_host: >-
 
 # Ingress settings for Grafana
 # The name of the ingress class to use
-cloud_metrics_grafana_ingress_class: nginx
+cloud_metrics_grafana_ingress_class: traefik
 
 # The hostname to use for the ingress resource
 cloud_metrics_grafana_ingress_host: >-
@@ -159,16 +159,6 @@ cloud_metrics_grafana_ingress_auth_next_url_param: next
 # by the external authentication service
 cloud_metrics_grafana_ingress_auth_request_headers:
   accept: application/json
-
-# The ingress annotations that configure the auth callout
-cloud_metrics_grafana_ingress_auth_annotations:
-  nginx.ingress.kubernetes.io/auth-url: "{{ cloud_metrics_grafana_ingress_auth_url }}"
-  nginx.ingress.kubernetes.io/auth-signin: "{{ cloud_metrics_grafana_ingress_auth_signin_url }}"
-  nginx.ingress.kubernetes.io/auth-signin-redirect-param: "{{ cloud_metrics_grafana_ingress_auth_next_url_param }}"
-  nginx.ingress.kubernetes.io/auth-snippet: |-
-    {% for name, value in cloud_metrics_grafana_ingress_auth_request_headers.items() %}
-    proxy_set_header {{ name }} {{ value }};
-    {% endfor %}
 
 # The admin username and password for Grafana
 cloud_metrics_grafana_admin_username: admin
@@ -269,35 +259,30 @@ cloud_metrics_grafana_deployment_strategy:
 cloud_metrics_grafana_release_defaults:
   deploymentStrategy: "{{ cloud_metrics_grafana_deployment_strategy }}"
   ingress:
-    enabled: true
-    hosts:
-      - "{{ cloud_metrics_grafana_ingress_host }}"
-    path: "{{ cloud_metrics_grafana_ingress_subpath }}"
-    ingressClassName: "{{ cloud_metrics_grafana_ingress_class }}"
-    annotations: >-
-      {{-
-        cloud_metrics_grafana_ingress_annotations |
-          combine(cloud_metrics_grafana_ingress_auth_annotations) |
-          combine(
-            cloud_metrics_grafana_ingress_tls_annotations
-            if (
-              cloud_metrics_grafana_ingress_tls_enabled and
-              not cloud_metrics_grafana_ingress_tls_certificate
-            )
-            else {}
-          )
-      }}
-    tls: >-
-      {{-
-        [
-          {
-            "hosts": [cloud_metrics_grafana_ingress_host],
-            "secretName": cloud_metrics_grafana_ingress_tls_secret_name,
-          }
-        ]
-        if cloud_metrics_grafana_ingress_tls_enabled
-        else []
-      }}
+    enabled: false
+  route:
+    main:
+      enabled: true
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      parentRefs:
+        - name: traefik-gateway
+          namespace: "{{ ingress_traefik_release_namespace }}"
+      hostnames:
+        - "{{ cloud_metrics_grafana_ingress_host }}"
+      matches:
+        - path:
+            type: PathPrefix
+            value: "{{ cloud_metrics_grafana_ingress_subpath }}"
+      timeouts:
+        request: 600s
+        backendRequest: 600s
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: admin-dashboard-auth
   persistence:
     enabled: "{{ cloud_metrics_grafana_persistence_enabled }}"
     size: "{{ cloud_metrics_grafana_persistence_size }}"

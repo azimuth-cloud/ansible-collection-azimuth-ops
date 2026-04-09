@@ -23,11 +23,9 @@ certmanager_monitoring_enabled: true
 
 # The values for the release
 certmanager_release_defaults:
-  # Disable the use of Exact PathType in Ingress resources, to work around a bug in ingress-nginx
-  # https://github.com/kubernetes/ingress-nginx/issues/11176
   config:
     featureGates:
-      ACMEHTTP01IngressPathTypeExact: false
+      GatewayAPI: true
   installCRDs: true
   prometheus:
     enabled: "{{ certmanager_monitoring_enabled }}"
@@ -72,8 +70,6 @@ certmanager_acmehttp01issuer_enabled: true
 certmanager_acmehttp01issuer_name: letsencrypt
 # The ACME server to use
 certmanager_acmehttp01issuer_server: https://acme-v02.api.letsencrypt.org/directory
-# The ingress class to use for resolving HTTP01 challenges
-certmanager_acmehttp01issuer_ingress_class: nginx
 # Indicates whether an External Account Binding (EAB) is required
 # For example, ZeroSSL requires an EAB for use with cert-manager
 # See https://zerossl.com/documentation/acme/
@@ -91,3 +87,5 @@ certmanager_acmehttp01issuer_eab_zerossl_apikey: >-
 # The URL where new EAB credentials can be obtained
 certmanager_acmehttp01issuer_eab_generate_url: >-
   https://api.zerossl.com/acme/eab-credentials?access_key={{ certmanager_acmehttp01issuer_eab_zerossl_apikey }}
+
+ingress_traefik_release_namespace: ingress-traefik

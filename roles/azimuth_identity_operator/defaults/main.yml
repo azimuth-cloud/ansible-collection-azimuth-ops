@@ -53,8 +53,13 @@ azimuth_identity_operator_dex_host: >-
     else undef(hint = 'azimuth_identity_operator_dex_host is required')
   }}
 
+# The routing type for Dex ingress resources
+# 'ingress' uses standard Kubernetes Ingress (nginx-ingress-controller)
+# 'ingressroute' uses Traefik IngressRoute CRD (kubernetesCRD provider)
+azimuth_identity_operator_dex_ingress_routing_type: ingressroute
+
 # The ingress class to use for Dex ingress resources
-azimuth_identity_operator_dex_ingress_class: nginx
+azimuth_identity_operator_dex_ingress_class: traefik
 
 # The default annotations for the Dex ingress resources
 azimuth_identity_operator_ingress_default_annotations: "{{ ingress_annotations | default({}) }}"
@@ -196,6 +201,7 @@ azimuth_identity_operator_release_defaults:
   config:
     dex:
       host: "{{ azimuth_identity_operator_dex_host }}"
+      ingressRoutingType: "{{ azimuth_identity_operator_dex_ingress_routing_type }}"
       ingressClassName: "{{ azimuth_identity_operator_dex_ingress_class }}"
       ingressDefaultAnnotations: "{{ azimuth_identity_operator_ingress_default_annotations }}"
       ingressAuthUrl: "{{ azimuth_identity_operator_dex_ingress_auth_url }}"

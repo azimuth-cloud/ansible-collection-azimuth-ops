@@ -1,0 +1,30 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: prometheus
+  namespace: monitoring-system
+  labels:
+    app.kubernetes.io/managed-by: azimuth-ops
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace: ingress-traefik
+  hostnames:
+    - "prometheus.{{ ingress_base_domain }}"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      timeouts:
+        request: 600s
+        backendRequest: 600s
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: admin-dashboard-auth
+      backendRefs:
+        - name: kube-prometheus-stack-prometheus
+          port: 9090 # ← à vérifier

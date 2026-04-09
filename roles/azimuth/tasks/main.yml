@@ -32,8 +32,8 @@
         tls.crt: "{{ azimuth_ingress_tls_certificate }}"
         tls.key: "{{ azimuth_ingress_tls_key }}"
   when: azimuth_ingress_tls_certificate
-  register: kubectl_wildcard_tls_cert
-  changed_when: kubectl_wildcard_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: azimuth_azimuth_kubectl_wildcard_tls_cert
+  changed_when: azimuth_azimuth_kubectl_wildcard_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Set Azimuth OIDC client and secret facts
   when:
@@ -151,12 +151,12 @@
     cmd: >-
       kubectl get secret {{ azimuth_coral_credits_secret_name }}
       -n {{ azimuth_release_namespace }}
-  register: _coral_token_exists_reg
+  register: azimuth_azimuth_coral_token_exists_reg
   failed_when: false
   changed_when: false
 
 - name: Generate Coral credits token
-  when: coral_credits_enabled and _coral_token_exists_reg.rc != 0
+  when: coral_credits_enabled and azimuth_azimuth_coral_token_exists_reg.rc != 0
   no_log: true
   block:
     - name: Request token from API
@@ -169,14 +169,14 @@
         body:
           username: "admin"
           password: "{{ coral_credits_admin_password }}"
-      register: _coral_api_response
+      register: azimuth_coral_api_response
 
     - name: Generate secret with token
       ansible.builtin.command:
         cmd: >-
           kubectl create secret generic {{ azimuth_coral_credits_secret_name }}
           -n {{ azimuth_release_namespace }}
-          --from-literal {{ azimuth_coral_credits_secret_key }}={{ _coral_api_response.json.token }}
+          --from-literal {{ azimuth_coral_credits_secret_key }}={{ azimuth_coral_api_response.json.token }}
       changed_when: true
 
 - name: Install Azimuth on target Kubernetes cluster
@@ -191,6 +191,93 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ azimuth_wait_timeout }}"
+
+- name: Create HTTPRoute for Azimuth
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ httproute_definition | to_nice_yaml }}"
+  register: azimuth_kubectl_httproute
+  changed_when: azimuth_kubectl_httproute.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  vars:
+    httproute_definition:
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata:
+        name: azimuth
+        namespace: azimuth
+        labels:
+          app.kubernetes.io/instance: azimuth
+          app.kubernetes.io/managed-by: Helm
+          app.kubernetes.io/name: azimuth
+      spec:
+        parentRefs:
+          - name: traefik-gateway
+            namespace: ingress-traefik
+        hostnames:
+          - "{{ azimuth_ingress_host }}"
+        rules:
+          # /api → azimuth-api
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /api
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            backendRefs:
+              - name: azimuth-api
+                port: 80
+          # /auth → azimuth-api
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /auth
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            backendRefs:
+              - name: azimuth-api
+                port: 80
+          # /static → azimuth-api
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /static
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            backendRefs:
+              - name: azimuth-api
+                port: 80
+          # / → azimuth-ui
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            backendRefs:
+              - name: azimuth-ui
+                port: 80
+
+- name: Create ServersTransport for Azimuth
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ httproute_definition | to_nice_yaml }}"
+  vars:
+    httproute_definition:
+      apiVersion: traefik.io/v1alpha1
+      kind: ServersTransport
+      metadata:
+        name: azimuth-transport
+        namespace: azimuth
+      spec:
+        forwardingTimeouts:
+          dialTimeout: 600s
+          responseHeaderTimeout: 600s
+  register: azimuth_kubectl_servertransport
+  changed_when: azimuth_kubectl_servertransport.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: List CaaS clusters
   ansible.builtin.command: kubectl get clusters.caas -A -o json

@@ -66,6 +66,9 @@ kube_prometheus_stack_release_defaults:
       KubeProxyDown: true
       KubeControllerManagerDown: true
   prometheus:
+    service:
+      annotations:
+        traefik.ingress.kubernetes.io/service.servertransport: alertmanager-transport@kubernetescrd
     prometheusSpec:
       externalUrl: "{{ kube_prometheus_stack_prometheus_external_url }}"
       podMonitorSelectorNilUsesHelmValues: false
@@ -80,6 +83,9 @@ kube_prometheus_stack_release_defaults:
       auth.anonymous:
         enabled: true
   alertmanager:
+    service:
+      annotations:
+        traefik.ingress.kubernetes.io/service.servertransport: alertmanager-transport@kubernetescrd
     # Don't apply the namespace grouping by default
     config:
       route:

@@ -1,0 +1,51 @@
+---
+- name: Install Traefik Ingress Controller on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ ingress_traefik_chart_name }}"
+    chart_repo_url: "{{ ingress_traefik_chart_repo }}"
+    chart_version: "{{ ingress_traefik_chart_version }}"
+    release_namespace: "{{ ingress_traefik_release_namespace }}"
+    release_name: "{{ ingress_traefik_release_name }}"
+    release_values: "{{ ingress_traefik_release_values }}"
+    atomic: true
+    create_namespace: true
+    namespace: "{{ ingress_traefik_release_namespace }}"
+    wait: true
+    wait_timeout: "{{ ingress_traefik_wait_timeout }}"
+
+- name: Configure custom alerting rules for certificate expiry
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ traefik_ingress_alert_rules_definition | to_nice_yaml }}"
+  vars:
+    traefik_ingress_alert_rules_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PrometheusRule
+      metadata:
+        name: traefik-ingress-alerting-rules
+        namespace: "{{ ingress_traefik_release_namespace }}"
+        labels:
+          release: kube-prometheus-stack
+      spec:
+        groups:
+          - name: ingress_traefik.rules
+            rules:
+              - alert: TraefikIngressCertificateExpiresSoon
+                expr: |
+                  traefik_tls_certs_not_after < (time() + (30 * 24 * 3600))
+                for: 1h
+                annotations:
+                  message: "{% raw %}The cert {{ $labels.cn }} expires in {{ $value | humanizeDuration }}.{% endraw %}"
+                labels:
+                  severity: warning
+              - alert: TraefikIngressCertificateExpiresVerySoon
+                expr: |
+                  traefik_tls_certs_not_after < (time() + (7 * 24 * 3600))
+                for: 1m
+                annotations:
+                  message: "{% raw %}The cert {{ $labels.cn }} expires in {{ $value | humanizeDuration }}.{% endraw %}"
+                labels:
+                  severity: critical
+  register: ingress_traefik_ingress_traefik_kubectl_cert_expiry
+  changed_when: ingress_traefik_ingress_traefik_kubectl_cert_expiry.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  when: ingress_traefik_prometheus_stack_enabled

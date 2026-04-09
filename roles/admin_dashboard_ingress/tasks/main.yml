@@ -6,9 +6,15 @@
   failed_when: >-
     admin_dashboard_ingress_create_namespace.rc != 0 and
     'AlreadyExists' not in admin_dashboard_ingress_create_namespace.stderr
-  loop: "{{ admin_dashboard_ingresses | map(attribute='namespace') | unique }}"
+  loop: "{{ admin_dashboard_ingress_namespaces }}"
 
-# Install the basic auth secret once per namespace
+- name: Generate SHA-512 hash via openssl
+  ansible.builtin.command:
+    cmd: openssl passwd -6 "{{ admin_dashboard_ingress_basic_auth_password }}"
+  delegate_to: localhost
+  register: admin_dashboard_ingress_basic_auth_password_hash
+  changed_when: false
+
 - name: Install basic auth secret for admin dashboard ingress
   ansible.builtin.command: kubectl apply -f -
   args:
@@ -21,18 +27,12 @@
         name: "{{ admin_dashboard_ingress_basic_auth_secret_name }}"
         namespace: "{{ item }}"
       type: Opaque
-      stringData: >-
-        {{-
-          {
-            admin_dashboard_ingress_basic_auth_username: (
-              admin_dashboard_ingress_basic_auth_password |
-                password_hash('bcrypt')
-            )
-          }
-        }}
-  loop: "{{ admin_dashboard_ingresses | map(attribute='namespace') | unique }}"
-  register: kubectl_basic_auth_secret
-  changed_when: kubectl_basic_auth_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+      stringData:
+        users: |
+          {{ admin_dashboard_ingress_basic_auth_username }}:{{ admin_dashboard_ingress_basic_auth_password_hash.stdout }}
+  loop: "{{ admin_dashboard_ingress_namespaces }}"
+  register: admin_dashboard_ingress_admin_dashboard_ingress_kubectl_basic_auth_secret
+  changed_when: admin_dashboard_ingress_admin_dashboard_ingress_kubectl_basic_auth_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 # If there is a wildcard certificate, install it once per namespace
 - name: Create TLS secret for dashboard
@@ -50,66 +50,67 @@
       stringData:
         tls.crt: "{{ admin_dashboard_ingress_tls_wildcard_certificate }}"
         tls.key: "{{ admin_dashboard_ingress_tls_wildcard_key }}"
-  loop: "{{ admin_dashboard_ingresses | map(attribute='namespace') | unique }}"
-  register: kubectl_basic_auth_secret_dashboard
-  changed_when: kubectl_basic_auth_secret_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  loop: "{{ admin_dashboard_ingress_namespaces }}"
+  register: admin_dashboard_ingress_kubectl_basic_auth_secret_dashboard
+  changed_when: admin_dashboard_ingress_kubectl_basic_auth_secret_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
   when: >-
     admin_dashboard_ingress_tls_enabled and
     admin_dashboard_ingress_tls_wildcard_certificate
 
-- name: Install ingress for admin dashboard
+- name: Create Traefik Middleware
   ansible.builtin.command: kubectl apply -f -
   args:
-    stdin: "{{ admin_dashboard_ingress_definition | to_nice_yaml }}"
+    stdin: "{{ middlewane_definition | to_nice_yaml }}"
   vars:
-    admin_dashboard_ingress_definition:
-      apiVersion: networking.k8s.io/v1
-      kind: Ingress
+    middlewane_definition:
+      apiVersion: traefik.io/v1alpha1
+      kind: Middleware
       metadata:
-        name: "{{ item.name }}"
-        namespace: "{{ item.namespace }}"
-        labels: "{{ admin_dashboard_ingress_labels }}"
-        annotations: "{{ admin_dashboard_ingress_annotations }}"
-      spec: >-
-        {{-
-          {
-            "ingressClassName": admin_dashboard_ingress_class_name,
-            "rules": [
-              {
-                "host": item.host,
-                "http": {
-                  "paths": [
-                    {
-                      "path": "/",
-                      "pathType": "Prefix",
-                      "backend": {
-                        "service": {
-                          "name": item.service,
-                          "port": {
-                            "name": item.port,
-                          },
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          } | combine(
-            {
-              "tls": [
-                {
-                  "hosts": [item.host],
-                  "secretName": item.tls_secret_name,
-                }
-              ]
-            }
-            if admin_dashboard_ingress_tls_enabled
-            else {}
-          )
-        }}
-  loop_control:
-    label: "{{ item.name }}"
-  loop: "{{ admin_dashboard_ingresses }}"
-  register: kubectl_ingress_admin_dashboard
-  changed_when: kubectl_ingress_admin_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+        name: admin-dashboard-auth
+        namespace: azimuth
+      spec:
+        basicAuth:
+          secret: "{{ admin_dashboard_ingress_basic_auth_secret_name }}"
+          realm: "Azimuth admin dashboards"
+          removeHeader: true
+  register: admin_dashboard_ingress_kubectl_middleware
+  changed_when: admin_dashboard_ingress_kubectl_middleware.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+- name: Create HTTPRoute
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ httproute_definition | to_nice_yaml }}"
+  vars:
+    httproute_definition:
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata:
+        name: ara
+        namespace: azimuth
+        labels:
+          app.kubernetes.io/managed-by: azimuth-ops
+      spec:
+        parentRefs:
+          - name: traefik-gateway
+            namespace: ingress-traefik
+        hostnames:
+          - "ara.{{ azimuth_ingress_host }}"
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            timeouts:
+              request: 600s
+              backendRequest: 600s
+            filters:
+              - type: ExtensionRef
+                extensionRef:
+                  group: traefik.io
+                  kind: Middleware
+                  name: admin-dashboard-auth   # ← basicAuth
+            backendRefs:
+              - name: azimuth-caas-operator-ara
+                port: 8000
+  register: admin_dashboard_ingress_kubectl_httproute
+  changed_when: admin_dashboard_ingress_kubectl_httproute.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
