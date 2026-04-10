@@ -48,15 +48,15 @@ jobs:
     runs-on: ubuntu-latest
     # Map a step output to a job output, this allows other jobs to be gated on the filter results
     outputs:
-      paths: ${{ steps.filter.outputs.paths }}
+      paths_singlenode: ${{ steps.filter_singlenode.outputs.paths }}
+      paths_ha: ${{ steps.filter_ha.outputs.paths }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Paths Filter
-        # For safety using commit of dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.1.0
+      - name: Paths Filter (Singlenode)
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.1.0
-        id: filter
+        id: filter_singlenode
         with:
           # Default predicate is 'some' which gives a match if any one filter matches.
           # Change the predicate to 'every' so the file has to match all filters,
@@ -78,6 +78,19 @@ jobs:
               - "!roles/capi_cluster/**"
               - "!roles/velero/**"
 
+      - name: Paths Filter (HA)
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.1.0
+        id: filter_ha
+        with:
+          filters: |
+            paths:
+              # Include any changes that only affect the HA install
+              - "playbooks/deploy_capi_mgmt.yml"
+              - "playbooks/provision_capi_mgmt.yml"
+              - "playbooks/restore.yml"
+              - "roles/capi_cluster/**"
+              - "roles/velero/**"
+
   run_azimuth_tests:
     # Use the output of the above filter to check if the files listed under "paths" have changed.
     # We can negate this check to run an alternative job,
@@ -86,6 +99,10 @@ jobs:
     name: Run Azimuth Tests
     needs:
       - files_changed
-    if: needs.files_changed.outputs.paths == 'true'
+    if: |
+      needs.files_changed.outputs.paths_singlenode == 'true' ||
+      needs.files_changed.outputs.paths_ha == 'true'
     uses: ./.github/workflows/test-azimuth.yml
+    with:
+      install-mode: ${{ needs.files_changed.outputs.paths_ha == 'true' && 'ha' || 'singlenode' }}
     secrets: inherit
