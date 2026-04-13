@@ -249,6 +249,11 @@ azimuth_capi_operator_capi_helm_values_defaults:
   authWebhook: "{{ 'azimuth-authorization-webhook' if azimuth_authentication_type == 'oidc' else 'none' }}"
   azimuthAuthorizationWebhook: "{{ azimuth_capi_operator_capi_helm_azimuth_authorization_webhook_config if azimuth_authentication_type == 'oidc' else {} }}"
   addons:
+    ingress:
+      traefik:
+        enabled: false
+      nginx:
+        enabled: true
     openstack:
       # General OpenStack configuration
       cloudConfig:
