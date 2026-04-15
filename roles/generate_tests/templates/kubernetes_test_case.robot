@@ -58,7 +58,12 @@ Fetch Logs {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["logs"]) | join('  ') }}
     ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
     Query Loki Logs For Kubernetes Cluster  ${cluster.id}
+    ...  query={{ test_case.loki_query }}
+    ...  limit={{ test_case.loki_limit }}
     ...  output_path={{ test_case_name }}-logs.tar.gz
+    ...  loki_namespace={{ test_case.loki_namespace }}
+    ...  loki_service={{ test_case.loki_service }}
+    ...  loki_port={{ test_case.loki_port }}
 
 Delete {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["delete"]) | join('  ') }}
