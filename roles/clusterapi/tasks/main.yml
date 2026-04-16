@@ -12,7 +12,8 @@
     mode: "0644"
 
 - name: Install Cluster API resources
-  ansible.builtin.command: kubectl apply -k {{ clusterapi_kustomization_directory }}
+  ansible.builtin.command: >-
+    kubectl apply --force-conflicts --server-side=true -k {{ clusterapi_kustomization_directory }}
   register: kubectl_clusterapi_resources
   changed_when: kubectl_clusterapi_resources.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
