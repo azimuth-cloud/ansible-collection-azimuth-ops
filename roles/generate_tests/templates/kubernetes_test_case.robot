@@ -71,6 +71,12 @@ Fetch Pod Events {{ test_case_name }}
     Get Pod Events For Kubernetes Cluster  ${cluster.id}
     ...  output_path={{ test_case_name }}-pod-events.json
 
+Fetch Helm Releases {{ test_case_name }}
+    [Tags]  {{ test_case_name }}  helm-releases
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Get Helm Releases For Kubernetes Cluster  ${cluster.id}
+    ...  output_path={{ test_case_name }}-helm-releases.json
+
 Delete {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["delete"]) | join('  ') }}
 {% if test_case.delete_timeout is defined and test_case.delete_timeout %}
