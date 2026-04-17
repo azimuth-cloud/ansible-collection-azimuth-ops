@@ -196,6 +196,13 @@ generate_tests_kubernetes_test_case_worker_count: 2
 # Indicates whether the monitoring should be enabled for tests
 generate_tests_kubernetes_test_case_monitoring_enabled: true
 
+# Loki log query defaults for Kubernetes test cases
+generate_tests_kubernetes_test_case_loki_query: '{job=~".+"}'
+generate_tests_kubernetes_test_case_loki_limit: 999
+generate_tests_kubernetes_test_case_loki_namespace: monitoring-system
+generate_tests_kubernetes_test_case_loki_service: svc/loki-stack
+generate_tests_kubernetes_test_case_loki_port: 3100
+
 # Indicates if test cases should be generated for the latest Kubernetes version only,
 # or all non-deprecated versions
 generate_tests_kubernetes_test_cases_latest_only: false
@@ -242,6 +249,11 @@ generate_tests_kubernetes_test_cases_default: >-
       "worker_size": "{{ generate_tests_kubernetes_test_case_worker_size }}",
       "worker_count": {{ generate_tests_kubernetes_test_case_worker_count }},
       "monitoring_enabled": {{ generate_tests_kubernetes_test_case_monitoring_enabled }},
+      "loki_query": {{ generate_tests_kubernetes_test_case_loki_query | to_json }},
+      "loki_limit": {{ generate_tests_kubernetes_test_case_loki_limit }},
+      "loki_namespace": "{{ generate_tests_kubernetes_test_case_loki_namespace }}",
+      "loki_service": "{{ generate_tests_kubernetes_test_case_loki_service }}",
+      "loki_port": {{ generate_tests_kubernetes_test_case_loki_port }},
     },
     {% endif %}
     {% endfor %}
