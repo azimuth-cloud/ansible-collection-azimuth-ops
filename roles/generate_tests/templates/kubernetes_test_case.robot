@@ -65,6 +65,12 @@ Fetch Logs {{ test_case_name }}
     ...  loki_service={{ test_case.loki_service }}
     ...  loki_port={{ test_case.loki_port }}
 
+Fetch Pod Events {{ test_case_name }}
+    [Tags]  {{ test_case_name }}  pod-events
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Get Pod Events For Kubernetes Cluster  ${cluster.id}
+    ...  output_path={{ test_case_name }}-pod-events.json
+
 Delete {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["delete"]) | join('  ') }}
 {% if test_case.delete_timeout is defined and test_case.delete_timeout %}
