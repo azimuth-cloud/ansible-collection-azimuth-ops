@@ -54,6 +54,29 @@ Verify {{ test_case_name }}
     Wait Until Page Title Contains  Grafana
 {% endif %}
 
+Fetch Logs {{ test_case_name }}
+    [Tags]  {{ (test_case_tags + ["logs"]) | join('  ') }}
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Query Loki Logs For Kubernetes Cluster  ${cluster.id}
+    ...  query={{ test_case.loki_query }}
+    ...  limit={{ test_case.loki_limit }}
+    ...  output_path={{ test_case_name }}-logs.tar.gz
+    ...  loki_namespace={{ test_case.loki_namespace }}
+    ...  loki_service={{ test_case.loki_service }}
+    ...  loki_port={{ test_case.loki_port }}
+
+Fetch Pod Events {{ test_case_name }}
+    [Tags]  {{ test_case_name }}  pod-events
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Get Pod Events For Kubernetes Cluster  ${cluster.id}
+    ...  output_path={{ test_case_name }}-pod-events.json
+
+Fetch Helm Releases {{ test_case_name }}
+    [Tags]  {{ test_case_name }}  helm-releases
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Get Helm Releases For Kubernetes Cluster  ${cluster.id}
+    ...  output_path={{ test_case_name }}-helm-releases.json
+
 Delete {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["delete"]) | join('  ') }}
 {% if test_case.delete_timeout is defined and test_case.delete_timeout %}
