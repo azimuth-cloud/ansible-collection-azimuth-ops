@@ -47,6 +47,8 @@ Verify {{ test_case_name }}
     [Timeout]  {{ test_case.verify_timeout }}
 {% endif %}
     ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    ${cluster} =  Wait For Kubernetes Cluster Nodes Ready  ${cluster.id}
+    ${cluster} =  Wait For Kubernetes Cluster Addons Deployed  ${cluster.id}
     ${cluster} =  Wait For Kubernetes Cluster Ready  ${cluster.id}
 {% if test_case.monitoring_enabled is not defined or test_case.monitoring_enabled %}
     ${monitoring} =  Get Kubernetes Cluster Service Url  ${cluster}  monitoring
