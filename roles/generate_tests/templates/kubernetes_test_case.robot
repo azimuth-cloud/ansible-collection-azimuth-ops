@@ -67,6 +67,12 @@ Fetch Logs {{ test_case_name }}
     ...  loki_service={{ test_case.loki_service }}
     ...  loki_port={{ test_case.loki_port }}
 
+Fetch Console Logs {{ test_case_name }}
+    [Tags]  {{ (test_case_tags + ["logs"]) | join('  ') }}
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Get Console Logs For Kubernetes Cluster Nodes  ${cluster.id}
+    ...  output_prefix={{ test_case_name }}-console-logs
+
 Fetch Nodes {{ test_case_name }}
     [Tags]  {{ test_case_name }}  get-nodes
     ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
