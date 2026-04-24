@@ -113,6 +113,13 @@ azimuth_capi_operator_capi_helm_control_plane_failure_domains:
 # Set to null to let OpenStack select a suitable AZ based on other scheduling constraints
 azimuth_capi_operator_capi_helm_worker_failure_domain: nova
 
+# Override the default nodeStartupTimeout for control plane nodes
+# If a control plane node takes longer than this to become Ready, it is remediated
+azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout:
+# Override the default nodeStartupTimeout for worker nodes
+# If a worker node takes longer than this to become Ready, it is remediated
+azimuth_capi_operator_capi_helm_worker_node_startup_timeout:
+
 # The size of the root disks if boot-from-volume is required
 # Leave blank to use the root disk from the flavor
 azimuth_capi_operator_capi_helm_root_volume_size:
@@ -210,6 +217,17 @@ azimuth_capi_operator_capi_helm_values_defaults:
   controlPlane:
     omitFailureDomain: "{{ azimuth_capi_operator_capi_helm_control_plane_omit_failure_domain }}"
     failureDomains: "{{ azimuth_capi_operator_capi_helm_control_plane_failure_domains }}"
+    healthCheck: >-
+      {{-
+        {} |
+          combine(
+            { "spec" : {
+                "nodeStartupTimeout": azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout
+              }
+            } if azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout
+            else {}
+          )
+      }}
     machineRootVolume: >-
       {{-
         {} |
@@ -231,6 +249,17 @@ azimuth_capi_operator_capi_helm_values_defaults:
       }}
   nodeGroupDefaults:
     failureDomain: "{{ azimuth_capi_operator_capi_helm_worker_failure_domain }}"
+    healthCheck: >-
+      {{-
+        {} |
+          combine(
+            { "spec" : {
+                "nodeStartupTimeout": azimuth_capi_operator_capi_helm_worker_node_startup_timeout
+              }
+            } if azimuth_capi_operator_capi_helm_worker_node_startup_timeout
+            else {}
+          )
+      }}
     machineRootVolume: >-
       {{-
         {} |
