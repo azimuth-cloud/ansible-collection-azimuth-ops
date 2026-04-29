@@ -28,11 +28,67 @@
     image list -f json
     --name {{ community_images_image_spec.name }}
   changed_when: false
-  register: community_images_image_list_cmd
+  register: community_images_project_image_list_cmd
+
+- name: "List images from other projects with name - {{ community_images_image_spec.name }}"
+  ansible.builtin.command: >-
+    {{ community_images_openstack_cli_path }}
+    image list -f json --community
+    --name {{ community_images_image_spec.name }}
+  changed_when: false
+  register: community_images_community_image_list_cmd
 
 - name: "Set image list fact - {{ community_images_image_spec.name }}"
   ansible.builtin.set_fact:
-    community_images_image_list: "{{ community_images_image_list_cmd.stdout | from_json }}"
+    community_images_image_list: "{{ _community_images_project_image_list if _community_images_use_images_in_project else _community_images_project_image_list }}"
+  vars:
+    _community_images_project_image_list: "{{ community_images_project_image_list_cmd.stdout | from_json }}"
+    _community_images_community_image_list: "{{ community_images_community_image_list_cmd.stdout | from_json }}"
+    _community_images_use_images_in_project: _community_images_project_image_list | length > 0 or not community_images_share_trusted_community_images
+
+- name: Verify existing images
+  when:
+    - not community_images_insecure_skip_glance_verify
+    - community_images_image_list | length > 0
+    - community_images_image_spec.checksum_sha512 is defined
+  block:
+    - name: Get Glance checksums
+      ansible.builtin.command: >-
+        {{ community_images_openstack_cli_path }}
+        image show -f json
+        {{ _image_id }}
+      loop: "{{ community_images_image_list | map(attribute='ID') }}"
+      loop_control:
+        loop_var: _image_id
+      register: _community_images_show_cmd
+
+    - name: Set glance checksum as fact
+      ansible.builtin.set_fact:
+        community_images_glance_checksum_list: "{{ _community_images_show_cmd.results | map(attribute='stdout') | map('from_json') | map(attribute='properties.os_hash_value') }}"
+      
+    - name: Check using secure hashing algorithm
+      ansible.builtin.assert:
+        that: community_images_glance_checksum_algo in ['sha256','sha512']
+        fail_msg: "Glance os_hash_algo must be sha256 or sha512"
+
+    - name: Verify Glance checksums
+      block:
+      - name: "Ensure all Glance checksums of images named {{ community_images_image_spec.name }} are the same"
+        ansible.builtin.assert:
+          that: "{{ community_images_glance_checksum_list | unique | length == 1 }}"
+          fail_msg: |
+            Expecting a single image with name {{ community_images_image_spec.name }} and
+            os_hash_value {{ _community_images_image_spec_glance_checksum }}, found
+            {{ community_images_glance_checksum_list | unique }}
+      - name: Ensure Glance checksum matches manifest
+        ansible.builtin.assert:
+          that: community_images_glance_checksum_list | first == _community_images_image_spec_glance_checksum
+          fail_msg: >- 
+            Expecting os_hash_value to be {{ community_images_glance_checksum_algo }} checksum
+            {{ _community_images_image_spec_glance_checksum }}, was {{ community_images_glance_checksum_list | first }}
+      vars:
+        _community_images_image_spec_glance_checksum: "{{ community_images_image_spec.checksum_sha512 if community_images_glance_checksum_algo == 'sha512' else community_images_image_spec.checksum }}"
+
 
 - name: Get information on existing images from OpenStack
   when: "community_images_image_list | length > 0"

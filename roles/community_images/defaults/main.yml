@@ -72,6 +72,7 @@ community_images_azimuth_images: |-
       "name": "{{ image.name }}",
       "source_url": "{{ image.url }}",
       "checksum": "{{ image.checksum }}",
+      "checksum_sha512": "{{ image.checksum_sha512 }}",
       "source_disk_format": "qcow2",
       "container_format": "bare",
       {% if "kubernetes_version" in image %}
@@ -92,6 +93,12 @@ community_images_slurm:
     source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-260306-0934-45b9a589"
     source_disk_format: qcow2
     container_format: bare
+
+community_images_share_trusted_community_images: true
+
+community_images_insecure_skip_glance_verify: false
+
+community_images_glance_checksum_algo: sha256
 
 # The default community images to upload
 community_images_default: >-
