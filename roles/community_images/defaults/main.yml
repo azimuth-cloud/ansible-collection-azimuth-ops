@@ -98,7 +98,7 @@ community_images_share_trusted_community_images: true
 
 community_images_insecure_skip_glance_verify: false
 
-community_images_glance_checksum_algo: sha256
+community_images_glance_checksum_algo: sha512
 
 # The default community images to upload
 community_images_default: >-

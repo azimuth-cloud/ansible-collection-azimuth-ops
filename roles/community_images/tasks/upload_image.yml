@@ -82,12 +82,14 @@
             {{ community_images_glance_checksum_list | unique }}
       - name: Ensure Glance checksum matches manifest
         ansible.builtin.assert:
-          that: community_images_glance_checksum_list | first == _community_images_image_spec_glance_checksum
+          that: _glance_checksum == _community_images_image_spec_glance_checksum
           fail_msg: >- 
             Expecting os_hash_value to be {{ community_images_glance_checksum_algo }} checksum
-            {{ _community_images_image_spec_glance_checksum }}, was {{ community_images_glance_checksum_list | first }}
+            {{ _community_images_image_spec_glance_checksum }}, was {{ _glance_checksum }}
+        vars:
+          _glance_checksum: "{{ community_images_glance_checksum_list | first }}"
       vars:
-        _community_images_image_spec_glance_checksum: "{{ community_images_image_spec.checksum_sha512 if community_images_glance_checksum_algo == 'sha512' else community_images_image_spec.checksum }}"
+        _community_images_image_spec_glance_checksum: "{{ ( community_images_image_spec.checksum_sha512 if community_images_glance_checksum_algo == 'sha512' else community_images_image_spec.checksum).split(':')[1] }}"
 
 
 - name: Get information on existing images from OpenStack
