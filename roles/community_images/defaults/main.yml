@@ -10,7 +10,6 @@ community_images_openstack_cli_path: >-
 # The directory into which images will be downloaded / converted
 # If not given, a temporary directory will be used
 community_images_workdir:
-
 # OpenStack credentials for uploading images
 # The value of the OS_CLOUD environment variable to use
 community_images_os_cloud: >-
@@ -94,10 +93,16 @@ community_images_slurm:
     source_disk_format: qcow2
     container_format: bare
 
-community_images_share_trusted_community_images: true
-
+# Skips verifying the Glance os_hash_value properties of existing images on the cloud
+# Insecure, but may be required if not supported by Openstack config
 community_images_insecure_skip_glance_verify: false
-
+# Indicates whether to look for community-visibility images from other projects,
+# community_images_insecure_skip_glance_verify must be false
+# to use this functionality
+community_images_share_trusted_community_images: true
+# Hash algorithm to verify Glance images with. Must match os_hash_algo value of images
+# and must be sha256 or sha512. If these requirements can't be satisfied, set
+# community_images_insecure_skip_glance_verify: true
 community_images_glance_checksum_algo: sha512
 
 # The default community images to upload
