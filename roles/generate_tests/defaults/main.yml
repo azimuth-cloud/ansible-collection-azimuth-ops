@@ -304,7 +304,7 @@ generate_tests_kubernetes_apps_default_test_case_enabled: true
 generate_tests_kubernetes_apps_test_case_jupyterhub_services:
   - jupyterhub-azimuth
 #   The expected title for the JupyterHub app
-generate_tests_kubernetes_apps_test_case_jupyterhub_service_jupyterhub_azimuth_expected_title: JupyterLab
+generate_tests_kubernetes_apps_test_case_jupyterhub_service_jupyterhub_azimuth_expected_title: JupyterHub
 
 # Configuration for the DaskHub test case
 #   The services that will be produced by the DaskHub app
