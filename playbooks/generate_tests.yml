@@ -36,7 +36,7 @@
       changed_when: false
 
     - name: Get installed Kubernetes app templates
-      ansible.builtin.command: kubectl get apptemplates -o json
+      ansible.builtin.command: kubectl get apptemplates.azimuth.stackhpc.com -o json
       register: generate_tests_app_templates_cmd
       changed_when: false
 
