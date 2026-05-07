@@ -138,6 +138,11 @@ jobs:
             repository: kubernetes-sigs/cluster-api-provider-openstack
             version_jsonpath: clusterapi_openstack_version
 
+          - key: openstack-resource-controller
+            path: ./roles/clusterapi/defaults/main.yml
+            repository: k-orc/openstack-resource-controller
+            version_jsonpath: clusterapi_openstack_resource_controller_version
+
           - key: cluster-api-addon-provider
             path: ./roles/clusterapi/defaults/main.yml
             repository: azimuth-cloud/cluster-api-addon-provider
