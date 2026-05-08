@@ -80,6 +80,12 @@ jobs:
             prereleases: "yes"
             version_jsonpath: azimuth_capi_operator_chart_version
 
+          - key: azimuth-charts
+            path: ./roles/azimuth_capi_operator/defaults/main.yml
+            repository: azimuth-cloud/azimuth-charts
+            prereleases: "yes"
+            version_jsonpath: azimuth_capi_operator_azimuth_charts_version
+
           - key: azimuth-identity-operator
             path: ./roles/azimuth_identity_operator/defaults/main.yml
             repository: azimuth-cloud/azimuth-identity-operator
