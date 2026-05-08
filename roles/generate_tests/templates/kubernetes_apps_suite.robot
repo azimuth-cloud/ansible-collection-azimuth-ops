@@ -51,12 +51,38 @@ Verify Apps Kubernetes Cluster
     [Tags]  appscluster  verify
     [Timeout]  {{ generate_tests_kubernetes_apps_verify_timeout }}
     ${cluster} =  Find Kubernetes Cluster By Name  ${kubeapps.cluster_name}
+    ${cluster} =  Wait For Kubernetes Cluster Nodes Ready  ${cluster.id}
+    ${cluster} =  Wait For Kubernetes Cluster Addons Deployed  ${cluster.id}
     ${cluster} =  Wait For Kubernetes Cluster Ready  ${cluster.id}
+
+Fetch Console Logs from Apps Kubernetes Cluster
+    [Tags]  appscluster  console-logs
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubeapps.cluster_name}
+    Get Console Logs For Kubernetes Cluster Nodes  ${cluster.id}
+    ...  output_prefix=apps-kubernetes-cluster-console-logs
+
+Fetch Nodes from Apps Kubernetes Cluster
+    [Tags]  appscluster  get-nodes
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubeapps.cluster_name}
+    Get Nodes For Kubernetes Cluster  ${cluster.id}
+    ...  output_path=apps-kubernetes-cluster-nodes.json
 
 {% for test_case in generate_tests_kubernetes_apps_test_cases %}
 {% include (test_case.template | default(generate_tests_kubernetes_apps_test_case_template, True)) %}
 
 {% endfor %}
+
+Fetch Pod Events from Apps Kubernetes Cluster
+    [Tags]  appscluster   pod-events
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubeapps.cluster_name}
+    Get Pod Events For Kubernetes Cluster  ${cluster.id}
+    ...  output_path=apps-kubernetes-cluster-pod-events.json
+
+Fetch Helm Releases from Apps Kubernetes Cluster
+    [Tags]  appscluster  helm-releases
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubeapps.cluster_name}
+    Get Helm Releases For Kubernetes Cluster  ${cluster.id}
+    ...  output_path=apps-kubernetes-cluster-helm-releases.json
 
 Teardown Apps Kubernetes Cluster
     [Tags]  appscluster  delete
