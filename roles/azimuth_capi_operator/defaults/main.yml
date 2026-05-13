@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.19.1-dev.0.main.1
+azimuth_capi_operator_chart_version: 0.19.1-dev.0.update-dependency-openstack-cluster.2
 
 # By default, pin versions to azimuth-charts version associated with current Azimuth release
 azimuth_capi_operator_azimuth_charts_version: 0.8.0
@@ -261,8 +261,11 @@ azimuth_capi_operator_capi_helm_values_defaults:
         release:
           values:
             providers:
+              # Requires >=40.0.0 of Traefik helm chart, was called
+              # kubernetesIngressNginx before
               kubernetesIngressNGINX:
                 enabled: true
+                ingressClassByName: true
               kubernetesGateway:
                 enabled: true
     openstack:
