@@ -33,6 +33,30 @@ ingress_traefik_tls_secret_name: traefik-tls-wildcard
 
 # Extra objects always added to the Helm release
 ingress_traefik_extra_objects:
+  - apiVersion: gateway.networking.k8s.io/v1
+    kind: Gateway
+    metadata:
+      name: ingress-traefik
+    spec:
+      gatewayClassName: ingress-traefik
+      allowedListeners: # This option is absent from helm values
+        namespaces:
+          from: All
+      listeners:
+        - name: web
+          port: 80
+          protocol: HTTP
+          namespacePolicy:
+            from: All
+        - name: websecure
+          port: 443
+          protocol: HTTPS
+          namespacePolicy:
+            from: All
+          certificateRefs:
+            - kind: Secret
+              name: "{{ ingress_traefik_tls_secret_name }}"
+              namespace: "{{ ingress_traefik_release_namespace }}"
   - apiVersion: v1
     kind: Secret
     metadata:
@@ -89,6 +113,7 @@ ingress_traefik_release_defaults:
       matchRule: Host(`metrics.{{ ingress_base_domain }}`)
       entryPoints:
         - web
+        - websecure
       middlewares:
         - name: dashboard-auth
 
@@ -106,24 +131,9 @@ ingress_traefik_release_defaults:
     kubernetesGateway:
       enabled: true
 
-  # Gateway created and managed by the chart
-  # certificateRefs points to the wildcard TLS secret created via extraObjects above
+  # The gateway will be created using extraObjects. ListenerSets are not supported here.
   gateway:
-    listeners:
-      web:
-        port: 80
-        protocol: HTTP
-        namespacePolicy:
-          from: All
-      websecure:
-        port: 443
-        protocol: HTTPS
-        namespacePolicy:
-          from: All
-        certificateRefs:
-          - kind: Secret
-            name: "{{ ingress_traefik_tls_secret_name }}"
-            namespace: "{{ ingress_traefik_release_namespace }}"
+    enabled: false
 
   # Enable Observability
   logs:

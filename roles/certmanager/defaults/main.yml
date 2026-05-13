@@ -24,8 +24,10 @@ certmanager_monitoring_enabled: true
 # The values for the release
 certmanager_release_defaults:
   config:
+    enableGatewayAPI: true
+    enableGatewayAPIListenerSet: true
     featureGates:
-      GatewayAPI: true
+      ListenerSets: true
   installCRDs: true
   prometheus:
     enabled: "{{ certmanager_monitoring_enabled }}"
