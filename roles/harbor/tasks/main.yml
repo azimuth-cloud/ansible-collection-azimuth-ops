@@ -80,9 +80,19 @@
     loop_var: project
     label: "{{ project.name }}"
 
+# Separate templating for cases where TLS is and isn't enabled to avoid
+# unintentionally changing kubeadmconfig and rolling nodes when upgrading from releases
+# <=2026.2.X, where skipVerify wasn't strictly checked by containerd.
 - name: Set registry mirrors fact
   ansible.builtin.set_fact:
     harbor_registry_mirrors: >-
+      {%- if harbor_tls_enabled -%}
+      {
+        {% for registry, project in harbor_proxy_cache_projects.items() %}
+        "{{ registry }}": ["{{ "{}/v2/{}".format(harbor_external_url, project.name) }}"],
+        {%- endfor -%}
+      }
+      {%- else -%}
       {%- set mirrors = {} -%}
       {%- for registry, project in harbor_proxy_cache_projects.items() -%}
         {%- set _ = mirrors.update({
@@ -99,6 +109,7 @@
         }) -%}
       {%- endfor -%}
       {{ mirrors }}
+      {%- endif -%}
 
 - name: Install Grafana dashboard for Harbor metrics
   ansible.builtin.command: kubectl apply -f -
