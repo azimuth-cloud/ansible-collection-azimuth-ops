@@ -223,9 +223,11 @@
       client_id: admin-cli
       username: "{{ keycloak_admin_username }}"
       password: "{{ keycloak_admin_password }}"
-    # An authentication error (401) is an expected status code here
+    # An authentication error (401) is an expected status code here until <26.6.0
+    # then 400: https://github.com/keycloak/keycloak/pull/46528
     status_code:
       - 200
+      - 400
       - 401
     ca_path: "{{ keycloak_ca_path }}"
     validate_certs: "{{ keycloak_validate_certs }}"

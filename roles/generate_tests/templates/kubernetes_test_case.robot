@@ -47,12 +47,49 @@ Verify {{ test_case_name }}
     [Timeout]  {{ test_case.verify_timeout }}
 {% endif %}
     ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    ${cluster} =  Wait For Kubernetes Cluster Nodes Ready  ${cluster.id}
+    ${cluster} =  Wait For Kubernetes Cluster Addons Deployed  ${cluster.id}
     ${cluster} =  Wait For Kubernetes Cluster Ready  ${cluster.id}
 {% if test_case.monitoring_enabled is not defined or test_case.monitoring_enabled %}
     ${monitoring} =  Get Kubernetes Cluster Service Url  ${cluster}  monitoring
     Open Zenith Service  ${monitoring}
     Wait Until Page Title Contains  Grafana
 {% endif %}
+
+Fetch Logs {{ test_case_name }}
+    [Tags]  {{ (test_case_tags + ["logs"]) | join('  ') }}
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Query Loki Logs For Kubernetes Cluster  ${cluster.id}
+    ...  query={{ test_case.loki_query }}
+    ...  limit={{ test_case.loki_limit }}
+    ...  output_path={{ test_case_name }}-logs.tar.gz
+    ...  loki_namespace={{ test_case.loki_namespace }}
+    ...  loki_service={{ test_case.loki_service }}
+    ...  loki_port={{ test_case.loki_port }}
+
+Fetch Console Logs {{ test_case_name }}
+    [Tags]  {{ (test_case_tags + ["logs"]) | join('  ') }}
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Get Console Logs For Kubernetes Cluster Nodes  ${cluster.id}
+    ...  output_prefix={{ test_case_name }}-console-logs
+
+Fetch Nodes {{ test_case_name }}
+    [Tags]  {{ test_case_name }}  get-nodes
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Get Nodes For Kubernetes Cluster  ${cluster.id}
+    ...  output_path={{ test_case_name }}-nodes.json
+
+Fetch Pod Events {{ test_case_name }}
+    [Tags]  {{ test_case_name }}  pod-events
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Get Pod Events For Kubernetes Cluster  ${cluster.id}
+    ...  output_path={{ test_case_name }}-pod-events.json
+
+Fetch Helm Releases {{ test_case_name }}
+    [Tags]  {{ test_case_name }}  helm-releases
+    ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
+    Get Helm Releases For Kubernetes Cluster  ${cluster.id}
+    ...  output_path={{ test_case_name }}-helm-releases.json
 
 Delete {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["delete"]) | join('  ') }}

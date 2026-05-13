@@ -3,7 +3,11 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.17.0
+azimuth_capi_operator_chart_version: 0.19.0
+
+# By default, pin versions to azimuth-charts version associated with current Azimuth release
+azimuth_capi_operator_azimuth_charts_version: 0.8.0
+azimuth_capi_operator_app_templates_default_version_range: "<={{ azimuth_capi_operator_azimuth_charts_version }}"
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -249,6 +253,11 @@ azimuth_capi_operator_capi_helm_values_defaults:
   authWebhook: "{{ 'azimuth-authorization-webhook' if azimuth_authentication_type == 'oidc' else 'none' }}"
   azimuthAuthorizationWebhook: "{{ azimuth_capi_operator_capi_helm_azimuth_authorization_webhook_config if azimuth_authentication_type == 'oidc' else {} }}"
   addons:
+    ingress:
+      traefik:
+        enabled: false
+      nginx:
+        enabled: true
     openstack:
       # General OpenStack configuration
       cloudConfig:
@@ -585,7 +594,7 @@ azimuth_capi_operator_app_templates_jupyterhub_chart_name: jupyterhub-azimuth
 # The Helm repository to use for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the JupyterHub Helm chart
-azimuth_capi_operator_app_templates_jupyterhub_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_jupyterhub_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the JupyterHub Helm chart
 azimuth_capi_operator_app_templates_jupyterhub_label:
 azimuth_capi_operator_app_templates_jupyterhub_logo:
@@ -650,7 +659,7 @@ azimuth_capi_operator_app_templates_daskhub_chart_name: daskhub-azimuth
 # The Helm repository to use for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the DaskHub Helm chart
-azimuth_capi_operator_app_templates_daskhub_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_daskhub_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the DaskHub Helm chart
 azimuth_capi_operator_app_templates_daskhub_label:
 azimuth_capi_operator_app_templates_daskhub_logo:
@@ -715,7 +724,7 @@ azimuth_capi_operator_app_templates_kubeflow_chart_name: kubeflow-azimuth
 # The Helm repository to use for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the kubeflow Helm chart
-azimuth_capi_operator_app_templates_kubeflow_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_kubeflow_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the kubeflow Helm chart
 azimuth_capi_operator_app_templates_kubeflow_label:
 azimuth_capi_operator_app_templates_kubeflow_logo:
@@ -780,7 +789,7 @@ azimuth_capi_operator_app_templates_binderhub_chart_name: binderhub-azimuth
 # The Helm repository to use for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the binderhub Helm chart
-azimuth_capi_operator_app_templates_binderhub_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_binderhub_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the binderhub Helm chart
 azimuth_capi_operator_app_templates_binderhub_label:
 azimuth_capi_operator_app_templates_binderhub_logo:
@@ -1081,7 +1090,7 @@ azimuth_capi_operator_app_templates_argocd_chart_name: argocd-azimuth
 # The Helm repository to use for the argocd app template
 azimuth_capi_operator_app_templates_argocd_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the argocd Helm chart
-azimuth_capi_operator_app_templates_argocd_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_argocd_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the argocd Helm chart
 azimuth_capi_operator_app_templates_argocd_label:
 azimuth_capi_operator_app_templates_argocd_logo:
