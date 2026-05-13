@@ -6,7 +6,7 @@ azimuth_capi_operator_chart_name: azimuth-capi-operator
 azimuth_capi_operator_chart_version: 0.19.0
 
 # By default, pin versions to azimuth-charts version associated with current Azimuth release
-azimuth_capi_operator_azimuth_charts_version: 0.7.1
+azimuth_capi_operator_azimuth_charts_version: 0.8.0
 azimuth_capi_operator_app_templates_default_version_range: "<={{ azimuth_capi_operator_azimuth_charts_version }}"
 
 # Release information for the CAPI operator release
