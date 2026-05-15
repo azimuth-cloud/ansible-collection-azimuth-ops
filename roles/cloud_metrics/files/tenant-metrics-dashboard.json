@@ -1142,7 +1142,7 @@
           "editorMode": "code",
           "expr": "rate(libvirt_domain_interface_stats_receive_bytes_total{}[5m]) * on(domain) group_left(instance_name,project_name,project_uuid) libvirt_domain_info_meta{project_uuid=~\"${project_id}\"}",
           "hide": false,
-          "legendFormat": "recieve: {{project_name}} {{instance_name}} {{target_device}}",
+          "legendFormat": "receive: {{project_name}} {{instance_name}} {{target_device}}",
           "range": true,
           "refId": "B"
         },

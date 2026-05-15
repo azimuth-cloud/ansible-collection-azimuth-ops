@@ -37,7 +37,7 @@ azimuth_identity_operator_tls_key: >-
     else undef(hint = 'azimuth_identity_operator_tls_key is required')
   }}
 
-# The issuer to use for the certificate, if no wilcard cert is available
+# The issuer to use for the certificate, if no wildcard cert is available
 azimuth_identity_operator_tls_issuer_group: cert-manager.io
 azimuth_identity_operator_tls_issuer_kind: ClusterIssuer
 azimuth_identity_operator_tls_issuer_name: "{{ certmanager_acmehttp01issuer_name | default('letsencrypt') }}"
