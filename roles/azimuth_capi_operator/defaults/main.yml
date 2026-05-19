@@ -121,9 +121,9 @@ azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout:
 azimuth_capi_operator_capi_helm_worker_node_startup_timeout:
 
 # Override the default kubeadmConfigSpec.Verbosity for control plane nodes
-azimuth_capi_operator_capi_helm_control_plane_kubeadm_verbosity:
+azimuth_capi_operator_capi_helm_control_plane_kubeadm_verbosity: 5
 # Override the default kubeadmConfigSpec.Verbosity for worker nodes
-azimuth_capi_operator_capi_helm_worker_kubeadm_verbosity:
+azimuth_capi_operator_capi_helm_worker_kubeadm_verbosity: 5
 
 # The size of the root disks if boot-from-volume is required
 # Leave blank to use the root disk from the flavor
