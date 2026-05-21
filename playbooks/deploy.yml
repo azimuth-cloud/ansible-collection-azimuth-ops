@@ -61,6 +61,10 @@
       when:
         - consul_server_host is defined
         - consul_server_port is defined
+    - name: Patch Ingress NGINX loadbalancer services to keep their floating IPs
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.ingress_nginx
+        tasks_from: patch_values.yml
     # Workaround for new services on existing Clusters not getting added
     # to Platforms after upgrades
     - name: Restart CAPI Operator
