@@ -3,7 +3,11 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.16.0
+azimuth_capi_operator_chart_version: 0.20.1
+
+# By default, pin versions to azimuth-charts version associated with current Azimuth release
+azimuth_capi_operator_azimuth_charts_version: 0.10.0
+azimuth_capi_operator_app_templates_default_version_range: "<={{ azimuth_capi_operator_azimuth_charts_version }}"
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -109,6 +113,18 @@ azimuth_capi_operator_capi_helm_control_plane_failure_domains:
 # Set to null to let OpenStack select a suitable AZ based on other scheduling constraints
 azimuth_capi_operator_capi_helm_worker_failure_domain: nova
 
+# Override the default nodeStartupTimeout for control plane nodes
+# If a control plane node takes longer than this to become Ready, it is remediated
+azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout:
+# Override the default nodeStartupTimeout for worker nodes
+# If a worker node takes longer than this to become Ready, it is remediated
+azimuth_capi_operator_capi_helm_worker_node_startup_timeout:
+
+# Override the default kubeadmConfigSpec.Verbosity for control plane nodes
+azimuth_capi_operator_capi_helm_control_plane_kubeadm_verbosity: 5
+# Override the default kubeadmConfigSpec.Verbosity for worker nodes
+azimuth_capi_operator_capi_helm_worker_kubeadm_verbosity: 5
+
 # The size of the root disks if boot-from-volume is required
 # Leave blank to use the root disk from the flavor
 azimuth_capi_operator_capi_helm_root_volume_size:
@@ -204,8 +220,28 @@ azimuth_capi_operator_capi_helm_values_defaults:
   registryMirrors: "{{ azimuth_capi_operator_capi_helm_registry_mirrors }}"
   additionalPackages: "{{ azimuth_capi_operator_capi_helm_additional_packages }}"
   controlPlane:
+    kubeadmConfigSpec: >-
+      {{-
+        {} |
+          combine(
+            {"verbosity": azimuth_capi_operator_capi_helm_control_plane_kubeadm_verbosity}
+            if azimuth_capi_operator_capi_helm_control_plane_kubeadm_verbosity
+            else {}
+          )
+        }}
     omitFailureDomain: "{{ azimuth_capi_operator_capi_helm_control_plane_omit_failure_domain }}"
     failureDomains: "{{ azimuth_capi_operator_capi_helm_control_plane_failure_domains }}"
+    healthCheck: >-
+      {{-
+        {} |
+          combine(
+            { "spec" : {
+                "nodeStartupTimeout": azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout
+              }
+            } if azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout
+            else {}
+          )
+      }}
     machineRootVolume: >-
       {{-
         {} |
@@ -226,7 +262,28 @@ azimuth_capi_operator_capi_helm_values_defaults:
           )
       }}
   nodeGroupDefaults:
+    kubeadmConfigSpec: >-
+      {{-
+        {} |
+          combine(
+            {"verbosity": azimuth_capi_operator_capi_helm_worker_kubeadm_verbosity}
+            if azimuth_capi_operator_capi_helm_worker_kubeadm_verbosity
+            else {}
+          )
+        }}
+
     failureDomain: "{{ azimuth_capi_operator_capi_helm_worker_failure_domain }}"
+    healthCheck: >-
+      {{-
+        {} |
+          combine(
+            { "spec" : {
+                "nodeStartupTimeout": azimuth_capi_operator_capi_helm_worker_node_startup_timeout
+              }
+            } if azimuth_capi_operator_capi_helm_worker_node_startup_timeout
+            else {}
+          )
+      }}
     machineRootVolume: >-
       {{-
         {} |
@@ -249,6 +306,11 @@ azimuth_capi_operator_capi_helm_values_defaults:
   authWebhook: "{{ 'azimuth-authorization-webhook' if azimuth_authentication_type == 'oidc' else 'none' }}"
   azimuthAuthorizationWebhook: "{{ azimuth_capi_operator_capi_helm_azimuth_authorization_webhook_config if azimuth_authentication_type == 'oidc' else {} }}"
   addons:
+    ingress:
+      traefik:
+        enabled: false
+      nginx:
+        enabled: true
     openstack:
       # General OpenStack configuration
       cloudConfig:
@@ -585,7 +647,7 @@ azimuth_capi_operator_app_templates_jupyterhub_chart_name: jupyterhub-azimuth
 # The Helm repository to use for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the JupyterHub Helm chart
-azimuth_capi_operator_app_templates_jupyterhub_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_jupyterhub_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the JupyterHub Helm chart
 azimuth_capi_operator_app_templates_jupyterhub_label:
 azimuth_capi_operator_app_templates_jupyterhub_logo:
@@ -650,7 +712,7 @@ azimuth_capi_operator_app_templates_daskhub_chart_name: daskhub-azimuth
 # The Helm repository to use for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the DaskHub Helm chart
-azimuth_capi_operator_app_templates_daskhub_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_daskhub_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the DaskHub Helm chart
 azimuth_capi_operator_app_templates_daskhub_label:
 azimuth_capi_operator_app_templates_daskhub_logo:
@@ -715,7 +777,7 @@ azimuth_capi_operator_app_templates_kubeflow_chart_name: kubeflow-azimuth
 # The Helm repository to use for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the kubeflow Helm chart
-azimuth_capi_operator_app_templates_kubeflow_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_kubeflow_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the kubeflow Helm chart
 azimuth_capi_operator_app_templates_kubeflow_label:
 azimuth_capi_operator_app_templates_kubeflow_logo:
@@ -780,7 +842,7 @@ azimuth_capi_operator_app_templates_binderhub_chart_name: binderhub-azimuth
 # The Helm repository to use for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the binderhub Helm chart
-azimuth_capi_operator_app_templates_binderhub_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_binderhub_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the binderhub Helm chart
 azimuth_capi_operator_app_templates_binderhub_label:
 azimuth_capi_operator_app_templates_binderhub_logo:
@@ -1081,7 +1143,7 @@ azimuth_capi_operator_app_templates_argocd_chart_name: argocd-azimuth
 # The Helm repository to use for the argocd app template
 azimuth_capi_operator_app_templates_argocd_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the argocd Helm chart
-azimuth_capi_operator_app_templates_argocd_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_argocd_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the argocd Helm chart
 azimuth_capi_operator_app_templates_argocd_label:
 azimuth_capi_operator_app_templates_argocd_logo:
