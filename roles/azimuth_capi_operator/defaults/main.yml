@@ -650,7 +650,7 @@ azimuth_capi_operator_cluster_templates_default: |-
         azimuth_capi_operator_cluster_template_defaults |
           combine(
             {
-              "label": image.kubernetes_version,
+              "label": image.kubernetes_version ~ " [Replace optional NGINX Ingress with Traefik]",
               "description": "Kubernetes " ~ kube_vn_no_prefix ~ " with HA control plane.",
               "values": {
                 "kubernetesVersion": kube_vn_no_prefix,
