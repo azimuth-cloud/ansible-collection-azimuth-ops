@@ -1121,7 +1121,46 @@ azimuth_capi_operator_app_templates_ragflow_keep_versions: 3
 # The sync frequency for the ragflow app template (default 24h)
 azimuth_capi_operator_app_templates_ragflow_sync_frequency: 86400
 # Any default values for the ragflow app template
-azimuth_capi_operator_app_templates_ragflow_default_values: {}
+azimuth_capi_operator_app_templates_ragflow_default_values:
+  env:
+    # XMX and XMS should be lower that the limits (50-75%)
+    # Some data are stored outside of the heap.
+    ES_JAVA_OPTS: "-Xms12Gi -Xmx12Gi"
+  elasticsearch:
+    deployment:
+      resources:
+        limits:
+          memory: 16Gi
+        requests:
+          memory: 16Gi
+  opensearch:
+    deployment:
+      resources:
+        limits:
+          memory: 16Gi
+        requests:
+          memory: 16Gi
+  mysql:
+    deployment:
+      resources:
+        limits:
+          memory: 512Mi
+        requests:
+          memory: 512Mi
+  redis:
+    deployment:
+      resources:
+        limits:
+          memory: 32Mi
+        requests:
+          memory: 32Mi
+  minio:
+    deployment:
+      resources:
+        limits:
+          memory: 512Mi
+        requests:
+          memory: 512Mi
 # The tenancy-based access controls for the app template
 # List of allowed tenancy IDs
 azimuth_capi_operator_app_templates_ragflow_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
