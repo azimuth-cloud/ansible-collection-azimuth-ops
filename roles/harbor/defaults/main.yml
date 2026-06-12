@@ -29,6 +29,8 @@ harbor_ingress_base_domain: >-
   }}
 # The subdomain to use for the core service
 harbor_ingress_subdomain_core: "{{ ingress_harbor_core_subdomain | default('registry') }}"
+# The ingress class name to use for harbor ingress
+harbor_ingress_class: "nginx"
 # The host to use for the core service
 harbor_ingress_host_core: "{{ harbor_ingress_subdomain_core }}.{{ harbor_ingress_base_domain }}"
 # The subdomain to use for the notary service
@@ -120,6 +122,7 @@ harbor_release_defaults:
       hosts:
         core: "{{ harbor_ingress_host_core }}"
         notary: "{{ harbor_ingress_host_notary }}"
+      className: "{{ harbor_ingress_class }}"
       annotations: >-
         {{-
           (harbor_ingress_annotations | combine(harbor_tls_ingress_annotations))
