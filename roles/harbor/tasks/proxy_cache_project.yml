@@ -94,7 +94,7 @@
           {
             "project_name": "{{ project.name }}",
             "registry_id": {{ harbor_registry.id }},
-            "public": true,
+            "public": false,
             "metadata": {
               "auto_scan": "true"
             }
