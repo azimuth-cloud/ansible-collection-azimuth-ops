@@ -254,6 +254,12 @@ capi_cluster_addons_monitoring_prometheus_external_url: >-
     else ""
   }}
 
+# Defines the rules that should be applied to worker nodes
+capi_cluster_worker_node_security_group_rules: []
+
+# Defines the rules that should be applied to control-plane nodes
+capi_cluster_control_plane_node_security_group_rules: []
+
 # The values for the release
 capi_cluster_release_defaults:
   kubernetesVersion: "{{ capi_cluster_kubernetes_version }}"
@@ -285,6 +291,16 @@ capi_cluster_release_defaults:
           if capi_cluster_external_network_id
           else {},
           recursive = True
+        ) |
+        combine(
+          { "workerNodeSecurityGroupRules": capi_cluster_worker_node_security_group_rules }
+          if capi_cluster_worker_node_security_group_rules | length > 0
+          else {}
+        ) |
+        combine(
+          { "controlPlaneNodesSecurityGroupRules": capi_cluster_control_plane_node_security_group_rules }
+          if capi_cluster_control_plane_node_security_group_rules | length > 0
+          else {}
         )
     }}
   kubeNetwork:
