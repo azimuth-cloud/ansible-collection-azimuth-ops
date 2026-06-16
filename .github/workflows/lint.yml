@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
 
       - name: Run ansible-lint
-        uses: ansible/ansible-lint@e98f9b38769d45cbe3c55a23b2eb25631babe7c4 # v25.4.0
+        uses: ansible/ansible-lint@5fac056c45595896c973fbde871f01f6cb14d74c # v26.4.0
 
       - name: Load super-linter configuration
         # Use grep inverse matching to exclude eventual comments in the .env file
