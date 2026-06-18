@@ -306,11 +306,42 @@ azimuth_capi_operator_capi_helm_values_defaults:
   authWebhook: "{{ 'azimuth-authorization-webhook' if azimuth_authentication_type == 'oidc' else 'none' }}"
   azimuthAuthorizationWebhook: "{{ azimuth_capi_operator_capi_helm_azimuth_authorization_webhook_config if azimuth_authentication_type == 'oidc' else {} }}"
   addons:
+    # We override this using azimuth_capi_operator_cluster_template_defaults, so
+    # that clusters get new values including Traefik ONLY on Kubernetes upgrade,
+    # when users are expecting and are warned about disruption. ingress-nginx
+    # is still enabled by default on clusters using deprecated clustertemplates.
     ingress:
-      traefik:
-        enabled: false
       nginx:
         enabled: true
+        release:
+          values:
+            controller:
+              service:
+                # Ensure that existing ingress-nginx deployments are modified so
+                # that when their loadbalancer resources are deleted, the
+                # subsequent deletion of the Octavia loadbalancer by OCCM does
+                # not release the floating IP from the project.
+                # This will be applied when a user "updates" their cluster.
+                # We also apply this change to all existing user ingress-nginx
+                # deployments using roles/ingress_nginx/patch_values.yml, so
+                # that if a cluster is upgraded without an update, we still
+                # should not lose the ingress-controller loadbalancer
+                # floating IP.
+                annotations:
+                  loadbalancer.openstack.org/keep-floatingip: "true"
+      traefik:
+        enabled: false
+        release:
+          values:
+            providers:
+              # Requires >=40.0.0 of Traefik helm chart, was called
+              # kubernetesIngressNginx before
+              kubernetesIngressNGINX:
+                enabled: true
+                ingressClassByName: true
+              kubernetesGateway:
+                enabled: true
+
     openstack:
       # General OpenStack configuration
       cloudConfig:
@@ -584,6 +615,13 @@ azimuth_capi_operator_cluster_template_defaults:
       internalNetwork:
         networkFilter:
           tags: portal-internal
+    addons:
+      ingress:
+        nginx:
+          enabled: false
+        traefik:
+          enabled: true
+
 # Tenancy-based access controls to apply to Kubernetes cluster templates
 # List of allowed tenancy IDs
 azimuth_capi_operator_cluster_template_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
@@ -612,7 +650,7 @@ azimuth_capi_operator_cluster_templates_default: |-
         azimuth_capi_operator_cluster_template_defaults |
           combine(
             {
-              "label": image.kubernetes_version,
+              "label": image.kubernetes_version ~ " [Replace optional NGINX Ingress with Traefik]",
               "description": "Kubernetes " ~ kube_vn_no_prefix ~ " with HA control plane.",
               "values": {
                 "kubernetesVersion": kube_vn_no_prefix,
