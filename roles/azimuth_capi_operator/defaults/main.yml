@@ -187,6 +187,35 @@ azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone: nova
 # The Cinder volume type for the default Cinder CSI storage class
 azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type:
 
+# The list of security group rules that should be applied to
+# worker nodes on clouds with Octavia loadbalancer provider OVN
+azimuth_capi_operator_capi_helm_worker_node_security_group_rules_ovn:
+  - name: Worker nodePort TCP
+    remoteIPPrefix: 0.0.0.0/0
+    protocol: tcp
+    direction: ingress
+    etherType: IPv4
+    portRangeMin: 30000
+    portRangeMax: 32767
+  - name: Worker nodePort UDP
+    protocol: udp
+    remoteIPPrefix: 0.0.0.0/0
+    direction: ingress
+    etherType: IPv4
+    portRangeMin: 30000
+    portRangeMax: 32767
+
+# Defines the rules that should be applied to worker nodes
+azimuth_capi_operator_capi_helm_worker_node_security_group_rules: >-
+  {{-
+    azimuth_capi_operator_capi_helm_worker_node_security_group_rules_ovn
+    if azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider == 'ovn'
+    else []
+  }}
+
+# Defines the rules that should be applied to control-plane nodes
+azimuth_capi_operator_capi_helm_control_plane_node_security_group_rules: []
+
 azimuth_capi_operator_capi_helm_values_defaults:
   machineMetadata: "{{ azimuth_capi_operator_capi_helm_machine_metadata }}"
   kubeNetwork:
@@ -213,6 +242,16 @@ azimuth_capi_operator_capi_helm_values_defaults:
         combine(
           { "dnsNameservers": azimuth_capi_operator_capi_helm_dns_nameservers }
           if azimuth_capi_operator_capi_helm_dns_nameservers
+          else {}
+        ) |
+        combine(
+          { "workerNodeSecurityGroupRules": azimuth_capi_operator_capi_helm_worker_node_security_group_rules }
+          if azimuth_capi_operator_capi_helm_worker_node_security_group_rules | length > 0
+          else {}
+        ) |
+        combine(
+          { "controlPlaneNodesSecurityGroupRules": azimuth_capi_operator_capi_helm_control_plane_node_security_group_rules }
+          if azimuth_capi_operator_capi_helm_control_plane_node_security_group_rules | length > 0
           else {}
         )
     }}
