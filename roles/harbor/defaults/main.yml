@@ -19,6 +19,7 @@ harbor_trust_bundle_secret_name: "{{ harbor_release_name }}-trust-bundle"
 # The Harbor admin password and secret key
 harbor_admin_password: "{{ undef(hint='harbor_admin_password is not set') }}"
 harbor_secret_key: "{{ undef(hint='harbor_secret_key is not set') }}"
+harbor_proxy_password: "{{ undef(hint='harbor_proxy_password is not set') }}"
 
 # The base domain when the core and notary share a common parent domain
 harbor_ingress_base_domain: >-
