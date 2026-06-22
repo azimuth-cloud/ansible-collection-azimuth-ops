@@ -12,7 +12,7 @@ clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/downl
 
 # The repo, version and manifest URL for the OpenStack Resource Controller components
 clusterapi_openstack_resource_controller_repo: https://github.com/k-orc/openstack-resource-controller
-clusterapi_openstack_resource_controller_version: v2.5.0
+clusterapi_openstack_resource_controller_version: v2.6.0
 clusterapi_openstack_resource_controller_components: >-
   {{ clusterapi_openstack_resource_controller_repo }}/releases/download/{{ clusterapi_openstack_resource_controller_version }}/install.yaml
 
