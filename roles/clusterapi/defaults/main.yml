@@ -178,3 +178,10 @@ clusterapi_janitor_openstack_wait_timeout: 30m
 # The values for the Cluster API janitor deployment
 # The defaults are sufficient for most use cases
 clusterapi_janitor_openstack_release_values: {}
+
+# The list of CAPO resource names to ensure are migrated before a CAPO upgrade
+clusterapi_capo_migrate_resources:
+  - openstackclusters
+  - openstackclustertemplates
+  - openstackmachines
+  - openstackmachinetemplates
