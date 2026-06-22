@@ -104,3 +104,29 @@
         status_code:
           - 201
       changed_when: true
+
+    - name: Add proxy user to proxy cache project
+      ansible.builtin.uri:
+        # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
+        url: "{{ harbor_external_url }}/api/v2.0/projects/{{ project.name }}/members"
+        method: POST
+        user: admin
+        password: "{{ harbor_admin_password }}"
+        force_basic_auth: true
+        body_format: json
+        # Integers in the body are converted to strings, which causes the Harbor API to fail
+        # https://github.com/ansible/ansible/issues/59732
+        # So we have to build the JSON manually
+        # role_id: 2 corresponds to a developer account in Harbor
+        body: >-
+          {
+            "role_id": 2,
+            "member_user": {
+              "username": "proxy"
+            }
+          }
+        ca_path: "{{ harbor_ca_path }}"
+        validate_certs: "{{ harbor_validate_certs }}"
+        status_code:
+          - 201
+      changed_when: true
