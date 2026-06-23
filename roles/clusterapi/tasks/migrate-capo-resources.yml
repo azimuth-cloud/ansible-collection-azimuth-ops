@@ -1,0 +1,34 @@
+---
+
+- name: List CRDs
+  ansible.builtin.command: >-
+    kubectl get deployments -n capo-system -o custom-columns=NAME:.metadata.name
+  register: cluster_crds
+  changed_when: false
+
+- name: Get running capo-controller-manager image and tag
+  ansible.builtin.command: >-
+    kubectl get -n capo-system deployments/capo-controller-manager -o jsonpath="{..image}"
+  register: clusterapi_capo_image
+  failed_when: false
+  changed_when: false
+
+- name: Migrate CAPO objects when upgrading CAPO
+  when:
+    - clusterapi_capo_image.rc == 0
+  block:
+    - name: Extract running capo-controller-manager tag
+      ansible.builtin.set_fact:
+        clusterapi_running_capo_version: "{{ clusterapi_capo_image.stdout_lines[0] | split(':') | last }}"
+
+    - name: Ensure that CAPO object migrations have occurred
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        kubectl get {{ item }} -A -o json | kubectl replace -f -
+      args:
+        executable: /bin/bash
+      when:
+        - item in cluster_crds.stdout_lines
+        - clusterapi_openstack_version is version(clusterapi_running_capo_version, '>')
+      loop: "{{ clusterapi_capo_migrate_resources }}"
+      changed_when: true

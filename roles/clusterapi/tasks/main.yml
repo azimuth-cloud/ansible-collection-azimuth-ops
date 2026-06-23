@@ -11,6 +11,9 @@
     dest: "{{ clusterapi_kustomization_directory }}/kustomization.yaml"
     mode: "0644"
 
+- name: Ensure Cluster API Provider OpenStack resources are migrated
+  ansible.builtin.include_tasks: migrate-capo-resources.yml
+
 - name: Install Cluster API resources
   ansible.builtin.command: >-
     kubectl apply --force-conflicts --server-side=true -k {{ clusterapi_kustomization_directory }}
