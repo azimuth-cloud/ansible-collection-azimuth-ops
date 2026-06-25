@@ -6,6 +6,7 @@
 - name: Deploy Azimuth
   hosts: azimuth_deploy
   roles:
+    - role: azimuth_cloud.azimuth_ops.preflight_checks
     # Configure alerting
     - role: azimuth_cloud.azimuth_ops.alertmanager_config
       when: >-
