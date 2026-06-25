@@ -11,15 +11,36 @@ alertmanager_config_labels:
   app.kubernetes.io/managed-by: azimuth-ops
   alertmanager: "{{ _kube_prometheus_stack_release_name }}-alertmanager"
 
-# The Slack URL to use for the alertmanager Slack webhook
+# Conigure Slack webhooks and channels to send alerts to, see monitoring documentation in azimuth-config
+# The Slack URL to use for the alertmanager Slack webhook to send alerts by default
 alertmanager_config_slack_webhook_url:
+# The Slack URL to use for the alertmanager Slack webhook to send only critical alerts
+alertmanager_config_slack_critical_webhook_url:
+# The Slack URL to use for the alertmanager Slack webhook to send only warning alerts
+alertmanager_config_slack_warning_webhook_url:
 # The name of the channel to send alerts to
 # If not given, the default channel for the webhook will be used
 alertmanager_config_slack_webhook_channel:
+alertmanager_config_slack_critical_webhook_channel:
+alertmanager_config_slack_warning_webhook_channel:
 # The name and key of the secret containing the Slack webhook URL
 alertmanager_config_slack_webhook_secret_name: alertmanager-slack-webhook
 # checkov:skip=CKV_SECRET_6: No secret in config
 alertmanager_config_slack_webhook_secret_key: slack-api-url
+# Map of webhooks for the configured Slack routing
+alertmanager_config_slack_webhook_secret_map: >-
+  {{-
+    {} | combine(
+        { alertmanager_config_slack_webhook_secret_key: alertmanager_config_slack_webhook_url }
+        if alertmanager_config_slack_webhook_url is defined else {}
+      ) | combine(
+        { alertmanager_config_slack_webhook_secret_key+"-critical": alertmanager_config_slack_critical_webhook_url }
+        if alertmanager_config_slack_critical_webhook_url is defined else {}
+      ) | combine(
+        { alertmanager_config_slack_webhook_secret_key+"-warning": alertmanager_config_slack_warning_webhook_url }
+        if alertmanager_config_slack_warning_webhook_url is defined else {}
+      )
+  }}
 
 # The name of the alertmanager config for the Slack webhook
 alertmanager_config_slack_name: alertmanager-slack-webhook
@@ -87,7 +108,7 @@ alertmanager_config_slack_receiver_template_text: |-
   {{- end }}
   {%- endraw -%}
 
-# The Slack receiver config
+# The Slack receiver default config without webhook config
 alertmanager_config_slack_receiver_defaults: >-
   {{-
     {
@@ -99,24 +120,80 @@ alertmanager_config_slack_receiver_defaults: >-
       "title": alertmanager_config_slack_receiver_template_title,
       "text": alertmanager_config_slack_receiver_template_text,
       "sendResolved": True,
-    } |
+    }
+  }}
+
+# If the critical webhook is defined overwrite the webhook URL
+alertmanager_config_slack_critical_receiver_config: >-
+  {{-
+    alertmanager_config_slack_receiver_defaults |
       combine(
-        { "channel": alertmanager_config_slack_webhook_channel }
-        if alertmanager_config_slack_webhook_channel
-        else {}
+        {
+          "apiURL": {
+            "key":  alertmanager_config_slack_webhook_secret_key+"-critical",
+          }
+        } if alertmanager_config_slack_critical_webhook_url is defined
+        else {},
+        recursive = True
       )
   }}
+
+# If the warning webhook is defined overwrite the webhook URL
+alertmanager_config_slack_warning_receiver_config: >-
+  {{-
+    alertmanager_config_slack_receiver_defaults |
+      combine(
+        {
+          "apiURL": {
+            "key":  alertmanager_config_slack_webhook_secret_key+"-warning",
+          }
+        } if alertmanager_config_slack_warning_webhook_url is defined
+        else {},
+        recursive = True
+      )
+  }}
+
 alertmanager_config_slack_receiver_overrides: {}
 alertmanager_config_slack_receiver: >-
   {{-
     alertmanager_config_slack_receiver_defaults |
+      combine(
+        { "channel": alertmanager_config_slack_webhook_channel }
+        if alertmanager_config_slack_webhook_channel
+        else {}
+      ) |
+      combine(alertmanager_config_slack_receiver_overrides, recursive = True)
+  }}
+
+alertmanager_config_slack_critical_receiver: >-
+  {{-
+    alertmanager_config_slack_critical_receiver_config |
+      combine(
+        { "channel": alertmanager_config_slack_webhook_channel }
+        if alertmanager_config_slack_critical_webhook_channel is defined
+        else {},
+        recursive = True
+      ) |
+      combine(alertmanager_config_slack_receiver_overrides, recursive = True)
+  }}
+
+alertmanager_config_slack_warning_receiver: >-
+  {{-
+    alertmanager_config_slack_warning_receiver_config |
+      combine(
+        { "channel": alertmanager_config_slack_webhook_channel }
+        if alertmanager_config_slack_warning_webhook_channel is defined
+        else {},
+        recursive = True
+      ) |
       combine(alertmanager_config_slack_receiver_overrides, recursive = True)
   }}
 
 # The spec of the alertmanager config for the Slack webhook
+# Always split the alerts but re-use the same receiver if we only have one slack channel
 alertmanager_config_slack_spec_defaults:
   route:
-    receiver: slack-notifications
+    receiver: critical-slack-notifications
     groupBy:
       - namespace
       - severity
@@ -128,10 +205,24 @@ alertmanager_config_slack_spec_defaults:
       - name: severity
         matchType: "=~"
         value: warning|critical
+    routes:
+      - receiver: critical-slack-notifications
+        matchers:
+          - name: severity
+            matchType: "="
+            value: critical
+      - receiver: warning-slack-notifications
+        matchers:
+          - name: severity
+            matchType: "="
+            value: warning
   receivers:
-    - name: slack-notifications
+    - name: warning-slack-notifications
       slackConfigs:
-        - "{{ alertmanager_config_slack_receiver }}"
+        - "{{ alertmanager_config_slack_warning_receiver | default(alertmanager_config_slack_receiver) }}"
+    - name: critical-slack-notifications
+      slackConfigs:
+        - "{{ alertmanager_config_slack_critical_receiver | default(alertmanager_config_slack_receiver) }}"
 alertmanager_config_slack_spec_overrides: {}
 alertmanager_config_slack_spec: >-
   {{-
