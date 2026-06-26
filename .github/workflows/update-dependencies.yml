@@ -1,11 +1,6 @@
 # This workflow proposes updates to the dependencies that dependabot cannot
 name: Update dependencies
 
-permissions:
-  contents: write
-  id-token: write
-  pull-requests: write
-
 on:  # yamllint disable-line rule:truthy
   # Allow manual executions
   workflow_dispatch:
@@ -19,6 +14,10 @@ jobs:
   # For Azimuth components, we also allow pre-releases so we can easily cut release candidates
   propose_github_release_updates:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+      id-token: write
     strategy:
       matrix:
         include:
@@ -80,6 +79,12 @@ jobs:
             prereleases: "yes"
             version_jsonpath: azimuth_capi_operator_chart_version
 
+          - key: azimuth-charts
+            path: ./roles/azimuth_capi_operator/defaults/main.yml
+            repository: azimuth-cloud/azimuth-charts
+            prereleases: "yes"
+            version_jsonpath: azimuth_capi_operator_azimuth_charts_version
+
           - key: azimuth-identity-operator
             path: ./roles/azimuth_identity_operator/defaults/main.yml
             repository: azimuth-cloud/azimuth-identity-operator
@@ -137,6 +142,11 @@ jobs:
             path: ./roles/clusterapi/defaults/main.yml
             repository: kubernetes-sigs/cluster-api-provider-openstack
             version_jsonpath: clusterapi_openstack_version
+
+          - key: openstack-resource-controller
+            path: ./roles/clusterapi/defaults/main.yml
+            repository: k-orc/openstack-resource-controller
+            version_jsonpath: clusterapi_openstack_resource_controller_version
 
           - key: cluster-api-addon-provider
             path: ./roles/clusterapi/defaults/main.yml
@@ -207,6 +217,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Check for most recent GitHub release
         id: next
@@ -251,6 +263,10 @@ jobs:
 
   propose_helm_chart_updates:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+      id-token: write
     strategy:
       matrix:
         include:
@@ -324,6 +340,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Extract repo and chart
         id: chart-info

@@ -4,19 +4,12 @@ name: Lint
 on:  # yamllint disable-line rule:truthy
   workflow_call:
 
-permissions:
-  contents: read
-  packages: write
-  # To report GitHub Actions status checks
-  statuses: write
-
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: read
       # To report GitHub Actions status checks
       statuses: write
 
@@ -27,9 +20,10 @@ jobs:
           # list of files that changed across commits
           fetch-depth: 0
           submodules: true
+          persist-credentials: false
 
       - name: Run ansible-lint
-        uses: ansible/ansible-lint@e98f9b38769d45cbe3c55a23b2eb25631babe7c4 # v25.4.0
+        uses: ansible/ansible-lint@5fac056c45595896c973fbde871f01f6cb14d74c # v26.4.0
 
       - name: Load super-linter configuration
         # Use grep inverse matching to exclude eventual comments in the .env file
@@ -41,7 +35,7 @@ jobs:
         if: always()
 
       - name: Run super-linter
-        uses: super-linter/super-linter@4e8a7c2bf106c4c766c816b35ec612638dc9b6b2 # v7.3.0
+        uses: super-linter/super-linter/slim@9e863354e3ff62e0727d37183162c4a88873df41 # v8.6.0
         if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

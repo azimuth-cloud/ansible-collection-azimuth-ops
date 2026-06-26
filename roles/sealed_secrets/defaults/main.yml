@@ -1,6 +1,6 @@
 ---
 
-sealed_secrets_chart_repo: https://bitnami-labs.github.io/sealed-secrets
+sealed_secrets_chart_repo: https://bitnami.github.io/sealed-secrets
 sealed_secrets_chart_name: sealed-secrets
 sealed_secrets_chart_version: 2.18.5
 
