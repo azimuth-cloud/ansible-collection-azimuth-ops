@@ -99,11 +99,7 @@ community_images_insecure_skip_glance_verify: false
 # Indicates whether to look for community-visibility images from other projects,
 # community_images_insecure_skip_glance_verify must be false
 # to use this functionality
-community_images_share_trusted_community_images: true
-# Hash algorithm to verify Glance images with. Must match os_hash_algo value of images
-# and must be sha256 or sha512. If these requirements can't be satisfied, set
-# community_images_insecure_skip_glance_verify: true
-community_images_glance_checksum_algo: sha512
+community_images_use_existing_trusted_community_images: true
 
 # The default community images to upload
 community_images_default: >-

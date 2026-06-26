@@ -50,7 +50,7 @@
   vars:
     _community_images_project_image_list: "{{ community_images_project_image_list_cmd.stdout | from_json }}"
     _community_images_community_image_list: "{{ community_images_community_image_list_cmd.stdout | from_json }}"
-    _community_images_use_images_in_project: _community_images_project_image_list | length > 0 or not community_images_share_trusted_community_images or
+    _community_images_use_images_in_project: _community_images_project_image_list | length > 0 or not community_images_use_existing_trusted_community_images or
       community_images_insecure_skip_glance_verify
 
 - name: Verify existing images
@@ -79,32 +79,27 @@
           | map(attribute='properties.os_hash_value')
           }}"
 
-    - name: Check using secure hashing algorithm
-      ansible.builtin.assert:
-        that: community_images_glance_checksum_algo in ['sha256','sha512']
-        fail_msg: "Glance os_hash_algo must be sha256 or sha512"
-
     - name: Verify Glance checksums
       vars:
-        _community_images_image_spec_glance_checksum: "{{
-                                                      ( community_images_image_spec.checksum_sha512
-                                                      if community_images_glance_checksum_algo == 'sha512' else
-                                                      community_images_image_spec.checksum).split(':')[1]
-                                                      }}"
+        _community_images_image_spec_glance_checksum: "{{ community_images_image_spec.checksum_sha512.split(':')[1] }}"
       block:
-        - name: "Ensure all Glance checksums are the same for of images named {{ community_images_image_spec.name }}"
+        - name: "Ensure all Glance checksums are the same for images named {{ community_images_image_spec.name }}"
           ansible.builtin.assert:
             that: "{{ community_images_glance_checksum_list | unique | length == 1 }}"
             fail_msg: |
               Expecting a single image with name {{ community_images_image_spec.name }} and
               os_hash_value {{ _community_images_image_spec_glance_checksum }}, found
-              {{ community_images_glance_checksum_list | unique }}
+              {{ community_images_glance_checksum_list | unique }}. Ensure that duplicate, untrusted images
+              are unused and if so remove them with `openstack image delete`, or ensure a new set of trusted, per-project images
+              are pulled by setting `community_images_use_existing_trusted_community_images: false`.
         - name: Ensure Glance checksum matches manifest
           ansible.builtin.assert:
             that: _glance_checksum == _community_images_image_spec_glance_checksum
             fail_msg: >-
-              Expecting os_hash_value to be {{ community_images_glance_checksum_algo }} checksum
-              {{ _community_images_image_spec_glance_checksum }}, was {{ _glance_checksum }}
+              Expecting os_hash_value to be sha512 checksum
+              {{ _community_images_image_spec_glance_checksum }}, was {{ _glance_checksum }}. Ensure the untrusted image is unused
+              and if so remove it with `openstack image delete`. A new set of trusted, per-project images
+              are pulled by setting `community_images_use_existing_trusted_community_images: false`.
           vars:
             _glance_checksum: "{{ community_images_glance_checksum_list | first }}"
 - name: Get information on existing images from OpenStack
