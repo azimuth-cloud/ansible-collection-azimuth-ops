@@ -293,7 +293,7 @@ capi_cluster_release_defaults:
           recursive = True
         ) |
         combine(
-          { "workerNodeSecurityGroupRules": capi_cluster_worker_node_security_group_rules }
+          { "workerNodesSecurityGroupRules": capi_cluster_worker_node_security_group_rules }
           if capi_cluster_worker_node_security_group_rules | length > 0
           else {}
         ) |
