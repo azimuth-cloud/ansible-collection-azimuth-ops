@@ -1,4 +1,11 @@
 ---
+
+- name: dump cinder info
+  debug:
+    var: capi_cluster_release_defaults.addons.openstack.csiCinder
+
+- meta: end_play
+
 - name: Deploy CAPI cluster
   when: capi_cluster_release_state == 'present'
   block:
