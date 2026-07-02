@@ -1,0 +1,17 @@
+---
+
+# The jq repository
+jq_repo: https://github.com/jqlang/jq
+# The jq version to download
+jq_version: jq-1.7.1
+# The OS variant and architecture to use
+# See https://github.com/jqlang/jq/releases for the available options
+jq_os: linux
+jq_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+# The name of the jq binary
+jq_binary_name: "jq-{{ jq_os }}-{{ jq_architecture }}"
+# The URL of the jq binary to download
+jq_binary_url: "{{ jq_repo }}/releases/download/{{ jq_version }}/{{ jq_binary_name }}"
+
+# The directory into which the jq binary should be placed
+jq_bin_directory: /usr/local/bin
