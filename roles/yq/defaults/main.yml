@@ -1,0 +1,17 @@
+---
+
+# The yq repository
+yq_repo: https://github.com/mikefarah/yq
+# The yq version to download
+yq_version: v4.45.1
+# The OS variant and architecture to use
+# See https://github.com/mikefarah/yq/releases for the available options
+yq_os: linux
+yq_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+# The name of the yq binary
+yq_binary_name: "yq_{{ yq_os }}_{{ yq_architecture }}"
+# The URL of the yq binary to download
+yq_binary_url: "{{ yq_repo }}/releases/download/{{ yq_version }}/{{ yq_binary_name }}"
+
+# The directory into which the yq binary should be placed
+yq_bin_directory: /usr/local/bin
