@@ -20,11 +20,12 @@ clusterapi_openstack_resource_controller_components: >-
 clusterapi_diagnostics_address: 0.0.0.0:8443
 clusterapi_insecure_diagnostics: false
 
-# The diagnostics address for CAPO components
+# The namespace and diagnostics address for CAPO components
+clusterapi_openstack_namespace: capo-system
 clusterapi_openstack_metrics: true
 clusterapi_openstack_diagnostics_address: >-
   {{ '0.0.0.0:8080' if clusterapi_openstack_metrics else '127.0.0.1:8080' }}
-clusterapi_openstack_insecure_diagnostics: "{{ clusterapi_openstack_metrics }}"
+clusterapi_openstack_insecure_diagnostics: true
 
 # Variables for toggling feature gates for experimental features
 clusterapi_feature_gate_machine_pool: false
@@ -56,8 +57,8 @@ clusterapi_manifests:
   - "{{ clusterapi_openstack_resource_controller_components }}"
   - "{{ clusterapi_openstack_components }}"
 
-# List of patches to apply to the resources in the manifests
-clusterapi_patches:
+# Base list of patches to apply to the resources in the manifests
+clusterapi_patches_base:
   # The manifests contain environment variable substitutions for feature gates that we do not need
   # yamllint disable rule:line-length
   - patch: |-
@@ -107,8 +108,12 @@ clusterapi_patches:
           - --feature-gates={% for k, v in clusterapi_openstack_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
     target:
       kind: Deployment
-      namespace: capo-system
+      namespace: "{{ clusterapi_openstack_namespace }}"
       name: capo-controller-manager
+  # yamllint enable rule:line-length
+
+# Additional patches applied when metrics are enabled (expose the metrics port on the CAPO pod)
+clusterapi_openstack_metrics_patches:
   - patch: |-
       - op: add
         path: /spec/template/spec/containers/0/ports/-
@@ -118,9 +123,14 @@ clusterapi_patches:
           protocol: TCP
     target:
       kind: Deployment
-      namespace: capo-system
+      namespace: "{{ clusterapi_openstack_namespace }}"
       name: capo-controller-manager
-  # yamllint enable rule:line-length
+
+clusterapi_patches: >-
+  {{-
+    clusterapi_patches_base +
+    (clusterapi_openstack_metrics_patches if clusterapi_openstack_metrics else [])
+  }}
 
 # The kustomization to use for Cluster API
 clusterapi_kustomization:
@@ -152,7 +162,7 @@ clusterapi_watches:
     name: capi-kubeadm-control-plane-controller-manager
     condition: Available
   - kind: deployment
-    namespace: capo-system
+    namespace: "{{ clusterapi_openstack_namespace }}"
     name: capo-controller-manager
     condition: Available
 
