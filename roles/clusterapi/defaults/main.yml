@@ -21,8 +21,10 @@ clusterapi_diagnostics_address: 0.0.0.0:8443
 clusterapi_insecure_diagnostics: false
 
 # The diagnostics address for CAPO components
-clusterapi_openstack_diagnostics_address: 127.0.0.1:8080
-clusterapi_openstack_insecure_diagnostics: false
+clusterapi_openstack_metrics: true
+clusterapi_openstack_diagnostics_address: >-
+  {{ '0.0.0.0:8080' if clusterapi_openstack_metrics else '127.0.0.1:8080' }}
+clusterapi_openstack_insecure_diagnostics: "{{ clusterapi_openstack_metrics }}"
 
 # Variables for toggling feature gates for experimental features
 clusterapi_feature_gate_machine_pool: false
@@ -101,8 +103,19 @@ clusterapi_patches:
           - --leader-elect
           - --v=2
           - --diagnostics-address={{ clusterapi_openstack_diagnostics_address }}
-          - --insecure-diagnostics={{ clusterapi_openstack_insecure_diagnostics }}
+          - --insecure-diagnostics={{ "true" if clusterapi_openstack_insecure_diagnostics else "false" }}
           - --feature-gates={% for k, v in clusterapi_openstack_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
+    target:
+      kind: Deployment
+      namespace: capo-system
+      name: capo-controller-manager
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/ports/-
+        value:
+          containerPort: 8080
+          name: metrics
+          protocol: TCP
     target:
       kind: Deployment
       namespace: capo-system
