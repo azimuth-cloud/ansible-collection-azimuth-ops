@@ -57,9 +57,7 @@
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null }
-            ]
+            "steps": [{ "color": "green", "value": null }]
           }
         },
         "overrides": []
@@ -97,9 +95,7 @@
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null }
-            ]
+            "steps": [{ "color": "green", "value": null }]
           },
           "unit": "ops"
         },
@@ -180,9 +176,7 @@
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null }
-            ]
+            "steps": [{ "color": "green", "value": null }]
           },
           "unit": "short"
         },
@@ -256,7 +250,12 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
       "id": 11,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Reconcile Rate by Controller",
@@ -306,7 +305,12 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
       "id": 12,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Error Rate by Controller",
@@ -356,7 +360,12 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
       "id": 13,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Reconcile Duration",
@@ -425,7 +434,12 @@
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 23 },
       "id": 21,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Work Queue Depth",
@@ -475,7 +489,12 @@
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 23 },
       "id": 22,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Work Queue Add Rate",
@@ -525,7 +544,12 @@
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 23 },
       "id": 23,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Work Queue Processing Latency p99",
@@ -582,7 +606,12 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
       "id": 31,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Active Workers by Controller",
@@ -632,7 +661,12 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
       "id": 32,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Max Concurrent Reconciles",
@@ -689,7 +723,12 @@
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 41 },
       "id": 41,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Goroutines",
@@ -739,7 +778,12 @@
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 41 },
       "id": 42,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "Resident Memory",
@@ -789,7 +833,12 @@
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 41 },
       "id": 43,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
         "tooltip": { "mode": "multi", "sort": "none" }
       },
       "title": "CPU Usage",
