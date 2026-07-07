@@ -2,12 +2,12 @@
 
 # The repo, version and manifest URL for the Cluster API core components
 clusterapi_core_repo: https://github.com/kubernetes-sigs/cluster-api
-clusterapi_core_version: v1.13.2
+clusterapi_core_version: v1.13.3
 clusterapi_core_components: "{{ clusterapi_core_repo }}/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml"
 
 # The repo, version and manifest URL for the Cluster API OpenStack provider components
 clusterapi_openstack_repo: https://github.com/kubernetes-sigs/cluster-api-provider-openstack
-clusterapi_openstack_version: v0.14.4
+clusterapi_openstack_version: v0.14.6
 clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml"
 
 # The repo, version and manifest URL for the OpenStack Resource Controller components
@@ -139,7 +139,7 @@ clusterapi_watches:
 # Helm chart information for the Cluster API addon provider
 clusterapi_addon_provider_chart_repo: https://azimuth-cloud.github.io/cluster-api-addon-provider
 clusterapi_addon_provider_chart_name: cluster-api-addon-provider
-clusterapi_addon_provider_chart_version: 0.12.0
+clusterapi_addon_provider_chart_version: 0.12.1
 
 # Release information for the Cluster API addon provider release
 clusterapi_addon_provider_release_namespace: capi-addon-system
