@@ -1,0 +1,66 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "10m"
+spec:
+  distribution:
+    version: "2.x"
+    registry: "ghcr.io/fluxcd"
+    artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
+  components:
+    - source-controller # default
+    - source-watcher
+    - kustomize-controller # default
+    - helm-controller # default
+    - notification-controller # default
+    - image-reflector-controller
+    - image-automation-controller
+  cluster:
+    type: kubernetes
+    size: small
+    multitenant: false # default
+    networkPolicy: true # default
+    domain: "cluster.local" # default
+  kustomize:
+    patches:
+      - target:
+          kind: Deployment
+        patch: |
+          - op: add
+            path: /spec/template/spec/tolerations
+            value:
+              - key: "CriticalAddonsOnly"
+                operator: "Exists"
+      - target:
+          kind: Kustomization
+          name: flux-system
+        patch: |
+          - op: add
+            path: /spec/decryption
+            value:
+              provider: sops
+              secretRef:
+                name: "{{ sops_private_key_secret_name }}"
+      - target:
+          kind: Kustomization
+          namespace: flux-system
+        patch: |
+          - op: add
+            path: /spec/postBuild
+            value:
+              substituteFrom:
+                - kind: ConfigMap
+                  name: cluster-info
+  sync:
+    kind: OCIRepository
+    url: "{{ flux_instance.oci_repository.url }}"
+    {% if flux_instance.pull_secret -%}
+    pullSecret: "artifact-creds"
+    {% endif -%}
+    ref: "{{ flux_instance.oci_repository.reference }}"
+    path: "{{ flux_instance.oci_repository.path }}"
+    interval: "30s"

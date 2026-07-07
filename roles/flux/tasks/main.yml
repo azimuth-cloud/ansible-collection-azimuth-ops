@@ -1,8 +1,7 @@
 ---
-- name: Install Flux controllers on target Kubernetes cluster
+- name: Install Flux Operator on target Kubernetes cluster
   kubernetes.core.helm:
-    chart_ref: "{{ flux_chart_name }}"
-    chart_repo_url: "{{ flux_chart_repo }}"
+    chart_ref: "{{ flux_chart_repo }}"
     chart_version: "{{ flux_chart_version }}"
     release_namespace: "{{ flux_release_namespace }}"
     release_name: "{{ flux_release_name }}"
@@ -11,3 +10,70 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ flux_wait_timeout }}"
+
+- name: Install kube Python package (should be baked into VM image)
+  ansible.builtin.pip:
+    name: kubernetes
+
+- name: Deploy SOPS private key
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ age_key_secret_definition | to_nice_yaml }}"
+  vars:
+    age_key_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ sops_private_key_secret_name }}"
+        namespace: "{{ flux_release_namespace }}"
+      type: Opaque
+      data:
+        age.agekey: "{{ age_private_key | b64encode }}"
+
+- name: Deploy OCI Registry pull secret
+  block:
+    - name: Remove any existing secret to allow updates to secret
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - delete
+          - secret
+          - -n
+          - flux-system
+          - artifact-creds
+      ignore_errors: true
+
+    - name: Create pull secret
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - create
+          - secret
+          - docker-registry
+          - -n
+          - flux-system
+          - artifact-creds
+          - --docker-server={{ flux_instance.pull_secret.server }}
+          - --docker-username={{ flux_instance.pull_secret.username }}
+          - --docker-password={{ flux_instance.pull_secret.password }}
+  when: flux_instance.pull_secret
+
+- name: Deploy dynamic cluster info config map
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ cluster_info_map_definition | to_nice_yaml }}"
+  vars:
+    cluster_info_map_definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: cluster-info
+        namespace: "{{ flux_release_namespace }}"
+      data:
+        DOMAIN: "{{ ingress_base_domain }}"
+
+- name: Deploy FluxInstance
+  kubernetes.core.k8s:
+    state: present
+    template: "flux-instance.yaml.j2"
+    kubeconfig: /home/ubuntu/.kube/config

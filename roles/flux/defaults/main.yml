@@ -1,28 +1,20 @@
 ---
-
 #####
-# Flux controller installation using Helm
+# Flux operator installation using Helm
 #####
 
-flux_chart_repo: https://fluxcd-community.github.io/helm-charts
-flux_chart_name: flux2
-flux_chart_version: 2.18.4
+flux_chart_repo: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
+flux_chart_version: 0.53.0
 
 flux_release_namespace: flux-system
-flux_release_name: flux
+flux_release_name: flux-operator
 
 # The timeout to wait for the dashboard to become ready
 flux_wait_timeout: 10m
 
 # The values for the release
 flux_release_defaults:
-  # Install the CRDs
-  installCRDs: true
-  # We don't need the image automation controllers
-  imageAutomationController:
-    create: false
-  imageReflectionController:
-    create: false
+
 flux_release_overrides: {}
 flux_release_values: >-
   {{-
@@ -30,6 +22,23 @@ flux_release_values: >-
       combine(flux_release_overrides, recursive = True)
   }}
 
+sops_private_key_secret_name: sops-age
+
+flux_instance_defaults:
+  oci_repository:
+    url: "oci://ghcr.io/azimuth-cloud/azimuth-config/flux/base"
+    reference: "devel"
+    path: "."
+  pull_secret: {}
+    # server: oci://ghcr.io/user123
+    # username: user123
+    # password: letmein
+
+flux_instance: >-
+  {{-
+    flux_instance_defaults |
+      combine(flux_instance_overrides, recursive = True)
+  }}
 
 #####
 # Flux CLI installation on the seed
