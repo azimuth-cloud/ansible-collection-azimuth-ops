@@ -56,6 +56,7 @@ Verify {{ test_case_name }}
     Wait Until Page Title Contains  Grafana
 {% endif %}
 
+{% if generate_tests_kubernetes_collect_logs_from_loki | default(False) %}
 Fetch Logs {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["logs"]) | join('  ') }}
     ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
@@ -66,6 +67,7 @@ Fetch Logs {{ test_case_name }}
     ...  loki_namespace={{ test_case.loki_namespace }}
     ...  loki_service={{ test_case.loki_service }}
     ...  loki_port={{ test_case.loki_port }}
+{% endif %}
 
 Fetch Console Logs {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["logs"]) | join('  ') }}
