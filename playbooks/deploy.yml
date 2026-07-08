@@ -6,6 +6,7 @@
 - name: Deploy Azimuth
   hosts: azimuth_deploy
   roles:
+    - role: azimuth_cloud.azimuth_ops.preflight_checks
     # Configure alerting
     - role: azimuth_cloud.azimuth_ops.alertmanager_config
       when: >-
@@ -14,6 +15,7 @@
     - role: azimuth_cloud.azimuth_ops.flux
       when: flux_enabled
     - role: azimuth_cloud.azimuth_ops.sealed_secrets
+      when: azimuth_authentication_type == "oidc"
     - role: azimuth_cloud.azimuth_ops.certmanager
       when: certmanager_enabled or azimuth_kubernetes_enabled
     # NOTE: this is kept to remove existing dashboard installs
@@ -61,6 +63,10 @@
       when:
         - consul_server_host is defined
         - consul_server_port is defined
+    - name: Patch Ingress NGINX loadbalancer services to keep their floating IPs
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.ingress_nginx
+        tasks_from: patch_values.yml
     # Workaround for new services on existing Clusters not getting added
     # to Platforms after upgrades
     - name: Restart CAPI Operator

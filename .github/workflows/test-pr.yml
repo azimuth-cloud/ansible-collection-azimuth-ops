@@ -1,12 +1,5 @@
 name: Test Azimuth deployment
 
-permissions:
-  contents: read
-  packages: write
-  # To report GitHub Actions status checks
-  statuses: write
-  id-token: write
-
 on:  # yamllint disable-line rule:truthy
   pull_request:
     types:
@@ -27,6 +20,7 @@ jobs:
   # This job exists so that PRs from outside the main repo are rejected
   fail_on_remote:
     name: Fail on Remote
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - name: PR must be from a branch in the azimuth-cloud/ansible-collection-azimuth-ops repo
@@ -36,31 +30,39 @@ jobs:
           fi
   lint:
     name: Lint
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
     uses: ./.github/workflows/lint.yml
     needs:
       - fail_on_remote
 
   files_changed:
     name: Detect Files Changed
+    permissions:
+      contents: read
     needs:
       - fail_on_remote
       - lint
     runs-on: ubuntu-latest
     # Map a step output to a job output, this allows other jobs to be gated on the filter results
     outputs:
-      paths: ${{ steps.filter.outputs.paths }}
+      paths_singlenode: ${{ steps.filter_singlenode.outputs.paths }}
+      paths_ha: ${{ steps.filter_ha.outputs.paths }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      - name: Paths Filter
-        # For safety using commit of dorny/paths-filter@v3
-        uses: dorny/paths-filter@668c092af3649c4b664c54e4b704aa46782f6f7c
-        id: filter
+      - name: Paths Filter (Singlenode)
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter_singlenode
         with:
           # Default predicate is 'some' which gives a match if any one filter matches.
           # Change the predicate to 'every' so the file has to match all filters,
-          # to model 'paths-ignore' we match only if we've exluded all unwanted files.
+          # to model 'paths-ignore' we match only if we've excluded all unwanted files.
           predicate-quantifier: 'every'
           filters: |
             paths:
@@ -78,14 +80,34 @@ jobs:
               - "!roles/capi_cluster/**"
               - "!roles/velero/**"
 
+      - name: Paths Filter (HA)
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter_ha
+        with:
+          filters: |
+            paths:
+              # Include any changes that only affect the HA install
+              - "playbooks/deploy_capi_mgmt.yml"
+              - "playbooks/provision_capi_mgmt.yml"
+              - "playbooks/restore.yml"
+              - "roles/capi_cluster/**"
+              - "roles/velero/**"
+
   run_azimuth_tests:
     # Use the output of the above filter to check if the files listed under "paths" have changed.
     # We can negate this check to run an alternative job,
     # we can add additional filters like "paths" and action on those.
     # Example: https://github.com/getsentry/sentry/blob/2ebe01feab863d89aa7564e6d243b6d80c230ddc/.github/workflows/backend.yml#L36
     name: Run Azimuth Tests
+    permissions:
+      contents: read
     needs:
       - files_changed
-    if: needs.files_changed.outputs.paths == 'true'
+    if: |
+      needs.files_changed.outputs.paths_singlenode == 'true' ||
+      needs.files_changed.outputs.paths_ha == 'true'
     uses: ./.github/workflows/test-azimuth.yml
-    secrets: inherit
+    with:
+      install-mode: ${{ needs.files_changed.outputs.paths_ha == 'true' && 'ha' || 'singlenode' }}
+    secrets:
+      OS_CLOUDS: ${{ secrets.OS_CLOUDS }}
