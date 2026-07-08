@@ -40,6 +40,16 @@
       register: generate_tests_app_templates_cmd
       changed_when: false
 
+    - name: Get installed Kubernetes version
+      ansible.builtin.command: k3s kubectl version --output json
+      changed_when: false
+      become: true
+      register: k3s_kubectl_version
+
+    - name: Set kubectl version fact
+      ansible.builtin.set_fact:
+        kubectl_version: "{{ (k3s_kubectl_version.stdout | from_json).serverVersion.gitVersion.split('+') | first }}"
+
 # Generate the tests locally
 - name: Generate Azimuth tests
   hosts: terraform_provision
@@ -69,3 +79,22 @@
     - name: Generate test suite
       ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.generate_tests
+
+
+    - name: Install test dependencies locally
+      block:
+        - name: Install Helm
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.helm
+          vars:
+            helm_unpack_directory: "{{ local_work_directory }}/helm/{{ helm_version }}"
+            helm_bin_directory: "{{ local_work_directory }}/bin"
+
+        - name: Install kubectl
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.kubectl
+          vars:
+            kubectl_bin_directory: "{{ local_work_directory }}/bin"
+            # NOTE(matta): This isn't a perfect match with the Kubernetes version of a
+            # HA cluster, but it should be close enough
+            kubectl_version: "{{ hostvars[groups.k3s.0].kubectl_version }}"
