@@ -28,6 +28,8 @@
       when: harbor_enabled
     - role: azimuth_cloud.azimuth_ops.cloud_metrics
       when: cloud_metrics_enabled
+    - role: azimuth_cloud.azimuth_ops.kamaji
+      when: azimuth_kubernetes_enabled and (kamaji_enabled | default(false))
     - role: azimuth_cloud.azimuth_ops.clusterapi
       when: azimuth_kubernetes_enabled
     - role: azimuth_cloud.azimuth_ops.consul

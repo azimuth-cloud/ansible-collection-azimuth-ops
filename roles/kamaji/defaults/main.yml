@@ -1,0 +1,127 @@
+---
+#####
+# Kamaji Hosted Control Plane manager installation using Helm
+#
+# Kamaji runs the Kubernetes control plane of tenant clusters as pods in the
+# management cluster. When used as a Cluster API control plane provider it
+# backs the KamajiControlPlane resource installed by the clusterapi role.
+#
+# Kamaji requires cert-manager, which is installed by the certmanager role.
+#####
+
+# The chart repository
+kamaji_chart_repo: https://clastix.github.io/charts
+
+# The Kamaji CRDs chart
+kamaji_crds_chart_name: kamaji-crds
+kamaji_crds_chart_version: 0.0.0+latest
+kamaji_crds_release_name: kamaji-crds
+
+# The Kamaji chart
+kamaji_chart_name: kamaji
+kamaji_chart_version: 0.0.0+latest
+
+# Release information for the Kamaji release
+kamaji_release_namespace: kamaji-system
+kamaji_release_name: kamaji
+
+# The timeout to wait for Kamaji (and its CRDs) to become ready
+kamaji_wait_timeout: 10m
+
+# The Kamaji controller image.
+# The chart defaults image.tag to null, which resolves to the mutable
+kamaji_image_tag: 26.7.2-edge
+
+# The number of replicas for the Kamaji controller
+kamaji_replica_count: 3
+
+# Resources for the Kamaji controller container
+kamaji_resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Toggle for whether the internal multi-tenant etcd datastore bundled with the
+# chart should be deployed.
+kamaji_etcd_deploy: true
+
+# The default name of the Datastore that TenantControlPlanes with no explicit
+# datastore will inherit. Matches the name created by the bundled etcd.
+kamaji_default_datastore_name: default
+
+# The number of etcd members in the bundled kamaji-etcd cluster
+kamaji_etcd_replicas: 3
+
+# The Kubernetes cluster domain used by the bundled kamaji-etcd
+kamaji_etcd_cluster_domain: cluster.local
+
+# The storage class used for the bundled kamaji-etcd persistent volumes
+# If empty, the cluster default storage class is used
+kamaji_etcd_storage_class_name: ''
+
+# The size of the persistent volume for each bundled kamaji-etcd member
+kamaji_etcd_storage_size: 8Gi
+
+# Spread the etcd members across distinct nodes.
+kamaji_etcd_anti_affinity_required: true
+kamaji_etcd_affinity: >-
+  {{
+    {
+      "podAntiAffinity": {
+        "requiredDuringSchedulingIgnoredDuringExecution": [
+          {
+            "labelSelector": {
+              "matchExpressions": [
+                {
+                  "key": "app.kubernetes.io/name",
+                  "operator": "In",
+                  "values": ["kamaji-etcd"],
+                }
+              ]
+            },
+            "topologyKey": "kubernetes.io/hostname",
+          }
+        ]
+      }
+    }
+    if kamaji_etcd_anti_affinity_required else {}
+  }}
+
+# Toggle for the Gateway API integration
+kamaji_gateway_api_enabled: false
+
+# The values for the release
+kamaji_release_defaults:
+  defaultDatastoreName: '{{ kamaji_default_datastore_name }}'
+  replicaCount: '{{ kamaji_replica_count }}'
+  resources: '{{ kamaji_resources }}'
+  image:
+    tag: '{{ kamaji_image_tag }}'
+  gatewayAPI:
+    enabled: '{{ kamaji_gateway_api_enabled }}'
+  kamaji-etcd:
+    deploy: '{{ kamaji_etcd_deploy }}'
+    replicas: '{{ kamaji_etcd_replicas }}'
+    clusterDomain: '{{ kamaji_etcd_cluster_domain }}'
+    affinity: '{{ kamaji_etcd_affinity }}'
+    persistentVolumeClaim: >-
+      {{
+        {
+          "size": kamaji_etcd_storage_size,
+        } | combine(
+          {"storageClassName": kamaji_etcd_storage_class_name}
+          if kamaji_etcd_storage_class_name else {}
+        )
+      }}
+    datastore:
+      enabled: '{{ kamaji_etcd_deploy }}'
+      name: '{{ kamaji_default_datastore_name }}'
+kamaji_release_overrides: {}
+kamaji_release_values: >-
+  {{-
+    kamaji_release_defaults |
+      combine(kamaji_release_overrides, recursive = True)
+  }}
