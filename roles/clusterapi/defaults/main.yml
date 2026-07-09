@@ -117,6 +117,13 @@ clusterapi_kustomization:
 # Use a directory in $HOME for the kustomization by default
 clusterapi_kustomization_directory: "{{ (ansible_env.HOME, 'clusterapi') | path_join }}"
 
+# List of CAPO CRD resource types that may need stored version migration during upgrades
+clusterapi_capo_crds:
+  - openstackclusters
+  - openstackclustertemplates
+  - openstackmachines
+  - openstackmachinetemplates
+
 # List of resources to watch for completeness
 clusterapi_watches:
   - kind: deployment
