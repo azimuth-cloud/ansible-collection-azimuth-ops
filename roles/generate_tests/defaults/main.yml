@@ -63,6 +63,17 @@ generate_tests_include_upgrade_tests: false
 # Indicates whether to generate the CaaS test suite
 generate_tests_caas_suite_enabled: "{{ azimuth_clusters_enabled }}"
 
+# Scheduling settings for generated CaaS create tests
+# If enabled and no explicit end time is provided, the test computes
+# a default of now + 1 day at runtime.
+generate_tests_caas_scheduling_enabled: >-
+  {{
+    azimuth_scheduling_enabled
+    if azimuth_scheduling_enabled is defined
+    else false
+  }}
+generate_tests_caas_schedule_end_time:
+
 # The template to use for the CaaS suite
 generate_tests_caas_suite_template: caas_suite.robot
 # The template to use for test cases in the suite
@@ -170,6 +181,18 @@ generate_tests_caas_test_cases: >-
 # Settings for the Kubernetes test suite
 # Indicates whether to generate the Kubernetes test suite
 generate_tests_kubernetes_suite_enabled: "{{ azimuth_kubernetes_enabled }}"
+
+# Scheduling settings for generated Kubernetes create tests
+# If enabled and no explicit end time is provided, the test computes
+# a default of now + 1 day at runtime.
+generate_tests_kubernetes_scheduling_enabled: "{{ generate_tests_caas_scheduling_enabled }}"
+generate_tests_kubernetes_schedule_end_time: "{{ generate_tests_caas_schedule_end_time }}"
+
+# Scheduling settings for the Kubernetes cluster used by Kubernetes apps tests
+# If enabled and no explicit end time is provided, the test computes
+# a default of now + 1 day at runtime.
+generate_tests_kubernetes_apps_k8s_scheduling_enabled: "{{ generate_tests_caas_scheduling_enabled }}"
+generate_tests_kubernetes_apps_k8s_schedule_end_time: "{{ generate_tests_caas_schedule_end_time }}"
 
 # The template to use for the Kubernetes suite
 generate_tests_kubernetes_suite_template: kubernetes_suite.robot

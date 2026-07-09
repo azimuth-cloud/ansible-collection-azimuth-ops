@@ -36,6 +36,16 @@ Setup Apps Kubernetes Cluster
     ...  name=md-0
     ...  machine_size=${worker_size.id}
     ...  count={{ generate_tests_kubernetes_apps_k8s_worker_count }}
+{% if generate_tests_kubernetes_apps_k8s_scheduling_enabled %}
+{% if generate_tests_kubernetes_apps_k8s_schedule_end_time %}
+    ${schedule_end_time} =  Set Variable  {{ generate_tests_kubernetes_apps_k8s_schedule_end_time }}
+{% else %}
+    ${schedule_end_time} =  Evaluate
+    ...  (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    ...  modules=datetime
+{% endif %}
+    ${config} =  Enable Scheduling For Kubernetes Config  ${config}  ${schedule_end_time}
+{% endif %}
     ${cluster} =  Create Kubernetes Cluster  ${config}
 
 {% if generate_tests_include_upgrade_tests %}
