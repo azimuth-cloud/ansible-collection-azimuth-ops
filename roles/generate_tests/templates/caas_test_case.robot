@@ -18,7 +18,26 @@ Create {{ test_case_name }}
 {% endif %}
 {% endfor %}
 {% endif %}
-    ${cluster} =  Create Cluster  ${caas.cluster_names['{{ test_case_name }}']}  ${ctype.name}  &{params}
+{% if generate_tests_caas_scheduling_enabled %}
+{% if generate_tests_caas_schedule_end_time %}
+    ${schedule_end_time} =  Set Variable  {{ generate_tests_caas_schedule_end_time }}
+{% else %}
+    ${schedule_end_time} =  Evaluate
+    ...  (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    ...  modules=datetime
+{% endif %}
+    ${schedule} =  Create Dictionary  end_time=${schedule_end_time}
+    ${cluster} =  Create Cluster
+    ...  ${caas.cluster_names['{{ test_case_name }}']}
+    ...  ${ctype.name}
+    ...  schedule=${schedule}
+    ...  &{params}
+{% else %}
+    ${cluster} =  Create Cluster
+    ...  ${caas.cluster_names['{{ test_case_name }}']}
+    ...  ${ctype.name}
+    ...  &{params}
+{% endif %}
 
 {% if generate_tests_include_upgrade_tests %}
 Upgrade {{ test_case_name }}
