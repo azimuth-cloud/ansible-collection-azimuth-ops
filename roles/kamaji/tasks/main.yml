@@ -1,0 +1,25 @@
+---
+- name: Install Kamaji CRDs on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ kamaji_crds_chart_name }}"
+    chart_repo_url: "{{ kamaji_chart_repo }}"
+    chart_version: "{{ kamaji_crds_chart_version }}"
+    release_namespace: "{{ kamaji_release_namespace }}"
+    release_name: "{{ kamaji_crds_release_name }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ kamaji_wait_timeout }}"
+
+- name: Install Kamaji on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ kamaji_chart_name }}"
+    chart_repo_url: "{{ kamaji_chart_repo }}"
+    chart_version: "{{ kamaji_chart_version }}"
+    release_namespace: "{{ kamaji_release_namespace }}"
+    release_name: "{{ kamaji_release_name }}"
+    release_values: "{{ kamaji_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ kamaji_wait_timeout }}"
