@@ -155,3 +155,55 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ clusterapi_janitor_openstack_wait_timeout }}"
+
+- name: Check if Prometheus Operator CRDs are available
+  ansible.builtin.command: kubectl get crd podmonitors.monitoring.coreos.com
+  register: clusterapi_podmonitor_crd_check
+  failed_when: false
+  changed_when: false
+
+- name: Install monitoring resources for CAPO
+  when: clusterapi_openstack_metrics and clusterapi_podmonitor_crd_check.rc == 0
+  block:
+    - name: Install PodMonitor for CAPO metrics
+      ansible.builtin.command: kubectl apply -f -
+      args:
+        stdin: "{{ capo_podmonitor_definition | to_nice_yaml }}"
+      vars:
+        capo_podmonitor_definition:
+          apiVersion: monitoring.coreos.com/v1
+          kind: PodMonitor
+          metadata:
+            name: capo-controller-manager
+            namespace: "{{ clusterapi_openstack_namespace }}"
+          spec:
+            jobLabel: control-plane
+            podMetricsEndpoints:
+              - port: metrics
+            namespaceSelector:
+              matchNames:
+                - "{{ clusterapi_openstack_namespace }}"
+            selector:
+              matchLabels:
+                control-plane: capo-controller-manager
+      register: kubectl_capo_podmonitor
+      changed_when: kubectl_capo_podmonitor.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+    - name: Install Grafana dashboard ConfigMap for CAPO metrics
+      ansible.builtin.command: kubectl apply -f -
+      args:
+        stdin: "{{ capo_dashboard_definition | to_nice_yaml }}"
+      vars:
+        capo_dashboard_definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: capo-grafana-dashboard
+            namespace: "{{ clusterapi_openstack_namespace }}"
+            labels:
+              grafana_dashboard: "1"
+          data:
+            capo_dashboard.json: |-
+              {{ lookup('file', 'grafana_dashboard.json') | from_json | to_nice_json }}
+      register: kubectl_capo_dashboard
+      changed_when: kubectl_capo_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
