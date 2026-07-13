@@ -44,6 +44,7 @@ Setup Apps Kubernetes Cluster
     ...  (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     ...  modules=datetime
 {% endif %}
+    Set Suite Variable  ${kubeapps_schedule_end_time}  ${schedule_end_time}
     ${config} =  Enable Scheduling For Kubernetes Config  ${config}  ${schedule_end_time}
 {% endif %}
     ${cluster} =  Create Kubernetes Cluster  ${config}
@@ -64,6 +65,11 @@ Verify Apps Kubernetes Cluster
     ${cluster} =  Wait For Kubernetes Cluster Nodes Ready  ${cluster.id}
     ${cluster} =  Wait For Kubernetes Cluster Addons Deployed  ${cluster.id}
     ${cluster} =  Wait For Kubernetes Cluster Ready  ${cluster.id}
+{% if generate_tests_kubernetes_apps_k8s_scheduling_enabled %}
+    Assert Lease Resource End Time
+    ...  kube-${kubeapps.cluster_name}
+    ...  ${kubeapps_schedule_end_time}
+{% endif %}
 
 Fetch Console Logs from Apps Kubernetes Cluster
     [Tags]  appscluster  console-logs
