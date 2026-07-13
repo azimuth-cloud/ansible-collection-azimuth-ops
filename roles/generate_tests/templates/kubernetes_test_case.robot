@@ -36,6 +36,7 @@ Create {{ test_case_name }}
     ...  (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     ...  modules=datetime
 {% endif %}
+    Set Suite Variable  ${kubernetes_schedule_end_time_{{ test_case_name | regex_replace('[^0-9A-Za-z_]', '_') }}}  ${schedule_end_time}
     ${config} =  Enable Scheduling For Kubernetes Config  ${config}  ${schedule_end_time}
 {% endif %}
     ${cluster} =  Create Kubernetes Cluster  ${config}
@@ -60,6 +61,11 @@ Verify {{ test_case_name }}
     ${cluster} =  Wait For Kubernetes Cluster Nodes Ready  ${cluster.id}
     ${cluster} =  Wait For Kubernetes Cluster Addons Deployed  ${cluster.id}
     ${cluster} =  Wait For Kubernetes Cluster Ready  ${cluster.id}
+{% if generate_tests_kubernetes_scheduling_enabled %}
+    Assert Lease Resource End Time
+    ...  kube-${kubernetes.cluster_names['{{ test_case_name }}']}
+    ...  ${kubernetes_schedule_end_time_{{ test_case_name | regex_replace('[^0-9A-Za-z_]', '_') }}}
+{% endif %}
 {% if test_case.monitoring_enabled is not defined or test_case.monitoring_enabled %}
     ${monitoring} =  Get Kubernetes Cluster Service Url  ${cluster}  monitoring
     Open Zenith Service  ${monitoring}
