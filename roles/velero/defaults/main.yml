@@ -30,6 +30,9 @@ velero_s3_url: "{{ undef(hint='velero_s3_url is required') }}"
 # The name of a pre-existing bucket in the target object store
 velero_bucket_name: "{{ undef(hint='velero_bucket_name is required') }}"
 
+# The name of the s3 region to connect to.
+velero_s3_region: "notused"
+
 # The name to use for the secret containing the object store credentials
 velero_s3_creds_secret_name: velero-s3-config
 
@@ -81,6 +84,7 @@ velero_default_backup_storage_location: >-
         "key": "s3-creds",
       },
       "config": {
+        "region": velero_s3_region,
         "s3Url": velero_s3_url,
         "s3ForcePathStyle": True,
         "checksumAlgorithm": "",
