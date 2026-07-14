@@ -1,4 +1,34 @@
 ---
+
+- name: Pause clusters.azimuth.stackhpc.com
+  when:
+    - openstack_loadbalancer_provider == "ovn"
+  block:
+    - name: Retrieve all clusters.azimuth.stackhpc.com
+      ansible.builtin.command: >-
+        kubectl get
+        --all-namespaces
+        -o json
+        clusters.azimuth.stackhpc.com
+      register: clusterapi_azimuth_clusters
+      changed_when: false
+      failed_when: false
+
+    - name: Set a fact containing clusters.azimuth.stackhpc.com
+      ansible.builtin.set_fact:
+        clusterapi_azimuth_clusters: >-
+          {{
+            clusterapi_azimuth_clusters.stdout
+            | from_json
+            | json_query('items')
+          }}
+
+    - name: Pause clusters.cluster.x-k8s.io
+      ansible.builtin.include_tasks: pause_unpause_reconciliation.yml
+      vars:
+        clusterapi_pause_clusters: "{{ clusterapi_azimuth_clusters }}"
+        clusterapi_should_pause_clusters: true
+
 - name: Make kustomization directory
   ansible.builtin.file:
     path: "{{ clusterapi_kustomization_directory }}"
@@ -10,6 +40,48 @@
     content: "{{ clusterapi_kustomization | to_nice_yaml }}"
     dest: "{{ clusterapi_kustomization_directory }}/kustomization.yaml"
     mode: "0644"
+
+# When upgrading CAPO (e.g. from v0.11.x to v0.14.x), v1alpha7 is removed from CRD spec.versions
+# but existing resources still have v1alpha7 in status.storedVersions. The new CRDs cannot be
+# applied until the stored versions are migrated. This is done by re-applying existing resources
+# using kubectl replace, which triggers a storage version migration.
+- name: Check for CAPO resources using old API versions
+  ansible.builtin.command: >-
+    kubectl get {{ item }} -A -o jsonpath={.items[*].apiVersion}
+  register: clusterapi_capo_api_versions
+  changed_when: false
+  failed_when: false
+  loop: "{{ clusterapi_capo_crds }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Fetch CAPO resources with old API versions
+  ansible.builtin.command: >-
+    kubectl get {{ item.item }} -A -o json
+  register: clusterapi_capo_old_resources
+  changed_when: false
+  failed_when: false
+  loop: "{{ clusterapi_capo_api_versions.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: >-
+    item.rc == 0 and
+    'v1alpha7' in item.stdout
+
+- name: Replace CAPO resources to migrate stored versions
+  ansible.builtin.command: kubectl replace -f -
+  args:
+    stdin: "{{ item.stdout }}"
+  loop: "{{ clusterapi_capo_old_resources.results }}"
+  register: clusterapi_capo_replace
+  changed_when: clusterapi_capo_replace.rc == 0
+  failed_when: false
+  loop_control:
+    label: "{{ item.item.item }}"
+  when: >-
+    item.skipped is not defined and
+    item.rc == 0 and
+    item.stdout | length > 0
 
 - name: Install Cluster API resources
   ansible.builtin.command: >-
@@ -41,6 +113,23 @@
     loop_var: watch
     label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
 
+- name: Patch security group rules and unpause clusters
+  when:
+    - openstack_loadbalancer_provider == "ovn"
+  block:
+    - name: Patch workerNodesSecurityGroupRules on openstackclusters.infrastructure.cluster.x-k8s.io
+      ansible.builtin.include_role:
+        name: azimuth_capi_operator
+        tasks_from: patch_cluster_security_group_rules.yml
+      vars:
+        azimuth_capi_operator_patch_security_group_clusters: "{{ clusterapi_azimuth_clusters }}"
+
+    - name: Unpause clusters.cluster.x-k8s.io
+      ansible.builtin.include_tasks: pause_unpause_reconciliation.yml
+      vars:
+        clusterapi_pause_clusters: "{{ clusterapi_azimuth_clusters }}"
+        clusterapi_should_pause_clusters: false
+
 - name: Install Cluster API addon provider
   kubernetes.core.helm:
     chart_ref: "{{ clusterapi_addon_provider_chart_name }}"
@@ -66,3 +155,55 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ clusterapi_janitor_openstack_wait_timeout }}"
+
+- name: Check if Prometheus Operator CRDs are available
+  ansible.builtin.command: kubectl get crd podmonitors.monitoring.coreos.com
+  register: clusterapi_podmonitor_crd_check
+  failed_when: false
+  changed_when: false
+
+- name: Install monitoring resources for CAPO
+  when: clusterapi_openstack_metrics and clusterapi_podmonitor_crd_check.rc == 0
+  block:
+    - name: Install PodMonitor for CAPO metrics
+      ansible.builtin.command: kubectl apply -f -
+      args:
+        stdin: "{{ capo_podmonitor_definition | to_nice_yaml }}"
+      vars:
+        capo_podmonitor_definition:
+          apiVersion: monitoring.coreos.com/v1
+          kind: PodMonitor
+          metadata:
+            name: capo-controller-manager
+            namespace: "{{ clusterapi_openstack_namespace }}"
+          spec:
+            jobLabel: control-plane
+            podMetricsEndpoints:
+              - port: metrics
+            namespaceSelector:
+              matchNames:
+                - "{{ clusterapi_openstack_namespace }}"
+            selector:
+              matchLabels:
+                control-plane: capo-controller-manager
+      register: kubectl_capo_podmonitor
+      changed_when: kubectl_capo_podmonitor.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+    - name: Install Grafana dashboard ConfigMap for CAPO metrics
+      ansible.builtin.command: kubectl apply -f -
+      args:
+        stdin: "{{ capo_dashboard_definition | to_nice_yaml }}"
+      vars:
+        capo_dashboard_definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: capo-grafana-dashboard
+            namespace: "{{ clusterapi_openstack_namespace }}"
+            labels:
+              grafana_dashboard: "1"
+          data:
+            capo_dashboard.json: |-
+              {{ lookup('file', 'grafana_dashboard.json') | from_json | to_nice_json }}
+      register: kubectl_capo_dashboard
+      changed_when: kubectl_capo_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
