@@ -60,7 +60,6 @@
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.flux
             tasks_from: cli
-          when: flux_enabled
 
         - name: Slurp kubeconfig file
           ansible.builtin.slurp:
@@ -84,21 +83,25 @@
         name: azimuth_cloud.azimuth_ops.community_images
       when: community_images_enabled is not defined or community_images_enabled
 
-    # For a single node install, we put the monitoring and ingress controller on the K3S cluster
-    - name: Install monitoring stack and ingress controller
-      when: install_mode == 'singlenode'
-
-      # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
+    - name: Bootstrap Flux and wait for it to deploy the target manifest bomb
       block:
-        # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
-        - name: Install Kube-Prometheus-Stack
+        - name: Install Flux
           ansible.builtin.include_role:
-            name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
+            name: azimuth_cloud.azimuth_ops.flux
+            tasks_from: main
 
-        - name: Install Nginx ingress controller
-          ansible.builtin.include_role:
-            name: azimuth_cloud.azimuth_ops.ingress_nginx
-          when: "ingress_controller_enabled | default(true)"
+        - name: Sleep for 60 seconds and continue with play
+          ansible.builtin.wait_for:
+            timeout: 60
+          delegate_to: localhost
+
+    # For a single node install, we put the monitoring and ingress controller on the K3S cluster
+    - name: Install nginx ingress controller
+      # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.ingress_nginx
+      when: install_mode == "singlenode" and (ingress_controller_enabled | default(true))
+
 
     - name: Configure Azimuth HA cluster
       when: install_mode == 'ha'
