@@ -22,7 +22,6 @@
 - name: Setup Node
   hosts: k3s
   tasks:
-
     - name: System setup
       become: true
       when: configure_system_resources | default (false)
@@ -104,21 +103,23 @@
             dest: "{{ ansible_env.HOME }}/.kube/config"
             mode: u=rwx,g=r,o=r
 
-    # For a single node install, we put the monitoring and ingress controller on the K3S cluster
-    - name: Install monitoring stack and ingress controller
-
-      # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
+    - name: Bootstrap Flux and wait for it to deploy the target manifest bomb
       block:
-        # Must be done before NGINX ingress so that the ServiceMonitor CRD exists
-        - name: Install Kube-Prometheus-Stack
+        - name: Install Flux
           ansible.builtin.include_role:
-            name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
-          when: deploy_prometheus_stack | default(false)
+            name: azimuth_cloud.azimuth_ops.flux
+            tasks_from: main
 
-        - name: Install Nginx ingress controller
-          ansible.builtin.include_role:
-            name: azimuth_cloud.azimuth_ops.ingress_nginx
-          when: "ingress_controller_enabled | default(true)"
+        - name: Sleep for 60 seconds and continue with play
+          ansible.builtin.wait_for:
+            timeout: 60
+          delegate_to: localhost
+
+    # For a single node install, we put the ingress controller on the K3S cluster
+    - name: Install Nginx ingress controller
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.ingress_nginx
+      when: "ingress_controller_enabled | default(true)"
 
 # Install Azimuth
 - name: Install and configure Azimuth
