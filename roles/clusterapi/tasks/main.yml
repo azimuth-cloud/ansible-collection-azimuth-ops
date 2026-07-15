@@ -1,46 +1,4 @@
 ---
-
-- name: Pause clusters.azimuth.stackhpc.com
-  when:
-    - openstack_loadbalancer_provider == "ovn"
-  block:
-    - name: Retrieve all clusters.azimuth.stackhpc.com
-      ansible.builtin.command: >-
-        kubectl get
-        --all-namespaces
-        -o json
-        clusters.azimuth.stackhpc.com
-      register: clusterapi_azimuth_clusters
-      changed_when: false
-      failed_when: false
-
-    - name: Set a fact containing clusters.azimuth.stackhpc.com
-      ansible.builtin.set_fact:
-        clusterapi_azimuth_clusters: >-
-          {{
-            clusterapi_azimuth_clusters.stdout
-            | from_json
-            | json_query('items')
-          }}
-
-    - name: Pause clusters.cluster.x-k8s.io
-      ansible.builtin.include_tasks: pause_unpause_reconciliation.yml
-      vars:
-        clusterapi_pause_clusters: "{{ clusterapi_azimuth_clusters }}"
-        clusterapi_should_pause_clusters: true
-
-- name: Make kustomization directory
-  ansible.builtin.file:
-    path: "{{ clusterapi_kustomization_directory }}"
-    state: directory
-    mode: "0755"
-
-- name: Write kustomization file
-  ansible.builtin.copy:
-    content: "{{ clusterapi_kustomization | to_nice_yaml }}"
-    dest: "{{ clusterapi_kustomization_directory }}/kustomization.yaml"
-    mode: "0644"
-
 # When upgrading CAPO (e.g. from v0.11.x to v0.14.x), v1alpha7 is removed from CRD spec.versions
 # but existing resources still have v1alpha7 in status.storedVersions. The new CRDs cannot be
 # applied until the stored versions are migrated. This is done by re-applying existing resources
@@ -82,6 +40,47 @@
     item.skipped is not defined and
     item.rc == 0 and
     item.stdout | length > 0
+
+- name: Make kustomization directory
+  ansible.builtin.file:
+    path: "{{ clusterapi_kustomization_directory }}"
+    state: directory
+    mode: "0755"
+
+- name: Write kustomization file
+  ansible.builtin.copy:
+    content: "{{ clusterapi_kustomization | to_nice_yaml }}"
+    dest: "{{ clusterapi_kustomization_directory }}/kustomization.yaml"
+    mode: "0644"
+
+- name: Retrieve all clusters.azimuth.stackhpc.com
+  ansible.builtin.command: >-
+    kubectl get
+    --all-namespaces
+    -o json
+    clusters.azimuth.stackhpc.com
+  register: clusterapi_azimuth_clusters
+  changed_when: false
+  failed_when: false
+
+- name: Set a fact containing clusters.azimuth.stackhpc.com
+  ansible.builtin.set_fact:
+    clusterapi_azimuth_clusters: >-
+      {{
+        (clusterapi_azimuth_clusters.stdout
+        | from_json
+        | json_query('items'))
+        if clusterapi_azimuth_clusters.rc == 0
+        else []
+      }}
+
+- name: Pause clusters.cluster.x-k8s.io
+  ansible.builtin.include_tasks: pause_unpause_reconciliation.yml
+  vars:
+    clusterapi_pause_clusters: "{{ clusterapi_azimuth_clusters }}"
+    clusterapi_should_pause_clusters: true
+  when:
+    - openstack_loadbalancer_provider == "ovn"
 
 - name: Install Cluster API resources
   ansible.builtin.command: >-
