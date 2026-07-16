@@ -80,7 +80,7 @@ infra_image_id:
 # The name of the image to upload (should be changed when the image changes)
 infra_image_name: ubuntu-noble-20260518
 # The source URL for the image
-infra_image_source_url: https://cloud-images.ubuntu.com/releases/noble/release-20260518/ubuntu-24.04-server-cloudimg-amd64.img
+infra_image_source_url: https://cloud-images.ubuntu.com/releases/noble/release-20260705/ubuntu-24.04-server-cloudimg-amd64.img
 # The disk format of the image as downloaded
 infra_image_source_disk_format: qcow2
 # The container format for the image

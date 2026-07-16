@@ -2,17 +2,17 @@
 
 # The repo, version and manifest URL for the Cluster API core components
 clusterapi_core_repo: https://github.com/kubernetes-sigs/cluster-api
-clusterapi_core_version: v1.13.2
+clusterapi_core_version: v1.13.3
 clusterapi_core_components: "{{ clusterapi_core_repo }}/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml"
 
 # The repo, version and manifest URL for the Cluster API OpenStack provider components
 clusterapi_openstack_repo: https://github.com/kubernetes-sigs/cluster-api-provider-openstack
-clusterapi_openstack_version: v0.14.4
+clusterapi_openstack_version: v0.14.6
 clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml"
 
 # The repo, version and manifest URL for the OpenStack Resource Controller components
 clusterapi_openstack_resource_controller_repo: https://github.com/k-orc/openstack-resource-controller
-clusterapi_openstack_resource_controller_version: v2.5.0
+clusterapi_openstack_resource_controller_version: v2.6.0
 clusterapi_openstack_resource_controller_components: >-
   {{ clusterapi_openstack_resource_controller_repo }}/releases/download/{{ clusterapi_openstack_resource_controller_version }}/install.yaml
 
@@ -20,9 +20,12 @@ clusterapi_openstack_resource_controller_components: >-
 clusterapi_diagnostics_address: 0.0.0.0:8443
 clusterapi_insecure_diagnostics: false
 
-# The diagnostics address for CAPO components
-clusterapi_openstack_diagnostics_address: 127.0.0.1:8080
-clusterapi_openstack_insecure_diagnostics: false
+# The namespace and diagnostics address for CAPO components
+clusterapi_openstack_namespace: capo-system
+clusterapi_openstack_metrics: true
+clusterapi_openstack_diagnostics_address: >-
+  {{ '0.0.0.0:8080' if clusterapi_openstack_metrics else '127.0.0.1:8080' }}
+clusterapi_openstack_insecure_diagnostics: true
 
 # Variables for toggling feature gates for experimental features
 clusterapi_feature_gate_machine_pool: false
@@ -54,8 +57,8 @@ clusterapi_manifests:
   - "{{ clusterapi_openstack_resource_controller_components }}"
   - "{{ clusterapi_openstack_components }}"
 
-# List of patches to apply to the resources in the manifests
-clusterapi_patches:
+# Base list of patches to apply to the resources in the manifests
+clusterapi_patches_base:
   # The manifests contain environment variable substitutions for feature gates that we do not need
   # yamllint disable rule:line-length
   - patch: |-
@@ -101,13 +104,33 @@ clusterapi_patches:
           - --leader-elect
           - --v=2
           - --diagnostics-address={{ clusterapi_openstack_diagnostics_address }}
-          - --insecure-diagnostics={{ clusterapi_openstack_insecure_diagnostics }}
+          - --insecure-diagnostics={{ "true" if clusterapi_openstack_insecure_diagnostics else "false" }}
           - --feature-gates={% for k, v in clusterapi_openstack_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
     target:
       kind: Deployment
-      namespace: capo-system
+      namespace: "{{ clusterapi_openstack_namespace }}"
       name: capo-controller-manager
   # yamllint enable rule:line-length
+
+# Additional patches applied when metrics are enabled (expose the metrics port on the CAPO pod)
+clusterapi_openstack_metrics_patches:
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/ports/-
+        value:
+          containerPort: 8080
+          name: metrics
+          protocol: TCP
+    target:
+      kind: Deployment
+      namespace: "{{ clusterapi_openstack_namespace }}"
+      name: capo-controller-manager
+
+clusterapi_patches: >-
+  {{-
+    clusterapi_patches_base +
+    (clusterapi_openstack_metrics_patches if clusterapi_openstack_metrics else [])
+  }}
 
 # The kustomization to use for Cluster API
 clusterapi_kustomization:
@@ -116,6 +139,13 @@ clusterapi_kustomization:
 
 # Use a directory in $HOME for the kustomization by default
 clusterapi_kustomization_directory: "{{ (ansible_env.HOME, 'clusterapi') | path_join }}"
+
+# List of CAPO CRD resource types that may need stored version migration during upgrades
+clusterapi_capo_crds:
+  - openstackclusters
+  - openstackclustertemplates
+  - openstackmachines
+  - openstackmachinetemplates
 
 # List of resources to watch for completeness
 clusterapi_watches:
@@ -132,14 +162,14 @@ clusterapi_watches:
     name: capi-kubeadm-control-plane-controller-manager
     condition: Available
   - kind: deployment
-    namespace: capo-system
+    namespace: "{{ clusterapi_openstack_namespace }}"
     name: capo-controller-manager
     condition: Available
 
 # Helm chart information for the Cluster API addon provider
 clusterapi_addon_provider_chart_repo: https://azimuth-cloud.github.io/cluster-api-addon-provider
 clusterapi_addon_provider_chart_name: cluster-api-addon-provider
-clusterapi_addon_provider_chart_version: 0.12.0
+clusterapi_addon_provider_chart_version: 0.12.1
 
 # Release information for the Cluster API addon provider release
 clusterapi_addon_provider_release_namespace: capi-addon-system

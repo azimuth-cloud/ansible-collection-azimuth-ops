@@ -6,6 +6,7 @@
 - name: Deploy Azimuth
   hosts: azimuth_deploy
   roles:
+    - role: azimuth_cloud.azimuth_ops.preflight_checks
     # Configure alerting
     - role: azimuth_cloud.azimuth_ops.alertmanager_config
       when: >-
@@ -14,6 +15,7 @@
     - role: azimuth_cloud.azimuth_ops.flux
       when: flux_enabled
     - role: azimuth_cloud.azimuth_ops.sealed_secrets
+      when: azimuth_authentication_type == "oidc"
     - role: azimuth_cloud.azimuth_ops.certmanager
       when: certmanager_enabled or azimuth_kubernetes_enabled
     # NOTE: this is kept to remove existing dashboard installs
