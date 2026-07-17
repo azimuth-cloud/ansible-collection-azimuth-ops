@@ -53,31 +53,31 @@
     dest: "{{ clusterapi_kustomization_directory }}/kustomization.yaml"
     mode: "0644"
 
-- name: Retrieve all clusters.azimuth.stackhpc.com
+- name: Retrieve all openstackclusters.infrastructure.cluster.x-k8s.io
   ansible.builtin.command: >-
     kubectl get
     --all-namespaces
     -o json
-    clusters.azimuth.stackhpc.com
-  register: clusterapi_azimuth_clusters
+    openstackclusters.infrastructure.cluster.x-k8s.io
+  register: clusterapi_openstack_clusters
   changed_when: false
   failed_when: false
 
-- name: Set a fact containing clusters.azimuth.stackhpc.com
+- name: Set a fact containing openstackclusters.infrastructure.cluster.x-k8s.io
   ansible.builtin.set_fact:
-    clusterapi_azimuth_clusters: >-
+    clusterapi_openstack_clusters: >-
       {{
-        (clusterapi_azimuth_clusters.stdout
+        (clusterapi_openstack_clusters.stdout
         | from_json
         | json_query('items'))
-        if clusterapi_azimuth_clusters.rc == 0
+        if clusterapi_openstack_clusters.rc == 0
         else []
       }}
 
 - name: Pause clusters.cluster.x-k8s.io
   ansible.builtin.include_tasks: pause_unpause_reconciliation.yml
   vars:
-    clusterapi_pause_clusters: "{{ clusterapi_azimuth_clusters }}"
+    clusterapi_pause_clusters: "{{ clusterapi_openstack_clusters }}"
     clusterapi_should_pause_clusters: true
   when:
     - openstack_loadbalancer_provider == "ovn"
@@ -121,12 +121,12 @@
         name: azimuth_capi_operator
         tasks_from: patch_cluster_security_group_rules.yml
       vars:
-        azimuth_capi_operator_patch_security_group_clusters: "{{ clusterapi_azimuth_clusters }}"
+        azimuth_capi_operator_patch_security_group_clusters: "{{ clusterapi_openstack_clusters }}"
 
     - name: Unpause clusters.cluster.x-k8s.io
       ansible.builtin.include_tasks: pause_unpause_reconciliation.yml
       vars:
-        clusterapi_pause_clusters: "{{ clusterapi_azimuth_clusters }}"
+        clusterapi_pause_clusters: "{{ clusterapi_openstack_clusters }}"
         clusterapi_should_pause_clusters: false
 
 - name: Install Cluster API addon provider
