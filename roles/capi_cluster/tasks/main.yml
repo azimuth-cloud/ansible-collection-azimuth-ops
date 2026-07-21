@@ -12,6 +12,7 @@
         release_state: present
         release_values: "{{ capi_cluster_release_values }}"
         create_namespace: true
+        skip_schema_validation: "{{ capi_cluster_skip_schema_validation }}"
       register: capi_cluster_helm_release
 
     - name: Wait for cluster to become Available

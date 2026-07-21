@@ -1,0 +1,21 @@
+---
+
+- name: Pause or unpause CAPI cluster reconciliation
+  ansible.builtin.command: >-
+    kubectl patch clusters.cluster {{ item.metadata.name }}
+    --namespace {{ item.metadata.namespace }}
+    --type merge
+    --patch '{{ patch | to_nice_json }}'
+  loop: "{{ clusterapi_pause_clusters }}"
+  loop_control:
+    label: "{{ item.metadata.namespace }}/{{ item.metadata.name }}/paused: {{ paused }}"
+  register: clusterapi_patch_cluster_pause
+  changed_when: clusterapi_patch_cluster_pause.stdout_lines | select('match', '(?!.*\\(no change\\)$)') | length > 0
+  vars:
+    paused: "{{ clusterapi_should_pause_clusters | default(false) }}"
+    patch: >-
+      {{
+        {"spec": {"paused": paused }}
+        }}
+    when:
+      - clusterapi_pause_clusters is defined
