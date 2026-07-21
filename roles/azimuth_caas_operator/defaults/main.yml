@@ -179,7 +179,7 @@ azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_regex: "{{ platforms_tenancy
 # Regex pattern to block tenancies by name
 azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
 # Maximum duration allowed
-azimuth_caas_stackhpc_slurm_appliance_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('forever') }}"
+azimuth_caas_stackhpc_slurm_appliance_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_stackhpc_slurm_appliance_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_list | join(',') }}"
@@ -306,7 +306,7 @@ azimuth_caas_workstation_tenancy_deny_regex: >-
       default(platforms_tenancy_deny_regex | default(''))
   }}
 # Maximum duration allowed
-azimuth_caas_stackhpc_workstation_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('forever') }}"
+azimuth_caas_stackhpc_workstation_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_workstation_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_workstation_tenancy_allow_list | join(',') }}"
@@ -388,7 +388,7 @@ azimuth_caas_workstation_ssh_tenancy_deny_regex: >-
       default(azimuth_caas_workstation_tenancy_deny_regex)
   }}
 # Maximum duration allowed
-azimuth_caas_stackhpc_workstation_ssh_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('forever') }}"
+azimuth_caas_stackhpc_workstation_ssh_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_workstation_ssh_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_workstation_ssh_tenancy_allow_list | join(',') }}"
@@ -512,7 +512,7 @@ azimuth_caas_repo2docker_tenancy_deny_regex: >-
       default(platforms_tenancy_deny_regex | default(''))
   }}
 # Maximum duration allowed
-azimuth_caas_stackhpc_repo2docker_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('forever') }}"
+azimuth_caas_stackhpc_repo2docker_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_repo2docker_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_repo2docker_tenancy_allow_list | join(',') }}"
@@ -636,7 +636,7 @@ azimuth_caas_rstudio_tenancy_deny_regex: >-
       default(platforms_tenancy_deny_regex | default(''))
   }}
 # Maximum duration allowed
-azimuth_caas_stackhpc_rstudio_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('forever') }}"
+azimuth_caas_stackhpc_rstudio_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_rstudio_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_rstudio_tenancy_allow_list | join(',') }}"
