@@ -29,3 +29,79 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ kube_prometheus_stack_wait_timeout }}"
+
+# Configure alerts for Cluster API control-plane certificate expiry.
+# These alerts rely on the certificate expiry metric exposed by
+# kube-state-metrics from Machine.status.certificatesExpiryDate.
+#
+# Control-plane replacement is expected to start automatically when
+# certificates have fewer than 21 days remaining.
+- name: Configure alerting rules for Cluster API Machine certificate expiry
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ kube_prometheus_stack_capi_certificate_alert_rules_definition | to_nice_yaml }}"
+  vars:
+    kube_prometheus_stack_capi_certificate_alert_rules_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PrometheusRule
+      metadata:
+        name: capi-certificate-expiry-alerting-rules
+        namespace: "{{ kube_prometheus_stack_release_namespace }}"
+        labels:
+          release: "{{ kube_prometheus_stack_release_name }}"
+      spec:
+        groups:
+          - name: capi_control_plane_certificate_expiry.rules
+            rules:
+              # warning: cert expiry between 21 and 30 days
+              - alert: CAPIMachineCertificateExpiringSoon
+                expr: |
+                  (
+                    kube_customresource_capi_machine_certificate_expiry_timestamp
+                    - time()
+                  ) < (30 * 24 * 60 * 60)
+                  and
+                  (
+                    kube_customresource_capi_machine_certificate_expiry_timestamp
+                    - time()
+                  ) >= (20 * 24 * 60 * 60)
+                for: 15m
+                annotations:
+                  summary: >-
+                    {% raw %}Control-plane certificates for
+                    {{ $labels.cluster_name }} expire within 30 days{% endraw %}
+                  description: >-
+                    {% raw %}Machine {{ $labels.machine }} in namespace
+                    {{ $labels.namespace }} has control-plane certificates expiring
+                    within 30 days. Azimuth will automatically replace the affected
+                    control-plane Machine when fewer than 21 days remain. No manual
+                    action is required unless the replacement fails.{% endraw %}
+                labels:
+                  severity: warning
+
+              # critical: if auto replacement failed
+              - alert: CAPIMachineCertificateReplacementOverdue
+                expr: |
+                  (
+                    kube_customresource_capi_machine_certificate_expiry_timestamp
+                    - time()
+                  ) <= (20 * 24 * 60 * 60)
+                # controlplane replacement would be longer than 15min
+                for: 1h
+                annotations:
+                  summary: >-
+                    {% raw %}Automatic controlplane certificate replacement for
+                    {{ $labels.cluster_name }} may have failed{% endraw %}
+                  description: >-
+                    {% raw %}Machine {{ $labels.machine }} in namespace
+                    {{ $labels.namespace }} still has certificates expiring within
+                    20 days. Automatic replacement should have started at the
+                    21-day threshold but has not completed. Operator investigation
+                    is required.{% endraw %}
+                labels:
+                  severity: critical
+  register: kubectl_capi_certificate_expiry_alert_rules
+  changed_when: >-
+    kubectl_capi_certificate_expiry_alert_rules.stdout_lines |
+      select('match', '(?!.*unchanged$)') |
+      length > 0
