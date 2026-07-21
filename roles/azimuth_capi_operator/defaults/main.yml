@@ -671,7 +671,7 @@ azimuth_capi_operator_cluster_template_tenancy_allow_regex: "{{ platforms_tenanc
 # Regex pattern to block tenancies by name
 azimuth_capi_operator_cluster_template_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
 # Maximum duration allowed
-azimuth_capi_operator_cluster_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('forever') }}"
+azimuth_capi_operator_cluster_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
 # The set of key-value annotations to apply to the clusters templates
 azimuth_capi_operator_cluster_template_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_cluster_template_tenancy_allow_list | join(',') }}"
