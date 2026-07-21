@@ -94,6 +94,49 @@ kube_prometheus_stack_release_defaults:
       # Do NOT add the namespace matcher to routes from AlertmanagerConfig resources
       alertmanagerConfigMatcherStrategy:
         type: None
+  kube-state-metrics:
+    # Exposes the following metric:
+    # kube_customresource_capi_machine_certificate_expiry_timestamp
+    # Used for certificate expiry monitoring of Cluster API controlplane Machines.
+    rbac:
+      extraRules:
+        - apiGroups:
+            - cluster.x-k8s.io
+          resources:
+            - machines
+          verbs:
+            - list
+            - watch
+    customResourceState:
+      enabled: true
+      create: true
+      config:
+        kind: CustomResourceStateMetrics
+        spec:
+          resources:
+            - groupVersionKind:
+                group: cluster.x-k8s.io
+                version: v1beta1
+                kind: Machine
+              labelsFromPath:
+                namespace:
+                  - metadata
+                  - namespace
+                cluster_name:
+                  - spec
+                  - clusterName
+                machine:
+                  - metadata
+                  - name
+              metrics:
+                - name: capi_machine_certificate_expiry_timestamp
+                  help: Unix timestamp when the control plane Machine certificates expire
+                  each:
+                    type: Gauge
+                    gauge:
+                      path:
+                        - status
+                        - certificatesExpiryDate
 
 kube_prometheus_stack_release_overrides: {}
 kube_prometheus_stack_release_values: >-
