@@ -201,6 +201,7 @@ velero_backup_excluded_namespaces:
   - default
   - harbor
   - ingress-nginx
+  - traefik
   - kube-node-lease
   - kube-public
   - kube-system
