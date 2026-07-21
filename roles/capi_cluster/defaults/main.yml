@@ -199,6 +199,8 @@ capi_cluster_addons_openstack_block_storage_rescan_on_resize:
 capi_cluster_addons_openstack_block_storage_ignore_volume_az: true
 # The availability zone for the default Cinder CSI storage class
 capi_cluster_addons_csi_cinder_availability_zone: nova
+# Whether or not to allow volume expansion for the default Cinder CSI storage class
+capi_cluster_addons_csi_cinder_allow_volume_expansion: false
 # The Cinder volume type for the default Cinder CSI storage class
 capi_cluster_addons_csi_cinder_volume_type:
 # Retention settings for Alertmanager
@@ -549,7 +551,10 @@ capi_cluster_release_defaults:
       csiCinder:
         defaultStorageClass: >-
           {{-
-            { "availabilityZone": capi_cluster_addons_csi_cinder_availability_zone } |
+            {
+              "availabilityZone": capi_cluster_addons_csi_cinder_availability_zone,
+              "allowVolumeExpansion": capi_cluster_addons_csi_cinder_allow_volume_expansion
+            } |
               combine(
                 { "volumeType": capi_cluster_addons_csi_cinder_volume_type }
                 if capi_cluster_addons_csi_cinder_volume_type
