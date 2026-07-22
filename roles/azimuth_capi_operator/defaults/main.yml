@@ -678,7 +678,7 @@ azimuth_capi_operator_cluster_template_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_cluster_template_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_deny_regex }}"
-  scheduling.azimuth.stackhpc.com/max-duration-hours: "{{ azimuth_capi_operator_cluster_max_duration_hours }}"
+  scheduling.azimuth.stackhpc.com/max-duration-hours: "{{ azimuth_capi_operator_cluster_max_duration_hours | string }}"
 # By default, make a template for each Kubernetes release for which we have an image
 azimuth_capi_operator_cluster_templates_default: |-
   {
