@@ -71,6 +71,7 @@
         namespace: "{{ flux_release_namespace }}"
       data:
         DOMAIN: "{{ ingress_base_domain }}"
+        SOPS_PRIVATE_KEY_SECRET: "{{ sops_private_key_secret_name }}"
 
 - name: Deploy FluxInstance
   kubernetes.core.k8s:
