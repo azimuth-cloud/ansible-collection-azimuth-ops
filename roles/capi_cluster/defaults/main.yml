@@ -257,6 +257,116 @@ capi_cluster_addons_monitoring_prometheus_external_url: >-
     else ""
   }}
 
+# Monitoring configuration installed in the HA management cluster
+# through the capi-helm-charts cluster-addons deployment path.
+#
+# This exposes certificate expiry information for workload cluster
+# controlplane Machines managed by this cluster.
+capi_cluster_addons_monitoring_kube_state_metrics_values:
+  rbac:
+    extraRules:
+      - apiGroups:
+          - cluster.x-k8s.io
+        resources:
+          - machines
+        verbs:
+          - list
+          - watch
+
+  customResourceState:
+    enabled: true
+    create: true
+    config:
+      kind: CustomResourceStateMetrics
+      spec:
+        resources:
+          - groupVersionKind:
+              group: cluster.x-k8s.io
+              version: v1beta1
+              kind: Machine
+
+            labelsFromPath:
+              namespace:
+                - metadata
+                - namespace
+              cluster_name:
+                - spec
+                - clusterName
+              machine:
+                - metadata
+                - name
+
+            metrics:
+              - name: capi_machine_certificate_expiry_timestamp
+                help: >-
+                  Unix timestamp when the control plane Machine
+                  certificates expire
+                each:
+                  type: Gauge
+                  gauge:
+                    path:
+                      - status
+                      - certificatesExpiryDate
+
+# Configure alerts for Cluster API controlplane certificate expiry.
+# These alerts rely on the certificate expiry metric exposed by
+# kube-state-metrics from Machine.status.certificatesExpiryDate.
+#
+# Controlplane replacement is expected to start automatically when
+# certificates have fewer than 21 days remaining.
+capi_cluster_addons_monitoring_prometheus_rules:
+  capi-machine-certificate-expiry:
+    groups:
+      - name: capi_control_plane_certificate_expiry.rules
+        rules:
+          # warning: cert expiry between 21 and 30 days
+          - alert: CAPIMachineCertificateExpiringSoon
+            expr: |
+              (
+                kube_customresource_capi_machine_certificate_expiry_timestamp
+                - time()
+              ) < (30 * 24 * 60 * 60)
+              and
+              (
+                kube_customresource_capi_machine_certificate_expiry_timestamp
+                - time()
+              ) >= (20 * 24 * 60 * 60)
+            for: 15m
+            annotations:
+              summary: >-
+                {% raw %}Controlplane certificates for
+                {{ $labels.cluster_name }} expire within 30 days{% endraw %}
+              description: >-
+                {% raw %}Machine {{ $labels.machine }} in namespace
+                {{ $labels.namespace }} has controlplane certificates expiring
+                within 30 days. Azimuth will automatically replace the affected
+                controlplane Machine when fewer than 21 days remain. No manual
+                action is required unless the replacement fails.{% endraw %}
+            labels:
+              severity: warning
+
+          # critical: if auto replacement failed
+          - alert: CAPIMachineCertificateReplacementOverdue
+            expr: |
+              (
+                kube_customresource_capi_machine_certificate_expiry_timestamp
+                - time()
+              ) <= (20 * 24 * 60 * 60)
+            # controlplane replacement would be longer than 15min
+            for: 1h
+            annotations:
+              summary: >-
+                {% raw %}Automatic control-plane certificate replacement for
+                {{ $labels.cluster_name }} may have failed{% endraw %}
+              description: >-
+                {% raw %}Machine {{ $labels.machine }} in namespace
+                {{ $labels.namespace }} still has certificates expiring within
+                20 days. Automatic replacement should have started at the
+                21-day threshold but has not completed. Operator investigation
+                is required.{% endraw %}
+            labels:
+              severity: critical
+
 # Defines the rules that should be applied to worker nodes
 capi_cluster_worker_node_security_group_rules: []
 
@@ -456,6 +566,10 @@ capi_cluster_release_defaults:
                       resources:
                         requests:
                           storage: "{{ capi_cluster_addons_monitoring_prometheus_volume_size }}"
+            kube-state-metrics: >-
+              {{ capi_cluster_addons_monitoring_kube_state_metrics_values }}
+            additionalPrometheusRulesMap: >-
+              {{ capi_cluster_addons_monitoring_prometheus_rules }}
       lokiStack:
         release:
           values:
