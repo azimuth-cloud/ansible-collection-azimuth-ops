@@ -168,7 +168,7 @@ alertmanager_config_slack_critical_receiver: >-
   {{-
     alertmanager_config_slack_critical_receiver_config |
       combine(
-        { "channel": alertmanager_config_slack_webhook_channel }
+        { "channel": alertmanager_config_slack_critical_webhook_channel }
         if alertmanager_config_slack_critical_webhook_channel is defined
         else {},
         recursive = True
@@ -180,7 +180,7 @@ alertmanager_config_slack_warning_receiver: >-
   {{-
     alertmanager_config_slack_warning_receiver_config |
       combine(
-        { "channel": alertmanager_config_slack_webhook_channel }
+        { "channel": alertmanager_config_slack_warning_webhook_channel }
         if alertmanager_config_slack_warning_webhook_channel is defined
         else {},
         recursive = True
