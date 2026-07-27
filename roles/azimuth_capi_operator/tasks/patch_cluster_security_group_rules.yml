@@ -1,0 +1,26 @@
+---
+
+- name: Patch workerNodesSecurityGroupRules on OpenStackClusters
+  ansible.builtin.command: >-
+    kubectl patch openstackclusters.infrastructure.cluster.x-k8s.io {{ item.metadata.name }}
+    --namespace {{ item.metadata.namespace }}
+    --type merge
+    --patch '{{ azimuth_capi_operator_patch_security_group_clusters_patch | to_nice_json }}'
+  loop: "{{ azimuth_capi_operator_patch_security_group_clusters }}"
+  loop_control:
+    label: "{{ item.metadata.namespace }}/{{ item.metadata.name }}"
+  register: azimuth_capi_operator_patch_cluster_sg
+  changed_when: azimuth_capi_operator_patch_cluster_sg.stdout_lines | select('match', '(?!.*\\(no change\\)$)') | length > 0
+  vars:
+    azimuth_capi_operator_patch_security_group_clusters_patch: >-
+      {{
+        {
+          "spec": {
+            "managedSecurityGroups": {
+              "workerNodesSecurityGroupRules": azimuth_capi_operator_capi_helm_worker_node_security_group_rules
+              }
+            }
+          }
+      }}
+  when:
+    - azimuth_capi_operator_patch_security_group_clusters is defined
