@@ -671,14 +671,14 @@ azimuth_capi_operator_cluster_template_tenancy_allow_regex: "{{ platforms_tenanc
 # Regex pattern to block tenancies by name
 azimuth_capi_operator_cluster_template_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
 # Maximum duration allowed
-azimuth_capi_operator_cluster_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
+azimuth_capi_operator_cluster_max_lifetime_hours: "{{ azimuth_max_platform_lifetime_hours | default('') }}"
 # The set of key-value annotations to apply to the clusters templates
 azimuth_capi_operator_cluster_template_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_cluster_template_tenancy_allow_list | join(',') }}"
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_cluster_template_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_deny_regex }}"
-  scheduling.azimuth.stackhpc.com/max-duration-hours: "{{ azimuth_capi_operator_cluster_max_duration_hours | string }}"
+  scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_capi_operator_cluster_max_lifetime_hours | string }}"
 # By default, make a template for each Kubernetes release for which we have an image
 azimuth_capi_operator_cluster_templates_default: |-
   {

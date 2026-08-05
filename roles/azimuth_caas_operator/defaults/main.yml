@@ -179,14 +179,14 @@ azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_regex: "{{ platforms_tenancy
 # Regex pattern to block tenancies by name
 azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
 # Maximum duration allowed
-azimuth_caas_stackhpc_slurm_appliance_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
+azimuth_caas_stackhpc_slurm_appliance_max_lifetime_hours: "{{ azimuth_max_platform_lifetime_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_stackhpc_slurm_appliance_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_list | join(',') }}"
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_regex }}"
-  scheduling.azimuth.stackhpc.com/max-duration-hours: "{{ azimuth_caas_stackhpc_slurm_appliance_max_duration_hours | string }}"
+  scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_slurm_appliance_max_lifetime_hours | string }}"
 # The template definition for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_template:
   annotations: "{{ azimuth_caas_stackhpc_slurm_appliance_annotations }}"
@@ -306,14 +306,14 @@ azimuth_caas_workstation_tenancy_deny_regex: >-
       default(platforms_tenancy_deny_regex | default(''))
   }}
 # Maximum duration allowed
-azimuth_caas_stackhpc_workstation_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
+azimuth_caas_stackhpc_workstation_max_lifetime_hours: "{{ azimuth_max_platform_lifetime_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_workstation_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_workstation_tenancy_allow_list | join(',') }}"
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_workstation_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_workstation_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_workstation_tenancy_deny_regex }}"
-  scheduling.azimuth.stackhpc.com/max-duration-hours: "{{ azimuth_caas_stackhpc_workstation_max_duration_hours | string }}"
+  scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_workstation_max_lifetime_hours | string }}"
 # The template definition for the workstation appliance
 azimuth_caas_workstation_template:
   annotations: "{{ azimuth_caas_workstation_annotations }}"
@@ -388,14 +388,14 @@ azimuth_caas_workstation_ssh_tenancy_deny_regex: >-
       default(azimuth_caas_workstation_tenancy_deny_regex)
   }}
 # Maximum duration allowed
-azimuth_caas_stackhpc_workstation_ssh_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
+azimuth_caas_stackhpc_workstation_ssh_max_lifetime_hours: "{{ azimuth_max_platform_lifetime_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_workstation_ssh_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_workstation_ssh_tenancy_allow_list | join(',') }}"
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_workstation_ssh_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_workstation_ssh_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_workstation_ssh_tenancy_deny_regex }}"
-  scheduling.azimuth.stackhpc.com/max-duration-hours: "{{ azimuth_caas_stackhpc_workstation_ssh_max_duration_hours | string }}"
+  scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_workstation_ssh_max_lifetime_hours | string }}"
 # The template definition for the SSH-enabled workstation appliance
 azimuth_caas_workstation_ssh_template:
   annotations: "{{ azimuth_caas_workstation_ssh_annotations }}"
@@ -512,14 +512,14 @@ azimuth_caas_repo2docker_tenancy_deny_regex: >-
       default(platforms_tenancy_deny_regex | default(''))
   }}
 # Maximum duration allowed
-azimuth_caas_stackhpc_repo2docker_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
+azimuth_caas_stackhpc_repo2docker_max_lifetime_hours: "{{ azimuth_max_platform_lifetime_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_repo2docker_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_repo2docker_tenancy_allow_list | join(',') }}"
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_repo2docker_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_repo2docker_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_repo2docker_tenancy_deny_regex }}"
-  scheduling.azimuth.stackhpc.com/max-duration-hours: "{{ azimuth_caas_stackhpc_repo2docker_max_duration_hours | string }}"
+  scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_repo2docker_max_lifetime_hours | string }}"
 # The template definition for the repo2docker appliance
 azimuth_caas_repo2docker_template:
   annotations: "{{ azimuth_caas_repo2docker_annotations }}"
@@ -636,14 +636,14 @@ azimuth_caas_rstudio_tenancy_deny_regex: >-
       default(platforms_tenancy_deny_regex | default(''))
   }}
 # Maximum duration allowed
-azimuth_caas_stackhpc_rstudio_max_duration_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
+azimuth_caas_stackhpc_rstudio_max_lifetime_hours: "{{ azimuth_max_platform_lifetime_hours | default('') }}"
 # The set of key-value annotations to apply to the template
 azimuth_caas_rstudio_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_caas_rstudio_tenancy_allow_list | join(',') }}"
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_rstudio_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_rstudio_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_rstudio_tenancy_deny_regex }}"
-  scheduling.azimuth.stackhpc.com/max-duration-hours: "{{ azimuth_caas_stackhpc_rstudio_max_duration_hours | string }}"
+  scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_rstudio_max_lifetime_hours | string }}"
 # The template definition for the R-Studio appliance
 azimuth_caas_rstudio_template:
   annotations: "{{ azimuth_caas_rstudio_annotations }}"
