@@ -519,12 +519,7 @@ azimuth_release_defaults:
     }}
   scheduling: >-
     {{-
-      { "enabled": azimuth_scheduling_enabled } |
-        combine(
-          { "maxPlatformDurationHours": azimuth_max_platform_lifetime_hours }
-          if azimuth_max_platform_lifetime_hours is defined and azimuth_scheduling_enabled
-          else {}
-        )
+      { "enabled": azimuth_scheduling_enabled }
     }}
   theme: >-
     {{-
