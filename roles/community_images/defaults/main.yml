@@ -117,6 +117,9 @@ community_images_extra: {}
 #   source_disk_format: qcow2
 #   # The container format for the image
 #   container_format: bare
+#   # Any extra properties to set on the image
+#   properties:
+#   - hw_architecture=x86_64
 
 # The full set of community images to upload to the Azimuth project
 community_images: >-
