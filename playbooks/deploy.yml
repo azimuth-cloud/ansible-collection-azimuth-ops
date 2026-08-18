@@ -18,8 +18,6 @@
         alertmanager_config_slack_warning_webhook_url)
     - role: azimuth_cloud.azimuth_ops.flux
       when: flux_enabled
-    - role: azimuth_cloud.azimuth_ops.sealed_secrets
-      when: azimuth_authentication_type == "oidc"
     # NOTE: this is kept to remove existing dashboard installs
     - role: azimuth_cloud.azimuth_ops.kubernetes_dashboard
     - role: azimuth_cloud.azimuth_ops.helm_dashboard
