@@ -20,8 +20,6 @@
       when: flux_enabled
     - role: azimuth_cloud.azimuth_ops.sealed_secrets
       when: azimuth_authentication_type == "oidc"
-    - role: azimuth_cloud.azimuth_ops.certmanager
-      when: certmanager_enabled or azimuth_kubernetes_enabled
     # NOTE: this is kept to remove existing dashboard installs
     - role: azimuth_cloud.azimuth_ops.kubernetes_dashboard
     - role: azimuth_cloud.azimuth_ops.helm_dashboard
