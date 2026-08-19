@@ -95,14 +95,6 @@
             timeout: 60
           delegate_to: localhost
 
-    # For a single node install, we put the monitoring and ingress controller on the K3S cluster
-    - name: Install nginx ingress controller
-      # Configure the K3S cluster as a Cluster API management cluster when doing a HA installation
-      ansible.builtin.include_role:
-        name: azimuth_cloud.azimuth_ops.ingress_nginx
-      when: install_mode == "singlenode" and (ingress_controller_enabled | default(true))
-
-
     - name: Configure Azimuth HA cluster
       when: install_mode == 'ha'
       block:
