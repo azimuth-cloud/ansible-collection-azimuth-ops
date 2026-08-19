@@ -76,6 +76,7 @@
         FLUX_ARTIFACT_TAG: "{{ flux_artifact_tag }}"
         FLUX_SECRET_TAG: "{{ flux_secret_tag }}"
         ADMIN_DASHBOARD_SCHEME: "{{ (ingress_tls_enabled | default(True)) | ternary('https', 'http') }}"
+        TLS_ENABLED: "{{ (ingress_tls_enabled | default(True)) | ternary('true', 'false') }}"
 
 - name: Deploy FluxInstance
   kubernetes.core.k8s:
