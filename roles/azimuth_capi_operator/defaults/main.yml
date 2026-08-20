@@ -1,5 +1,4 @@
 ---
-
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
@@ -510,7 +509,6 @@ azimuth_capi_operator_capi_helm_values: >-
       combine(azimuth_capi_operator_capi_helm_values_overrides, recursive = True)
   }}
 
-
 # The Zenith registrar admin URL for Zenith support
 # If not given, Zenith support is not enabled
 azimuth_capi_operator_zenith_registrar_admin_url: >-
@@ -661,6 +659,58 @@ azimuth_capi_operator_cluster_template_defaults:
         traefik:
           enabled: true
 
+azimuth_capi_operator_flatcar_sysext_arches: "{{ flatcar_sysext_enabled_arches | default([]) }}"
+azimuth_capi_operator_flatcar_sysext_definitions:
+  kube-1-36:
+    kubernetes_version: 1.36.2
+    sysexts:
+      x86_64:
+        kubernetes:
+          url: "https://extensions.flatcar.org/extensions/kubernetes-v1.36.2-x86-64.raw"
+          checksum: "sha512-72ab899fdb2bc9ec8f6140c95d1090898d41c2de6964564b84e3c91f070056ebd8dca109e866edcc10549833abbbef68585de8508ebbed5ffdfd8b67b2fae282"
+        containerd:
+          url: "https://extensions.flatcar.org/extensions/containerd-2.0.4-x86-64.raw"
+          checksum: "sha512-b7f1806cd01d9319786f049d471f98cad8ecae4a4c290f2517ca29b4423dd31f3e64985cad38c434a6df5f3a59a9d9fa25d8c29d4c2c69952a8550dea5e00f83"
+      aarch64:
+        kubernetes:
+          url: "https://extensions.flatcar.org/extensions/kubernetes-v1.36.2-arm64.raw"
+          checksum: "sha512-f939b2758aa5202ef4fffd9e27693de2cbaa7c9b90c438cb5869a97ecb2be7c84c36ee6d3cc5f37926626396cfa9d83c3600475d9782af5748890db93c4f3869"
+        containerd:
+          url: "https://extensions.flatcar.org/extensions/containerd-2.0.4-arm64.raw"
+          checksum: "sha512-e933fcbc5f4e2673680e2da23ad3a13a64c5fa8739393a98f32963e2f0f8dfd6216ed943ae49d8b937503eb7df2b163a3e7029e0290ea675b7fcdd55d12acccc"
+
+azimuth_capi_operator_cluster_templates_flatcar_sysext: |-
+  {
+    {% for key, values in azimuth_capi_operator_flatcar_sysext_definitions.items() %}
+    {% for arch in values.sysexts.keys() %}
+    {% if arch in azimuth_capi_operator_flatcar_sysext_arches %}
+    {% set flatcar_image = "flatcar_" ~ arch %}
+    "flatcar-{{ key }}-{{ arch | replace('_', '-') }}": {
+      "annotations": {{ azimuth_capi_operator_cluster_template_annotations }},
+      "spec": {{
+        azimuth_capi_operator_cluster_template_defaults |
+          combine(
+            {
+              "label": "v" ~ values.kubernetes_version ~ " on flatcar " ~ arch,
+              "description": "Kubernetes " ~ values.kubernetes_version ~ " on flatcar container linux" ~ arch ,
+              "values": {
+                "kubernetesVersion": values.kubernetes_version,
+                "machineImageId": community_images_image_ids[flatcar_image],
+                "osDistro": "flatcar-sysext",
+                "flatcar": {
+                  "sysexts": values.sysexts[arch]
+                },
+              },
+            },
+            recursive = True
+          )
+      }},
+    },
+      {% endif %}
+      {% endfor %}
+      {% endfor %}
+    }
+
 # Tenancy-based access controls to apply to Kubernetes cluster templates
 # List of allowed tenancy IDs
 azimuth_capi_operator_cluster_template_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
@@ -712,9 +762,9 @@ azimuth_capi_operator_cluster_templates_extra: {}
 azimuth_capi_operator_cluster_templates: >-
   {{-
     azimuth_capi_operator_cluster_templates_default |
+      combine(azimuth_capi_operator_cluster_templates_flatcar, recursive=True) |
       combine(azimuth_capi_operator_cluster_templates_extra, recursive = True)
   }}
-
 
 #####
 # Kubernetes app template definitions
@@ -1141,7 +1191,6 @@ azimuth_capi_operator_app_templates_danswer_spec:
         )
     }}
 
-
 #####
 # RAGFlow app template
 #####
@@ -1211,7 +1260,6 @@ azimuth_capi_operator_app_templates_ragflow_spec:
         )
     }}
 
-
 #####
 # Argo CD app template
 #####
@@ -1280,7 +1328,6 @@ azimuth_capi_operator_app_templates_argocd_spec:
           else {}
         )
     }}
-
 
 # The default templates
 azimuth_capi_operator_app_templates_default: >-
