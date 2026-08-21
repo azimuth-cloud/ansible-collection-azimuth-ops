@@ -1,0 +1,13 @@
+---
+- name: Ensure bin directory exists
+  ansible.builtin.file:
+    path: "{{ jq_bin_directory }}"
+    state: directory
+    mode: "0755"
+
+- name: Download and install jq binary
+  ansible.builtin.get_url:
+    url: "{{ jq_binary_url }}"
+    dest: "{{ (jq_bin_directory, 'jq') | path_join }}"
+    mode: "0755"
+    force: true
