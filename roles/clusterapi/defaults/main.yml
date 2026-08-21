@@ -1,5 +1,4 @@
 ---
-
 # The repo, version and manifest URL for the Cluster API core components
 clusterapi_core_repo: https://github.com/kubernetes-sigs/cluster-api
 clusterapi_core_version: v1.14.0
@@ -32,7 +31,7 @@ clusterapi_feature_gate_machine_pool: false
 clusterapi_feature_gate_cluster_topology: true
 clusterapi_feature_gate_runtime_sdk: true
 clusterapi_feature_gate_machine_set_preflight_checks: true
-clusterapi_feature_gate_kubeadm_bootstrap_format_ignition: false
+clusterapi_feature_gate_kubeadm_bootstrap_format_ignition: true
 clusterapi_feature_gate_openstack_priority_queue: true
 clusterapi_feature_gate_openstack_autoscale_from_zero: true
 
