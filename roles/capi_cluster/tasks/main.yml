@@ -36,7 +36,8 @@
       changed_when: false
       register: capi_cluster_rollout
       until: capi_cluster_rollout is succeeded
-      retries: 360
+      # TEMPORARY: cut from 360 retries (1h) to 90 (15m) to fail fast
+      retries: 90
       delay: 10
 
     - name: Wait for cluster ControlPlaneMachinesUpToDate
