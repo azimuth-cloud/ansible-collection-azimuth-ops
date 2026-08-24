@@ -34,8 +34,10 @@ jobs:
         timeout-minutes: 180
 
       # Provision Azimuth using the azimuth-ops version under test
+      # TEMPORARY: pinned to a branch with unmerged debug-bundle-on-failure changes,
+      # to capture diagnostics from this PR's hang. Revert to @devel before merging.
       - name: Provision Azimuth
-        uses: azimuth-cloud/azimuth-config/.github/actions/provision@devel
+        uses: azimuth-cloud/azimuth-config/.github/actions/provision@debug-bundle-on-provision-failure
 
       # # Run the tests
       - name: Run Azimuth tests
