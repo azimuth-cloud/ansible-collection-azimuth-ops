@@ -23,6 +23,7 @@ jobs:
       - name: Set up Azimuth environment
         uses: azimuth-cloud/azimuth-config/.github/actions/setup@devel
         with:
+          ref: debug-bundle-on-provision-failure
           os-clouds: ${{ secrets.OS_CLOUDS }}
           environment-prefix: ops-ci
           azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
