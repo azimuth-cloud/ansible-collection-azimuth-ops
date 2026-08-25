@@ -123,6 +123,7 @@ community_images_extra: {}
 
 community_images_flatcar_sysext_version: 4593.2.5
 azimuth_capi_operator_flatcar_sysext_arches: "{{ flatcar_sysext_enabled_arches | default([]) }}"
+# yamllint disable rule:line-length
 community_images_flatcar: |-
   {% set arch_map = {"x86_64": "amd64", "aarch64": "arm64"} %}
   {% for arch in azimuth_capi_operator_flatcar_sysext_arches %}
@@ -136,6 +137,7 @@ community_images_flatcar: |-
       - os_distro=flatcar
       - os_version={{ community_images_flatcar_version }}
   {% endfor %}
+# yamllint enable rule:line-length
 
 # The full set of community images to upload to the Azimuth project
 community_images: >-
