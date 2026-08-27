@@ -40,7 +40,7 @@ community_images_disk_format: qcow2
 # The repository to use for azimuth-images
 community_images_azimuth_images_repo: https://github.com/azimuth-cloud/azimuth-images
 # The version of azimuth-images to use to populate the default community images
-community_images_azimuth_images_version: 0.32.0
+community_images_azimuth_images_version: 0.34.0
 # The azimuth-images manifest URL
 community_images_azimuth_images_manifest_url: >-
   {{ community_images_azimuth_images_repo }}/releases/download/{{ community_images_azimuth_images_version }}/manifest.json
@@ -53,7 +53,7 @@ community_images_azimuth_images_manifest: >-
 community_images_azimuth_images: |-
   {
     {% for source_key, image in community_images_azimuth_images_manifest.items() %}
-    {% if "kubernetes_version" in image and source_key.endswith("-jammy") %}
+    {% if "kubernetes_version" in image %}
       {% set kube_version = image.kubernetes_version | regex_replace('^v', '') %}
       {% set kube_series = kube_version.split(".")[:-1] | join("_") %}
       {% set dest_key = "kube_" ~ kube_series %}
@@ -86,10 +86,10 @@ community_images_azimuth_images: |-
 community_images_slurm_base_url: >-
   https://leafcloud.store/swift/v1/AUTH_f39848421b2747148400ad8eeae8d536/openhpc-images
 community_images_slurm:
-  # from https://github.com/stackhpc/ansible-slurm-appliance/releases/tag/v2.19
+  # from https://github.com/stackhpc/ansible-slurm-appliance/releases/tag/v2.24.0
   openhpc:
-    name: openhpc-RL9-260603-0842-b38bb57d
-    source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-260603-0842-b38bb57d"
+    name: openhpc-RL9-260818-0723-3f645271
+    source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-260818-0723-3f645271"
     source_disk_format: qcow2
     container_format: bare
 
@@ -117,6 +117,9 @@ community_images_extra: {}
 #   source_disk_format: qcow2
 #   # The container format for the image
 #   container_format: bare
+#   # Any extra properties to set on the image
+#   properties:
+#   - hw_architecture=x86_64
 
 # The full set of community images to upload to the Azimuth project
 community_images: >-

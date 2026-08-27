@@ -226,15 +226,17 @@
   when: community_images_image_visibility != community_images_image_current_visibility
   changed_when: true
 
+
+  # Keeping this task allows us to set properties on images that already exist, rather than just at upload time.
 - name: "Set custom properties for image - {{ community_images_image_spec.name }}"
   ansible.builtin.command: >-
     {{ community_images_openstack_cli_path }}
       image set
-      {%- for property in community_images_custom_properties %}
+      {%- for property in (community_images_image_spec.properties | default([])) + community_images_custom_properties %}
       --property {{ property | quote }}
-    {%- endfor %}
+      {%- endfor %}
       {{ community_images_image_id }}
-  when: "community_images_custom_properties | length > 0"
+  when: "((community_images_image_spec.properties | default([])) + community_images_custom_properties) | length > 0"
   changed_when: true
 
 - name: Share and accept images with OpenStack projects

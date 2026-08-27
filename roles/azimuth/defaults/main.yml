@@ -3,7 +3,7 @@
 # The chart to use
 azimuth_chart_repo: https://azimuth-cloud.github.io/azimuth
 azimuth_chart_name: azimuth
-azimuth_chart_version: 0.21.1
+azimuth_chart_version: 0.23.0
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
@@ -445,7 +445,9 @@ azimuth_scheduling_enabled: false
 
 # Maximum duration users can specify for platforms. Unlimited
 # if undefined
-# azimuth_max_platform_duration_hours:
+azimuth_max_platform_lifetime_hours: "{{ azimuth_max_platform_duration_hours | default('') }}"
+# azimuth_max_platform_duration_hours is an old deprecated name
+# for azimuth_max_platform_lifetime_hours
 
 # Theme settings
 # Custom bootstrap CSS URL
@@ -517,12 +519,7 @@ azimuth_release_defaults:
     }}
   scheduling: >-
     {{-
-      { "enabled": azimuth_scheduling_enabled } |
-        combine(
-          { "maxPlatformDurationHours": azimuth_max_platform_duration_hours }
-          if azimuth_max_platform_duration_hours is defined and azimuth_scheduling_enabled
-          else {}
-        )
+      { "enabled": azimuth_scheduling_enabled }
     }}
   theme: >-
     {{-
