@@ -121,9 +121,31 @@ community_images_extra: {}
 #   properties:
 #   - hw_architecture=x86_64
 
+community_images_flatcar_sysext_version: 4593.2.5
+azimuth_capi_operator_flatcar_sysext_arches: "{{ flatcar_sysext_enabled_arches | default([]) }}"
+# yamllint disable rule:line-length
+community_images_flatcar: |-
+  {% set arch_map = {"x86_64": "amd64", "aarch64": "arm64"} %}
+  {% for arch in azimuth_capi_operator_flatcar_sysext_arches %}
+  flatcar_{{ arch }}:
+    name: flatcar_sysext_{{ community_images_flatcar_version }}_{{ arch }}
+    source_url: https://stable.release.flatcar-linux.net/{{ arch_map[arch] }}-usr/{{ community_images_flatcar_sysext_version }}/flatcar_production_openstack_image.img.bz2
+    source_disk_format: qcow2
+    container_format: bare
+    properties:
+      - hw_architecture={{ arch }}
+      - os_distro=flatcar
+      - os_version={{ community_images_flatcar_version }}
+  {% endfor %}
+# yamllint enable rule:line-length
+
 # The full set of community images to upload to the Azimuth project
 community_images: >-
-  {{ community_images_default | combine(community_images_extra, recursive=True) }}
+  {{
+    community_images_default |
+    combine(community_images_flatcar | from_yaml, recursive=True) |
+    combine(community_images_extra, recursive=True)
+  }}
 
 # The default visibility for images
 # Can be overridden on a per-image basis if required
