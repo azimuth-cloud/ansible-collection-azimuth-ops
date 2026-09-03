@@ -192,27 +192,6 @@
     wait: true
     wait_timeout: "{{ azimuth_wait_timeout }}"
 
-- name: List CaaS clusters
-  ansible.builtin.command: kubectl get clusters.caas -A -o json
-  changed_when: false
-  register: azimuth_caas_clusters_list
-  when: azimuth_clusters_enabled
-
-- name: Move clusters that are in old-style namespaces
-  ansible.builtin.include_tasks:
-    file: move-caas-cluster.yml
-  when: azimuth_clusters_enabled
-  loop: >-
-    {{
-      azimuth_caas_clusters_list.stdout |
-        from_json |
-        json_query('items') |
-        selectattr('metadata.namespace', 'search', '^caas-')
-    }}
-  loop_control:
-    loop_var: cluster
-    label: "{{ cluster.metadata.namespace }}/{{ cluster.metadata.name }}"
-
 - name: Print Azimuth URL and write it to a local env file
   vars:
     scheme: "{{ 'https' if azimuth_ingress_tls_enabled else 'http' }}"
