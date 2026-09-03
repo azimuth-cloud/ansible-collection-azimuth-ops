@@ -10,3 +10,6 @@ kubectl_url: https://dl.k8s.io/release/{{ kubectl_version }}/bin/{{ kubectl_os }
 
 # The directory into which the kubectl binary should be placed
 kubectl_bin_directory: /usr/local/bin
+
+# Configure bash completions for kubectl
+kubectl_configure_bash_completions: false
