@@ -193,7 +193,8 @@ generate_tests_kubernetes_test_case_worker_size:
 # The worker count for tests
 generate_tests_kubernetes_test_case_worker_count: 2
 
-# Indicates whether the monitoring should be enabled for tests
+# Indicates whether the dashboard and monitoring should be enabled for tests
+generate_tests_kubernetes_test_case_dashboard_enabled: true
 generate_tests_kubernetes_test_case_monitoring_enabled: true
 
 # Loki log query defaults for Kubernetes test cases
@@ -248,6 +249,7 @@ generate_tests_kubernetes_test_cases_default: >-
       "control_plane_size": "{{ generate_tests_kubernetes_test_case_control_plane_size }}",
       "worker_size": "{{ generate_tests_kubernetes_test_case_worker_size }}",
       "worker_count": {{ generate_tests_kubernetes_test_case_worker_count }},
+      "dashboard_enabled": {{ generate_tests_kubernetes_test_case_dashboard_enabled }},
       "monitoring_enabled": {{ generate_tests_kubernetes_test_case_monitoring_enabled }},
       "loki_query": {{ generate_tests_kubernetes_test_case_loki_query | to_json }},
       "loki_limit": {{ generate_tests_kubernetes_test_case_loki_limit }},
