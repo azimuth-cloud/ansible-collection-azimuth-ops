@@ -160,6 +160,12 @@ jobs:
             prereleases: "yes"
             version_jsonpath: clusterapi_janitor_openstack_chart_version
 
+          - key: jq
+            path: ./roles/jq/defaults/main.yml
+            repository: jqlang/jq
+            tags: "yes"
+            version_jsonpath: jq_version
+
           - key: flux-cli
             path: ./roles/flux/defaults/main.yml
             repository: fluxcd/flux2
@@ -191,6 +197,11 @@ jobs:
             path: ./roles/kustomize/defaults/main.yml
             repository: kubernetes-sigs/kustomize
             version_jsonpath: kustomize_version
+
+          - key: yq
+            path: ./roles/yq/defaults/main.yml
+            repository: mikefarah/yq
+            version_jsonpath: yq_version
 
           - key: provider-keycloak
             path: ./roles/crossplane/defaults/main.yml

@@ -1,0 +1,13 @@
+---
+- name: Ensure bin directory exists
+  ansible.builtin.file:
+    path: "{{ yq_bin_directory }}"
+    state: directory
+    mode: "0755"
+
+- name: Download and install yq binary
+  ansible.builtin.get_url:
+    url: "{{ yq_binary_url }}"
+    dest: "{{ (yq_bin_directory, 'yq') | path_join }}"
+    mode: "0755"
+    force: true

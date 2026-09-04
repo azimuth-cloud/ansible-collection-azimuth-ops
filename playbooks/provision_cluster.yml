@@ -35,6 +35,14 @@
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.k9s
 
+        - name: Install jq
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.jq
+
+        - name: Install yq
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.yq
+
         - name: Get installed Kubernetes version
           ansible.builtin.command: k3s kubectl version --output json
           changed_when: false
