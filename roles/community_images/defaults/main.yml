@@ -130,6 +130,9 @@ community_images: >-
 community_images_default_visibility: community
 # Indicates whether the visibility should be updated for pre-existing images
 community_images_update_existing_visibility: true
+# Indicates whether images should be uploaded with the --hidden property,
+# hiding them from Horizon and OpenStack CLI by default
+community_images_hidden: false
 
 # Any custom properties to set on community images
 # Should be a list of strings in the format "key=value"
