@@ -538,7 +538,7 @@ azimuth_caas_repo2docker_annotations:
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_repo2docker_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_repo2docker_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_caas_repo2docker_catalogue_name }}"
-  acl.azimuth.stackhpc.com/catalogue-prededence: "{{ azimuth_caas_repo2docker_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_caas_repo2docker_catalogue_precedence | string }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_repo2docker_max_lifetime_hours | string }}"
 # The template definition for the repo2docker appliance
 azimuth_caas_repo2docker_template:
