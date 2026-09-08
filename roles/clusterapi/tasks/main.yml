@@ -79,8 +79,6 @@
   vars:
     clusterapi_pause_clusters: "{{ clusterapi_openstack_clusters }}"
     clusterapi_should_pause_clusters: true
-  when:
-    - openstack_loadbalancer_provider == "ovn"
 
 - name: Install Cluster API resources
   ansible.builtin.command: >-
@@ -112,22 +110,18 @@
     loop_var: watch
     label: "{{ watch.namespace }}/{{ watch.kind }}/{{ watch.name }}"
 
-- name: Patch security group rules and unpause clusters
-  when:
-    - openstack_loadbalancer_provider == "ovn"
-  block:
-    - name: Patch workerNodesSecurityGroupRules on openstackclusters.infrastructure.cluster.x-k8s.io
-      ansible.builtin.include_role:
-        name: azimuth_capi_operator
-        tasks_from: patch_cluster_security_group_rules.yml
-      vars:
-        azimuth_capi_operator_patch_security_group_clusters: "{{ clusterapi_openstack_clusters }}"
+- name: Patch workerNodesSecurityGroupRules on openstackclusters.infrastructure.cluster.x-k8s.io
+  ansible.builtin.include_role:
+    name: azimuth_capi_operator
+    tasks_from: patch_cluster_security_group_rules.yml
+  vars:
+    azimuth_capi_operator_patch_security_group_clusters: "{{ clusterapi_openstack_clusters }}"
 
-    - name: Unpause clusters.cluster.x-k8s.io
-      ansible.builtin.include_tasks: pause_unpause_reconciliation.yml
-      vars:
-        clusterapi_pause_clusters: "{{ clusterapi_openstack_clusters }}"
-        clusterapi_should_pause_clusters: false
+- name: Unpause clusters.cluster.x-k8s.io
+  ansible.builtin.include_tasks: pause_unpause_reconciliation.yml
+  vars:
+    clusterapi_pause_clusters: "{{ clusterapi_openstack_clusters }}"
+    clusterapi_should_pause_clusters: false
 
 - name: Install Cluster API addon provider
   kubernetes.core.helm:
