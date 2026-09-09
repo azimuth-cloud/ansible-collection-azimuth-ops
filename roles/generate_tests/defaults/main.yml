@@ -327,6 +327,22 @@ generate_tests_kubernetes_apps_test_case_daskhub_services:
 #   The expected title for the DaskHub app
 generate_tests_kubernetes_apps_test_case_daskhub_service_daskhub_azimuth_expected_title: JupyterLab
 
+# Configuration for the ArgoCD test case
+#   The services that will be produced by the ArgoCD app
+generate_tests_kubernetes_apps_test_case_argocd_services:
+  - argocd-azimuth
+#   The expected title for the ArgoCD app
+generate_tests_kubernetes_apps_test_case_argocd_service_argocd_azimuth_expected_title: "Application Tiles - Argo CD"
+
+# Configuration for the BinderHub test case
+#   The services that will be produced by the BinderHub app
+generate_tests_kubernetes_apps_test_case_binderhub_services:
+  - binderhub-azimuth
+  - binderhub-azimuth-jupyterhub
+#   The expected title for the BinderHub app
+generate_tests_kubernetes_apps_test_case_binderhub_service_binderhub_azimuth_expected_title: "Binder"
+generate_tests_kubernetes_apps_test_case_binderhub_service_binderhub_azimuth_jupyterhub_expected_title: "JupyterHub"
+
 # The test cases for the suite
 generate_tests_kubernetes_apps_test_cases_default: >-
   [
