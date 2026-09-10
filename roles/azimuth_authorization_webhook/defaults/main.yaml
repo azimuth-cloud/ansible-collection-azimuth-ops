@@ -26,6 +26,7 @@ azimuth_authorization_webhook_protected_namespaces:
   - calico-apiserver
   - csi-ceph-system
   - ingress-nginx
+  - traefik
   - monitoring-system
   - node-feature-discovery
   - gpu-operator

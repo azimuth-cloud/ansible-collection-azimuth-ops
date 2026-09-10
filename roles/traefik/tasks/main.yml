@@ -1,0 +1,54 @@
+---
+- name: Install Traefik on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ traefik_chart_name }}"
+    chart_repo_url: "{{ traefik_chart_repo }}"
+    chart_version: "{{ traefik_chart_version }}"
+    release_namespace: "{{ traefik_release_namespace }}"
+    release_name: "{{ traefik_release_name }}"
+    release_values: "{{ traefik_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ traefik_wait_timeout }}"
+
+- name: Configure custom alerting rules for certificate expiry
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ traefik_alert_rules_definition | to_nice_yaml }}"
+  vars:
+    traefik_alert_rules_definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PrometheusRule
+      metadata:
+        name: traefik-alerting-rules
+        namespace: "{{ traefik_release_namespace }}"
+        labels:
+          release: kube-prometheus-stack
+      spec:
+        groups:
+          - name: traefik.rules
+            rules:
+              - alert: TraefikTLSCertificatesExpiring
+                annotations:
+                  message: |
+                    The minimum number of days until a Traefik-served certificate expires is {{ "{{" }} printf "%.0f" $value {{ "}}" }} days on {{ "{{" }} $labels.sans {{ "}}" }} which is below the critical threshold of 7.
+                  summary: A Traefik-served TLS certificate will expire very soon.
+                expr: |
+                  max by (instance, sans) ((last_over_time(traefik_tls_certs_not_after{}[5m]) - time()) / 86400) < 7
+                for: 5m
+                labels:
+                  severity: critical
+              - alert: TraefikTLSCertificatesExpiringSoon
+                annotations:
+                  message: |
+                    The minimum number of days until a Traefik-served certificate expires is {{ "{{" }} printf "%.0f" $value {{ "}}" }} days on {{ "{{" }} $labels.sans {{ "}}" }} which is less than 14 but greater than 7.
+                  summary: A Traefik-served TLS certificate will expire soon.
+                expr: |
+                  max by (instance, sans) ((last_over_time(traefik_tls_certs_not_after{}[5m]) - time()) / 86400) < 14 > 7
+                for: 5m
+                labels:
+                  severity: warning
+  register: kubectl_ingress_cert_expiry
+  changed_when: kubectl_ingress_cert_expiry.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  when: traefik_prometheus_stack_enabled
