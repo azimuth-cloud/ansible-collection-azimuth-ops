@@ -9,6 +9,12 @@ azimuth_capi_operator_chart_version: 0.24.1
 azimuth_capi_operator_azimuth_charts_version: 0.14.0
 azimuth_capi_operator_app_templates_default_version_range: "<={{ azimuth_capi_operator_azimuth_charts_version }}"
 
+azimuth_capi_operator_patch_cves_chart_namespace: "kube-system"
+azimuth_capi_operator_patch_cves_chart_repo: "https://azimuth-cloud.github.io/azimuth-charts"
+azimuth_capi_operator_patch_cves_chart_name: "patch-cves"
+azimuth_capi_operator_patch_cves_chart_version: "{{ azimuth_capi_operator_azimuth_charts_version }}"
+azimuth_capi_operator_patch_cves_chart_enabled: false
+
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
 azimuth_capi_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
@@ -477,6 +483,27 @@ azimuth_capi_operator_capi_helm_values_defaults:
     monitoring:
       blackboxExporter:
         enabled: false
+    custom: >-
+      {{-
+        {} |
+          combine(
+            {
+              "patch-cves": {
+                "kind": "HelmRelease",
+                "spec": {
+                  "namespace": azimuth_capi_operator_patch_cves_chart_namespace,
+                  "chart": {
+                    "repo": azimuth_capi_operator_patch_cves_chart_repo,
+                    "name": azimuth_capi_operator_patch_cves_chart_name,
+                    "version": azimuth_capi_operator_patch_cves_chart_version
+                  }
+                }
+              }
+            }
+            if azimuth_capi_operator_patch_cves_chart_enabled
+            else {}
+          )
+      }}
   etcd: >-
     {{-
       {

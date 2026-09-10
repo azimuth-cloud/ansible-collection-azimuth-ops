@@ -332,15 +332,15 @@ generate_tests_kubernetes_apps_test_case_daskhub_service_daskhub_azimuth_expecte
 generate_tests_kubernetes_apps_test_case_argocd_services:
   - argocd-azimuth
 #   The expected title for the ArgoCD app
-generate_tests_kubernetes_apps_test_case_argocd_service_argocd_azimuth_expected_title: "Application Tiles - Argo CD"
+generate_tests_kubernetes_apps_test_case_argocd_service_argocd_azimuth_expected_title: "Argo CD"
 
 # Configuration for the BinderHub test case
 #   The services that will be produced by the BinderHub app
+#   Currently only testing JupyterHub service as Binder service gives 403 when trying to access
+#   through Robot Framework
 generate_tests_kubernetes_apps_test_case_binderhub_services:
-  - binderhub-azimuth
   - binderhub-azimuth-jupyterhub
 #   The expected title for the BinderHub app
-generate_tests_kubernetes_apps_test_case_binderhub_service_binderhub_azimuth_expected_title: "Binder"
 generate_tests_kubernetes_apps_test_case_binderhub_service_binderhub_azimuth_jupyterhub_expected_title: "JupyterHub"
 
 # The test cases for the suite
