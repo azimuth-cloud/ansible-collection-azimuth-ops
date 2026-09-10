@@ -32,7 +32,8 @@ clusterapi_feature_gate_machine_pool: false
 clusterapi_feature_gate_cluster_topology: true
 clusterapi_feature_gate_runtime_sdk: true
 clusterapi_feature_gate_machine_set_preflight_checks: true
-clusterapi_feature_gate_kubeadm_bootstrap_format_ignition: false
+clusterapi_feature_gate_kubeadm_bootstrap_format_ignition: >-
+  {{ azimuth_capi_operator_flatcar_enabled | default(False) }}
 clusterapi_feature_gate_openstack_priority_queue: true
 clusterapi_feature_gate_openstack_autoscale_from_zero: true
 

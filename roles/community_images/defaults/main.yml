@@ -93,6 +93,27 @@ community_images_slurm:
     source_disk_format: qcow2
     container_format: bare
 
+# Flatcar Linux images - published by azimuth-images via the flatcar-update workflow
+# URL for Flatcar version data at the same azimuth-images version as Ubuntu images
+community_images_flatcar_versions_url: >-
+  https://raw.githubusercontent.com/azimuth-cloud/azimuth-images/{{ community_images_azimuth_images_version }}/vars/flatcar/versions.json
+community_images_flatcar_versions: >-
+  {{ lookup('url', community_images_flatcar_versions_url, split_lines=False) | from_json }}
+# Empty dict when no Flatcar image has been published for this azimuth-images version
+community_images_flatcar: >-
+  {%- if community_images_flatcar_versions.flatcar_image_url %}
+  {
+    "flatcar": {
+      "name": "flatcar-stable-{{ community_images_flatcar_versions.flatcar_version }}",
+      "source_url": "{{ community_images_flatcar_versions.flatcar_image_url }}",
+      "source_disk_format": "raw",
+      "container_format": "bare"
+    }
+  }
+  {%- else %}
+  {}
+  {%- endif %}
+
 # Skips verifying the Glance os_hash_value properties of existing images on the cloud
 # Insecure, but may be required if not supported by Openstack config
 community_images_insecure_skip_glance_verify: false
@@ -103,7 +124,7 @@ community_images_use_existing_trusted_community_images: true
 
 # The default community images to upload
 community_images_default: >-
-  {{ community_images_azimuth_images | combine(community_images_slurm, recursive=True) }}
+  {{ community_images_azimuth_images | combine(community_images_flatcar, recursive=True) | combine(community_images_slurm, recursive=True) }}
 
 # Any extra community images to upload as well as the defaults
 community_images_extra: {}
