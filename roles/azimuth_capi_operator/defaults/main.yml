@@ -130,6 +130,8 @@ azimuth_capi_operator_capi_helm_worker_kubeadm_verbosity: 5
 azimuth_capi_operator_capi_helm_root_volume_size:
 azimuth_capi_operator_capi_helm_control_plane_root_volume_size: "{{ azimuth_capi_operator_capi_helm_root_volume_size }}"
 azimuth_capi_operator_capi_helm_worker_root_volume_size: "{{ azimuth_capi_operator_capi_helm_root_volume_size }}"
+# Whether or not to allow volume expansion for the default Cinder CSI storage class
+capi_cluster_addons_csi_cinder_allow_volume_expansion: false
 # The volume type for the root disk
 # Leave blank for the default volume type
 azimuth_capi_operator_capi_helm_root_volume_type:
@@ -468,7 +470,10 @@ azimuth_capi_operator_capi_helm_values_defaults:
           {{-
             { "availabilityZone": azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone } |
               combine(
-                { "volumeType": azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type }
+                {
+                  "volumeType": azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type,
+                  "allowVolumeExpansion": capi_cluster_addons_csi_cinder_allow_volume_expansion
+                }
                 if azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type
                 else {}
               )
