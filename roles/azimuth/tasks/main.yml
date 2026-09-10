@@ -32,8 +32,8 @@
         tls.crt: "{{ azimuth_ingress_tls_certificate }}"
         tls.key: "{{ azimuth_ingress_tls_key }}"
   when: azimuth_ingress_tls_certificate
-  register: kubectl_wildcard_tls_cert
-  changed_when: kubectl_wildcard_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+  register: azimuth_kubectl_wildcard_tls_cert
+  changed_when: azimuth_kubectl_wildcard_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Set Azimuth OIDC client and secret facts
   when:
@@ -151,12 +151,12 @@
     cmd: >-
       kubectl get secret {{ azimuth_coral_credits_secret_name }}
       -n {{ azimuth_release_namespace }}
-  register: _coral_token_exists_reg
+  register: azimuth_coral_token_exists_reg
   failed_when: false
   changed_when: false
 
 - name: Generate Coral credits token
-  when: coral_credits_enabled and _coral_token_exists_reg.rc != 0
+  when: coral_credits_enabled and azimuth_coral_token_exists_reg.rc != 0
   no_log: true
   block:
     - name: Request token from API
@@ -169,14 +169,14 @@
         body:
           username: "admin"
           password: "{{ coral_credits_admin_password }}"
-      register: _coral_api_response
+      register: azimuth_coral_api_response
 
     - name: Generate secret with token
       ansible.builtin.command:
         cmd: >-
           kubectl create secret generic {{ azimuth_coral_credits_secret_name }}
           -n {{ azimuth_release_namespace }}
-          --from-literal {{ azimuth_coral_credits_secret_key }}={{ _coral_api_response.json.token }}
+          --from-literal {{ azimuth_coral_credits_secret_key }}={{ azimuth_coral_api_response.json.token }}
       changed_when: true
 
 - name: Install Azimuth on target Kubernetes cluster
@@ -191,27 +191,6 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ azimuth_wait_timeout }}"
-
-- name: List CaaS clusters
-  ansible.builtin.command: kubectl get clusters.caas -A -o json
-  changed_when: false
-  register: azimuth_caas_clusters_list
-  when: azimuth_clusters_enabled
-
-- name: Move clusters that are in old-style namespaces
-  ansible.builtin.include_tasks:
-    file: move-caas-cluster.yml
-  when: azimuth_clusters_enabled
-  loop: >-
-    {{
-      azimuth_caas_clusters_list.stdout |
-        from_json |
-        json_query('items') |
-        selectattr('metadata.namespace', 'search', '^caas-')
-    }}
-  loop_control:
-    loop_var: cluster
-    label: "{{ cluster.metadata.namespace }}/{{ cluster.metadata.name }}"
 
 - name: Print Azimuth URL and write it to a local env file
   vars:
