@@ -1083,7 +1083,7 @@ azimuth_capi_operator_app_templates_danswer_logo: >-
   https://raw.githubusercontent.com/danswer-ai/danswer/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png
 azimuth_capi_operator_app_templates_danswer_description: A self-service platform for Retrieval-Augmented Generation.
 # The app catalogue that danswer should be placed in
-azimuth_capi_operator_app_templates_danswer_catalogue: Unknown
+azimuth_capi_operator_app_templates_danswer_catalogue: Experimental
 # The number of versions to make available for the danswer app template
 azimuth_capi_operator_app_templates_danswer_keep_versions: 3
 # The sync frequency for the danswer app template (default 24h)
