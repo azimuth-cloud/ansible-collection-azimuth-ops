@@ -89,6 +89,7 @@
           vars:
             helm_unpack_directory: "{{ local_work_directory }}/helm/{{ helm_version }}"
             helm_bin_directory: "{{ local_work_directory }}/bin"
+            helm_configure_bash_completions: false
 
         - name: Install kubectl
           ansible.builtin.include_role:
@@ -98,3 +99,4 @@
             # NOTE(matta): This isn't a perfect match with the Kubernetes version of a
             # HA cluster, but it should be close enough
             kubectl_version: "{{ hostvars[groups.k3s.0].kubectl_version }}"
+            kubectl_configure_bash_completions: false
