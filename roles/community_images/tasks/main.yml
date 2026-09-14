@@ -50,3 +50,8 @@
 - name: Export community_images fact so it can be consumed from other roles
   ansible.builtin.set_fact:
     community_images: "{{ community_images }}"
+
+- name: Export Flatcar sysext manifest fact so it can be consumed from other roles
+  ansible.builtin.set_fact:
+    community_images_flatcar_sysext_manifest: "{{ community_images_flatcar_sysext_manifest }}"
+  when: flatcar_sysext_enabled_arches | default([])

@@ -660,28 +660,39 @@ azimuth_capi_operator_cluster_template_defaults:
           enabled: true
 
 azimuth_capi_operator_flatcar_sysext_arches: "{{ flatcar_sysext_enabled_arches | default([]) }}"
-azimuth_capi_operator_flatcar_sysext_definitions:
-  kube-1-36:
-    kubernetes_version: 1.36.2
-    sysexts:
-      x86_64:
-        kubernetes:
-          url: "https://extensions.flatcar.org/extensions/kubernetes-v1.36.2-x86-64.raw"
-          checksum: "sha512-72ab899fdb2bc9ec8f6140c95d1090898d41c2de6964564b84e3c91f070056ebd8dca109e866edcc10549833abbbef68585de8508ebbed5ffdfd8b67b2fae282"
-        containerd:
-          url: "https://extensions.flatcar.org/extensions/containerd-2.0.4-x86-64.raw"
-          checksum: "sha512-b7f1806cd01d9319786f049d471f98cad8ecae4a4c290f2517ca29b4423dd31f3e64985cad38c434a6df5f3a59a9d9fa25d8c29d4c2c69952a8550dea5e00f83"
-      aarch64:
-        kubernetes:
-          url: "https://extensions.flatcar.org/extensions/kubernetes-v1.36.2-arm64.raw"
-          checksum: "sha512-f939b2758aa5202ef4fffd9e27693de2cbaa7c9b90c438cb5869a97ecb2be7c84c36ee6d3cc5f37926626396cfa9d83c3600475d9782af5748890db93c4f3869"
-        containerd:
-          url: "https://extensions.flatcar.org/extensions/containerd-2.0.4-arm64.raw"
-          checksum: "sha512-e933fcbc5f4e2673680e2da23ad3a13a64c5fa8739393a98f32963e2f0f8dfd6216ed943ae49d8b937503eb7df2b163a3e7029e0290ea675b7fcdd55d12acccc"
-
-azimuth_capi_operator_cluster_templates_flatcar_sysext: |-
+# Generate Flatcar sysext definitions from the manifest.
+# community_images_flatcar_sysext_manifest is fetched in roles/community_images
+azimuth_capi_operator_flatcar_sysext_definitions: |-
   {
-    {% for key, values in azimuth_capi_operator_flatcar_sysext_definitions.items() %}
+  {% if azimuth_capi_operator_flatcar_sysext_arches %}
+  {% for key, entry in community_images_flatcar_sysext_manifest.items() %}
+  {% set series_key = key | regex_replace('^kubernetes-', 'kube-') | regex_replace('-flatcar-sysext$', '') %}
+  "{{ series_key }}": {
+    "kubernetes_version": "{{ entry.kubernetes_version | regex_replace('^v', '') }}",
+    "sysexts": {
+      {% for arch in azimuth_capi_operator_flatcar_sysext_arches %}
+      {% if arch in entry %}
+      "{{ arch }}": {
+        "kubernetes": {
+          "url": "{{ entry[arch].sysexts.kubernetes.url }}",
+          "checksum": "{{ entry[arch].sysexts.kubernetes.checksum_sha512 }}"
+        },
+        "containerd": {
+          "url": "{{ entry[arch].sysexts.containerd.url }}",
+          "checksum": "{{ entry[arch].sysexts.containerd.checksum_sha512 }}"
+        }
+      },
+      {% endif %}
+      {% endfor %}
+    }
+  },
+  {% endfor %}
+  {% endif %}
+  }
+
+azimuth_capi_operator_cluster_templates_flatcar: |-
+  {
+    {% for key, values in (azimuth_capi_operator_flatcar_sysext_definitions | from_yaml).items() %}
     {% for arch in values.sysexts.keys() %}
     {% if arch in azimuth_capi_operator_flatcar_sysext_arches %}
     {% set flatcar_image = "flatcar_" ~ arch %}

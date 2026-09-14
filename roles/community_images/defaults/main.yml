@@ -48,6 +48,13 @@ community_images_azimuth_images_manifest_url: >-
 community_images_azimuth_images_manifest: >-
   {{ lookup('url', community_images_azimuth_images_manifest_url, split_lines=False) | from_json }}
 
+# The azimuth-images Flatcar sysext manifest URL (published alongside manifest.json)
+community_images_flatcar_sysext_manifest_url: >-
+  {{ community_images_azimuth_images_repo }}/releases/download/{{ community_images_azimuth_images_version }}/flatcar-sysext-manifest.json
+# The azimuth-images Flatcar sysext manifest data
+community_images_flatcar_sysext_manifest: >-
+  {{ lookup('url', community_images_flatcar_sysext_manifest_url, split_lines=False) | from_json }}
+
 # Generate community image specs for the images in the manifest
 # We don't use all the images
 community_images_azimuth_images: |-
@@ -121,23 +128,28 @@ community_images_extra: {}
 #   properties:
 #   - hw_architecture=x86_64
 
-community_images_flatcar_sysext_version: 4593.2.5
-azimuth_capi_operator_flatcar_sysext_arches: "{{ flatcar_sysext_enabled_arches | default([]) }}"
-# yamllint disable rule:line-length
+# Generate a community image spec for the Flatcar OS image itself, for each
+# enabled architecture, from the Flatcar sysext manifest
 community_images_flatcar: |-
-  {% set arch_map = {"x86_64": "amd64", "aarch64": "arm64"} %}
-  {% for arch in azimuth_capi_operator_flatcar_sysext_arches %}
+  {% if flatcar_sysext_enabled_arches | default([]) %}
+  {% set flatcar_image = community_images_flatcar_sysext_manifest.values() | list | first %}
+  {% for arch in flatcar_sysext_enabled_arches %}
+  {% if arch in flatcar_image %}
   flatcar_{{ arch }}:
-    name: flatcar_sysext_{{ community_images_flatcar_version }}_{{ arch }}
-    source_url: https://stable.release.flatcar-linux.net/{{ arch_map[arch] }}-usr/{{ community_images_flatcar_sysext_version }}/flatcar_production_openstack_image.img.bz2
+    name: "{{ flatcar_image[arch].name }}"
+    source_url: "{{ flatcar_image[arch].url }}"
+    checksum: "{{ flatcar_image[arch].checksum }}"
+    checksum_sha512: "{{ flatcar_image[arch].checksum_sha512 }}"
     source_disk_format: qcow2
     container_format: bare
     properties:
       - hw_architecture={{ arch }}
       - os_distro=flatcar
-      - os_version={{ community_images_flatcar_version }}
+  {% endif %}
   {% endfor %}
-# yamllint enable rule:line-length
+  {% else %}
+  {}
+  {% endif %}
 
 # The full set of community images to upload to the Azimuth project
 community_images: >-
