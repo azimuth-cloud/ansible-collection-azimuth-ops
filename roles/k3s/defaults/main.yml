@@ -15,3 +15,8 @@ k3s_traefik_enabled: false
 
 # Variable to disable filesystem setup (for running on existing systems)
 k3s_configure_filesystem: true
+
+# Additional APT packages to install on the seed host
+k3s_admin_packages:
+  - jq
+  - yq
