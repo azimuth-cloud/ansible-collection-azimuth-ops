@@ -16,6 +16,11 @@
   retries: 60
   delay: 10
 
+- name: Sleep for 5 seconds to avoid Harbor race condition
+  ansible.builtin.wait_for:
+    timeout: 5
+  delegate_to: localhost
+
 - name: Create proxy cache projects
   ansible.builtin.include_tasks: proxy_cache_project.yml
   loop: "{{ harbor_proxy_cache_projects.values() }}"
