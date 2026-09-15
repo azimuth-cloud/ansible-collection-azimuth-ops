@@ -4,8 +4,7 @@
   block:
     - name: Install or upgrade cluster
       kubernetes.core.helm:
-        chart_ref: "{{ capi_cluster_chart_name }}"
-        chart_repo_url: "{{ capi_cluster_chart_repo }}"
+        chart_ref: "{{ capi_cluster_chart_ref }}"
         chart_version: "{{ capi_cluster_chart_version }}"
         release_namespace: "{{ capi_cluster_release_namespace }}"
         release_name: "{{ capi_cluster_release_name }}"
