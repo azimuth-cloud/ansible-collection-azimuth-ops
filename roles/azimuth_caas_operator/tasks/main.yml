@@ -27,19 +27,6 @@
             azimuth_caas_operator_cluster_info.metadata.name
           }}
 
-- name: Install Azimuth CaaS operator on target Kubernetes cluster
-  kubernetes.core.helm:
-    chart_ref: "{{ azimuth_caas_operator_chart_name }}"
-    chart_repo_url: "{{ azimuth_caas_operator_chart_repo }}"
-    chart_version: "{{ azimuth_caas_operator_chart_version }}"
-    release_namespace: "{{ azimuth_caas_operator_release_namespace }}"
-    release_name: "{{ azimuth_caas_operator_release_name }}"
-    release_values: "{{ azimuth_caas_operator_release_values }}"
-    atomic: true
-    create_namespace: true
-    wait: true
-    wait_timeout: "{{ azimuth_caas_operator_wait_timeout }}"
-
 - name: Install Azimuth CaaS cluster templates
   ansible.builtin.command: kubectl apply -f -
   args:
