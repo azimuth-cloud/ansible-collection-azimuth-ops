@@ -98,6 +98,8 @@ azimuth_caas_stackhpc_slurm_appliance_enabled: "{{ azimuth_clusters_enabled }}"
 azimuth_caas_stackhpc_slurm_appliance_git_url: https://github.com/stackhpc/ansible-slurm-appliance.git
 # The git version for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_git_version: v2.24.0
+# Catalogue the app is placed within
+azimuth_caas_stackhpc_slurm_appliance_catalogue: Platforms
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
@@ -186,6 +188,7 @@ azimuth_caas_stackhpc_slurm_appliance_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_regex }}"
+  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_caas_stackhpc_slurm_appliance_catalogue }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_slurm_appliance_max_lifetime_hours | string }}"
 # The template definition for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_template:
@@ -212,6 +215,8 @@ azimuth_caas_workstation_git_url: >-
   }}
 # The git version for the workstation
 azimuth_caas_workstation_default_git_version: 0.10.1
+# Catalogue the app is placed within
+azimuth_caas_workstation_catalogue: Platforms
 azimuth_caas_workstation_git_version: >-
   {{
     azimuth_caas_stackhpc_workstation_git_version |
@@ -313,6 +318,7 @@ azimuth_caas_workstation_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_workstation_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_workstation_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_workstation_tenancy_deny_regex }}"
+  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_caas_workstation_catalogue }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_workstation_max_lifetime_hours | string }}"
 # The template definition for the workstation appliance
 azimuth_caas_workstation_template:
@@ -395,6 +401,7 @@ azimuth_caas_workstation_ssh_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_workstation_ssh_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_workstation_ssh_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_workstation_ssh_tenancy_deny_regex }}"
+  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_caas_workstation_catalogue }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_workstation_ssh_max_lifetime_hours | string }}"
 # The template definition for the SSH-enabled workstation appliance
 azimuth_caas_workstation_ssh_template:
@@ -418,6 +425,8 @@ azimuth_caas_repo2docker_git_url: >-
   }}
 # The git version for the repo2docker appliance
 azimuth_caas_repo2docker_default_git_version: 0.8.1
+# Catalogue the app is placed within
+azimuth_caas_repo2docker_catalogue: Platforms
 azimuth_caas_repo2docker_git_version: >-
   {{
     azimuth_caas_stackhpc_repo2docker_git_version |
@@ -519,6 +528,7 @@ azimuth_caas_repo2docker_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_repo2docker_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_repo2docker_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_repo2docker_tenancy_deny_regex }}"
+  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_caas_repo2docker_catalogue }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_repo2docker_max_lifetime_hours | string }}"
 # The template definition for the repo2docker appliance
 azimuth_caas_repo2docker_template:
@@ -542,6 +552,8 @@ azimuth_caas_rstudio_git_url: >-
   }}
 # The git version for the R-Studio appliance
 azimuth_caas_rstudio_default_git_version: 0.7.1
+# Catalogue the app is placed within
+azimuth_caas_rstudio_catalogue: Platforms
 azimuth_caas_rstudio_git_version: >-
   {{
     azimuth_caas_stackhpc_rstudio_git_version |
@@ -643,6 +655,7 @@ azimuth_caas_rstudio_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_caas_rstudio_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_caas_rstudio_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_rstudio_tenancy_deny_regex }}"
+  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_caas_rstudio_catalogue }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_rstudio_max_lifetime_hours | string }}"
 # The template definition for the R-Studio appliance
 azimuth_caas_rstudio_template:
