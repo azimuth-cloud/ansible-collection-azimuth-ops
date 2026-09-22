@@ -660,7 +660,12 @@ azimuth_capi_operator_cluster_template_defaults:
           enabled: false
         traefik:
           enabled: true
-
+# Catalogue that the templates should be placed in
+azimuth_capi_operator_cluster_template_tenancy_catalogue_name: Platforms
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_cluster_template_tenancy_catalogue_precedence: 100
+# If the catalogue is expanded or collapsed by default
+azimuth_capi_operator_cluster_template_tenancy_catalogue_shown: true
 # Tenancy-based access controls to apply to Kubernetes cluster templates
 # List of allowed tenancy IDs
 azimuth_capi_operator_cluster_template_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
@@ -679,6 +684,9 @@ azimuth_capi_operator_cluster_template_annotations:
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_deny_regex }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_capi_operator_cluster_max_lifetime_hours | string }}"
+  acl.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_cluster_template_tenancy_catalogue_name }}"
+  acl.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_cluster_template_tenancy_catalogue_precedence | string }}"
+  acl.azimuth.stackhpc.com/catalogue-shown: "{{ azimuth_capi_operator_cluster_template_tenancy_catalogue_shown | string }}"
 # By default, make a template for each Kubernetes release for which we have an image
 azimuth_capi_operator_cluster_templates_default: |-
   {
@@ -733,7 +741,11 @@ azimuth_capi_operator_app_templates_jupyterhub_label:
 azimuth_capi_operator_app_templates_jupyterhub_logo:
 azimuth_capi_operator_app_templates_jupyterhub_description:
 # The app catalogue that JupyterHub should be placed in
-azimuth_capi_operator_app_templates_jupyterhub_catalogue: Platforms
+azimuth_capi_operator_app_templates_jupyterhub_catalogue_name: Platforms
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_jupyterhub_catalogue_precedence: 100
+# If the catalogue is expanded or collapsed by default
+azimuth_capi_operator_app_templates_jupyterhub_catalogue_shown: true
 # The number of versions to make available for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_keep_versions: 3
 # The sync frequency for the JupyterHub app template (default 24h)
@@ -755,7 +767,9 @@ azimuth_capi_operator_app_templates_jupyterhub_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_regex }}"
-  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_capi_operator_app_templates_jupyterhub_catalogue }}"
+  acl.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_jupyterhub_catalogue_name }}"
+  acl.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_jupyterhub_catalogue_precedence | string }}"
+  acl.azimuth.stackhpc.com/catalogue-shown: "{{ azimuth_capi_operator_app_templates_jupyterhub_catalogue_shown | string }}"
 # The spec for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_jupyterhub_annotations }}"
@@ -801,7 +815,11 @@ azimuth_capi_operator_app_templates_daskhub_label:
 azimuth_capi_operator_app_templates_daskhub_logo:
 azimuth_capi_operator_app_templates_daskhub_description:
 # The app catalogue that DaskHub should be placed in
-azimuth_capi_operator_app_templates_daskhub_catalogue: Platforms
+azimuth_capi_operator_app_templates_daskhub_catalogue_name: Platforms
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_daskhub_catalogue_precedence: 100
+# If the catalogue is expanded or collapsed by default
+azimuth_capi_operator_app_templates_daskhub_catalogue_shown: true
 # The number of versions to make available for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_keep_versions: 3
 # The sync frequency for the DaskHub app template (default 24h)
@@ -823,7 +841,9 @@ azimuth_capi_operator_app_templates_daskhub_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_deny_regex }}"
-  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_capi_operator_app_templates_daskhub_catalogue }}"
+  acl.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_daskhub_catalogue_name }}"
+  acl.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_daskhub_catalogue_precedence | string }}"
+  acl.azimuth.stackhpc.com/catalogue-shown: "{{ azimuth_capi_operator_app_templates_daskhub_catalogue_shown | string }}"
 # The spec for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_daskhub_annotations }}"
@@ -869,7 +889,11 @@ azimuth_capi_operator_app_templates_kubeflow_label:
 azimuth_capi_operator_app_templates_kubeflow_logo:
 azimuth_capi_operator_app_templates_kubeflow_description:
 # The app catalogue that kubeflow should be placed in
-azimuth_capi_operator_app_templates_kubeflow_catalogue: GPU
+azimuth_capi_operator_app_templates_kubeflow_catalogue_name: GPU
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_kubeflow_catalogue_precedence: 110
+# If the catalogue is expanded or collapsed by default
+azimuth_capi_operator_app_templates_kubeflow_catalogue_shown: true
 # The number of versions to make available for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_keep_versions: 3
 # The sync frequency for the kubeflow app template (default 24h)
@@ -891,7 +915,9 @@ azimuth_capi_operator_app_templates_kubeflow_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_regex }}"
-  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_capi_operator_app_templates_kubeflow_catalogue }}"
+  acl.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_kubeflow_catalogue_name }}"
+  acl.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_kubeflow_catalogue_precedence | string }}"
+  acl.azimuth.stackhpc.com/catalogue-shown: "{{ azimuth_capi_operator_app_templates_kubeflow_catalogue_shown | string }}"
 # The spec for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_kubeflow_annotations }}"
@@ -937,7 +963,11 @@ azimuth_capi_operator_app_templates_binderhub_label:
 azimuth_capi_operator_app_templates_binderhub_logo:
 azimuth_capi_operator_app_templates_binderhub_description:
 # The app catalogue that BinderHub should be placed in
-azimuth_capi_operator_app_templates_binderhub_catalogue: Platforms
+azimuth_capi_operator_app_templates_binderhub_catalogue_name: Platforms
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_binderhub_catalogue_precedence: 100
+# If the catalogue is expanded or collapsed by default
+azimuth_capi_operator_app_templates_binderhub_catalogue_shown: true
 # The number of versions to make available for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_keep_versions: 3
 # The sync frequency for the binderhub app template (default 24h)
@@ -962,7 +992,9 @@ azimuth_capi_operator_app_templates_binderhub_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_deny_regex }}"
-  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_capi_operator_app_templates_binderhub_catalogue }}"
+  acl.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_binderhub_catalogue_name }}"
+  acl.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_binderhub_catalogue_precedence | string }}"
+  acl.azimuth.stackhpc.com/catalogue-shown: "{{ azimuth_capi_operator_app_templates_binderhub_catalogue_shown | string }}"
 # The spec for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_binderhub_annotations }}"
@@ -1010,7 +1042,11 @@ azimuth_capi_operator_app_templates_huggingface_llm_description: |
   A generative AI chatbot service backed by a HuggingFace large language model
   (requires a GPU node group on the target cluster).
 # The app catalogue that huggingface_llm should be placed in
-azimuth_capi_operator_app_templates_huggingface_catalogue: GPU
+azimuth_capi_operator_app_templates_huggingface_catalogue_name: GPU
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_huggingface_catalogue_precedence: 110
+# If the catalogue is expanded or collapsed by default
+azimuth_capi_operator_app_templates_huggingface_catalogue_shown: true
 # The number of versions to make available for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_keep_versions: 3
 # The sync frequency for the huggingface_llm app template (default 24h)
@@ -1032,7 +1068,9 @@ azimuth_capi_operator_app_templates_huggingface_llm_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_regex }}"
-  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_capi_operator_app_templates_huggingface_catalogue }}"
+  acl.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_huggingface_catalogue_name }}"
+  acl.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_huggingface_catalogue_precedence | string }}"
+  acl.azimuth.stackhpc.com/catalogue-shown: "{{ azimuth_capi_operator_app_templates_huggingface_catalogue_shown | string }}"
 # The spec for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_huggingface_llm_annotations }}"
@@ -1083,7 +1121,11 @@ azimuth_capi_operator_app_templates_danswer_logo: >-
   https://raw.githubusercontent.com/danswer-ai/danswer/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png
 azimuth_capi_operator_app_templates_danswer_description: A self-service platform for Retrieval-Augmented Generation.
 # The app catalogue that danswer should be placed in
-azimuth_capi_operator_app_templates_danswer_catalogue: Experimental
+azimuth_capi_operator_app_templates_danswer_catalogue_name: Experimental
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_danswer_catalogue_precedence: 150
+# If the catalogue is expanded or collapsed by default
+azimuth_capi_operator_app_templates_danswer_shown: false
 # The number of versions to make available for the danswer app template
 azimuth_capi_operator_app_templates_danswer_keep_versions: 3
 # The sync frequency for the danswer app template (default 24h)
@@ -1126,7 +1168,9 @@ azimuth_capi_operator_app_templates_danswer_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_deny_regex }}"
-  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_capi_operator_app_templates_danswer_catalogue }}"
+  acl.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_danswer_catalogue_name }}"
+  acl.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_danswer_catalogue_precedence | string }}"
+  acl.azimuth.stackhpc.com/catalogue-shown: "{{ azimuth_capi_operator_app_templates_danswer_catalogue_shown | string }}"
 # The spec for the danswer app template
 azimuth_capi_operator_app_templates_danswer_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_danswer_annotations }}"
@@ -1177,7 +1221,11 @@ azimuth_capi_operator_app_templates_ragflow_label: RAGFlow
 azimuth_capi_operator_app_templates_ragflow_logo:
 azimuth_capi_operator_app_templates_ragflow_description:
 # The app catalogue that ragflow should be placed in
-azimuth_capi_operator_app_templates_ragflow_catalogue: Experimental
+azimuth_capi_operator_app_templates_ragflow_catalogue_name: Experimental
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_ragflow_catalogue_precedence: 150
+# If the catalogue is expanded or collapsed by default
+azimuth_capi_operator_app_templates_ragflow_catalogue_shown: true
 # The number of versions to make available for the ragflow app template
 azimuth_capi_operator_app_templates_ragflow_keep_versions: 3
 # The sync frequency for the ragflow app template (default 24h)
@@ -1199,7 +1247,9 @@ azimuth_capi_operator_app_templates_ragflow_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_deny_regex }}"
-  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_capi_operator_app_templates_ragflow_catalogue }}"
+  acl.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_ragflow_catalogue_name }}"
+  acl.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_ragflow_catalogue_precedence | string }}"
+  acl.azimuth.stackhpc.com/catalogue-shown: "{{ azimuth_capi_operator_app_templates_ragflow_catalogue_shown | string }}"
 # The spec for the ragflow app template
 azimuth_capi_operator_app_templates_ragflow_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_ragflow_annotations }}"
@@ -1250,7 +1300,11 @@ azimuth_capi_operator_app_templates_argocd_label:
 azimuth_capi_operator_app_templates_argocd_logo:
 azimuth_capi_operator_app_templates_argocd_description:
 # The app catalogue that agocd should be placed in
-azimuth_capi_operator_app_templates_argocd_catalogue: Platforms
+azimuth_capi_operator_app_templates_argocd_catalogue_name: Platforms
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_argocd_catalogue_precedence: 100
+# If the catalogue is expanded or collapsed by default
+azimuth_capi_operator_app_templates_argocd_catalogue_shown: true
 # The number of versions to make available for the argocd app template
 azimuth_capi_operator_app_templates_argocd_keep_versions: 3
 # The sync frequency for the argocd app template (default 24h)
@@ -1272,7 +1326,9 @@ azimuth_capi_operator_app_templates_argocd_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_deny_regex }}"
-  acl.azimuth.stackhpc.com/catalogue: "{{ azimuth_capi_operator_app_templates_argocd_catalogue }}"
+  acl.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_argocd_catalogue_name }}"
+  acl.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_argocd_catalogue_precedence | string }}"
+  acl.azimuth.stackhpc.com/catalogue-shown: "{{ azimuth_capi_operator_app_templates_argocd_catalogue_shown | string }}"
 # The spec for the argocd app template
 azimuth_capi_operator_app_templates_argocd_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_argocd_annotations }}"
