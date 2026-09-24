@@ -89,6 +89,13 @@ Fetch Nodes {{ test_case_name }}
     Get Nodes For Kubernetes Cluster  ${cluster.id}
     ...  output_path={{ test_case_name }}-nodes.json
 
+{% if test_case.run_apps_tests %}
+{% for app_test_case in generate_tests_kubernetes_apps_test_cases %}
+{% include (app_test_case.template | default(generate_tests_kubernetes_apps_test_case_template, True)) %}
+
+{% endfor %}
+{% endif %}
+
 Fetch Pod Events {{ test_case_name }}
     [Tags]  {{ test_case_name }}  pod-events
     ${cluster} =  Find Kubernetes Cluster By Name  ${kubernetes.cluster_names['{{ test_case_name }}']}
