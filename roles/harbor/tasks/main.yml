@@ -73,6 +73,29 @@
   retries: 60
   delay: 10
 
+- name: Create proxy user
+  # checkov:skip=CKV2_ANSIBLE_1: TLS is optional
+  # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
+  ansible.builtin.uri:
+    url: "{{ harbor_external_url }}/api/v2.0/users"
+    method: POST
+    user: admin
+    password: "{{ harbor_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    headers:
+      X-Is-Resource-Name: true
+    body:
+      username: proxy
+      password: "{{ harbor_proxy_password }}"
+      realname: "Docker proxy cache user"
+      comment: "Docker proxy cache user"
+      email: "notreal@email.com"
+    ca_path: "{{ harbor_ca_path }}"
+    validate_certs: "{{ harbor_validate_certs }}"
+    status_code:
+      - 201
+
 - name: Create proxy cache projects
   ansible.builtin.include_tasks: proxy_cache_project.yml
   loop: "{{ harbor_proxy_cache_projects.values() }}"
