@@ -71,13 +71,6 @@
       ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.ingress_nginx
         tasks_from: patch_values.yml
-    # Workaround for new services on existing Clusters not getting added
-    # to Platforms after upgrades
-    - name: Restart CAPI Operator
-      ansible.builtin.include_role:
-        name: azimuth_cloud.azimuth_ops.azimuth_capi_operator
-        tasks_from: restart.yml
-      when: azimuth_kubernetes_enabled
 
   environment:
     KUBECONFIG: "{{ kubeconfig_path | default('') }}"
