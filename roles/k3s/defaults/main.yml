@@ -1,7 +1,7 @@
 ---
 
 k3s_repo: https://github.com/k3s-io/k3s
-k3s_version: v1.35.8+k3s1
+k3s_version: v1.37.0+k3s1
 k3s_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
 k3s_binary_name: "{{ 'k3s' if ansible_architecture == 'x86_64' else 'k3s-' ~ k3s_architecture }}"
 k3s_binary_url: "{{ k3s_repo }}/releases/download/{{ k3s_version }}/{{ k3s_binary_name }}"
