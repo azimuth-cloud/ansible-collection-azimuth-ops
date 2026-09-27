@@ -12,8 +12,18 @@
 - name: Install basic auth secret for admin dashboard ingress
   ansible.builtin.command: kubectl apply -f -
   args:
-    stdin: "{{ admin_dashboard_ingress_basic_auth_secret_definition | to_nice_yaml }}"
+    stdin: "{{ admin_dashboard_ingress_basic_auth_secret_definition | to_nice_yaml }}"    
+  loop: "{{ admin_dashboard_ingresses | map(attribute='namespace') | unique }}"
   vars:
+    admin_dashboard_ingress_basic_auth_users: >-
+      {{
+        [ 
+          admin_dashboard_ingress_basic_auth_username, 
+          admin_dashboard_ingress_basic_auth_password | password_hash('bcrypt')
+          ] 
+          | join(":")
+          | b64encode
+        }}
     admin_dashboard_ingress_basic_auth_secret_definition:
       apiVersion: v1
       kind: Secret
@@ -21,18 +31,29 @@
         name: "{{ admin_dashboard_ingress_basic_auth_secret_name }}"
         namespace: "{{ item }}"
       type: Opaque
-      stringData: >-
-        {{-
-          {
-            admin_dashboard_ingress_basic_auth_username: (
-              admin_dashboard_ingress_basic_auth_password |
-                password_hash('bcrypt')
-            )
-          }
-        }}
-  loop: "{{ admin_dashboard_ingresses | map(attribute='namespace') | unique }}"
+      data:
+        users: "{{ admin_dashboard_ingress_basic_auth_users }}"
   register: kubectl_basic_auth_secret
   changed_when: kubectl_basic_auth_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+# Install the basic auth Traefik middleware once per namespace
+- name: Install basic auth Traefik middleware for admin dashboard ingress
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ admin_dashboard_ingress_traefik_middleware_definition | to_nice_yaml }}"
+  vars:
+    admin_dashboard_ingress_traefik_middleware_definition:
+      apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      metadata:
+        name: "{{ admin_dashboard_ingress_basic_auth_middleware_name }}"
+        namespace: "{{ item }}"
+      spec:
+        basicAuth:
+          secret: "{{ admin_dashboard_ingress_basic_auth_secret_name }}"
+  loop: "{{ admin_dashboard_ingresses | map(attribute='namespace') | unique }}"
+  register: kubectl_traefik_middleware
+  changed_when: kubectl_traefik_middleware.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 # If there is a wildcard certificate, install it once per namespace
 - name: Create TLS secret for dashboard
