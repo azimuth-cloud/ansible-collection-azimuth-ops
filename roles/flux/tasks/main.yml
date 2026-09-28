@@ -77,6 +77,9 @@
         FLUX_SECRET_TAG: "{{ flux_secret_tag }}"
         ADMIN_DASHBOARD_SCHEME: "{{ (ingress_tls_enabled | default(True)) | ternary('https', 'http') }}"
         TLS_ENABLED: "{{ (ingress_tls_enabled | default(True)) | ternary('true', 'false') }}"
+        CURRENT_CLOUD_NAME: "{{ azimuth_current_cloud_name }}"
+        CURRENT_CLOUD_LABEL: "{{ azimuth_current_cloud_name | regex_replace('[^a-z0-9]+', ' ') | capitalize }}"
+        AZIMUTH_SECRET_KEY: "{{ azimuth_secret_key }}"
 
 - name: Deploy FluxInstance
   kubernetes.core.k8s:
