@@ -179,19 +179,6 @@
           --from-literal {{ azimuth_coral_credits_secret_key }}={{ _coral_api_response.json.token }}
       changed_when: true
 
-- name: Install Azimuth on target Kubernetes cluster
-  kubernetes.core.helm:
-    chart_ref: "{{ azimuth_chart_name }}"
-    chart_repo_url: "{{ azimuth_chart_repo }}"
-    chart_version: "{{ azimuth_chart_version }}"
-    release_namespace: "{{ azimuth_release_namespace }}"
-    release_name: "{{ azimuth_release_name }}"
-    release_values: "{{ azimuth_release_values }}"
-    atomic: true
-    create_namespace: true
-    wait: true
-    wait_timeout: "{{ azimuth_wait_timeout }}"
-
 - name: List CaaS clusters
   ansible.builtin.command: kubectl get clusters.caas -A -o json
   changed_when: false
