@@ -48,6 +48,13 @@ community_images_azimuth_images_manifest_url: >-
 community_images_azimuth_images_manifest: >-
   {{ lookup('url', community_images_azimuth_images_manifest_url, split_lines=False) | from_json }}
 
+# The azimuth-images Flatcar sysext manifest URL (published alongside manifest.json)
+community_images_flatcar_sysext_manifest_url: >-
+  {{ community_images_azimuth_images_repo }}/releases/download/{{ community_images_azimuth_images_version }}/flatcar-sysext-manifest.json
+# The azimuth-images Flatcar sysext manifest data
+community_images_flatcar_sysext_manifest: >-
+  {{ lookup('url', community_images_flatcar_sysext_manifest_url, split_lines=False) | from_json }}
+
 # Generate community image specs for the images in the manifest
 # We don't use all the images
 community_images_azimuth_images: |-
@@ -121,9 +128,36 @@ community_images_extra: {}
 #   properties:
 #   - hw_architecture=x86_64
 
+# Generate a community image spec for the Flatcar OS image itself, for each
+# enabled architecture, from the Flatcar sysext manifest
+community_images_flatcar: |-
+  {% if flatcar_sysext_enabled_arches | default([]) %}
+  {% set flatcar_image = community_images_flatcar_sysext_manifest.values() | list | first %}
+  {% for arch in flatcar_sysext_enabled_arches %}
+  {% if arch in flatcar_image %}
+  flatcar_{{ arch }}:
+    name: "{{ flatcar_image[arch].name }}"
+    source_url: "{{ flatcar_image[arch].url }}"
+    checksum: "{{ flatcar_image[arch].checksum }}"
+    checksum_sha512: "{{ flatcar_image[arch].checksum_sha512 }}"
+    source_disk_format: qcow2
+    container_format: bare
+    properties:
+      - hw_architecture={{ arch }}
+      - os_distro=flatcar
+  {% endif %}
+  {% endfor %}
+  {% else %}
+  {}
+  {% endif %}
+
 # The full set of community images to upload to the Azimuth project
 community_images: >-
-  {{ community_images_default | combine(community_images_extra, recursive=True) }}
+  {{
+    community_images_default |
+    combine(community_images_flatcar | from_yaml, recursive=True) |
+    combine(community_images_extra, recursive=True)
+  }}
 
 # The default visibility for images
 # Can be overridden on a per-image basis if required
