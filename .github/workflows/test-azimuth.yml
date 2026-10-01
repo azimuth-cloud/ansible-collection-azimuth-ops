@@ -28,6 +28,7 @@ jobs:
           azimuth-ops-version: ${{ github.event.pull_request.head.sha }}
           target-cloud: ${{ vars.TARGET_CLOUD }}
           install-mode: ${{ inputs.install-mode }}
+          ref: PLAT-1106-auth-registry
         # GitHub terminates jobs after 6 hours
         # We don't want jobs to acquire the lock then get timed out before they can finish
         # So wait a maximum of 3 hours to acquire the lock, leaving 3 hours for other tasks in the job
