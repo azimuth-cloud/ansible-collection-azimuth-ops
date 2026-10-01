@@ -256,6 +256,7 @@ generate_tests_kubernetes_test_cases_default: >-
       "loki_namespace": "{{ generate_tests_kubernetes_test_case_loki_namespace }}",
       "loki_service": "{{ generate_tests_kubernetes_test_case_loki_service }}",
       "loki_port": {{ generate_tests_kubernetes_test_case_loki_port }},
+      "run_apps_tests": {{ generate_tests_kubernetes_apps_suite_enabled and tpl_is_latest }},
     },
     {% endif %}
     {% endfor %}
