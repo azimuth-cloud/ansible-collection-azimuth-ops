@@ -658,75 +658,10 @@ azimuth_capi_operator_cluster_template_defaults:
           enabled: false
         traefik:
           enabled: true
-
 # Catalogue that the templates should be placed in
 azimuth_capi_operator_cluster_template_tenancy_catalogue_name: General
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_cluster_template_tenancy_catalogue_precedence: 100
-
-azimuth_capi_operator_flatcar_sysext_arches: "{{ flatcar_sysext_enabled_arches | default([]) }}"
-# Generate Flatcar sysext definitions from the manifest.
-# community_images_flatcar_sysext_manifest is fetched in roles/community_images
-azimuth_capi_operator_flatcar_sysext_definitions: |-
-  {
-  {% if azimuth_capi_operator_flatcar_sysext_arches %}
-  {% for key, entry in community_images_flatcar_sysext_manifest.items() %}
-  {% set series_key = key | regex_replace('^kubernetes-', 'kube-') | regex_replace('-flatcar-sysext$', '') %}
-  "{{ series_key }}": {
-    "kubernetes_version": "{{ entry.kubernetes_version | regex_replace('^v', '') }}",
-    "sysexts": {
-      {% for arch in azimuth_capi_operator_flatcar_sysext_arches %}
-      {% if arch in entry %}
-      "{{ arch }}": {
-        "kubernetes": {
-          "url": "{{ entry[arch].sysexts.kubernetes.url }}",
-          "checksum": "{{ entry[arch].sysexts.kubernetes.checksum_sha512 }}"
-        },
-        "containerd": {
-          "url": "{{ entry[arch].sysexts.containerd.url }}",
-          "checksum": "{{ entry[arch].sysexts.containerd.checksum_sha512 }}"
-        }
-      },
-      {% endif %}
-      {% endfor %}
-    }
-  },
-  {% endfor %}
-  {% endif %}
-  }
-
-azimuth_capi_operator_cluster_templates_flatcar: |-
-  {
-    {% for key, values in (azimuth_capi_operator_flatcar_sysext_definitions | from_yaml).items() %}
-    {% for arch in values.sysexts.keys() %}
-    {% if arch in azimuth_capi_operator_flatcar_sysext_arches %}
-    {% set flatcar_image = "flatcar_" ~ arch %}
-    "flatcar-{{ key }}-{{ arch | replace('_', '-') }}": {
-      "annotations": {{ azimuth_capi_operator_cluster_template_annotations }},
-      "spec": {{
-        azimuth_capi_operator_cluster_template_defaults |
-          combine(
-            {
-              "label": "v" ~ values.kubernetes_version ~ " on flatcar " ~ arch,
-              "description": "Kubernetes " ~ values.kubernetes_version ~ " on flatcar container linux" ~ arch ,
-              "values": {
-                "kubernetesVersion": values.kubernetes_version,
-                "machineImageId": community_images_image_ids[flatcar_image],
-                "osDistro": "flatcar-sysext",
-                "flatcar": {
-                  "sysexts": values.sysexts[arch]
-                },
-              },
-            },
-            recursive = True
-          )
-      }},
-    },
-      {% endif %}
-      {% endfor %}
-      {% endfor %}
-    }
-
 # Tenancy-based access controls to apply to Kubernetes cluster templates
 # List of allowed tenancy IDs
 azimuth_capi_operator_cluster_template_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
@@ -774,13 +709,58 @@ azimuth_capi_operator_cluster_templates_default: |-
     {% endif %}
     {% endfor %}
   }
+# The architectures to make Flatcar templates for
+azimuth_capi_operator_flatcar_sysext_arches: "{{ flatcar_sysext_enabled_arches | default([]) }}"
+# Make a Flatcar template for each Kubernetes release and architecture in the Flatcar sysext manifest
+azimuth_capi_operator_cluster_templates_flatcar: |-
+  {
+    {% if azimuth_capi_operator_flatcar_sysext_arches %}
+    {% for entry in community_images_flatcar_sysext_manifest.values() %}
+    {% set kube_vn_no_prefix = entry.kubernetes_version | regex_replace('^v', '') %}
+    {% set kube_vn_dash = kube_vn_no_prefix | replace('.', '-') %}
+    {% for arch in azimuth_capi_operator_flatcar_sysext_arches if arch in entry %}
+    {% set sysexts = entry[arch].sysexts %}
+    "flatcar-kube-{{ kube_vn_dash }}-{{ arch | replace('_', '-') }}": {
+      "annotations": {{ azimuth_capi_operator_cluster_template_annotations }},
+      "spec": {{
+        azimuth_capi_operator_cluster_template_defaults |
+          combine(
+            {
+              "label": "v" ~ kube_vn_no_prefix ~ " on Flatcar " ~ arch,
+              "description": "Kubernetes " ~ kube_vn_no_prefix ~ " with HA control plane on Flatcar Container Linux " ~ arch ~ ".",
+              "values": {
+                "kubernetesVersion": kube_vn_no_prefix,
+                "machineImageId": community_images_image_ids["flatcar_" ~ arch],
+                "osDistro": "flatcar-sysext",
+                "flatcar": {
+                  "sysexts": {
+                    "kubernetes": {
+                      "url": sysexts.kubernetes.url,
+                      "checksum": sysexts.kubernetes.checksum_sha512,
+                    },
+                    "containerd": {
+                      "url": sysexts.containerd.url,
+                      "checksum": sysexts.containerd.checksum_sha512,
+                    },
+                  },
+                },
+              },
+            },
+            recursive = True
+          )
+      }},
+    },
+    {% endfor %}
+    {% endfor %}
+    {% endif %}
+  }
 # Allow extra templates to be defined using a separate variable
 azimuth_capi_operator_cluster_templates_extra: {}
 # The full list of Kubernetes cluster templates to install
 azimuth_capi_operator_cluster_templates: >-
   {{-
     azimuth_capi_operator_cluster_templates_default |
-      combine(azimuth_capi_operator_cluster_templates_flatcar, recursive=True) |
+      combine(azimuth_capi_operator_cluster_templates_flatcar, recursive = True) |
       combine(azimuth_capi_operator_cluster_templates_extra, recursive = True)
   }}
 
