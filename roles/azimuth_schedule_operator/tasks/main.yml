@@ -1,8 +1,7 @@
 ---
 - name: Install Azimuth schedule operator on target Kubernetes cluster
   kubernetes.core.helm:
-    chart_ref: "{{ azimuth_schedule_operator_chart_name }}"
-    chart_repo_url: "{{ azimuth_schedule_operator_chart_repo }}"
+    chart_ref: "{{ azimuth_schedule_operator_chart_ref }}"
     chart_version: "{{ azimuth_schedule_operator_chart_version }}"
     release_namespace: "{{ azimuth_schedule_operator_release_namespace }}"
     release_name: "{{ azimuth_schedule_operator_release_name }}"
