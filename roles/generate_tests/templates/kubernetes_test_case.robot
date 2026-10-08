@@ -25,6 +25,9 @@ Create {{ test_case_name }}
     ...  name=md-0
     ...  machine_size=${worker_size.id}
     ...  count={{ test_case.worker_count }}
+{% if test_case.dashboard_enabled is not defined or test_case.dashboard_enabled %}
+    ${config} =  Enable Dashboard For Kubernetes Config  ${config}
+{% endif %}
 {% if test_case.monitoring_enabled is not defined or test_case.monitoring_enabled %}
     ${config} =  Enable Monitoring For Kubernetes Config  ${config}
 {% endif %}
@@ -65,6 +68,10 @@ Verify {{ test_case_name }}
     Assert Lease Resource End Time
     ...  kube-${kubernetes.cluster_names['{{ test_case_name }}']}
     ...  ${kubernetes_schedule_end_time_{{ test_case_name | regex_replace('[^0-9A-Za-z_]', '_') }}}
+{% if test_case.dashboard_enabled is not defined or test_case.dashboard_enabled %}
+    ${dashboard} =  Get Kubernetes Cluster Service Url  ${cluster}  headlamp-client
+    Open Zenith Service  ${dashboard}
+    Wait Until Page Title Contains  Cluster
 {% endif %}
 {% if test_case.monitoring_enabled is not defined or test_case.monitoring_enabled %}
     ${monitoring} =  Get Kubernetes Cluster Service Url  ${cluster}  monitoring

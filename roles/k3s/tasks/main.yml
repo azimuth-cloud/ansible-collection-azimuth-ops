@@ -32,6 +32,11 @@
         dev: "{{ k3s_storage_device }}"
         resizefs: true
 
+- name: Install admin packages
+  ansible.builtin.apt:
+    name: "{{ k3s_admin_packages }}"
+    update_cache: true
+
 - name: Download k3s binary
   ansible.builtin.get_url:
     url: "{{ k3s_binary_url }}"

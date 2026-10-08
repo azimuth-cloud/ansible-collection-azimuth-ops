@@ -10,7 +10,6 @@ community_images_openstack_cli_path: >-
 # The directory into which images will be downloaded / converted
 # If not given, a temporary directory will be used
 community_images_workdir:
-
 # OpenStack credentials for uploading images
 # The value of the OS_CLOUD environment variable to use
 community_images_os_cloud: >-
@@ -41,7 +40,7 @@ community_images_disk_format: qcow2
 # The repository to use for azimuth-images
 community_images_azimuth_images_repo: https://github.com/azimuth-cloud/azimuth-images
 # The version of azimuth-images to use to populate the default community images
-community_images_azimuth_images_version: 0.29.0
+community_images_azimuth_images_version: 0.36.2
 # The azimuth-images manifest URL
 community_images_azimuth_images_manifest_url: >-
   {{ community_images_azimuth_images_repo }}/releases/download/{{ community_images_azimuth_images_version }}/manifest.json
@@ -54,7 +53,7 @@ community_images_azimuth_images_manifest: >-
 community_images_azimuth_images: |-
   {
     {% for source_key, image in community_images_azimuth_images_manifest.items() %}
-    {% if "kubernetes_version" in image and source_key.endswith("-jammy") %}
+    {% if "kubernetes_version" in image %}
       {% set kube_version = image.kubernetes_version | regex_replace('^v', '') %}
       {% set kube_series = kube_version.split(".")[:-1] | join("_") %}
       {% set dest_key = "kube_" ~ kube_series %}
@@ -72,6 +71,7 @@ community_images_azimuth_images: |-
       "name": "{{ image.name }}",
       "source_url": "{{ image.url }}",
       "checksum": "{{ image.checksum }}",
+      "checksum_sha512": "{{ image.checksum_sha512 }}",
       "source_disk_format": "qcow2",
       "container_format": "bare",
       {% if "kubernetes_version" in image %}
@@ -86,12 +86,20 @@ community_images_azimuth_images: |-
 community_images_slurm_base_url: >-
   https://leafcloud.store/swift/v1/AUTH_f39848421b2747148400ad8eeae8d536/openhpc-images
 community_images_slurm:
-  # from https://github.com/stackhpc/ansible-slurm-appliance/releases/tag/v2.16
+  # from https://github.com/stackhpc/ansible-slurm-appliance/releases/tag/v2.24.0
   openhpc:
-    name: openhpc-RL9-260508-1119-0374764b
-    source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-260508-1119-0374764b"
+    name: openhpc-RL9-260818-0723-3f645271
+    source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-260818-0723-3f645271"
     source_disk_format: qcow2
     container_format: bare
+
+# Skips verifying the Glance os_hash_value properties of existing images on the cloud
+# Insecure, but may be required if not supported by Openstack config
+community_images_insecure_skip_glance_verify: false
+# Indicates whether to look for community-visibility images from other projects,
+# community_images_insecure_skip_glance_verify must be false
+# to use this functionality
+community_images_use_existing_trusted_community_images: true
 
 # The default community images to upload
 community_images_default: >-
@@ -109,6 +117,9 @@ community_images_extra: {}
 #   source_disk_format: qcow2
 #   # The container format for the image
 #   container_format: bare
+#   # Any extra properties to set on the image
+#   properties:
+#   - hw_architecture=x86_64
 
 # The full set of community images to upload to the Azimuth project
 community_images: >-

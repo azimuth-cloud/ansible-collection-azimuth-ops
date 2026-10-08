@@ -104,3 +104,52 @@
         status_code:
           - 201
       changed_when: true
+
+- name: Set quota for proxy cache project
+  when: harbor_proxy_cache_set_quotas
+  block:
+    - name: Get project ID
+      ansible.builtin.uri:
+        # checkov:skip=CKV2_ANSIBLE_1: TLS is optional
+        # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
+        url: "{{ harbor_external_url }}/api/v2.0/projects/{{ project.name }}"
+        method: GET
+        user: admin
+        password: "{{ harbor_admin_password }}"
+        force_basic_auth: true
+        ca_path: "{{ harbor_ca_path }}"
+        validate_certs: "{{ harbor_validate_certs }}"
+      register: harbor_project
+
+    - name: Get quota ID
+      ansible.builtin.uri:
+        # checkov:skip=CKV2_ANSIBLE_1: TLS is optional
+        # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
+        url: "{{ harbor_external_url }}/api/v2.0/quotas?reference_id={{ harbor_project.json.project_id }}"
+        method: GET
+        user: admin
+        password: "{{ harbor_admin_password }}"
+        force_basic_auth: true
+        ca_path: "{{ harbor_ca_path }}"
+        validate_certs: "{{ harbor_validate_certs }}"
+      register: harbor_quota_list
+
+    - name: Set quota for project
+      ansible.builtin.uri:
+        # checkov:skip=CKV2_ANSIBLE_1: TLS is optional
+        # checkov:skip=CKV_ANSIBLE_1: Certificate validation is optional
+        url: "{{ harbor_external_url }}/api/v2.0/quotas/{{ (harbor_quota_list.json | first).id }}"
+        method: PUT
+        user: admin
+        password: "{{ harbor_admin_password }}"
+        force_basic_auth: true
+        ca_path: "{{ harbor_ca_path }}"
+        validate_certs: "{{ harbor_validate_certs }}"
+        body_format: json
+        body: >-
+          {
+            "hard": {
+              "storage": {{ project.quota | default(harbor_default_proxy_cache_quota) }}
+            }
+          }
+      changed_when: true
