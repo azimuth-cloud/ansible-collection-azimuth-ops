@@ -18,7 +18,27 @@ Create {{ test_case_name }}
 {% endif %}
 {% endfor %}
 {% endif %}
-    ${cluster} =  Create Cluster  ${caas.cluster_names['{{ test_case_name }}']}  ${ctype.name}  &{params}
+{% if generate_tests_caas_scheduling_enabled %}
+{% if generate_tests_caas_schedule_end_time %}
+    ${schedule_end_time} =  Set Variable  {{ generate_tests_caas_schedule_end_time }}
+{% else %}
+    ${schedule_end_time} =  Evaluate
+    ...  (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    ...  modules=datetime
+{% endif %}
+    Set Suite Variable  ${caas_schedule_end_time_{{ test_case_name | regex_replace('[^0-9A-Za-z_]', '_') }}}  ${schedule_end_time}
+    ${schedule} =  Create Dictionary  end_time=${schedule_end_time}
+    ${cluster} =  Create Cluster
+    ...  ${caas.cluster_names['{{ test_case_name }}']}
+    ...  ${ctype.name}
+    ...  schedule=${schedule}
+    ...  &{params}
+{% else %}
+    ${cluster} =  Create Cluster
+    ...  ${caas.cluster_names['{{ test_case_name }}']}
+    ...  ${ctype.name}
+    ...  &{params}
+{% endif %}
 
 {% if generate_tests_include_upgrade_tests %}
 Upgrade {{ test_case_name }}
@@ -37,6 +57,11 @@ Verify {{ test_case_name }}
 {% endif %}
     ${cluster} =  Find Cluster By Name  ${caas.cluster_names['{{ test_case_name }}']}
     ${cluster} =  Wait For Cluster Ready  ${cluster.id}
+{% if generate_tests_caas_scheduling_enabled %}
+    Assert Lease Resource End Time
+    ...  caas-${caas.cluster_names['{{ test_case_name }}']}
+    ...  ${caas_schedule_end_time_{{ test_case_name | regex_replace('[^0-9A-Za-z_]', '_') }}}
+{% endif %}
 {% if test_case.services is defined and test_case.services %}
 {% for service in test_case.services %}
     ${url} =  Get Cluster Service URL  ${cluster}  {{ service.name }}
