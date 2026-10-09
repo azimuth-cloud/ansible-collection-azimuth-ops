@@ -25,7 +25,9 @@
 - name: "List images with name - {{ community_images_image_spec.name }}"
   ansible.builtin.command: >-
     {{ community_images_openstack_cli_path }}
-    image list -f json
+    image list
+    -f json
+    --hidden
     --name {{ community_images_image_spec.name }}
   changed_when: false
   register: community_images_project_image_list_cmd
@@ -33,7 +35,10 @@
 - name: "List images from other projects with name - {{ community_images_image_spec.name }}"
   ansible.builtin.command: >-
     {{ community_images_openstack_cli_path }}
-    image list -f json --community
+    image list
+    -f json
+    --community
+    --hidden
     --name {{ community_images_image_spec.name }}
   changed_when: false
   register: community_images_community_image_list_cmd
@@ -62,7 +67,8 @@
     - name: Get Glance checksums
       ansible.builtin.command: >-
         {{ community_images_openstack_cli_path }}
-        image show -f json
+        image show
+        -f json
         {{ _image_id }}
       loop: "{{ community_images_image_list | map(attribute='ID') }}"
       loop_control:
@@ -102,6 +108,7 @@
               are pulled by setting `community_images_use_existing_trusted_community_images: false`.
           vars:
             _glance_checksum: "{{ community_images_glance_checksum_list | first }}"
+
 - name: Get information on existing images from OpenStack
   when: "community_images_image_list | length > 0"
   block:
@@ -112,7 +119,8 @@
     - name: "Fetch pre-existing image - {{ community_images_image_spec.name }}"
       ansible.builtin.command: >-
         {{ community_images_openstack_cli_path }}
-        image show -f json
+        image show
+        -f json
         {{ community_images_image_id }}
       changed_when: false
       register: community_images_image_info
@@ -185,6 +193,7 @@
       ansible.builtin.command: >-
         {{ community_images_openstack_cli_path }} image create
           -f json
+          {{ '--hidden' if community_images_hidden else '' }}
           --container-format {{ community_images_image_spec.container_format }}
           --disk-format {{ community_images_disk_format }}
           --file {{ community_images_image_upload_in_path }}
@@ -221,11 +230,11 @@
   ansible.builtin.command: >-
     {{ community_images_openstack_cli_path }}
     image set
+    {{ '--hidden' if community_images_hidden else '' }}
     --{{ community_images_image_visibility }}
     {{ community_images_image_id }}
   when: community_images_image_visibility != community_images_image_current_visibility
   changed_when: true
-
 
   # Keeping this task allows us to set properties on images that already exist, rather than just at upload time.
 - name: "Set custom properties for image - {{ community_images_image_spec.name }}"
