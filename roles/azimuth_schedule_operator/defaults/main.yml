@@ -1,6 +1,6 @@
 ---
 # The chart to use
-azimuth_schedule_operator_chart_ref: quay.io/azimuth/azimuth-schedule-operator-charts/azimuth-schedule-operator
+azimuth_schedule_operator_chart_ref: "oci://quay.io/azimuth/azimuth-schedule-operator-charts/azimuth-schedule-operator"
 azimuth_schedule_operator_chart_version: 0.12.0
 
 # Release information for the operator release
