@@ -1,16 +1,32 @@
 ---
 
-# The repo, version and manifest URL for the Cluster API core components
-clusterapi_core_repo: https://github.com/kubernetes-sigs/cluster-api
-clusterapi_core_version: v1.14.2
-clusterapi_core_components: "{{ clusterapi_core_repo }}/releases/download/{{ clusterapi_core_version }}/cluster-api-components.yaml"
+# Helm chart information for the Cluster API operator
+clusterapi_operator_chart_repo: https://kubernetes-sigs.github.io/cluster-api-operator
+clusterapi_operator_chart_name: cluster-api-operator
+clusterapi_operator_chart_version: 0.29.0
 
-# The repo, version and manifest URL for the Cluster API OpenStack provider components
-clusterapi_openstack_repo: https://github.com/kubernetes-sigs/cluster-api-provider-openstack
+# Release information for the Cluster API operator release
+clusterapi_operator_release_namespace: capi-operator-system
+clusterapi_operator_release_name: cluster-api-operator
+
+# The timeout to wait for the Cluster API operator to become ready
+clusterapi_operator_wait_timeout: 10m
+
+# The values for the Cluster API operator release
+clusterapi_operator_release_defaults: {}
+clusterapi_operator_release_overrides: {}
+clusterapi_operator_release_values: >-
+  {{-
+    clusterapi_operator_release_defaults |
+      combine(clusterapi_operator_release_overrides, recursive = True)
+  }}
+
+# The versions of the Cluster API providers managed by the operator
+clusterapi_core_version: v1.14.2
 clusterapi_openstack_version: v0.14.8
-clusterapi_openstack_components: "{{ clusterapi_openstack_repo }}/releases/download/{{ clusterapi_openstack_version }}/infrastructure-components.yaml"
 
 # The repo, version and manifest URL for the OpenStack Resource Controller components
+# ORC is not a Cluster API provider, so it is not managed by the operator
 clusterapi_openstack_resource_controller_repo: https://github.com/k-orc/openstack-resource-controller
 clusterapi_openstack_resource_controller_version: v2.6.0
 clusterapi_openstack_resource_controller_components: >-
@@ -37,80 +53,24 @@ clusterapi_feature_gate_openstack_priority_queue: true
 clusterapi_feature_gate_openstack_autoscale_from_zero: true
 
 clusterapi_core_feature_gates:
-  MachinePool: "{{ clusterapi_feature_gate_machine_pool }}"
-  ClusterTopology: "{{ clusterapi_feature_gate_cluster_topology }}"
-  RuntimeSDK: "{{ clusterapi_feature_gate_runtime_sdk }}"
-  MachineSetPreflightChecks: "{{ clusterapi_feature_gate_machine_set_preflight_checks }}"
+  MachinePool: "{{ clusterapi_feature_gate_machine_pool | bool }}"
+  ClusterTopology: "{{ clusterapi_feature_gate_cluster_topology | bool }}"
+  RuntimeSDK: "{{ clusterapi_feature_gate_runtime_sdk | bool }}"
+  MachineSetPreflightChecks: "{{ clusterapi_feature_gate_machine_set_preflight_checks | bool }}"
 clusterapi_openstack_feature_gates:
-  PriorityQueue: "{{ clusterapi_feature_gate_openstack_priority_queue }}"
-  AutoScaleFromZero: "{{ clusterapi_feature_gate_openstack_autoscale_from_zero }}"
+  PriorityQueue: "{{ clusterapi_feature_gate_openstack_priority_queue | bool }}"
+  AutoScaleFromZero: "{{ clusterapi_feature_gate_openstack_autoscale_from_zero | bool }}"
 clusterapi_kubeadm_bootstrap_feature_gates:
-  MachinePool: "{{ clusterapi_feature_gate_machine_pool }}"
-  KubeadmBootstrapFormatIgnition: "{{ clusterapi_feature_gate_kubeadm_bootstrap_format_ignition }}"
+  MachinePool: "{{ clusterapi_feature_gate_machine_pool | bool }}"
+  KubeadmBootstrapFormatIgnition: "{{ clusterapi_feature_gate_kubeadm_bootstrap_format_ignition | bool }}"
 clusterapi_kubeadm_control_plane_feature_gates:
-  ClusterTopology: "{{ clusterapi_feature_gate_cluster_topology }}"
-  KubeadmBootstrapFormatIgnition: "{{ clusterapi_feature_gate_kubeadm_bootstrap_format_ignition }}"
+  ClusterTopology: "{{ clusterapi_feature_gate_cluster_topology | bool }}"
+  KubeadmBootstrapFormatIgnition: "{{ clusterapi_feature_gate_kubeadm_bootstrap_format_ignition | bool }}"
 
-# List of Cluster API component manifests to install
-clusterapi_manifests:
-  - "{{ clusterapi_core_components }}"
-  - "{{ clusterapi_openstack_resource_controller_components }}"
-  - "{{ clusterapi_openstack_components }}"
-
-# Base list of patches to apply to the resources in the manifests
-clusterapi_patches_base:
-  # The manifests contain environment variable substitutions for feature gates that we do not need
-  # yamllint disable rule:line-length
-  - patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/args
-        value:
-          - --leader-elect
-          - --diagnostics-address={{ clusterapi_diagnostics_address }}
-          - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
-          - --feature-gates={% for k, v in clusterapi_core_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
-    target:
-      kind: Deployment
-      namespace: capi-system
-      name: capi-controller-manager
-  - patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/args
-        value:
-          - --leader-elect
-          - --diagnostics-address={{ clusterapi_diagnostics_address }}
-          - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
-          - --feature-gates={% for k, v in clusterapi_kubeadm_bootstrap_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
-    target:
-      kind: Deployment
-      namespace: capi-kubeadm-bootstrap-system
-      name: capi-kubeadm-bootstrap-controller-manager
-  - patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/args
-        value:
-          - --leader-elect
-          - --diagnostics-address={{ clusterapi_diagnostics_address }}
-          - --insecure-diagnostics={{ "true" if clusterapi_insecure_diagnostics else "false" }}
-          - --feature-gates={% for k, v in clusterapi_kubeadm_control_plane_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
-    target:
-      kind: Deployment
-      namespace: capi-kubeadm-control-plane-system
-      name: capi-kubeadm-control-plane-controller-manager
-  - patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/args
-        value:
-          - --leader-elect
-          - --v=2
-          - --diagnostics-address={{ clusterapi_openstack_diagnostics_address }}
-          - --insecure-diagnostics={{ "true" if clusterapi_openstack_insecure_diagnostics else "false" }}
-          - --feature-gates={% for k, v in clusterapi_openstack_feature_gates.items() %}{{ k }}={{ "true" if v else "false" }}{{ "" if loop.last else "," }}{% endfor %}
-    target:
-      kind: Deployment
-      namespace: "{{ clusterapi_openstack_namespace }}"
-      name: capo-controller-manager
-  # yamllint enable rule:line-length
+# The manager configuration shared by the core, bootstrap and control plane providers
+clusterapi_manager_metrics:
+  diagnosticsAddress: "{{ clusterapi_diagnostics_address }}"
+  insecureDiagnostics: "{{ clusterapi_insecure_diagnostics | bool }}"
 
 # Additional patches applied when metrics are enabled (expose the metrics port on the CAPO pod)
 clusterapi_openstack_metrics_patches:
@@ -123,19 +83,61 @@ clusterapi_openstack_metrics_patches:
           protocol: TCP
     target:
       kind: Deployment
-      namespace: "{{ clusterapi_openstack_namespace }}"
       name: capo-controller-manager
 
-clusterapi_patches: >-
-  {{-
-    clusterapi_patches_base +
-    (clusterapi_openstack_metrics_patches if clusterapi_openstack_metrics else [])
-  }}
+# The provider resources that are reconciled by the Cluster API operator
+# yamllint disable rule:line-length
+clusterapi_providers:
+  - apiVersion: operator.cluster.x-k8s.io/v1alpha2
+    kind: CoreProvider
+    metadata:
+      name: cluster-api
+      namespace: capi-system
+    spec:
+      version: "{{ clusterapi_core_version }}"
+      manager:
+        metrics: "{{ clusterapi_manager_metrics }}"
+        featureGates: "{{ clusterapi_core_feature_gates }}"
+  - apiVersion: operator.cluster.x-k8s.io/v1alpha2
+    kind: BootstrapProvider
+    metadata:
+      name: kubeadm
+      namespace: capi-kubeadm-bootstrap-system
+    spec:
+      version: "{{ clusterapi_core_version }}"
+      manager:
+        metrics: "{{ clusterapi_manager_metrics }}"
+        featureGates: "{{ clusterapi_kubeadm_bootstrap_feature_gates }}"
+  - apiVersion: operator.cluster.x-k8s.io/v1alpha2
+    kind: ControlPlaneProvider
+    metadata:
+      name: kubeadm
+      namespace: capi-kubeadm-control-plane-system
+    spec:
+      version: "{{ clusterapi_core_version }}"
+      manager:
+        metrics: "{{ clusterapi_manager_metrics }}"
+        featureGates: "{{ clusterapi_kubeadm_control_plane_feature_gates }}"
+  - apiVersion: operator.cluster.x-k8s.io/v1alpha2
+    kind: InfrastructureProvider
+    metadata:
+      name: openstack
+      namespace: "{{ clusterapi_openstack_namespace }}"
+    spec:
+      version: "{{ clusterapi_openstack_version }}"
+      manager:
+        verbosity: 2
+        metrics:
+          diagnosticsAddress: "{{ clusterapi_openstack_diagnostics_address }}"
+          insecureDiagnostics: "{{ clusterapi_openstack_insecure_diagnostics | bool }}"
+        featureGates: "{{ clusterapi_openstack_feature_gates }}"
+      patches: "{{ clusterapi_openstack_metrics_patches if clusterapi_openstack_metrics else [] }}"
+# yamllint enable rule:line-length
 
-# The kustomization to use for Cluster API
+# The kustomization to use for the non-provider components (ORC)
 clusterapi_kustomization:
-  resources: "{{ clusterapi_manifests }}"
-  patches: "{{ clusterapi_patches }}"
+  resources:
+    - "{{ clusterapi_openstack_resource_controller_components }}"
 
 # Use a directory in $HOME for the kustomization by default
 clusterapi_kustomization_directory: "{{ (ansible_env.HOME, 'clusterapi') | path_join }}"
@@ -146,6 +148,9 @@ clusterapi_capo_crds:
   - openstackclustertemplates
   - openstackmachines
   - openstackmachinetemplates
+
+# The timeout to wait for each provider to reach the requested version
+clusterapi_provider_wait_timeout: 10m
 
 # List of resources to watch for completeness
 clusterapi_watches:

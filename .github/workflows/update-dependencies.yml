@@ -138,6 +138,11 @@ jobs:
             repository: kubernetes-sigs/cluster-api
             version_jsonpath: clusterapi_core_version
 
+          - key: cluster-api-operator
+            path: ./roles/clusterapi/defaults/main.yml
+            repository: kubernetes-sigs/cluster-api-operator
+            version_jsonpath: clusterapi_operator_chart_version
+
           - key: cluster-api-provider-openstack
             path: ./roles/clusterapi/defaults/main.yml
             repository: kubernetes-sigs/cluster-api-provider-openstack
