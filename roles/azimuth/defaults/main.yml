@@ -2,7 +2,7 @@
 
 # The chart to use
 azimuth_chart_ref: oci://quay.io/azimuth/azimuth-charts/azimuth
-azimuth_chart_version: 0.25.0
+azimuth_chart_version: 0.25.1
 
 # Release information for the Azimuth release
 azimuth_release_namespace: azimuth
