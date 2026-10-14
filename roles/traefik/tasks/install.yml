@@ -1,0 +1,62 @@
+---
+- name: Get existing Traefik CRDs
+  ansible.builtin.command: kubectl get crd --output json
+  changed_when: false
+  register: traefik_crds_cmd
+
+- name: Adopt existing Traefik CRDs into the CRDs release
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - patch
+      - crd
+      - "{{ item }}"
+      - --type
+      - merge
+      - --patch
+      - "{{ traefik_crd_adopt_patch | to_json }}"
+  loop: >-
+    {{
+      traefik_crds_cmd.stdout |
+        from_json |
+        json_query(
+          'items[?spec.group == `traefik.io` && !(metadata.annotations."meta.helm.sh/release-name")].metadata.name'
+        )
+    }}
+  vars:
+    traefik_crd_adopt_patch:
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: Helm
+        annotations:
+          meta.helm.sh/release-name: "{{ traefik_crds_release_name }}"
+          meta.helm.sh/release-namespace: "{{ traefik_release_namespace }}"
+  changed_when: true
+
+- name: Install Traefik CRDs
+  kubernetes.core.helm:
+    chart_ref: "{{ traefik_crds_chart_name }}"
+    chart_repo_url: "{{ traefik_crds_chart_repo }}"
+    chart_version: "{{ traefik_crds_chart_version }}"
+    release_namespace: "{{ traefik_release_namespace }}"
+    release_name: "{{ traefik_crds_release_name }}"
+    release_values: "{{ traefik_crds_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ traefik_wait_timeout }}"
+
+- name: Install Traefik on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ traefik_chart_name }}"
+    chart_repo_url: "{{ traefik_chart_repo }}"
+    chart_version: "{{ traefik_chart_version }}"
+    release_namespace: "{{ traefik_release_namespace }}"
+    release_name: "{{ traefik_release_name }}"
+    release_values: "{{ traefik_release_values }}"
+    # The CRDs are managed by the CRDs release
+    skip_crds: true
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ traefik_wait_timeout }}"
