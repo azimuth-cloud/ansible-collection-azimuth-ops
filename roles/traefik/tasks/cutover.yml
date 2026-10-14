@@ -6,6 +6,12 @@
 - name: Cut over the ingress controller Service to Traefik
   when: traefik_ingress_nginx_migrating
   block:
+    - name: Verify Traefik before the cutover
+      ansible.builtin.include_tasks: verify.yml
+      vars:
+        traefik_verify_service_name: "{{ traefik_chart_service_name }}"
+      when: traefik_verify_enabled
+
     - name: Remove ingress-nginx admission webhook
       ansible.builtin.command: >-
         kubectl delete validatingwebhookconfiguration
@@ -18,6 +24,28 @@
       ansible.builtin.include_tasks: patch_service.yml
       vars:
         traefik_service_patch_target: traefik
+
+    - name: Verify Traefik and roll back on failure
+      when: traefik_verify_enabled
+      block:
+        - name: Verify Traefik through the ingress controller Service
+          ansible.builtin.include_tasks: verify.yml
+          vars:
+            traefik_verify_service_name: "{{ traefik_service_name }}"
+
+      rescue:
+        - name: Point the ingress controller Service back at ingress-nginx
+          ansible.builtin.include_tasks: patch_service.yml
+          vars:
+            traefik_service_patch_target: ingress-nginx
+
+        - name: Fail after rolling back the cutover
+          ansible.builtin.fail:
+            msg: >-
+              Traefik verification failed, ingress controller Service has been
+              pointed back at ingress-nginx. Deploy in the nginx phase to remove Traefik
+              and restore the ingress-nginx admission webhook.
+              {{ ansible_failed_result.msg | default('') }}
 
 - name: Remove ingress-nginx
   when:

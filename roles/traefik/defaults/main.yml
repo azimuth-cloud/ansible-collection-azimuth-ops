@@ -109,12 +109,43 @@ traefik_chart_service_name: >-
     else "{}-{}".format(traefik_release_name, traefik_chart_name)
   }}
 
+# The port of the traefik entrypoint, which serves the API
+traefik_api_port: 8080
+
 # The number of Traefik replicas
 traefik_replicas: "{{ 2 if (install_mode | default('singlenode')) == 'ha' else 1 }}"
 
 traefik_tls_redirect_enabled: "{{ ingress_tls_enabled | default(true) }}"
 
 traefik_access_log_enabled: true
+
+# Enable check and rollback
+traefik_verify_enabled: true
+
+traefik_verify_probe_urls: >-
+  {{-
+    [
+      "{}://{}.{}/api/".format(
+        "https" if traefik_tls_redirect_enabled else "http",
+        ingress_azimuth_portal_subdomain | default("portal"),
+        ingress_base_domain
+      )
+    ]
+    if ingress_base_domain is defined
+    else []
+  }}
+
+traefik_verify_probe_status_codes:
+  - 200
+  - 301
+  - 302
+  - 307
+  - 308
+  - 401
+  - 403
+
+traefik_verify_retries: 12
+traefik_verify_delay: 5
 
 # The values for the traefik release
 traefik_release_defaults:
@@ -207,6 +238,10 @@ traefik_release_defaults:
           writeTimeout: 600
           idleTimeout: 600
 
+  # Only exposed on the traefik entrypoint of the pods
+  # Used for verification
+  api:
+    insecure: "{{ traefik_verify_enabled }}"
   accessLog:
     enabled: "{{ traefik_access_log_enabled }}"
 
