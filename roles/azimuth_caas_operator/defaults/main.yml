@@ -102,8 +102,8 @@ azimuth_caas_stackhpc_slurm_appliance_git_version: v2.24.0
 azimuth_caas_stackhpc_slurm_appliance_catalogue_name: General
 # Precedence of the catalogue relative to others
 azimuth_caas_stackhpc_slurm_appliance_catalogue_precedence: 100
-# If the app should be flagged as deprecated
-azimuth_caas_stackhpc_slurm_appliance_deprecated: false
+# If the app should be flagged as end of life
+azimuth_caas_stackhpc_slurm_appliance_eol: false
 # The playbook to use for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_playbook: ansible/site.yml
 # The timeout to apply to the k8s jobs which create, update & delete platform instances
@@ -194,7 +194,7 @@ azimuth_caas_stackhpc_slurm_appliance_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_stackhpc_slurm_appliance_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_caas_stackhpc_slurm_appliance_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_caas_stackhpc_slurm_appliance_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_caas_stackhpc_slurm_appliance_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_caas_stackhpc_slurm_appliance_eol | string }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_slurm_appliance_max_lifetime_hours | string }}"
 # The template definition for the StackHPC Slurm appliance
 azimuth_caas_stackhpc_slurm_appliance_template:
@@ -225,8 +225,8 @@ azimuth_caas_workstation_default_git_version: 0.11.0
 azimuth_caas_workstation_catalogue_name: General
 # Precedence of the catalogue relative to others
 azimuth_caas_workstation_catalogue_precedence: 100
-# If the app should be flagged as deprecated
-azimuth_caas_workstation_deprecated: false
+# If the app should be flagged as end of life
+azimuth_caas_workstation_eol: false
 azimuth_caas_workstation_git_version: >-
   {{
     azimuth_caas_stackhpc_workstation_git_version |
@@ -330,7 +330,7 @@ azimuth_caas_workstation_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_workstation_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_caas_workstation_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_caas_workstation_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_caas_workstation_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_caas_workstation_eol | string }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_workstation_max_lifetime_hours | string }}"
 # The template definition for the workstation appliance
 azimuth_caas_workstation_template:
@@ -415,7 +415,7 @@ azimuth_caas_workstation_ssh_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_workstation_ssh_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_caas_workstation_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_caas_workstation_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_caas_workstation_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_caas_workstation_eol | string }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_workstation_ssh_max_lifetime_hours | string }}"
 # The template definition for the SSH-enabled workstation appliance
 azimuth_caas_workstation_ssh_template:
@@ -443,8 +443,8 @@ azimuth_caas_repo2docker_default_git_version: 0.8.1
 azimuth_caas_repo2docker_catalogue_name: Deprecated
 # Precedence of the catalogue relative to others
 azimuth_caas_repo2docker_catalogue_precedence: 200
-# If the app should be flagged as deprecated
-azimuth_caas_repo2docker_deprecated: true
+# If the app should be flagged as end of life
+azimuth_caas_repo2docker_eol: true
 azimuth_caas_repo2docker_git_version: >-
   {{
     azimuth_caas_stackhpc_repo2docker_git_version |
@@ -548,7 +548,7 @@ azimuth_caas_repo2docker_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_repo2docker_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_caas_repo2docker_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_caas_repo2docker_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_caas_repo2docker_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_caas_repo2docker_eol | string }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_repo2docker_max_lifetime_hours | string }}"
 # The template definition for the repo2docker appliance
 azimuth_caas_repo2docker_template:
@@ -576,8 +576,8 @@ azimuth_caas_rstudio_default_git_version: 0.7.1
 azimuth_caas_rstudio_catalogue_name: General
 # Precedence of the catalogue relative to others
 azimuth_caas_rstudio_catalogue_precedence: 100
-# If the app should be flagged as deprecated
-azimuth_caas_rstudio_deprecated: false
+# If the app should be flagged as end of life
+azimuth_caas_rstudio_eol: false
 azimuth_caas_rstudio_git_version: >-
   {{
     azimuth_caas_stackhpc_rstudio_git_version |
@@ -681,7 +681,7 @@ azimuth_caas_rstudio_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_caas_rstudio_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_caas_rstudio_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_caas_rstudio_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_caas_rstudio_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_caas_rstudio_eol | string }}"
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_caas_stackhpc_rstudio_max_lifetime_hours | string }}"
 # The template definition for the R-Studio appliance
 azimuth_caas_rstudio_template:
