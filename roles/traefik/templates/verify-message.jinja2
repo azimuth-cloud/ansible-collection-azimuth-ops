@@ -1,0 +1,54 @@
+{#
+  Renders the message reported when Traefik verification fails, or nothing if it passed.
+#}
+{% set pod_selector = traefik_pod_selector.items() | map('join', '=') | join(',') %}
+{% set probe_status_codes = traefik_verify_probe_status_codes | map('string') | list %}
+{% set api_failures = traefik_verify_api.results | rejectattr('rc', 'equalto', 0) | list %}
+{% set bad_probes = traefik_verify_probes.results | rejectattr('stdout', 'in', probe_status_codes) | list %}
+{% if not traefik_verify_pods.stdout or api_failures or traefik_verify_disabled or bad_probes %}
+Traefik verification failed. {{ traefik_verify_context | default('') }}
+{% if not traefik_verify_pods.stdout %}
+
+No running Traefik pods were found in namespace {{ traefik_release_namespace }}.
+Check the pods with:
+  kubectl get pods -n {{ traefik_release_namespace }} -l {{ pod_selector }}
+{% endif %}
+{# ----------------------------------------------------------------------------------------- #}
+{% if api_failures %}
+
+The Traefik API could not be queried on these pods:
+{% for result in api_failures %}
+  - {{ result.item | join(' ') }}
+{% endfor %}
+Check that the pods are healthy and that the API is enabled (api.insecure), e.g. with:
+  kubectl logs -n {{ traefik_release_namespace }} {{ api_failures[0].item[0] }}
+{% endif %}
+{# ----------------------------------------------------------------------------------------- #}
+{% if traefik_verify_disabled %}
+
+Traefik cannot serve these routers and middlewares:
+{% for item in traefik_verify_disabled | sort(attribute = 'name') %}
+  {{ item.name }}:
+{% for error in item.error | default([item.status | default('disabled')], true) %}
+    - {{ error }}
+{% endfor %}
+{% endfor %}
+
+These Ingresses use ingress-nginx features that Traefik does not support, such as nginx
+configuration snippets.
+
+Upgrade the components that create them to versions that support Traefik by deploying
+with ingress_controller_migration_phase set to nginx,
+then deploy with it set to traefik again.
+{% endif %}
+{# ----------------------------------------------------------------------------------------- #}
+{% if bad_probes %}
+
+These URLs did not return an expected status ({{ probe_status_codes | join(', ') }}) through the Service {{ traefik_release_namespace }}/{{ traefik_verify_service_name }}:
+{% for result in bad_probes %}
+  - {{ result.item }} returned {{ result.stdout }}
+{% endfor %}
+000 means the connection failed, and 404 means Traefik has no route for the URL.
+Check the Ingress for the host and the Traefik logs.
+{% endif %}
+{% endif %}

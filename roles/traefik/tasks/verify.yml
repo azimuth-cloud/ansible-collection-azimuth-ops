@@ -84,33 +84,16 @@
   changed_when: false
 
 - name: Report Traefik verification problems
-  ansible.builtin.debug:
-    msg: "{{ traefik_verify_problems }}"
-  when: traefik_verify_problems
-  failed_when: true
+  ansible.builtin.fail:
+    msg: "{{ traefik_verify_message }}"
+  when: traefik_verify_message | length > 0
   vars:
-    traefik_verify_problems: >-
+    traefik_verify_disabled: >-
       {{
-        (["no running Traefik pods"] if not traefik_verify_pods.stdout else []) +
-        traefik_verify_api.results |
-          rejectattr('rc', 'equalto', 0) |
-          map(attribute = 'item') |
-          map('join', ' ') |
-          map('regex_replace', '^', 'failed to query Traefik API for ') |
-          list +
         traefik_verify_api.results |
           selectattr('rc', 'equalto', 0) |
           map(attribute = 'stdout') |
           map('from_json') |
-          flatten |
-          json_query('[].{name: name, status: status, error: error}') |
-          unique |
-          map('to_json') |
-          map('regex_replace', '^', 'disabled: ') |
-          list +
-        traefik_verify_probes.results |
-          rejectattr('stdout', 'in', traefik_verify_probe_status_codes | map('string') | list) |
-          map(attribute = 'item') |
-          map('regex_replace', '^', 'unexpected status from probe of ') |
-          list
+          flatten
       }}
+    traefik_verify_message: "{{ lookup('template', 'verify-message.jinja2') | default('', true) | trim }}"

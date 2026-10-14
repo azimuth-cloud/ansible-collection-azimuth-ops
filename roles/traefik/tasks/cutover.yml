@@ -10,6 +10,8 @@
       ansible.builtin.include_tasks: verify.yml
       vars:
         traefik_verify_service_name: "{{ traefik_chart_service_name }}"
+        traefik_verify_context: >-
+          No traffic has been moved to Traefik, and ingress-nginx is still serving all requests.
       when: traefik_verify_enabled
 
     - name: Remove ingress-nginx admission webhook

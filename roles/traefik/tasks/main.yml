@@ -1,10 +1,14 @@
 ---
+- name: Set ingress controller migration phase
+  ansible.builtin.set_fact:
+    traefik_phase: "{{ ingress_controller_migration_phase | default('nginx') }}"
+
 - name: Check ingress controller migration phase
   ansible.builtin.assert:
-    that: traefik_migration_phase in ['nginx', 'traefik']
+    that: traefik_phase in ['nginx', 'traefik']
     fail_msg: >-
       ingress_controller_migration_phase must be one of nginx or traefik,
-      got '{{ traefik_migration_phase }}'.
+      got '{{ traefik_phase }}'.
 
 - name: Get Traefik releases
   kubernetes.core.helm_info:
@@ -62,8 +66,8 @@
         traefik_existing_namespaces[0] == traefik_release_namespace
     fail_msg: >-
       Traefik is installed in namespace(s) {{ traefik_existing_namespaces | join(', ') }},
-      but traefik_release_namespace is {{ traefik_release_namespace }}. Changing the
-      namespace of an existing Traefik release is not supported.
+      but traefik_release_namespace is {{ traefik_release_namespace }}.
+      You cannot change the namespace of an existing release.
 
 - name: Check that Traefik is in the ingress-nginx namespace for the migration
   ansible.builtin.assert:
@@ -72,8 +76,8 @@
       traefik_release_namespace == traefik_ingress_nginx_release_namespace
     fail_msg: >-
       ingress-nginx is installed, so Traefik must be installed in the ingress-nginx
-      namespace {{ traefik_ingress_nginx_release_namespace }} for the migration, not
-      {{ traefik_release_namespace }}.
+      namespace {{ traefik_ingress_nginx_release_namespace }} for the migration.
+      You are trying to insall it into {{ traefik_release_namespace }}.
 
 - name: Get ingress controller state
   ansible.builtin.include_tasks: state.yml
@@ -86,7 +90,7 @@
       Rolling back from the traefik phase once ingress-nginx has been removed is a
       manual operation.
   when:
-    - traefik_migration_phase == 'nginx'
+    - traefik_phase == 'nginx'
     - traefik_service is truthy
     - >-
       traefik_service.metadata.annotations['meta.helm.sh/release-name'] | default('') !=
@@ -97,7 +101,7 @@
   vars:
     traefik_service_patch_target: ingress-nginx
   when:
-    - traefik_migration_phase == 'nginx'
+    - traefik_phase == 'nginx'
     - traefik_ingress_nginx_installed
     - traefik_service is truthy
 
@@ -111,7 +115,8 @@
     fail_msg: >-
       The ingress-nginx release does not have helm.sh/resource-policy=keep on the
       Service {{ traefik_service_name }} and the IngressClass
-      {{ traefik_ingress_nginx_class_name }}. Deploy in the nginx phase with a version
+      {{ traefik_ingress_nginx_class_name }}.
+      Deploy again in the nginx phase with a version
       of azimuth-ops that sets it before moving to the traefik phase.
   vars:
     traefik_ingress_nginx_keep_query: >-
@@ -120,12 +125,12 @@
         (kind == 'IngressClass' && metadata.name == '{{ traefik_ingress_nginx_class_name }}')
       ].metadata.annotations."helm.sh/resource-policy"
   when:
-    - traefik_migration_phase == 'traefik'
+    - traefik_phase == 'traefik'
     - traefik_ingress_nginx_installed
 
 - name: Uninstall Traefik
   when:
-    - traefik_migration_phase == 'nginx'
+    - traefik_phase == 'nginx'
     - traefik_installed
   block:
     - name: Uninstall Traefik release
@@ -150,16 +155,16 @@
 
 - name: Install Traefik
   ansible.builtin.include_tasks: install.yml
-  when: traefik_migration_phase == 'traefik'
+  when: traefik_phase == 'traefik'
 
 - name: Cut over from ingress-nginx to Traefik
   ansible.builtin.include_tasks: cutover.yml
-  when: traefik_migration_phase == 'traefik'
+  when: traefik_phase == 'traefik'
 
 - name: Verify Traefik
   ansible.builtin.include_tasks: verify.yml
   vars:
     traefik_verify_service_name: "{{ traefik_service_name }}"
   when:
-    - traefik_migration_phase == 'traefik'
+    - traefik_phase == 'traefik'
     - traefik_verify_enabled
