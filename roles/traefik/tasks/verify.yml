@@ -1,0 +1,116 @@
+---
+- name: Get Traefik pods
+  ansible.builtin.command: >-
+    kubectl get pods
+      --namespace {{ traefik_release_namespace }}
+      --selector {{ traefik_pod_selector.items() | map('join', '=') | join(',') }}
+      --field-selector status.phase=Running
+      --output jsonpath='{.items[*].metadata.name}'
+  changed_when: false
+  register: traefik_verify_pods
+
+- name: Check for disabled Traefik routers and middlewares
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - get
+      - --raw
+      - >-
+        /api/v1/namespaces/{{ traefik_release_namespace }}/pods/{{ item.0 }}:{{ traefik_api_port }}/proxy/api/http/{{ item.1 }}?status=disabled
+  loop: "{{ traefik_verify_pods.stdout | split | product(['routers', 'middlewares']) | list }}"
+  loop_control:
+    label: "{{ item.0 }} {{ item.1 }}"
+  register: traefik_verify_api
+  until: >-
+    traefik_verify_api.rc == 0 and
+    traefik_verify_api.stdout | from_json | length == 0
+  retries: "{{ traefik_verify_retries }}"
+  delay: "{{ traefik_verify_delay }}"
+  failed_when: false
+  changed_when: false
+
+- name: Get Ingresses
+  ansible.builtin.command: kubectl get ingress --all-namespaces --output json
+  changed_when: false
+  register: traefik_verify_ingresses
+
+- name: Get ClusterIP of the Service to probe
+  ansible.builtin.command: >-
+    kubectl get service {{ traefik_verify_service_name }}
+      --namespace {{ traefik_release_namespace }}
+      --output jsonpath='{.spec.clusterIP}'
+  changed_when: false
+  register: traefik_verify_cluster_ip
+
+- name: Probe URLs through the Service
+  ansible.builtin.command:
+    argv:
+      - curl
+      - --silent
+      - --insecure
+      - --output
+      - /dev/null
+      - --write-out
+      - "%{http_code}"
+      - --max-time
+      - "10"
+      - --resolve
+      - "{{ traefik_verify_probe_host }}:{{ traefik_verify_probe_port }}:{{ traefik_verify_cluster_ip.stdout }}"
+      - "{{ item }}"
+  loop: >-
+    {{
+      traefik_verify_probe_urls |
+        select('search', '^https?://(' ~ (traefik_verify_ingress_hosts | map('regex_escape') | join('|')) ~ ')([:/]|$)') |
+        list
+      if traefik_verify_ingress_hosts
+      else []
+    }}
+  vars:
+    traefik_verify_ingress_hosts: >-
+      {{
+        traefik_verify_ingresses.stdout |
+          from_json |
+          json_query('items[].spec.rules[].host') |
+          unique
+      }}
+    traefik_verify_probe_host: "{{ item | urlsplit('hostname') }}"
+    traefik_verify_probe_port: >-
+      {{ item | urlsplit('port') or (443 if item | urlsplit('scheme') == 'https' else 80) }}
+  register: traefik_verify_probes
+  until: traefik_verify_probes.stdout | int in traefik_verify_probe_status_codes
+  retries: "{{ traefik_verify_retries }}"
+  delay: "{{ traefik_verify_delay }}"
+  failed_when: false
+  changed_when: false
+
+- name: Report Traefik verification problems
+  ansible.builtin.debug:
+    msg: "{{ traefik_verify_problems }}"
+  when: traefik_verify_problems
+  failed_when: true
+  vars:
+    traefik_verify_problems: >-
+      {{
+        (["no running Traefik pods"] if not traefik_verify_pods.stdout else []) +
+        traefik_verify_api.results |
+          rejectattr('rc', 'equalto', 0) |
+          map(attribute = 'item') |
+          map('join', ' ') |
+          map('regex_replace', '^', 'failed to query Traefik API for ') |
+          list +
+        traefik_verify_api.results |
+          selectattr('rc', 'equalto', 0) |
+          map(attribute = 'stdout') |
+          map('from_json') |
+          flatten |
+          json_query('[].{name: name, status: status, error: error}') |
+          unique |
+          map('to_json') |
+          map('regex_replace', '^', 'disabled: ') |
+          list +
+        traefik_verify_probes.results |
+          rejectattr('stdout', 'in', traefik_verify_probe_status_codes | map('string') | list) |
+          map(attribute = 'item') |
+          map('regex_replace', '^', 'unexpected status from probe of ') |
+          list
+      }}
