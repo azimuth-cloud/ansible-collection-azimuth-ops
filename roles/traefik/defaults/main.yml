@@ -13,7 +13,8 @@
 # with a LB Service from the chart
 
 # Moving from traefik back to nginx is supported until ingress-nginx is removed
-traefik_migration_phase: "{{ ingress_controller_migration_phase | default('nginx') }}"
+# Migration phase is set by ingress_controller_migration_phase (default nginx), which also
+# controls whether the playbooks install ingress-nginx
 
 # The chart to use
 traefik_chart_repo: https://traefik.github.io/charts
@@ -151,8 +152,8 @@ traefik_verify_delay: 5
 
 # The values for the traefik release
 traefik_release_defaults:
-  deployment:
-    replicas: "{{ traefik_replicas | int }}"
+  # Must be passed through to the values as an int.
+  deployment: "{{ {'replicas': traefik_replicas | int} }}"
   podDisruptionBudget:
     enabled: "{{ traefik_replicas | int > 1 }}"
     maxUnavailable: 1
