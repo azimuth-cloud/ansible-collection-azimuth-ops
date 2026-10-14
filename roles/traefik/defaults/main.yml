@@ -117,6 +117,8 @@ traefik_replicas: "{{ 2 if (install_mode | default('singlenode')) == 'ha' else 1
 
 traefik_tls_redirect_enabled: "{{ ingress_tls_enabled | default(true) }}"
 
+traefik_prometheus_stack_enabled: "{{ ingress_nginx_prometheus_stack_enabled | default(true) }}"
+
 traefik_access_log_enabled: true
 
 # Enable check and rollback
@@ -244,6 +246,12 @@ traefik_release_defaults:
     insecure: "{{ traefik_verify_enabled }}"
   accessLog:
     enabled: "{{ traefik_access_log_enabled }}"
+  metrics:
+    prometheus:
+      service:
+        enabled: "{{ traefik_prometheus_stack_enabled }}"
+      serviceMonitor:
+        enabled: "{{ traefik_prometheus_stack_enabled }}"
 
 traefik_release_overrides: {}
 traefik_release_values: >-

@@ -136,6 +136,18 @@
         wait: true
         wait_timeout: "{{ traefik_wait_timeout }}"
 
+    - name: Remove Traefik monitoring resources
+      ansible.builtin.command: >-
+        kubectl delete {{ item }}
+          --namespace {{ traefik_release_namespace }}
+          --ignore-not-found
+      loop:
+        - configmap/traefik-grafana-dashboard
+        - prometheusrule/traefik-alerting-rules
+      register: traefik_delete_monitoring
+      changed_when: "'deleted' in traefik_delete_monitoring.stdout"
+      when: traefik_prometheus_stack_enabled
+
 - name: Install Traefik
   ansible.builtin.include_tasks: install.yml
   when: traefik_migration_phase == 'traefik'
