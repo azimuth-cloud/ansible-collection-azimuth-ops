@@ -70,7 +70,12 @@
           [
             {"resource": "validatingwebhookconfiguration/" ~ traefik_ingress_nginx_release_name ~ "-admission", "namespaced": False},
             {"resource": "lease/" ~ traefik_ingress_nginx_release_name ~ "-leader", "namespaced": True},
-          ]
+          ] +
+          (
+            [{"resource": "prometheusrule/nginx-ingress-alerting-rules", "namespaced": True}]
+            if traefik_prometheus_stack_enabled
+            else []
+          )
         }}
       loop_control:
         label: "{{ item.resource }}"
