@@ -1,0 +1,197 @@
+---
+- name: Check whether ingress-nginx is being migrated
+  ansible.builtin.set_fact:
+    traefik_ingress_nginx_migrating: "{{ traefik_ingress_nginx_installed }}"
+
+- name: Cut over the ingress controller Service to Traefik
+  when: traefik_ingress_nginx_migrating
+  block:
+    - name: Verify Traefik before the cutover
+      ansible.builtin.include_tasks: verify.yml
+      vars:
+        traefik_verify_service_name: "{{ traefik_chart_service_name }}"
+        traefik_verify_context: >-
+          No traffic has been moved to Traefik, and ingress-nginx is still serving all requests.
+      when: traefik_verify_enabled
+
+    - name: Remove ingress-nginx admission webhook
+      ansible.builtin.command: >-
+        kubectl delete validatingwebhookconfiguration
+          {{ traefik_ingress_nginx_release_name }}-admission
+          --ignore-not-found
+      register: traefik_delete_ingress_nginx_webhook
+      changed_when: "'deleted' in traefik_delete_ingress_nginx_webhook.stdout"
+
+    - name: Point the ingress controller Service at the Traefik pods
+      ansible.builtin.include_tasks: patch_service.yml
+      vars:
+        traefik_service_patch_target: traefik
+
+    - name: Verify Traefik and roll back on failure
+      when: traefik_verify_enabled
+      block:
+        - name: Verify Traefik through the ingress controller Service
+          ansible.builtin.include_tasks: verify.yml
+          vars:
+            traefik_verify_service_name: "{{ traefik_service_name }}"
+
+      rescue:
+        - name: Point the ingress controller Service back at ingress-nginx
+          ansible.builtin.include_tasks: patch_service.yml
+          vars:
+            traefik_service_patch_target: ingress-nginx
+
+        - name: Fail after rolling back the cutover
+          ansible.builtin.fail:
+            msg: >-
+              Traefik verification failed, ingress controller Service has been
+              pointed back at ingress-nginx. Deploy in the nginx phase to remove Traefik
+              and restore the ingress-nginx admission webhook.
+              {{ ansible_failed_result.msg | default('') }}
+
+- name: Remove ingress-nginx
+  when:
+    - traefik_ingress_nginx_migrating
+    - traefik_ingress_nginx_remove
+  block:
+    - name: Uninstall ingress-nginx
+      kubernetes.core.helm:
+        release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
+        release_name: "{{ traefik_ingress_nginx_release_name }}"
+        release_state: absent
+        wait: true
+        wait_timeout: "{{ traefik_wait_timeout }}"
+
+    - name: Remove ingress-nginx leftovers
+      ansible.builtin.command: >-
+        kubectl delete {{ item.resource }}
+          {% if item.namespaced %}--namespace {{ traefik_ingress_nginx_release_namespace }}{% endif %}
+          --ignore-not-found
+      loop: >-
+        {{
+          [
+            {"resource": "validatingwebhookconfiguration/" ~ traefik_ingress_nginx_release_name ~ "-admission", "namespaced": False},
+            {"resource": "lease/" ~ traefik_ingress_nginx_release_name ~ "-leader", "namespaced": True},
+          ] +
+          (
+            [{"resource": "prometheusrule/nginx-ingress-alerting-rules", "namespaced": True}]
+            if traefik_prometheus_stack_enabled
+            else []
+          )
+        }}
+      loop_control:
+        label: "{{ item.resource }}"
+      register: traefik_delete_ingress_nginx_leftovers
+      changed_when: "'deleted' in traefik_delete_ingress_nginx_leftovers.stdout"
+
+    - name: Get ingress controller state
+      ansible.builtin.include_tasks: state.yml
+
+    - name: Check that the ingress controller Service was kept
+      ansible.builtin.assert:
+        that: traefik_service is truthy
+        fail_msg: >-
+          The Service {{ traefik_release_namespace }}/{{ traefik_service_name }} was
+          removed with ingress-nginx. This is a serious problem.
+
+- name: Configure ingress controller Service and IngressClass
+  when: not traefik_ingress_nginx_installed
+  block:
+    # Adopt the Service and IngressClass that were kept when ingress-nginx was uninstalled
+    # For a fresh install, the IngressClass is created and the Service is created by the chart
+    - name: Get ingress-nginx IngressClass
+      ansible.builtin.command: >-
+        kubectl get ingressclass {{ traefik_ingress_nginx_class_name }}
+          --ignore-not-found
+          --output json
+      changed_when: false
+      register: traefik_ingress_nginx_class_cmd
+
+    - name: Remove ingress-nginx release metadata
+      ansible.builtin.command:
+        argv: >-
+          {{
+            ["kubectl", "patch", item.kind | lower, item.metadata.name] +
+            (["--namespace", item.metadata.namespace] if item.metadata.namespace is defined else []) +
+            ["--type", "merge", "--patch", traefik_release_metadata_patch | to_json]
+          }}
+      loop: >-
+        {{
+          [
+            traefik_service,
+            (
+              traefik_ingress_nginx_class_cmd.stdout | from_json
+              if traefik_ingress_nginx_class_cmd.stdout
+              else {}
+            ),
+          ] |
+            select |
+            list
+        }}
+      when: >-
+        item.metadata.annotations['meta.helm.sh/release-name'] | default('') ==
+        traefik_ingress_nginx_release_name
+      loop_control:
+        label: "{{ item.kind }}/{{ item.metadata.name }}"
+      vars:
+        traefik_release_metadata_patch:
+          metadata:
+            # Remove all the labels added by the ingress-nginx chart
+            labels: >-
+              {{
+                item.metadata.labels |
+                  default({}) |
+                  dict2items |
+                  map('combine', {'value': None}) |
+                  items2dict
+              }}
+            annotations:
+              meta.helm.sh/release-name: null
+              meta.helm.sh/release-namespace: null
+              helm.sh/resource-policy: null
+      changed_when: true
+
+    - name: Configure ingress controller Service and IngressClass
+      ansible.builtin.command: kubectl apply -f -
+      args:
+        stdin: "{{ item | to_nice_yaml }}"
+      loop: >-
+        {{
+          ([] if traefik_service_from_chart else [traefik_service_definition]) +
+          [traefik_ingress_nginx_class_definition]
+        }}
+      vars:
+        traefik_service_definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ traefik_service_name }}"
+            namespace: "{{ traefik_release_namespace }}"
+            labels: "{{ traefik_service_labels }}"
+            annotations: "{{ traefik_service_annotations }}"
+          spec: >-
+            {{-
+              {
+                "type": "LoadBalancer",
+                "selector": traefik_pod_selector,
+                "ports": traefik_service_ports,
+              } |
+                combine(
+                  { "loadBalancerIP": traefik_service_load_balancer_ip }
+                  if traefik_service_load_balancer_ip
+                  else {}
+                )
+            }}
+        traefik_ingress_nginx_class_definition:
+          apiVersion: networking.k8s.io/v1
+          kind: IngressClass
+          metadata:
+            name: "{{ traefik_ingress_nginx_class_name }}"
+            labels:
+              app.kubernetes.io/managed-by: azimuth-ops
+          spec:
+            controller: "{{ traefik_ingress_nginx_controller_class }}"
+      loop_control:
+        label: "{{ item.kind }}/{{ item.metadata.name }}"
+      register: traefik_service_apply
+      changed_when: traefik_service_apply.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

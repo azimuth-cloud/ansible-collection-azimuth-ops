@@ -1,0 +1,170 @@
+---
+- name: Set ingress controller migration phase
+  ansible.builtin.set_fact:
+    traefik_phase: "{{ ingress_controller_migration_phase | default('nginx') }}"
+
+- name: Check ingress controller migration phase
+  ansible.builtin.assert:
+    that: traefik_phase in ['nginx', 'traefik']
+    fail_msg: >-
+      ingress_controller_migration_phase must be one of nginx or traefik,
+      got '{{ traefik_phase }}'.
+
+- name: Get Traefik releases
+  kubernetes.core.helm_info:
+    release_name: "{{ traefik_release_name }}"
+    release_namespace: "{{ item }}"
+  loop: "{{ [traefik_migration_namespace, traefik_namespace] | unique }}"
+  register: traefik_releases
+
+- name: Get ingress-nginx controller Service
+  ansible.builtin.command: >-
+    kubectl get service {{ traefik_ingress_nginx_release_name }}-controller
+      --namespace {{ traefik_ingress_nginx_release_namespace }}
+      --ignore-not-found
+      --output name
+  changed_when: false
+  register: traefik_ingress_nginx_service_cmd
+
+- name: Get ingress-nginx release
+  kubernetes.core.helm_info:
+    release_name: "{{ traefik_ingress_nginx_release_name }}"
+    release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
+  register: traefik_ingress_nginx_release
+
+- name: Set Traefik namespace facts
+  ansible.builtin.set_fact:
+    traefik_existing_namespaces: "{{ traefik_existing_namespaces }}"
+    traefik_detected_release_namespace: >-
+      {{-
+        traefik_existing_namespaces[0]
+        if traefik_existing_namespaces
+        else (
+          traefik_migration_namespace
+          if (
+            traefik_ingress_nginx_release.status is defined or
+            traefik_ingress_nginx_service_cmd.stdout
+          )
+          else traefik_namespace
+        )
+      }}
+  vars:
+    traefik_existing_namespaces: >-
+      {{
+        traefik_releases.results |
+          selectattr('status', 'defined') |
+          map(attribute = 'item') |
+          list
+      }}
+
+- name: Check that Traefik is installed in one namespace
+  ansible.builtin.assert:
+    that:
+      - traefik_existing_namespaces | length <= 1
+      - >-
+        not traefik_existing_namespaces or
+        traefik_existing_namespaces[0] == traefik_release_namespace
+    fail_msg: >-
+      Traefik is installed in namespace(s) {{ traefik_existing_namespaces | join(', ') }},
+      but traefik_release_namespace is {{ traefik_release_namespace }}.
+      You cannot change the namespace of an existing release.
+
+- name: Check that Traefik is in the ingress-nginx namespace for the migration
+  ansible.builtin.assert:
+    that: >-
+      traefik_ingress_nginx_release.status is not defined or
+      traefik_release_namespace == traefik_ingress_nginx_release_namespace
+    fail_msg: >-
+      ingress-nginx is installed, so Traefik must be installed in the ingress-nginx
+      namespace {{ traefik_ingress_nginx_release_namespace }} for the migration.
+      You are trying to insall it into {{ traefik_release_namespace }}.
+
+- name: Get ingress controller state
+  ansible.builtin.include_tasks: state.yml
+
+- name: Check that the ingress controller Service is not owned by Traefik
+  ansible.builtin.fail:
+    msg: >-
+      The Service {{ traefik_release_namespace }}/{{ traefik_service_name }} is
+      used by Traefik, so ingress-nginx cannot be re-installed by the nginx phase.
+      Rolling back from the traefik phase once ingress-nginx has been removed is a
+      manual operation.
+  when:
+    - traefik_phase == 'nginx'
+    - traefik_service is truthy
+    - >-
+      traefik_service.metadata.annotations['meta.helm.sh/release-name'] | default('') !=
+      traefik_ingress_nginx_release_name
+
+- name: Point the ingress controller Service at ingress-nginx
+  ansible.builtin.include_tasks: patch_service.yml
+  vars:
+    traefik_service_patch_target: ingress-nginx
+  when:
+    - traefik_phase == 'nginx'
+    - traefik_ingress_nginx_installed
+    - traefik_service is truthy
+
+- name: Check ingress-nginx resources are kept on uninstall
+  ansible.builtin.assert:
+    that: >-
+      traefik_ingress_nginx_release.status.manifest |
+        json_query(traefik_ingress_nginx_keep_query) |
+        select('equalto', 'keep') |
+        length == 2
+    fail_msg: >-
+      The ingress-nginx release does not have helm.sh/resource-policy=keep on the
+      Service {{ traefik_service_name }} and the IngressClass
+      {{ traefik_ingress_nginx_class_name }}.
+      Deploy again in the nginx phase with a version
+      of azimuth-ops that sets it before moving to the traefik phase.
+  vars:
+    traefik_ingress_nginx_keep_query: >-
+      [?
+        (kind == 'Service' && metadata.name == '{{ traefik_service_name }}') ||
+        (kind == 'IngressClass' && metadata.name == '{{ traefik_ingress_nginx_class_name }}')
+      ].metadata.annotations."helm.sh/resource-policy"
+  when:
+    - traefik_phase == 'traefik'
+    - traefik_ingress_nginx_installed
+
+- name: Uninstall Traefik
+  when:
+    - traefik_phase == 'nginx'
+    - traefik_installed
+  block:
+    - name: Uninstall Traefik release
+      kubernetes.core.helm:
+        release_namespace: "{{ traefik_release_namespace }}"
+        release_name: "{{ traefik_release_name }}"
+        release_state: absent
+        wait: true
+        wait_timeout: "{{ traefik_wait_timeout }}"
+
+    - name: Remove Traefik monitoring resources
+      ansible.builtin.command: >-
+        kubectl delete {{ item }}
+          --namespace {{ traefik_release_namespace }}
+          --ignore-not-found
+      loop:
+        - configmap/traefik-grafana-dashboard
+        - prometheusrule/traefik-alerting-rules
+      register: traefik_delete_monitoring
+      changed_when: "'deleted' in traefik_delete_monitoring.stdout"
+      when: traefik_prometheus_stack_enabled
+
+- name: Install Traefik
+  ansible.builtin.include_tasks: install.yml
+  when: traefik_phase == 'traefik'
+
+- name: Cut over from ingress-nginx to Traefik
+  ansible.builtin.include_tasks: cutover.yml
+  when: traefik_phase == 'traefik'
+
+- name: Verify Traefik
+  ansible.builtin.include_tasks: verify.yml
+  vars:
+    traefik_verify_service_name: "{{ traefik_service_name }}"
+  when:
+    - traefik_phase == 'traefik'
+    - traefik_verify_enabled
