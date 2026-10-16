@@ -1388,6 +1388,83 @@ azimuth_capi_operator_app_templates_argocd_spec:
         )
     }}
 
+#####
+# Azimuth Inference app template
+#####
+
+# Indicates whether the Azimuth Inference app template should be enabled
+azimuth_capi_operator_app_templates_inference_enabled: true
+# The Helm chart to use for the inference app template
+azimuth_capi_operator_app_templates_inference_chart_name: azimuth-inference
+# The Helm repository to use for the inference app template
+azimuth_capi_operator_app_templates_inference_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
+# The version range to use for the inference Helm chart
+azimuth_capi_operator_app_templates_inference_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
+# Overrides for the label, logo and description from the inference Helm chart
+azimuth_capi_operator_app_templates_inference_label:
+azimuth_capi_operator_app_templates_inference_logo:
+azimuth_capi_operator_app_templates_inference_description:
+# The app catalogue that Azimuth Inference should be placed in
+azimuth_capi_operator_app_templates_inference_catalogue_name: Preview
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_inference_catalogue_precedence: 150
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_inference_deprecated: false
+# The number of versions to make available for the inference app template
+azimuth_capi_operator_app_templates_inference_keep_versions: 3
+# The sync frequency for the inference app template (default 24h)
+azimuth_capi_operator_app_templates_inference_sync_frequency: 86400
+# Any default values for the inference app template
+azimuth_capi_operator_app_templates_inference_default_values: {}
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_inference_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_inference_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_inference_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_inference_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_inference_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_inference_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_inference_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_inference_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_inference_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_inference_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_inference_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_inference_deprecated | string }}"
+# The spec for the inference app template
+azimuth_capi_operator_app_templates_inference_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_inference_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_inference_chart_repo,
+          "name": azimuth_capi_operator_app_templates_inference_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_inference_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_inference_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_inference_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_inference_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_inference_label }
+          if azimuth_capi_operator_app_templates_inference_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_inference_logo }
+          if azimuth_capi_operator_app_templates_inference_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_inference_description }
+          if azimuth_capi_operator_app_templates_inference_description
+          else {}
+        )
+    }}
 
 # The default templates
 azimuth_capi_operator_app_templates_default: >-
@@ -1431,6 +1508,11 @@ azimuth_capi_operator_app_templates_default: >-
             combine(
         { "ragflow": azimuth_capi_operator_app_templates_ragflow_spec }
         if azimuth_capi_operator_app_templates_ragflow_enabled
+        else {}
+      ) |
+            combine(
+        { "inference": azimuth_capi_operator_app_templates_inference_spec }
+        if azimuth_capi_operator_app_templates_inference_enabled
         else {}
       )
   }}
