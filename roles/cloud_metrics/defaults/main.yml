@@ -1,5 +1,4 @@
 ---
-
 # The chart to use for Grafana
 cloud_metrics_grafana_chart_repo: https://grafana.github.io/helm-charts
 cloud_metrics_grafana_chart_name: grafana
@@ -40,7 +39,7 @@ cloud_metrics_prometheus_servicemonitor_name: "{{ cloud_metrics_prometheus_servi
 # The spec is set up for Prometheus federation
 cloud_metrics_prometheus_servicemonitor_params:
   "match[]":
-    - "{job=~\"os_capacity|libvirt_exporter\"}"
+    - '{job=~"os_capacity|libvirt_exporter"}'
 cloud_metrics_prometheus_servicemonitor_tls_config:
   serverName: "{{ cloud_metrics_prometheus_host }}"
 cloud_metrics_prometheus_servicemonitor_spec:
@@ -153,6 +152,30 @@ cloud_metrics_grafana_ingress_auth_signin_url: >-
 # The URL parameter to contain the original URL when redirecting
 cloud_metrics_grafana_ingress_auth_next_url_param: next
 
+# The auth-signin-redirect-param annotation is not supported by the Traefik
+# ingress-nginx compatibility provider.
+# Add parameter to the URL instead.
+_cloud_metrics_grafana_ingress_auth_signin_url_query: >-
+  {{ cloud_metrics_grafana_ingress_auth_signin_url | urlsplit('query') }}
+_cloud_metrics_grafana_ingress_auth_signin_url_with_next: >-
+  {{
+    cloud_metrics_grafana_ingress_auth_signin_url
+    if (
+      not cloud_metrics_grafana_ingress_auth_signin_url or
+      cloud_metrics_grafana_ingress_auth_next_url_param in (
+        _cloud_metrics_grafana_ingress_auth_signin_url_query.split('&') |
+          map('regex_replace', '=.*$', '')
+      )
+    )
+    else (
+      "{}{}{}=$scheme://$best_http_host$escaped_request_uri".format(
+        cloud_metrics_grafana_ingress_auth_signin_url,
+        '&' if _cloud_metrics_grafana_ingress_auth_signin_url_query else '?',
+        cloud_metrics_grafana_ingress_auth_next_url_param
+      )
+    )
+  }}
+
 # Dictionary of headers to set for authentication requests
 # These will override headers from the incoming request, which would otherwise be forwarded
 # In particular, you may need to override the accepts header to suit the content types served
@@ -161,14 +184,25 @@ cloud_metrics_grafana_ingress_auth_request_headers:
   accept: application/json
 
 # The ingress annotations that configure the auth callout
-cloud_metrics_grafana_ingress_auth_annotations:
+# The auth-signin annotation is only added if a sign-in URL is set
+_cloud_metrics_grafana_ingress_auth_base_annotations:
   nginx.ingress.kubernetes.io/auth-url: "{{ cloud_metrics_grafana_ingress_auth_url }}"
-  nginx.ingress.kubernetes.io/auth-signin: "{{ cloud_metrics_grafana_ingress_auth_signin_url }}"
-  nginx.ingress.kubernetes.io/auth-signin-redirect-param: "{{ cloud_metrics_grafana_ingress_auth_next_url_param }}"
   nginx.ingress.kubernetes.io/auth-snippet: |-
     {% for name, value in cloud_metrics_grafana_ingress_auth_request_headers.items() %}
     proxy_set_header {{ name }} {{ value }};
     {% endfor %}
+cloud_metrics_grafana_ingress_auth_annotations: >-
+  {{
+    _cloud_metrics_grafana_ingress_auth_base_annotations |
+      combine(
+        {
+          "nginx.ingress.kubernetes.io/auth-signin":
+            _cloud_metrics_grafana_ingress_auth_signin_url_with_next,
+        }
+        if cloud_metrics_grafana_ingress_auth_signin_url
+        else {}
+      )
+  }}
 
 # The admin username and password for Grafana
 cloud_metrics_grafana_admin_username: admin
