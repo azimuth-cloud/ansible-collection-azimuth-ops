@@ -29,11 +29,7 @@ ingress_nginx_release_defaults:
     # Allows Traefik to take possession of these when we migrate.
     service:
       annotations:
-        helm.sh/resource-policy: keep
         loadbalancer.openstack.org/keep-floatingip: "true"
-    ingressClassResource:
-      annotations:
-        helm.sh/resource-policy: keep
     metrics:
       enabled: "{{ ingress_nginx_prometheus_stack_enabled }}"
       serviceMonitor:
