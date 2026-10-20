@@ -208,7 +208,6 @@ velero_backup_excluded_namespaces:
   - kube-node-lease
   - kube-public
   - kube-system
-  - kubernetes-dashboard
   - monitoring-system
   - node-problem-detector
   - openstack-system
