@@ -1401,7 +1401,7 @@ azimuth_capi_operator_app_templates_inference_chart_repo: https://azimuth-cloud.
 # The version range to use for the inference Helm chart
 azimuth_capi_operator_app_templates_inference_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the inference Helm chart
-azimuth_capi_operator_app_templates_inference_label:
+azimuth_capi_operator_app_templates_inference_label: Azimuth Inference Platform
 azimuth_capi_operator_app_templates_inference_logo:
 azimuth_capi_operator_app_templates_inference_description:
 # The app catalogue that Azimuth Inference should be placed in
