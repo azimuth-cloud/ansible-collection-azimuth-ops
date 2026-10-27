@@ -1,12 +1,12 @@
 # This workflow proposes updates to the dependencies that dependabot cannot
 name: Update dependencies
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   # Allow manual executions
   workflow_dispatch:
   # Run nightly
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
 jobs:
   # Note that although the Azimuth components all have Helm charts, we use the
@@ -260,6 +260,73 @@ jobs:
             automation
             dependency-update
 
+  # The seed node uses an Ubuntu cloud image, which is not published as a GitHub release
+  propose_infra_image_update:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+      id-token: write
+    name: infra-image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check for updates
+        id: next
+        run: |
+          set -eo pipefail
+          base_url=https://cloud-images.ubuntu.com/releases/noble
+          # The release directory always points at the latest release, but we pin
+          # the dated directory so that the image name changes when the image does
+          version="$(
+            curl -fsSL "$base_url/release/unpacked/build-info.txt" |
+              sed -nE 's/^serial=([0-9]{8})$/\1/p'
+          )"
+          if [ -z "$version" ]; then
+            echo "Unable to determine latest Ubuntu Noble release" >&2
+            exit 1
+          fi
+          # Make sure the images we use have been published for the release
+          for arch in amd64 arm64; do
+            curl -fsSLI -o /dev/null \
+              "$base_url/release-$version/ubuntu-24.04-server-cloudimg-$arch.img"
+          done
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Update infra image version
+        uses: azimuth-cloud/github-actions/config-update@master
+        with:
+          path: ./roles/infra/defaults/main.yml
+          updates: |
+            infra_image_version=${{ steps.next.outputs.version }}
+
+      - name: Generate app token for PR
+        uses: azimuth-cloud/github-actions/generate-app-token@master
+        id: generate-app-token
+        with:
+          repository: ${{ github.repository }}
+          app-id: ${{ secrets.AUTOMATION_APP_ID }}
+          app-private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+
+      - name: Propose changes via PR if required
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          token: ${{ steps.generate-app-token.outputs.token }}
+          commit-message: >-
+            Update infra image to ubuntu-noble-${{ steps.next.outputs.version }}
+          branch: update-dependency/seed-image
+          delete-branch: true
+          title: >-
+            Update infra image to ubuntu-noble-${{ steps.next.outputs.version }}
+          body: >
+            This PR was created automatically to update the seed infra image
+            to ubuntu-noble-${{ steps.next.outputs.version }}.
+          labels: |
+            automation
+            dependency-update
 
   propose_helm_chart_updates:
     runs-on: ubuntu-latest
