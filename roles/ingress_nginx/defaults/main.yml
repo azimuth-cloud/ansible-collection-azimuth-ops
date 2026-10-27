@@ -14,11 +14,6 @@ ingress_nginx_wait_timeout: 10m
 # enables the monitoring stack
 ingress_nginx_prometheus_stack_enabled: true
 
-# Enabled when the traefik role is migrating from nginx
-ingress_nginx_keep_on_uninstall: false
-ingress_nginx_keep_annotations: >-
-  {{ {"helm.sh/resource-policy": "keep"} if ingress_nginx_keep_on_uninstall else {} }}
-
 # The values for the release
 ingress_nginx_release_defaults:
   controller:
@@ -30,14 +25,10 @@ ingress_nginx_release_defaults:
     # management cluster.
     config:
       annotations-risk-level: Critical
-    ingressClassResource:
-      annotations: "{{ ingress_nginx_keep_annotations }}"
+    # Keep the floating IP if the Service is deleted.
     service:
-      annotations: >-
-        {{
-          { "loadbalancer.openstack.org/keep-floatingip": "true" } |
-            combine(ingress_nginx_keep_annotations)
-        }}
+      annotations:
+        loadbalancer.openstack.org/keep-floatingip: "true"
     metrics:
       enabled: "{{ ingress_nginx_prometheus_stack_enabled }}"
       serviceMonitor:

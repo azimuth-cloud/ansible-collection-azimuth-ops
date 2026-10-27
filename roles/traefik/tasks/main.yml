@@ -10,100 +10,14 @@
       ingress_controller_migration_phase must be one of nginx or traefik,
       got '{{ traefik_phase }}'.
 
-- name: Get Traefik releases
-  kubernetes.core.helm_info:
-    release_name: "{{ traefik_release_name }}"
-    release_namespace: "{{ item }}"
-  loop: "{{ [traefik_migration_namespace, traefik_namespace] | unique }}"
-  register: traefik_releases
-
-- name: Get ingress-nginx controller Service
-  ansible.builtin.command: >-
-    kubectl get service {{ traefik_ingress_nginx_release_name }}-controller
-      --namespace {{ traefik_ingress_nginx_release_namespace }}
-      --ignore-not-found
-      --output name
-  changed_when: false
-  register: traefik_ingress_nginx_service_cmd
-
-- name: Get ingress-nginx release
-  kubernetes.core.helm_info:
-    release_name: "{{ traefik_ingress_nginx_release_name }}"
-    release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
-  register: traefik_ingress_nginx_release
-
-- name: Set Traefik namespace facts
-  ansible.builtin.set_fact:
-    traefik_existing_namespaces: "{{ traefik_existing_namespaces }}"
-    traefik_detected_release_namespace: >-
-      {{-
-        traefik_existing_namespaces[0]
-        if traefik_existing_namespaces
-        else (
-          traefik_migration_namespace
-          if (
-            traefik_ingress_nginx_release.status is defined or
-            traefik_ingress_nginx_service_cmd.stdout
-          )
-          else traefik_namespace
-        )
-      }}
-  vars:
-    traefik_existing_namespaces: >-
-      {{
-        traefik_releases.results |
-          selectattr('status', 'defined') |
-          map(attribute = 'item') |
-          list
-      }}
-
-- name: Check that Traefik is installed in one namespace
-  ansible.builtin.assert:
-    that:
-      - traefik_existing_namespaces | length <= 1
-      - >-
-        not traefik_existing_namespaces or
-        traefik_existing_namespaces[0] == traefik_release_namespace
-    fail_msg: >-
-      Traefik is installed in namespace(s) {{ traefik_existing_namespaces | join(', ') }},
-      but traefik_release_namespace is {{ traefik_release_namespace }}.
-      You cannot change the namespace of an existing release.
-
-- name: Check that Traefik is in the ingress-nginx namespace for the migration
-  ansible.builtin.assert:
-    that: >-
-      traefik_ingress_nginx_release.status is not defined or
-      traefik_release_namespace == traefik_ingress_nginx_release_namespace
-    fail_msg: >-
-      ingress-nginx is installed, so Traefik must be installed in the ingress-nginx
-      namespace {{ traefik_ingress_nginx_release_namespace }} for the migration.
-      You are trying to insall it into {{ traefik_release_namespace }}.
-
 - name: Get ingress controller state
   ansible.builtin.include_tasks: state.yml
 
-- name: Check that the ingress controller Service is not owned by Traefik
-  ansible.builtin.fail:
-    msg: >-
-      The Service {{ traefik_release_namespace }}/{{ traefik_service_name }} is
-      used by Traefik, so ingress-nginx cannot be re-installed by the nginx phase.
-      Rolling back from the traefik phase once ingress-nginx has been removed is a
-      manual operation.
-  when:
-    - traefik_phase == 'nginx'
-    - traefik_service is truthy
-    - >-
-      traefik_service.metadata.annotations['meta.helm.sh/release-name'] | default('') !=
-      traefik_ingress_nginx_release_name
-
-- name: Point the ingress controller Service at ingress-nginx
-  ansible.builtin.include_tasks: patch_service.yml
-  vars:
-    traefik_service_patch_target: ingress-nginx
-  when:
-    - traefik_phase == 'nginx'
-    - traefik_ingress_nginx_installed
-    - traefik_service is truthy
+# Traefik takes over the load balancer once ingress-nginx is not installed
+- name: Set whether Traefik is serving
+  ansible.builtin.set_fact:
+    traefik_serving: "{{ traefik_phase == 'traefik' and not traefik_ingress_nginx_installed }}"
+    traefik_migrating: "{{ traefik_phase == 'traefik' and traefik_ingress_nginx_installed }}"
 
 - name: Uninstall Traefik
   when:
@@ -136,12 +50,11 @@
 
 - name: Cut over from ingress-nginx to Traefik
   ansible.builtin.include_tasks: cutover.yml
-  when: traefik_phase == 'traefik'
+  when: traefik_migrating
 
 - name: Verify Traefik
   ansible.builtin.include_tasks: verify.yml
-  vars:
-    traefik_verify_service_name: "{{ traefik_service_name }}"
   when:
     - traefik_phase == 'traefik'
+    - not traefik_migrating
     - traefik_verify_enabled

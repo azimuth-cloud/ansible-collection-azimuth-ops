@@ -44,7 +44,7 @@ then deploy with it set to traefik again.
 {# ----------------------------------------------------------------------------------------- #}
 {% if bad_probes %}
 
-These URLs did not return an expected status ({{ probe_status_codes | join(', ') }}) through the Service {{ traefik_release_namespace }}/{{ traefik_verify_service_name }}:
+These URLs did not return an expected status ({{ probe_status_codes | join(', ') }}) through the Service {{ traefik_release_namespace }}/{{ traefik_service_name }}:
 {% for result in bad_probes %}
   - {{ result.item }} returned {{ result.stdout }}
 {% endfor %}

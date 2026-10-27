@@ -36,7 +36,7 @@
 
 - name: Get ClusterIP of the Service to probe
   ansible.builtin.command: >-
-    kubectl get service {{ traefik_verify_service_name }}
+    kubectl get service {{ traefik_service_name }}
       --namespace {{ traefik_release_namespace }}
       --output jsonpath='{.spec.clusterIP}'
   changed_when: false

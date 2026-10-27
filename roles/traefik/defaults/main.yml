@@ -1,18 +1,19 @@
 ---
+# MIGRATION PHASES:
 ### nginx ###
 # ingress-nginx serves all traffic and Traefik is not installed
-# If traefik exists, it is removed.
+# If Traefik is installed, it is removed
 
 ### traefik ###
-# * Install traefik
-# * Verify
-# * Move ingress-nginx service to point at traefic
-# * Remove ingress-nginx (optionally)
+# Traefik serves all traffic
+# If ingress-nginx is installed:
+# * Traefik is installed alongside it, with a ClusterIP Service, and verified
+# * ingress-nginx is uninstalled, which deletes its LoadBalancer Service
+# * The Traefik Service is changed to a LoadBalancer, and verified
+# * If that fails, Traefik goes back to a ClusterIP Service and ingress-nginx is reinstalled
+# There is a short outage between removing the ingress-nginx Service and the Traefik Service
+# getting the load balancer
 
-# For a fresh install, Traefik is installed directly into its own namespace,
-# with a LB Service from the chart
-
-# Moving from traefik back to nginx is supported until ingress-nginx is removed
 # Migration phase is set by ingress_controller_migration_phase (default nginx), which also
 # controls whether the playbooks install ingress-nginx
 
@@ -27,14 +28,7 @@ traefik_crds_chart_name: traefik-crds
 traefik_crds_chart_version: 1.18.0
 
 traefik_release_name: traefik
-# The namespace for fresh installs
-traefik_namespace: traefik
-# The namespace for installs that are migrated from ingress-nginx
-# MUST BE the namespace of ingress-nginx, because we need to adopt it's service
-traefik_migration_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
-
-# The namespace that Traefik is installed into
-traefik_release_namespace: "{{ traefik_detected_release_namespace }}"
+traefik_release_namespace: traefik
 traefik_crds_release_name: traefik-crds
 
 traefik_wait_timeout: 10m
@@ -42,27 +36,18 @@ traefik_wait_timeout: 10m
 # Release information for the ingress-nginx release that is being migrated from
 traefik_ingress_nginx_release_namespace: ingress-nginx
 traefik_ingress_nginx_release_name: ingress-nginx
-
-# Indicates whether ingress-nginx should be uninstalled in the traefik phase
-# By default, ingress-nginx is left running
-# Once ingress-nginx is uninstalled, rolling back is a manual operation
-traefik_ingress_nginx_remove: false
+traefik_ingress_nginx_service_name: "{{ traefik_ingress_nginx_release_name }}-controller"
 
 # IngressClass that the ingress-nginx compatibility provider serves
 traefik_ingress_nginx_class_name: nginx
 traefik_ingress_nginx_controller_class: k8s.io/ingress-nginx
 
-# LB service created by the chart for fresh installs.
-# For migrated installs, the ingress-nginx Service is taken over by the Traefik release
-# once ingress-nginx is removed
-traefik_service_from_chart: "{{ traefik_release_namespace != traefik_migration_namespace }}"
-
-# The LoadBalancer Service that receives external traffic
+# The name of the Service created by the Traefik chart
 traefik_service_name: >-
   {{-
-    traefik_chart_service_name
-    if traefik_service_from_chart
-    else "{}-controller".format(traefik_ingress_nginx_release_name)
+    traefik_release_name
+    if traefik_chart_name in traefik_release_name
+    else "{}-{}".format(traefik_release_name, traefik_chart_name)
   }}
 
 # The IP to request for the load balancer, if required
@@ -72,80 +57,24 @@ traefik_service_load_balancer_ip:
 traefik_service_annotations:
   loadbalancer.openstack.org/keep-floatingip: "true"
 
-# Labels for the Service when it is taken over from ingress-nginx
-traefik_service_labels:
-  app.kubernetes.io/name: traefik
-
-# The ports for the Service, pointing at the Traefik entrypoints
-# Names and ports to match the ingress-nginx controller Service
-traefik_service_ports:
-  - name: http
-    port: 80
-    protocol: TCP
-    targetPort: web
-  - name: https
-    port: 443
-    protocol: TCP
-    targetPort: websecure
-# The ports for the Service when pointing at ingress-nginx, used for rollback
-traefik_ingress_nginx_service_ports:
-  - name: http
-    port: 80
-    protocol: TCP
-    targetPort: http
-  - name: https
-    port: 443
-    protocol: TCP
-    targetPort: https
-
 # The labels that select the Traefik pods
 traefik_pod_selector:
   app.kubernetes.io/name: "{{ traefik_chart_name }}"
   app.kubernetes.io/instance: "{{ traefik_release_name }}-{{ traefik_release_namespace }}"
 
-# The name of the ClusterIP Service created by the Traefik chart
-traefik_chart_service_name: >-
-  {{-
-    traefik_release_name
-    if traefik_chart_name in traefik_release_name
-    else "{}-{}".format(traefik_release_name, traefik_chart_name)
-  }}
-
 # The port of the traefik entrypoint, which serves the API
 traefik_api_port: 8080
 
-# The Service and IngressClass that the Traefik release manages once ingress-nginx is not installed
-# While ingress-nginx is installed, they belong to the ingress-nginx release
-traefik_ingress_controller_objects: >-
+# The Service whose address is published in the Ingress statuses
+traefik_published_service: >-
   {{-
-    []
-    if traefik_ingress_nginx_installed
-    else (
-      ([] if traefik_service_from_chart else [traefik_service_definition]) +
-      [traefik_ingress_nginx_class_definition]
-    )
+    "{}/{}".format(traefik_release_namespace, traefik_service_name)
+    if traefik_serving
+    else "{}/{}".format(traefik_ingress_nginx_release_namespace, traefik_ingress_nginx_service_name)
   }}
-traefik_service_definition:
-  apiVersion: v1
-  kind: Service
-  metadata:
-    name: "{{ traefik_service_name }}"
-    namespace: "{{ traefik_release_namespace }}"
-    labels: "{{ traefik_service_labels }}"
-    annotations: "{{ traefik_service_annotations }}"
-  spec: >-
-    {{-
-      {
-        "type": "LoadBalancer",
-        "selector": traefik_pod_selector,
-        "ports": traefik_service_ports,
-      } |
-        combine(
-          { "loadBalancerIP": traefik_service_load_balancer_ip }
-          if traefik_service_load_balancer_ip
-          else {}
-        )
-    }}
+
+# The IngressClass for the Ingresses served by the ingress-nginx compatibility provider
+# While ingress-nginx is installed, it belongs to the ingress-nginx release
 traefik_ingress_nginx_class_definition:
   apiVersion: networking.k8s.io/v1
   kind: IngressClass
@@ -155,7 +84,7 @@ traefik_ingress_nginx_class_definition:
     controller: "{{ traefik_ingress_nginx_controller_class }}"
 
 # The number of Traefik replicas
-traefik_replicas: "{{ 2 if (install_mode | default('singlenode')) == 'ha' else 1 }}"
+traefik_replicas: "{{ 3 if (install_mode | default('singlenode')) == 'ha' else 1 }}"
 
 traefik_tls_redirect_enabled: "{{ ingress_tls_enabled | default(true) }}"
 
@@ -226,7 +155,7 @@ traefik_release_defaults:
   providers:
     kubernetesIngress:
       publishedService:
-        pathOverride: "{{ traefik_release_namespace }}/{{ traefik_service_name }}"
+        pathOverride: "{{ traefik_published_service }}"
 
     # Serves the existing nginx-class Ingresses
     kubernetesIngressNGINX:
@@ -235,9 +164,9 @@ traefik_release_defaults:
       allowSnippetAnnotations: true
       publishService:
         enabled: true
-        pathOverride: "{{ traefik_release_namespace }}/{{ traefik_service_name }}"
+        pathOverride: "{{ traefik_published_service }}"
 
-  # For a migrated install, the Service created by the chart is only used internally
+  # While ingress-nginx is serving, the Service is only used to verify Traefik
   service: >-
     {{-
       {
@@ -251,7 +180,7 @@ traefik_release_defaults:
             )
         ),
       }
-      if traefik_service_from_chart
+      if traefik_serving
       else { "spec": { "type": "ClusterIP" } }
     }}
 
@@ -282,10 +211,9 @@ traefik_release_defaults:
           writeTimeout: 600
           idleTimeout: 600
 
-  extraObjects: "{{ traefik_ingress_controller_objects }}"
+  extraObjects: "{{ [traefik_ingress_nginx_class_definition] if traefik_serving else [] }}"
 
   # Only exposed on the traefik entrypoint of the pods
-  # Used for verification
   api:
     insecure: "{{ traefik_verify_enabled }}"
   accessLog:
