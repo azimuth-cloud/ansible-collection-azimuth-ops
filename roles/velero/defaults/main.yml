@@ -43,7 +43,7 @@ velero_aws_secret_access_key: "{{ undef(hint='velero_aws_secret_access_key is re
 # Kubernetes CSI Snapshot Controller config
 velero_csi_snapshot_controller_chart_name: snapshot-controller
 velero_csi_snapshot_controller_chart_repo: https://piraeus.io/helm-charts/
-velero_csi_snapshot_controller_chart_version: 5.3.0
+velero_csi_snapshot_controller_chart_version: 5.4.0
 velero_csi_snapshot_controller_release_namespace: kube-system
 velero_csi_snapshot_controller_release_name: csi-snapshot-controller
 velero_csi_snapshot_controller_wait_timeout: 10m
@@ -100,7 +100,7 @@ velero_default_backup_storage_location: >-
 # Velero Helm chart config
 velero_chart_name: velero
 velero_chart_repo: https://vmware-tanzu.github.io/helm-charts
-velero_chart_version: 12.2.0
+velero_chart_version: 12.2.1
 velero_release_namespace: velero
 velero_release_name: velero
 velero_wait_timeout: 10m
@@ -208,7 +208,6 @@ velero_backup_excluded_namespaces:
   - kube-node-lease
   - kube-public
   - kube-system
-  - kubernetes-dashboard
   - monitoring-system
   - node-problem-detector
   - openstack-system
