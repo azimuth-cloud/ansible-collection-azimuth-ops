@@ -14,6 +14,26 @@
           No traffic has been moved to Traefik, and ingress-nginx is still serving all requests.
       when: traefik_verify_enabled
 
+    - name: Check ingress-nginx can be upgraded to keep the Service and IngressClass
+      ansible.builtin.assert:
+        that: >-
+          traefik_ingress_nginx_kept or
+          traefik_service.spec.selector | default({}) != traefik_pod_selector
+        fail_msg: >-
+          Deployment out-of order. Deploy again the nginx phase before moving to traefik.
+
+    - name: Upgrade ingress-nginx with keep_on_uninstall true
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.ingress_nginx
+      vars:
+        ingress_nginx_release_name: "{{ traefik_ingress_nginx_release_name }}"
+        ingress_nginx_release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
+        ingress_nginx_keep_on_uninstall: true
+      when: not traefik_ingress_nginx_kept
+
+    - name: Get ingress controller state
+      ansible.builtin.include_tasks: state.yml
+
     - name: Remove ingress-nginx admission webhook
       ansible.builtin.command: >-
         kubectl delete validatingwebhookconfiguration
@@ -54,6 +74,19 @@
     - traefik_ingress_nginx_migrating
     - traefik_ingress_nginx_remove
   block:
+    - name: Check ingress-nginx resources are kept on uninstall
+      ansible.builtin.assert:
+        that: traefik_ingress_nginx_kept
+        fail_msg: >-
+          The ingress-nginx release does not have helm.sh/resource-policy=keep on the
+          Service {{ traefik_service_name }} and the IngressClass
+          {{ traefik_ingress_nginx_class_name }}, so they would be deleted with it.
+
+    - name: Point the ingress controller Service at the Traefik pods
+      ansible.builtin.include_tasks: patch_service.yml
+      vars:
+        traefik_service_patch_target: traefik
+
     - name: Uninstall ingress-nginx
       kubernetes.core.helm:
         release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
@@ -94,104 +127,5 @@
           The Service {{ traefik_release_namespace }}/{{ traefik_service_name }} was
           removed with ingress-nginx. This is a serious problem.
 
-- name: Configure ingress controller Service and IngressClass
-  when: not traefik_ingress_nginx_installed
-  block:
-    # Adopt the Service and IngressClass that were kept when ingress-nginx was uninstalled
-    # For a fresh install, the IngressClass is created and the Service is created by the chart
-    - name: Get ingress-nginx IngressClass
-      ansible.builtin.command: >-
-        kubectl get ingressclass {{ traefik_ingress_nginx_class_name }}
-          --ignore-not-found
-          --output json
-      changed_when: false
-      register: traefik_ingress_nginx_class_cmd
-
-    - name: Remove ingress-nginx release metadata
-      ansible.builtin.command:
-        argv: >-
-          {{
-            ["kubectl", "patch", item.kind | lower, item.metadata.name] +
-            (["--namespace", item.metadata.namespace] if item.metadata.namespace is defined else []) +
-            ["--type", "merge", "--patch", traefik_release_metadata_patch | to_json]
-          }}
-      loop: >-
-        {{
-          [
-            traefik_service,
-            (
-              traefik_ingress_nginx_class_cmd.stdout | from_json
-              if traefik_ingress_nginx_class_cmd.stdout
-              else {}
-            ),
-          ] |
-            select |
-            list
-        }}
-      when: >-
-        item.metadata.annotations['meta.helm.sh/release-name'] | default('') ==
-        traefik_ingress_nginx_release_name
-      loop_control:
-        label: "{{ item.kind }}/{{ item.metadata.name }}"
-      vars:
-        traefik_release_metadata_patch:
-          metadata:
-            # Remove all the labels added by the ingress-nginx chart
-            labels: >-
-              {{
-                item.metadata.labels |
-                  default({}) |
-                  dict2items |
-                  map('combine', {'value': None}) |
-                  items2dict
-              }}
-            annotations:
-              meta.helm.sh/release-name: null
-              meta.helm.sh/release-namespace: null
-              helm.sh/resource-policy: null
-      changed_when: true
-
-    - name: Configure ingress controller Service and IngressClass
-      ansible.builtin.command: kubectl apply -f -
-      args:
-        stdin: "{{ item | to_nice_yaml }}"
-      loop: >-
-        {{
-          ([] if traefik_service_from_chart else [traefik_service_definition]) +
-          [traefik_ingress_nginx_class_definition]
-        }}
-      vars:
-        traefik_service_definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: "{{ traefik_service_name }}"
-            namespace: "{{ traefik_release_namespace }}"
-            labels: "{{ traefik_service_labels }}"
-            annotations: "{{ traefik_service_annotations }}"
-          spec: >-
-            {{-
-              {
-                "type": "LoadBalancer",
-                "selector": traefik_pod_selector,
-                "ports": traefik_service_ports,
-              } |
-                combine(
-                  { "loadBalancerIP": traefik_service_load_balancer_ip }
-                  if traefik_service_load_balancer_ip
-                  else {}
-                )
-            }}
-        traefik_ingress_nginx_class_definition:
-          apiVersion: networking.k8s.io/v1
-          kind: IngressClass
-          metadata:
-            name: "{{ traefik_ingress_nginx_class_name }}"
-            labels:
-              app.kubernetes.io/managed-by: azimuth-ops
-          spec:
-            controller: "{{ traefik_ingress_nginx_controller_class }}"
-      loop_control:
-        label: "{{ item.kind }}/{{ item.metadata.name }}"
-      register: traefik_service_apply
-      changed_when: traefik_service_apply.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+    - name: Take over the Service and IngressClass with the Traefik release
+      ansible.builtin.include_tasks: release.yml

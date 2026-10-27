@@ -25,3 +25,17 @@
     traefik_ingress_nginx_installed: "{{ traefik_ingress_nginx_release.status is defined }}"
     traefik_installed: "{{ traefik_release.status is defined }}"
     traefik_service: "{{ traefik_service_cmd.stdout | from_json if traefik_service_cmd.stdout else {} }}"
+    traefik_ingress_nginx_kept: >-
+      {{
+        traefik_ingress_nginx_release.status.manifest |
+          default([]) |
+          json_query(traefik_ingress_nginx_keep_query) |
+          select('equalto', 'keep') |
+          length == 2
+      }}
+  vars:
+    traefik_ingress_nginx_keep_query: >-
+      [?
+        (kind == 'Service' && metadata.name == '{{ traefik_service_name }}') ||
+        (kind == 'IngressClass' && metadata.name == '{{ traefik_ingress_nginx_class_name }}')
+      ].metadata.annotations."helm.sh/resource-policy"

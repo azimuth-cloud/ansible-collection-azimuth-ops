@@ -53,7 +53,8 @@ traefik_ingress_nginx_class_name: nginx
 traefik_ingress_nginx_controller_class: k8s.io/ingress-nginx
 
 # LB service created by the chart for fresh installs.
-# Otherwise, managed by ax-ops
+# For migrated installs, the ingress-nginx Service is taken over by the Traefik release
+# once ingress-nginx is removed
 traefik_service_from_chart: "{{ traefik_release_namespace != traefik_migration_namespace }}"
 
 # The LoadBalancer Service that receives external traffic
@@ -68,12 +69,12 @@ traefik_service_name: >-
 traefik_service_load_balancer_ip:
 
 # Annotations for the Service
-traefik_service_annotations: {}
+traefik_service_annotations:
+  loadbalancer.openstack.org/keep-floatingip: "true"
 
-# Labels for the Service when it is managed by ops
+# Labels for the Service when it is taken over from ingress-nginx
 traefik_service_labels:
   app.kubernetes.io/name: traefik
-  app.kubernetes.io/managed-by: azimuth-ops
 
 # The ports for the Service, pointing at the Traefik entrypoints
 # Names and ports to match the ingress-nginx controller Service
@@ -112,6 +113,46 @@ traefik_chart_service_name: >-
 
 # The port of the traefik entrypoint, which serves the API
 traefik_api_port: 8080
+
+# The Service and IngressClass that the Traefik release manages once ingress-nginx is not installed
+# While ingress-nginx is installed, they belong to the ingress-nginx release
+traefik_ingress_controller_objects: >-
+  {{-
+    []
+    if traefik_ingress_nginx_installed
+    else (
+      ([] if traefik_service_from_chart else [traefik_service_definition]) +
+      [traefik_ingress_nginx_class_definition]
+    )
+  }}
+traefik_service_definition:
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: "{{ traefik_service_name }}"
+    namespace: "{{ traefik_release_namespace }}"
+    labels: "{{ traefik_service_labels }}"
+    annotations: "{{ traefik_service_annotations }}"
+  spec: >-
+    {{-
+      {
+        "type": "LoadBalancer",
+        "selector": traefik_pod_selector,
+        "ports": traefik_service_ports,
+      } |
+        combine(
+          { "loadBalancerIP": traefik_service_load_balancer_ip }
+          if traefik_service_load_balancer_ip
+          else {}
+        )
+    }}
+traefik_ingress_nginx_class_definition:
+  apiVersion: networking.k8s.io/v1
+  kind: IngressClass
+  metadata:
+    name: "{{ traefik_ingress_nginx_class_name }}"
+  spec:
+    controller: "{{ traefik_ingress_nginx_controller_class }}"
 
 # The number of Traefik replicas
 traefik_replicas: "{{ 2 if (install_mode | default('singlenode')) == 'ha' else 1 }}"
@@ -240,6 +281,8 @@ traefik_release_defaults:
           readTimeout: 600
           writeTimeout: 600
           idleTimeout: 600
+
+  extraObjects: "{{ traefik_ingress_controller_objects }}"
 
   # Only exposed on the traefik entrypoint of the pods
   # Used for verification

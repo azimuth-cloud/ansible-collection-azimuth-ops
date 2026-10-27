@@ -530,11 +530,6 @@ capi_cluster_release_defaults:
               # management cluster.
               config:
                 annotations-risk-level: Critical
-              # Keep the Service and IngressClass when ingress-nginx is uninstalled.
-              # Allows Traefik to take possession of these when we migrate.
-              ingressClassResource:
-                annotations:
-                  helm.sh/resource-policy: keep
               service: >-
                 {{-
                   {

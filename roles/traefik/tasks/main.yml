@@ -105,29 +105,6 @@
     - traefik_ingress_nginx_installed
     - traefik_service is truthy
 
-- name: Check ingress-nginx resources are kept on uninstall
-  ansible.builtin.assert:
-    that: >-
-      traefik_ingress_nginx_release.status.manifest |
-        json_query(traefik_ingress_nginx_keep_query) |
-        select('equalto', 'keep') |
-        length == 2
-    fail_msg: >-
-      The ingress-nginx release does not have helm.sh/resource-policy=keep on the
-      Service {{ traefik_service_name }} and the IngressClass
-      {{ traefik_ingress_nginx_class_name }}.
-      Deploy again in the nginx phase with a version
-      of azimuth-ops that sets it before moving to the traefik phase.
-  vars:
-    traefik_ingress_nginx_keep_query: >-
-      [?
-        (kind == 'Service' && metadata.name == '{{ traefik_service_name }}') ||
-        (kind == 'IngressClass' && metadata.name == '{{ traefik_ingress_nginx_class_name }}')
-      ].metadata.annotations."helm.sh/resource-policy"
-  when:
-    - traefik_phase == 'traefik'
-    - traefik_ingress_nginx_installed
-
 - name: Uninstall Traefik
   when:
     - traefik_phase == 'nginx'
