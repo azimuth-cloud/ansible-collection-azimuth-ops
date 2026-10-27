@@ -1,4 +1,0 @@
----
-kubernetes_dashboard_release_namespace: kubernetes-dashboard
-kubernetes_dashboard_release_name: kubernetes-dashboard
-kubernetes_dashboard_wait_timeout: 10m
