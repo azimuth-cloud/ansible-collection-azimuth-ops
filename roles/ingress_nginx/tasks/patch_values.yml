@@ -1,0 +1,76 @@
+---
+- name: Retrieve all helmreleases
+  ansible.builtin.command:
+    cmd: >-
+      kubectl get helmreleases.addons.stackhpc.com -A -o json
+  register: ingress_nginx_helmreleases
+  changed_when: false
+
+- name: Extract ingress-nginx helmreleases
+  ansible.builtin.set_fact:
+    ingress_nginx_helmreleases: >-
+      {{
+        ingress_nginx_helmreleases_items
+        | selectattr('spec.chart.name', 'equalto', 'ingress-nginx')
+        | list
+      }}
+  vars:
+    ingress_nginx_helmreleases_items: >-
+      {{
+         ingress_nginx_helmreleases.stdout
+         | from_json
+         | json_query('items')
+      }}
+
+- name: Get ingress-nginx helmrelease values secret
+  ansible.builtin.command:
+    cmd: >-
+      kubectl get secret -o json
+      -n {{ item.metadata.namespace }}
+      {{ (item.spec.valuesSources | last ).secret.name }}
+  loop: "{{ ingress_nginx_helmreleases }}"
+  loop_control:
+    label: "{{ item.metadata.name }}"
+  register: ingress_nginx_config_secret_get
+  changed_when: false
+
+- name: Update helmrelease values secret to ensure we keep the floating IP
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ new_secret_object | to_nice_yaml }}"
+  loop: "{{ ingress_nginx_config_secret_get.results }}"
+  loop_control:
+    label: "{{ new_secret_object.metadata.name }}"
+  changed_when: true
+  vars:
+    new_overrides_string: >-
+      {{
+         (item.stdout | from_json).data.overrides
+         | ansible.builtin.b64decode
+         | from_yaml
+         | combine(
+             {
+               "controller": {
+                 "service": {
+                   "annotations": {
+                     "loadbalancer.openstack.org/keep-floatingip" : "true"
+                   }
+                 }
+               }
+             },
+             recursive=True
+           )
+         | to_nice_yaml
+         | ansible.builtin.b64encode
+      }}
+    new_secret_object: >-
+      {{
+        item.stdout
+        | from_json
+        | combine(
+          {
+            "data": {
+              "overrides" : new_overrides_string
+              }
+            }, recursive=True)
+      }}

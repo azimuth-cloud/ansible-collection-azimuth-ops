@@ -2,3 +2,7 @@
 skip-check:
   # Requires all blocks to have rescue: - not considered appropriate
   - CKV2_ANSIBLE_3
+  # Requires workflow files to have a top-level permissions block to ensure
+  # GITHUB_TOKEN is not write-all. azimuth-cloud org has GITHUB_TOKEN default
+  # set to read-only, so not required.
+  - CKV2_GHA_1

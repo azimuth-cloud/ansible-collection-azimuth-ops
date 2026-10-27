@@ -40,6 +40,26 @@
     wait: true
     wait_timeout: "{{ zenith_wait_timeout }}"
 
+- name: Wait for Zenith sshd service to be assigned an external address
+  # helm's own wait only covers workload readiness, not the sshd service's status
+  ansible.builtin.command: >-
+    kubectl wait services
+      --namespace {{ zenith_release_namespace }}
+      --selector {{ zenith_services_selector }},app.kubernetes.io/component=sshd
+      --for=jsonpath='{.status.loadBalancer.ingress}'
+      --timeout 0s
+  changed_when: false
+  register: zenith_sshd_service_ready
+  until: zenith_sshd_service_ready is succeeded
+  retries: 30
+  delay: 10
+  when: zenith_sshd_service_type == "LoadBalancer"
+  vars:
+    zenith_services_selectors:
+      - app.kubernetes.io/name={{ zenith_chart_name }}
+      - app.kubernetes.io/instance={{ zenith_release_name }}
+    zenith_services_selector: "{{ zenith_services_selectors | join(',') }}"
+
 - name: Get Zenith service information
   ansible.builtin.command: >-
     kubectl get services

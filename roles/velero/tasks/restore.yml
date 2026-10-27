@@ -6,6 +6,9 @@
       --output jsonpath='{.status.phase}'
   changed_when: false
   register: velero_target_backup_check
+  until: velero_target_backup_check.rc == 0
+  retries: 18
+  delay: 10
 
 - name: Fail if target backup is not in an allowable state
   ansible.builtin.fail:

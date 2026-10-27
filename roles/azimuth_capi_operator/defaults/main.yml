@@ -3,7 +3,17 @@
 # The chart to use
 azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
 azimuth_capi_operator_chart_name: azimuth-capi-operator
-azimuth_capi_operator_chart_version: 0.12.1
+azimuth_capi_operator_chart_version: 0.26.0
+
+# By default, pin versions to azimuth-charts version associated with current Azimuth release
+azimuth_capi_operator_azimuth_charts_version: 0.16.0
+azimuth_capi_operator_app_templates_default_version_range: "<={{ azimuth_capi_operator_azimuth_charts_version }}"
+
+azimuth_capi_operator_patch_cves_chart_namespace: "kube-system"
+azimuth_capi_operator_patch_cves_chart_repo: "https://azimuth-cloud.github.io/azimuth-charts"
+azimuth_capi_operator_patch_cves_chart_name: "patch-cves"
+azimuth_capi_operator_patch_cves_chart_version: "{{ azimuth_capi_operator_azimuth_charts_version }}"
+azimuth_capi_operator_patch_cves_chart_enabled: false
 
 # Release information for the CAPI operator release
 # Use the same namespace as Azimuth by default
@@ -109,6 +119,18 @@ azimuth_capi_operator_capi_helm_control_plane_failure_domains:
 # Set to null to let OpenStack select a suitable AZ based on other scheduling constraints
 azimuth_capi_operator_capi_helm_worker_failure_domain: nova
 
+# Override the default nodeStartupTimeout for control plane nodes
+# If a control plane node takes longer than this to become Ready, it is remediated
+azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout:
+# Override the default nodeStartupTimeout for worker nodes
+# If a worker node takes longer than this to become Ready, it is remediated
+azimuth_capi_operator_capi_helm_worker_node_startup_timeout:
+
+# Override the default kubeadmConfigSpec.Verbosity for control plane nodes
+azimuth_capi_operator_capi_helm_control_plane_kubeadm_verbosity: 5
+# Override the default kubeadmConfigSpec.Verbosity for worker nodes
+azimuth_capi_operator_capi_helm_worker_kubeadm_verbosity: 5
+
 # The size of the root disks if boot-from-volume is required
 # Leave blank to use the root disk from the flavor
 azimuth_capi_operator_capi_helm_root_volume_size:
@@ -170,9 +192,35 @@ azimuth_capi_operator_capi_helm_openstack_block_storage_ignore_volume_az: true
 azimuth_capi_operator_capi_helm_csi_cinder_default_availability_zone: nova
 # The Cinder volume type for the default Cinder CSI storage class
 azimuth_capi_operator_capi_helm_csi_cinder_default_volume_type:
-# Whether to allow config snippet annotations on individual ingress resources
-# on each tenant cluster.
-azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations: true
+
+# The list of security group rules that should be applied to
+# worker nodes on clouds with Octavia loadbalancer provider OVN
+azimuth_capi_operator_capi_helm_worker_node_security_group_rules_ovn:
+  - name: Worker nodePort TCP
+    remoteIPPrefix: 0.0.0.0/0
+    protocol: tcp
+    direction: ingress
+    etherType: IPv4
+    portRangeMin: 30000
+    portRangeMax: 32767
+  - name: Worker nodePort UDP
+    protocol: udp
+    remoteIPPrefix: 0.0.0.0/0
+    direction: ingress
+    etherType: IPv4
+    portRangeMin: 30000
+    portRangeMax: 32767
+
+# Defines the rules that should be applied to worker nodes
+azimuth_capi_operator_capi_helm_worker_node_security_group_rules: >-
+  {{-
+    azimuth_capi_operator_capi_helm_worker_node_security_group_rules_ovn
+    if azimuth_capi_operator_capi_helm_openstack_loadbalancer_provider == 'ovn'
+    else []
+  }}
+
+# Defines the rules that should be applied to control-plane nodes
+azimuth_capi_operator_capi_helm_control_plane_node_security_group_rules: []
 
 azimuth_capi_operator_capi_helm_values_defaults:
   machineMetadata: "{{ azimuth_capi_operator_capi_helm_machine_metadata }}"
@@ -201,14 +249,44 @@ azimuth_capi_operator_capi_helm_values_defaults:
           { "dnsNameservers": azimuth_capi_operator_capi_helm_dns_nameservers }
           if azimuth_capi_operator_capi_helm_dns_nameservers
           else {}
+        ) |
+        combine(
+          { "workerNodesSecurityGroupRules": azimuth_capi_operator_capi_helm_worker_node_security_group_rules }
+          if azimuth_capi_operator_capi_helm_worker_node_security_group_rules | length > 0
+          else {}
+        ) |
+        combine(
+          { "controlPlaneNodesSecurityGroupRules": azimuth_capi_operator_capi_helm_control_plane_node_security_group_rules }
+          if azimuth_capi_operator_capi_helm_control_plane_node_security_group_rules | length > 0
+          else {}
         )
     }}
   trustedCAs: "{{ azimuth_capi_operator_capi_helm_trust_bundle }}"
   registryMirrors: "{{ azimuth_capi_operator_capi_helm_registry_mirrors }}"
   additionalPackages: "{{ azimuth_capi_operator_capi_helm_additional_packages }}"
   controlPlane:
+    kubeadmConfigSpec: >-
+      {{-
+        {} |
+          combine(
+            {"verbosity": azimuth_capi_operator_capi_helm_control_plane_kubeadm_verbosity}
+            if azimuth_capi_operator_capi_helm_control_plane_kubeadm_verbosity
+            else {}
+          )
+        }}
     omitFailureDomain: "{{ azimuth_capi_operator_capi_helm_control_plane_omit_failure_domain }}"
     failureDomains: "{{ azimuth_capi_operator_capi_helm_control_plane_failure_domains }}"
+    healthCheck: >-
+      {{-
+        {} |
+          combine(
+            { "spec" : {
+                "nodeStartupTimeout": azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout
+              }
+            } if azimuth_capi_operator_capi_helm_control_plane_node_startup_timeout
+            else {}
+          )
+      }}
     machineRootVolume: >-
       {{-
         {} |
@@ -229,7 +307,28 @@ azimuth_capi_operator_capi_helm_values_defaults:
           )
       }}
   nodeGroupDefaults:
+    kubeadmConfigSpec: >-
+      {{-
+        {} |
+          combine(
+            {"verbosity": azimuth_capi_operator_capi_helm_worker_kubeadm_verbosity}
+            if azimuth_capi_operator_capi_helm_worker_kubeadm_verbosity
+            else {}
+          )
+        }}
+
     failureDomain: "{{ azimuth_capi_operator_capi_helm_worker_failure_domain }}"
+    healthCheck: >-
+      {{-
+        {} |
+          combine(
+            { "spec" : {
+                "nodeStartupTimeout": azimuth_capi_operator_capi_helm_worker_node_startup_timeout
+              }
+            } if azimuth_capi_operator_capi_helm_worker_node_startup_timeout
+            else {}
+          )
+      }}
     machineRootVolume: >-
       {{-
         {} |
@@ -252,6 +351,42 @@ azimuth_capi_operator_capi_helm_values_defaults:
   authWebhook: "{{ 'azimuth-authorization-webhook' if azimuth_authentication_type == 'oidc' else 'none' }}"
   azimuthAuthorizationWebhook: "{{ azimuth_capi_operator_capi_helm_azimuth_authorization_webhook_config if azimuth_authentication_type == 'oidc' else {} }}"
   addons:
+    # We override this using azimuth_capi_operator_cluster_template_defaults, so
+    # that clusters get new values including Traefik ONLY on Kubernetes upgrade,
+    # when users are expecting and are warned about disruption. ingress-nginx
+    # is still enabled by default on clusters using deprecated clustertemplates.
+    ingress:
+      nginx:
+        enabled: true
+        release:
+          values:
+            controller:
+              service:
+                # Ensure that existing ingress-nginx deployments are modified so
+                # that when their loadbalancer resources are deleted, the
+                # subsequent deletion of the Octavia loadbalancer by OCCM does
+                # not release the floating IP from the project.
+                # This will be applied when a user "updates" their cluster.
+                # We also apply this change to all existing user ingress-nginx
+                # deployments using roles/ingress_nginx/patch_values.yml, so
+                # that if a cluster is upgraded without an update, we still
+                # should not lose the ingress-controller loadbalancer
+                # floating IP.
+                annotations:
+                  loadbalancer.openstack.org/keep-floatingip: "true"
+      traefik:
+        enabled: false
+        release:
+          values:
+            providers:
+              # Requires >=40.0.0 of Traefik helm chart, was called
+              # kubernetesIngressNginx before
+              kubernetesIngressNGINX:
+                enabled: true
+                ingressClassByName: true
+              kubernetesGateway:
+                enabled: true
+
     openstack:
       # General OpenStack configuration
       cloudConfig:
@@ -348,13 +483,27 @@ azimuth_capi_operator_capi_helm_values_defaults:
     monitoring:
       blackboxExporter:
         enabled: false
-    # Allow nginx ingress config snippets as ingress resource annotations
-    ingress:
-      nginx:
-        release:
-          values:
-            controller:
-              allowSnippetAnnotations: "{{ azimuth_capi_operator_capi_helm_ingress_allow_snippet_annotations }}"
+    custom: >-
+      {{-
+        {} |
+          combine(
+            {
+              "patch-cves": {
+                "kind": "HelmRelease",
+                "spec": {
+                  "namespace": azimuth_capi_operator_patch_cves_chart_namespace,
+                  "chart": {
+                    "repo": azimuth_capi_operator_patch_cves_chart_repo,
+                    "name": azimuth_capi_operator_patch_cves_chart_name,
+                    "version": azimuth_capi_operator_patch_cves_chart_version
+                  }
+                }
+              }
+            }
+            if azimuth_capi_operator_patch_cves_chart_enabled
+            else {}
+          )
+      }}
   etcd: >-
     {{-
       {
@@ -532,6 +681,18 @@ azimuth_capi_operator_cluster_template_defaults:
       internalNetwork:
         networkFilter:
           tags: portal-internal
+    addons:
+      ingress:
+        nginx:
+          enabled: false
+        traefik:
+          enabled: true
+# Catalogue that the templates should be placed in
+azimuth_capi_operator_cluster_template_tenancy_catalogue_name: General
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_cluster_template_tenancy_catalogue_precedence: 100
+# If the app should be flagged as deprecated
+azimuth_capi_operator_cluster_template_tenancy_deprecated: false
 # Tenancy-based access controls to apply to Kubernetes cluster templates
 # List of allowed tenancy IDs
 azimuth_capi_operator_cluster_template_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
@@ -541,12 +702,18 @@ azimuth_capi_operator_cluster_template_tenancy_deny_list: "{{ platforms_tenancy_
 azimuth_capi_operator_cluster_template_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
 # Regex pattern to block tenancies by name
 azimuth_capi_operator_cluster_template_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# Maximum duration allowed
+azimuth_capi_operator_cluster_max_lifetime_hours: "{{ azimuth_max_platform_lifetime_hours | default('') }}"
 # The set of key-value annotations to apply to the clusters templates
 azimuth_capi_operator_cluster_template_annotations:
   acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_cluster_template_tenancy_allow_list | join(',') }}"
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_cluster_template_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_cluster_template_tenancy_deny_regex }}"
+  scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_capi_operator_cluster_max_lifetime_hours | string }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_cluster_template_tenancy_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_cluster_template_tenancy_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_cluster_template_tenancy_deprecated | string }}"
 # By default, make a template for each Kubernetes release for which we have an image
 azimuth_capi_operator_cluster_templates_default: |-
   {
@@ -560,7 +727,7 @@ azimuth_capi_operator_cluster_templates_default: |-
         azimuth_capi_operator_cluster_template_defaults |
           combine(
             {
-              "label": image.kubernetes_version,
+              "label": image.kubernetes_version ~ " [Replace optional NGINX Ingress with Traefik]",
               "description": "Kubernetes " ~ kube_vn_no_prefix ~ " with HA control plane.",
               "values": {
                 "kubernetesVersion": kube_vn_no_prefix,
@@ -595,11 +762,17 @@ azimuth_capi_operator_app_templates_jupyterhub_chart_name: jupyterhub-azimuth
 # The Helm repository to use for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the JupyterHub Helm chart
-azimuth_capi_operator_app_templates_jupyterhub_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_jupyterhub_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the JupyterHub Helm chart
 azimuth_capi_operator_app_templates_jupyterhub_label:
 azimuth_capi_operator_app_templates_jupyterhub_logo:
 azimuth_capi_operator_app_templates_jupyterhub_description:
+# The app catalogue that JupyterHub should be placed in
+azimuth_capi_operator_app_templates_jupyterhub_catalogue_name: General
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_jupyterhub_catalogue_precedence: 100
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_jupyterhub_deprecated: false
 # The number of versions to make available for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_keep_versions: 3
 # The sync frequency for the JupyterHub app template (default 24h)
@@ -621,6 +794,9 @@ azimuth_capi_operator_app_templates_jupyterhub_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_jupyterhub_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_jupyterhub_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_jupyterhub_deprecated | string }}"
 # The spec for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_jupyterhub_annotations }}"
@@ -660,11 +836,17 @@ azimuth_capi_operator_app_templates_daskhub_chart_name: daskhub-azimuth
 # The Helm repository to use for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the DaskHub Helm chart
-azimuth_capi_operator_app_templates_daskhub_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_daskhub_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the DaskHub Helm chart
 azimuth_capi_operator_app_templates_daskhub_label:
 azimuth_capi_operator_app_templates_daskhub_logo:
 azimuth_capi_operator_app_templates_daskhub_description:
+# The app catalogue that DaskHub should be placed in
+azimuth_capi_operator_app_templates_daskhub_catalogue_name: General
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_daskhub_catalogue_precedence: 100
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_daskhub_deprecated: false
 # The number of versions to make available for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_keep_versions: 3
 # The sync frequency for the DaskHub app template (default 24h)
@@ -686,6 +868,9 @@ azimuth_capi_operator_app_templates_daskhub_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_daskhub_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_daskhub_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_daskhub_deprecated | string }}"
 # The spec for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_daskhub_annotations }}"
@@ -725,11 +910,17 @@ azimuth_capi_operator_app_templates_kubeflow_chart_name: kubeflow-azimuth
 # The Helm repository to use for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the kubeflow Helm chart
-azimuth_capi_operator_app_templates_kubeflow_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_kubeflow_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the kubeflow Helm chart
 azimuth_capi_operator_app_templates_kubeflow_label:
 azimuth_capi_operator_app_templates_kubeflow_logo:
 azimuth_capi_operator_app_templates_kubeflow_description:
+# The app catalogue that kubeflow should be placed in
+azimuth_capi_operator_app_templates_kubeflow_catalogue_name: GPU
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_kubeflow_catalogue_precedence: 110
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_kubeflow_deprecated: false
 # The number of versions to make available for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_keep_versions: 3
 # The sync frequency for the kubeflow app template (default 24h)
@@ -751,6 +942,9 @@ azimuth_capi_operator_app_templates_kubeflow_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_kubeflow_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_kubeflow_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_kubeflow_deprecated | string }}"
 # The spec for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_kubeflow_annotations }}"
@@ -790,11 +984,17 @@ azimuth_capi_operator_app_templates_binderhub_chart_name: binderhub-azimuth
 # The Helm repository to use for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the binderhub Helm chart
-azimuth_capi_operator_app_templates_binderhub_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_binderhub_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the binderhub Helm chart
 azimuth_capi_operator_app_templates_binderhub_label:
 azimuth_capi_operator_app_templates_binderhub_logo:
 azimuth_capi_operator_app_templates_binderhub_description:
+# The app catalogue that BinderHub should be placed in
+azimuth_capi_operator_app_templates_binderhub_catalogue_name: General
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_binderhub_catalogue_precedence: 100
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_binderhub_deprecated: false
 # The number of versions to make available for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_keep_versions: 3
 # The sync frequency for the binderhub app template (default 24h)
@@ -819,6 +1019,9 @@ azimuth_capi_operator_app_templates_binderhub_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_binderhub_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_binderhub_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_binderhub_deprecated | string }}"
 # The spec for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_binderhub_annotations }}"
@@ -865,6 +1068,12 @@ azimuth_capi_operator_app_templates_huggingface_llm_logo: https://huggingface.co
 azimuth_capi_operator_app_templates_huggingface_llm_description: |
   A generative AI chatbot service backed by a HuggingFace large language model
   (requires a GPU node group on the target cluster).
+# The app catalogue that huggingface_llm should be placed in
+azimuth_capi_operator_app_templates_huggingface_catalogue_name: GPU
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_huggingface_catalogue_precedence: 110
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_huggingface_deprecated: false
 # The number of versions to make available for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_keep_versions: 3
 # The sync frequency for the huggingface_llm app template (default 24h)
@@ -886,6 +1095,9 @@ azimuth_capi_operator_app_templates_huggingface_llm_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_huggingface_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_huggingface_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_huggingface_deprecated | string }}"
 # The spec for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_huggingface_llm_annotations }}"
@@ -935,6 +1147,12 @@ azimuth_capi_operator_app_templates_danswer_label: Danswer
 azimuth_capi_operator_app_templates_danswer_logo: >-
   https://raw.githubusercontent.com/danswer-ai/danswer/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png
 azimuth_capi_operator_app_templates_danswer_description: A self-service platform for Retrieval-Augmented Generation.
+# The app catalogue that danswer should be placed in
+azimuth_capi_operator_app_templates_danswer_catalogue_name: Preview
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_danswer_catalogue_precedence: 150
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_danswer_deprecated: false
 # The number of versions to make available for the danswer app template
 azimuth_capi_operator_app_templates_danswer_keep_versions: 3
 # The sync frequency for the danswer app template (default 24h)
@@ -977,6 +1195,9 @@ azimuth_capi_operator_app_templates_danswer_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_danswer_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_danswer_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_danswer_deprecated | string }}"
 # The spec for the danswer app template
 azimuth_capi_operator_app_templates_danswer_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_danswer_annotations }}"
@@ -1026,6 +1247,12 @@ azimuth_capi_operator_app_templates_ragflow_version_range: ">=0.1.0"
 azimuth_capi_operator_app_templates_ragflow_label: RAGFlow
 azimuth_capi_operator_app_templates_ragflow_logo:
 azimuth_capi_operator_app_templates_ragflow_description:
+# The app catalogue that ragflow should be placed in
+azimuth_capi_operator_app_templates_ragflow_catalogue_name: Preview
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_ragflow_catalogue_precedence: 150
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_ragflow_deprecated: false
 # The number of versions to make available for the ragflow app template
 azimuth_capi_operator_app_templates_ragflow_keep_versions: 3
 # The sync frequency for the ragflow app template (default 24h)
@@ -1047,6 +1274,9 @@ azimuth_capi_operator_app_templates_ragflow_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_ragflow_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_ragflow_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_ragflow_deprecated | string }}"
 # The spec for the ragflow app template
 azimuth_capi_operator_app_templates_ragflow_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_ragflow_annotations }}"
@@ -1091,11 +1321,17 @@ azimuth_capi_operator_app_templates_argocd_chart_name: argocd-azimuth
 # The Helm repository to use for the argocd app template
 azimuth_capi_operator_app_templates_argocd_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
 # The version range to use for the argocd Helm chart
-azimuth_capi_operator_app_templates_argocd_version_range: ">=0.0.0"
+azimuth_capi_operator_app_templates_argocd_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
 # Overrides for the label, logo and description from the argocd Helm chart
 azimuth_capi_operator_app_templates_argocd_label:
 azimuth_capi_operator_app_templates_argocd_logo:
 azimuth_capi_operator_app_templates_argocd_description:
+# The app catalogue that agocd should be placed in
+azimuth_capi_operator_app_templates_argocd_catalogue_name: General
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_argocd_catalogue_precedence: 100
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_argocd_deprecated: false
 # The number of versions to make available for the argocd app template
 azimuth_capi_operator_app_templates_argocd_keep_versions: 3
 # The sync frequency for the argocd app template (default 24h)
@@ -1117,6 +1353,9 @@ azimuth_capi_operator_app_templates_argocd_annotations:
   acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_deny_list | join(',') }}"
   acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_allow_regex }}"
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_argocd_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_argocd_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_argocd_deprecated | string }}"
 # The spec for the argocd app template
 azimuth_capi_operator_app_templates_argocd_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_argocd_annotations }}"
@@ -1149,6 +1388,83 @@ azimuth_capi_operator_app_templates_argocd_spec:
         )
     }}
 
+#####
+# Azimuth Inference app template
+#####
+
+# Indicates whether the Azimuth Inference app template should be enabled
+azimuth_capi_operator_app_templates_inference_enabled: true
+# The Helm chart to use for the inference app template
+azimuth_capi_operator_app_templates_inference_chart_name: azimuth-inference
+# The Helm repository to use for the inference app template
+azimuth_capi_operator_app_templates_inference_chart_repo: https://azimuth-cloud.github.io/azimuth-charts
+# The version range to use for the inference Helm chart
+azimuth_capi_operator_app_templates_inference_version_range: "{{ azimuth_capi_operator_app_templates_default_version_range }}"
+# Overrides for the label, logo and description from the inference Helm chart
+azimuth_capi_operator_app_templates_inference_label: Azimuth Inference Platform
+azimuth_capi_operator_app_templates_inference_logo:
+azimuth_capi_operator_app_templates_inference_description:
+# The app catalogue that Azimuth Inference should be placed in
+azimuth_capi_operator_app_templates_inference_catalogue_name: Preview
+# Precedence of the catalogue relative to others
+azimuth_capi_operator_app_templates_inference_catalogue_precedence: 150
+# If the app should be flagged as deprecated
+azimuth_capi_operator_app_templates_inference_deprecated: false
+# The number of versions to make available for the inference app template
+azimuth_capi_operator_app_templates_inference_keep_versions: 3
+# The sync frequency for the inference app template (default 24h)
+azimuth_capi_operator_app_templates_inference_sync_frequency: 86400
+# Any default values for the inference app template
+azimuth_capi_operator_app_templates_inference_default_values: {}
+# The tenancy-based access controls for the app template
+# List of allowed tenancy IDs
+azimuth_capi_operator_app_templates_inference_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
+# List of denied tenancy IDs
+azimuth_capi_operator_app_templates_inference_tenancy_deny_list: "{{ platforms_tenancy_deny_list | default([]) }}"
+# Regex pattern to allow tenancies by name
+azimuth_capi_operator_app_templates_inference_tenancy_allow_regex: "{{ platforms_tenancy_allow_regex | default('') }}"
+# Regex pattern to block tenancies by name
+azimuth_capi_operator_app_templates_inference_tenancy_deny_regex: "{{ platforms_tenancy_deny_regex | default('') }}"
+# The set of key-value annotations to apply to the template
+azimuth_capi_operator_app_templates_inference_annotations:
+  acl.azimuth.stackhpc.com/allow-list: "{{ azimuth_capi_operator_app_templates_inference_tenancy_allow_list | join(',') }}"
+  acl.azimuth.stackhpc.com/deny-list: "{{ azimuth_capi_operator_app_templates_inference_tenancy_deny_list | join(',') }}"
+  acl.azimuth.stackhpc.com/allow-regex: "{{ azimuth_capi_operator_app_templates_inference_tenancy_allow_regex }}"
+  acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_inference_tenancy_deny_regex }}"
+  catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_inference_catalogue_name }}"
+  catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_inference_catalogue_precedence | string }}"
+  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_inference_deprecated | string }}"
+# The spec for the inference app template
+azimuth_capi_operator_app_templates_inference_spec:
+  annotations: "{{ azimuth_capi_operator_app_templates_inference_annotations }}"
+  spec: >-
+    {{-
+      {
+        "chart": {
+          "repo": azimuth_capi_operator_app_templates_inference_chart_repo,
+          "name": azimuth_capi_operator_app_templates_inference_chart_name,
+        },
+        "versionRange": azimuth_capi_operator_app_templates_inference_version_range,
+        "keepVersions": azimuth_capi_operator_app_templates_inference_keep_versions,
+        "syncFrequency": azimuth_capi_operator_app_templates_inference_sync_frequency,
+        "defaultValues": azimuth_capi_operator_app_templates_inference_default_values,
+      } |
+        combine(
+          { "label": azimuth_capi_operator_app_templates_inference_label }
+          if azimuth_capi_operator_app_templates_inference_label
+          else {}
+        ) |
+        combine(
+          { "logo": azimuth_capi_operator_app_templates_inference_logo }
+          if azimuth_capi_operator_app_templates_inference_logo
+          else {}
+        ) |
+        combine(
+          { "description": azimuth_capi_operator_app_templates_inference_description }
+          if azimuth_capi_operator_app_templates_inference_description
+          else {}
+        )
+    }}
 
 # The default templates
 azimuth_capi_operator_app_templates_default: >-
@@ -1192,6 +1508,11 @@ azimuth_capi_operator_app_templates_default: >-
             combine(
         { "ragflow": azimuth_capi_operator_app_templates_ragflow_spec }
         if azimuth_capi_operator_app_templates_ragflow_enabled
+        else {}
+      ) |
+            combine(
+        { "inference": azimuth_capi_operator_app_templates_inference_spec }
+        if azimuth_capi_operator_app_templates_inference_enabled
         else {}
       )
   }}

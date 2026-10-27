@@ -1,0 +1,24 @@
+---
+- name: Get ingress resource for azimuth if it exists.
+  ansible.builtin.command: kubectl get ingress --namespace azimuth --output json azimuth
+  register: preflight_deployed_azimuth_ingress_resource
+  changed_when: false
+  failed_when: >
+    preflight_deployed_azimuth_ingress_resource.rc != 0
+    and ("Error from server (NotFound)" not in preflight_deployed_azimuth_ingress_resource.stderr)
+
+- name: Extract ingress host for azimuth.
+  ansible.builtin.set_fact:
+    preflight_deployed_azimuth_domain: >
+      {{ preflight_deployed_azimuth_ingress_resource.stdout | from_json | community.general.json_query('spec.rules[0].host') }}
+  when: preflight_deployed_azimuth_ingress_resource.rc == 0
+
+- name: Fail if the base_domain being deployed is different to the existing deployment.
+  ansible.builtin.fail:
+    msg: |
+      Changing ingress_base_domain causes problems with zenith tunnels and is not allowed.
+      Azimuth is deployed at {{ preflight_deployed_azimuth_domain }}
+      You are trying to deploy to {{ ingress_base_domain }}
+  when: >
+    preflight_deployed_azimuth_ingress_resource.rc == 0
+    and (not ingress_base_domain in preflight_deployed_azimuth_domain)

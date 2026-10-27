@@ -270,44 +270,6 @@ admin_dashboard_ingress_helm_dashboard:
   port: "{{ admin_dashboard_ingress_helm_dashboard_port }}"
   tls_secret_name: "{{ admin_dashboard_ingress_helm_dashboard_tls_secret_name }}"
 
-# Settings for the Kubernetes dashboard ingress
-# The namespace for the ingress
-admin_dashboard_ingress_kubernetes_dashboard_namespace: kubernetes-dashboard
-
-# The name for the ingress
-admin_dashboard_ingress_kubernetes_dashboard_name: kubernetes-dashboard
-
-# The host for the ingress
-admin_dashboard_ingress_kubernetes_dashboard_host: >-
-  {{-
-    "{}.{}".format(ingress_kubernetes_dashboard_subdomain, ingress_base_domain)
-    if ingress_kubernetes_dashboard_subdomain is defined and ingress_base_domain is defined
-    else undef(hint = 'admin_dashboard_ingress_kubernetes_dashboard_host is required')
-  }}
-
-# The name of the service for the ingress
-admin_dashboard_ingress_kubernetes_dashboard_service: kubernetes-dashboard
-
-# The name of the service port for the ingress
-admin_dashboard_ingress_kubernetes_dashboard_port: http
-
-# The name of the secret containing the certificate for the ingress
-admin_dashboard_ingress_kubernetes_dashboard_tls_secret_name: >-
-  {{-
-    admin_dashboard_ingress_tls_wildcard_secret_name
-    if admin_dashboard_ingress_tls_wildcard_certificate
-    else admin_dashboard_ingress_kubernetes_dashboard_name ~ '-tls'
-  }}
-
-# The ingress definition
-admin_dashboard_ingress_kubernetes_dashboard:
-  name: "{{ admin_dashboard_ingress_kubernetes_dashboard_name }}"
-  namespace: "{{ admin_dashboard_ingress_kubernetes_dashboard_namespace }}"
-  host: "{{ admin_dashboard_ingress_kubernetes_dashboard_host }}"
-  service: "{{ admin_dashboard_ingress_kubernetes_dashboard_service }}"
-  port: "{{ admin_dashboard_ingress_kubernetes_dashboard_port }}"
-  tls_secret_name: "{{ admin_dashboard_ingress_kubernetes_dashboard_tls_secret_name }}"
-
 # The list of ingresses to create
 admin_dashboard_ingresses: >-
   {{-
@@ -317,7 +279,6 @@ admin_dashboard_ingresses: >-
       admin_dashboard_ingress_alertmanager,
       admin_dashboard_ingress_ara,
       admin_dashboard_ingress_helm_dashboard,
-      admin_dashboard_ingress_kubernetes_dashboard,
     ] |
       select() |
       list

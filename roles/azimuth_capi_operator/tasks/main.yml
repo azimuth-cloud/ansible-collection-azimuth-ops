@@ -106,3 +106,27 @@
     label: "{{ template.name }}"
   register: kubectl_install_capi_app_templates
   changed_when: kubectl_install_capi_app_templates.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+- name: Install Grafana dashboard for Azimuth CAPI operator metrics
+  when: azimuth_capi_operator_metrics
+  block:
+    - name: Install Grafana dashboard ConfigMap
+      ansible.builtin.command: kubectl apply -f -
+      args:
+        stdin: "{{ azimuth_capi_operator_dashboard_definition | to_nice_yaml }}"
+      vars:
+        azimuth_capi_operator_dashboard_definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: azimuth-capi-operator-grafana-dashboard
+            namespace: "{{ azimuth_capi_operator_release_namespace }}"
+            labels:
+              grafana_dashboard: "1"
+          data:
+            azimuth_capi_operator_dashboard.json: |-
+              {{ lookup('file', 'grafana_dashboard.json') | from_json | to_nice_json }}
+      register: kubectl_azimuth_capi_operator_dashboard
+      changed_when: >-
+        kubectl_azimuth_capi_operator_dashboard.stdout_lines |
+          select('match', '(?!.*unchanged$)') | length > 0

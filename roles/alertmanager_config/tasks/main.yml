@@ -11,10 +11,7 @@
         name: "{{ alertmanager_config_slack_webhook_secret_name }}"
         namespace: "{{ alertmanager_config_namespace }}"
         labels: "{{ alertmanager_config_labels }}"
-      stringData: >-
-        {{-
-          { alertmanager_config_slack_webhook_secret_key: alertmanager_config_slack_webhook_url }
-        }}
+      stringData: "{{alertmanager_config_slack_webhook_secret_map}}"
   register: kubectl_slack_webhook_url
   changed_when: kubectl_slack_webhook_url.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 

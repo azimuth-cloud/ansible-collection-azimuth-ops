@@ -1,0 +1,17 @@
+---
+
+rules:
+  secrets-outside-env:
+    # Disabled until we can allow specific secrets in
+    # 1.23.1+
+    disable: true
+    config:
+      allow:
+        - OS_CLOUDS
+        - AUTOMATION_APP_PRIVATE_KEY
+        - AUTOMATION_APP_ID
+  unpinned-uses:
+    config:
+      policies:
+        azimuth-cloud/github-actions/*: any
+        azimuth-cloud/azimuth-config/*: ref-pin

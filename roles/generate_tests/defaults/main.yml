@@ -195,6 +195,13 @@ generate_tests_kubernetes_test_case_worker_count: 2
 generate_tests_kubernetes_test_case_dashboard_enabled: true
 generate_tests_kubernetes_test_case_monitoring_enabled: true
 
+# Loki log query defaults for Kubernetes test cases
+generate_tests_kubernetes_test_case_loki_query: '{job=~".+"}'
+generate_tests_kubernetes_test_case_loki_limit: 999
+generate_tests_kubernetes_test_case_loki_namespace: monitoring-system
+generate_tests_kubernetes_test_case_loki_service: svc/loki-stack
+generate_tests_kubernetes_test_case_loki_port: 3100
+
 # Indicates if test cases should be generated for the latest Kubernetes version only,
 # or all non-deprecated versions
 generate_tests_kubernetes_test_cases_latest_only: false
@@ -243,6 +250,12 @@ generate_tests_kubernetes_test_cases_default: >-
       "worker_count": {{ generate_tests_kubernetes_test_case_worker_count }},
       "dashboard_enabled": {{ generate_tests_kubernetes_test_case_dashboard_enabled }},
       "monitoring_enabled": {{ generate_tests_kubernetes_test_case_monitoring_enabled }},
+      "loki_query": {{ generate_tests_kubernetes_test_case_loki_query | to_json }},
+      "loki_limit": {{ generate_tests_kubernetes_test_case_loki_limit }},
+      "loki_namespace": "{{ generate_tests_kubernetes_test_case_loki_namespace }}",
+      "loki_service": "{{ generate_tests_kubernetes_test_case_loki_service }}",
+      "loki_port": {{ generate_tests_kubernetes_test_case_loki_port }},
+      "run_apps_tests": {{ generate_tests_kubernetes_apps_suite_enabled and tpl_is_latest }},
     },
     {% endif %}
     {% endfor %}
@@ -304,7 +317,7 @@ generate_tests_kubernetes_apps_default_test_case_enabled: true
 generate_tests_kubernetes_apps_test_case_jupyterhub_services:
   - jupyterhub-azimuth
 #   The expected title for the JupyterHub app
-generate_tests_kubernetes_apps_test_case_jupyterhub_service_jupyterhub_azimuth_expected_title: JupyterLab
+generate_tests_kubernetes_apps_test_case_jupyterhub_service_jupyterhub_azimuth_expected_title: JupyterHub
 
 # Configuration for the DaskHub test case
 #   The services that will be produced by the DaskHub app
@@ -312,6 +325,22 @@ generate_tests_kubernetes_apps_test_case_daskhub_services:
   - daskhub-azimuth
 #   The expected title for the DaskHub app
 generate_tests_kubernetes_apps_test_case_daskhub_service_daskhub_azimuth_expected_title: JupyterLab
+
+# Configuration for the ArgoCD test case
+#   The services that will be produced by the ArgoCD app
+generate_tests_kubernetes_apps_test_case_argocd_services:
+  - argocd-azimuth
+#   The expected title for the ArgoCD app
+generate_tests_kubernetes_apps_test_case_argocd_service_argocd_azimuth_expected_title: "Argo CD"
+
+# Configuration for the BinderHub test case
+#   The services that will be produced by the BinderHub app
+#   Currently only testing JupyterHub service as Binder service gives 403 when trying to access
+#   through Robot Framework
+generate_tests_kubernetes_apps_test_case_binderhub_services:
+  - binderhub-azimuth-jupyterhub
+#   The expected title for the BinderHub app
+generate_tests_kubernetes_apps_test_case_binderhub_service_binderhub_azimuth_jupyterhub_expected_title: "JupyterHub"
 
 # The test cases for the suite
 generate_tests_kubernetes_apps_test_cases_default: >-
