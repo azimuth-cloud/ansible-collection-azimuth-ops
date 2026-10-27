@@ -85,11 +85,13 @@ community_images_azimuth_images: |-
 # Slurm images are published by the ansible-slurm-appliance repo - https://github.com/stackhpc/ansible-slurm-appliance/
 community_images_slurm_base_url: >-
   https://leafcloud.store/swift/v1/AUTH_f39848421b2747148400ad8eeae8d536/openhpc-images
+# Slurm image version comes from here:
+# environments/.stackhpc/tofu/cluster_image.auto.tfvars.json
+community_images_slurm_openhpc_image: openhpc-RL9-261026-1234-b24dffa1
 community_images_slurm:
-  # from https://github.com/stackhpc/ansible-slurm-appliance/releases/tag/v2.30.0
   openhpc:
-    name: openhpc-RL9-261026-1234-b24dffa1
-    source_url: "{{ community_images_slurm_base_url }}/openhpc-RL9-261026-1234-b24dffa1"
+    name: "{{ community_images_slurm_openhpc_image }}"
+    source_url: "{{ community_images_slurm_base_url }}/{{ community_images_slurm_openhpc_image }}"
     source_disk_format: qcow2
     container_format: bare
 
