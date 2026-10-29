@@ -1,0 +1,60 @@
+---
+- name: Set ingress controller migration phase
+  ansible.builtin.set_fact:
+    traefik_phase: "{{ ingress_controller_migration_phase | default('nginx') }}"
+
+- name: Check ingress controller migration phase
+  ansible.builtin.assert:
+    that: traefik_phase in ['nginx', 'traefik']
+    fail_msg: >-
+      ingress_controller_migration_phase must be one of nginx or traefik,
+      got '{{ traefik_phase }}'.
+
+- name: Get ingress controller state
+  ansible.builtin.include_tasks: state.yml
+
+# Traefik takes over the load balancer once ingress-nginx is not installed
+- name: Set whether Traefik is serving
+  ansible.builtin.set_fact:
+    traefik_serving: "{{ traefik_phase == 'traefik' and not traefik_ingress_nginx_installed }}"
+    traefik_migrating: "{{ traefik_phase == 'traefik' and traefik_ingress_nginx_installed }}"
+
+- name: Uninstall Traefik
+  when:
+    - traefik_phase == 'nginx'
+    - traefik_installed
+  block:
+    - name: Uninstall Traefik release
+      kubernetes.core.helm:
+        release_namespace: "{{ traefik_release_namespace }}"
+        release_name: "{{ traefik_release_name }}"
+        release_state: absent
+        wait: true
+        wait_timeout: "{{ traefik_wait_timeout }}"
+
+    - name: Remove Traefik monitoring resources
+      ansible.builtin.command: >-
+        kubectl delete {{ item }}
+          --namespace {{ traefik_release_namespace }}
+          --ignore-not-found
+      loop:
+        - configmap/traefik-grafana-dashboard
+        - prometheusrule/traefik-alerting-rules
+      register: traefik_delete_monitoring
+      changed_when: "'deleted' in traefik_delete_monitoring.stdout"
+      when: traefik_prometheus_stack_enabled
+
+- name: Install Traefik
+  ansible.builtin.include_tasks: install.yml
+  when: traefik_phase == 'traefik'
+
+- name: Cut over from ingress-nginx to Traefik
+  ansible.builtin.include_tasks: cutover.yml
+  when: traefik_migrating
+
+- name: Verify Traefik
+  ansible.builtin.include_tasks: verify.yml
+  when:
+    - traefik_phase == 'traefik'
+    - not traefik_migrating
+    - traefik_verify_enabled

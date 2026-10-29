@@ -1,0 +1,66 @@
+---
+- name: Verify Traefik before the cutover
+  ansible.builtin.include_tasks: verify.yml
+  vars:
+    traefik_verify_context: >-
+      No traffic has been moved to Traefik, and ingress-nginx is still serving all requests.
+  when: traefik_verify_enabled
+
+# Removing the ingress-nginx Service releases the load balancer, so that the Traefik Service
+# can take it over
+# Requests fail from when ingress-nginx is uninstalled until the Traefik Service is ready
+- name: Uninstall ingress-nginx
+  kubernetes.core.helm:
+    release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
+    release_name: "{{ traefik_ingress_nginx_release_name }}"
+    release_state: absent
+    wait: true
+    wait_timeout: "{{ traefik_wait_timeout }}"
+
+- name: Move the load balancer to Traefik and roll back on failure
+  block:
+    - name: Expose Traefik with a LoadBalancer Service
+      ansible.builtin.set_fact:
+        traefik_serving: true
+
+    - name: Update Traefik release
+      ansible.builtin.include_tasks: release.yml
+
+    - name: Verify Traefik after the cutover
+      ansible.builtin.include_tasks: verify.yml
+      when: traefik_verify_enabled
+
+  rescue:
+    - name: Stop exposing Traefik with a LoadBalancer Service
+      ansible.builtin.set_fact:
+        traefik_serving: false
+
+    - name: Update Traefik release
+      ansible.builtin.include_tasks: release.yml
+
+    - name: Reinstall ingress-nginx
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.ingress_nginx
+      vars:
+        ingress_nginx_release_name: "{{ traefik_ingress_nginx_release_name }}"
+        ingress_nginx_release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
+
+    - name: Fail after rolling back the cutover
+      ansible.builtin.fail:
+        msg: >-
+          Moving the load balancer to Traefik failed, so ingress-nginx has been reinstalled
+          and is serving all requests again. Deploy in the nginx phase to remove Traefik.
+          {{ ansible_failed_result.msg | default('') }}
+
+- name: Remove ingress-nginx leftovers
+  ansible.builtin.command: >-
+    kubectl delete {{ item }}
+      --namespace {{ traefik_ingress_nginx_release_namespace }}
+      --ignore-not-found
+  loop: >-
+    {{
+      ["lease/" ~ traefik_ingress_nginx_release_name ~ "-leader"] +
+      (["prometheusrule/nginx-ingress-alerting-rules"] if traefik_prometheus_stack_enabled else [])
+    }}
+  register: traefik_delete_ingress_nginx_leftovers
+  changed_when: "'deleted' in traefik_delete_ingress_nginx_leftovers.stdout"

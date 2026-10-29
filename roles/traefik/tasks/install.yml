@@ -1,0 +1,116 @@
+---
+- name: Get existing Traefik CRDs
+  ansible.builtin.command: kubectl get crd --output json
+  changed_when: false
+  register: traefik_crds_cmd
+
+- name: Adopt existing Traefik CRDs into the CRDs release
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - patch
+      - crd
+      - "{{ item }}"
+      - --type
+      - merge
+      - --patch
+      - "{{ traefik_crd_adopt_patch | to_json }}"
+  loop: >-
+    {{
+      traefik_crds_cmd.stdout |
+        from_json |
+        json_query(
+          'items[?spec.group == `traefik.io` && !(metadata.annotations."meta.helm.sh/release-name")].metadata.name'
+        )
+    }}
+  vars:
+    traefik_crd_adopt_patch:
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: Helm
+        annotations:
+          meta.helm.sh/release-name: "{{ traefik_crds_release_name }}"
+          meta.helm.sh/release-namespace: "{{ traefik_release_namespace }}"
+  changed_when: true
+
+- name: Install Traefik CRDs
+  kubernetes.core.helm:
+    chart_ref: "{{ traefik_crds_chart_name }}"
+    chart_repo_url: "{{ traefik_crds_chart_repo }}"
+    chart_version: "{{ traefik_crds_chart_version }}"
+    release_namespace: "{{ traefik_release_namespace }}"
+    release_name: "{{ traefik_crds_release_name }}"
+    release_values: "{{ traefik_crds_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ traefik_wait_timeout }}"
+
+- name: Install Traefik release
+  ansible.builtin.include_tasks: release.yml
+
+- name: Configure Traefik monitoring
+  when: traefik_prometheus_stack_enabled
+  block:
+    - name: Install Grafana dashboard for Traefik metrics
+      ansible.builtin.command: kubectl apply -f -
+      args:
+        stdin: "{{ traefik_dashboard_definition | to_nice_yaml }}"
+      vars:
+        traefik_dashboard_definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: traefik-grafana-dashboard
+            namespace: "{{ traefik_release_namespace }}"
+            labels:
+              grafana_dashboard: "1"
+          data:
+            traefik_dashboard.json: |-
+              {{ lookup("file", "grafana_dashboard.json") | from_json | to_nice_json }}
+      register: traefik_install_dashboard
+      changed_when: traefik_install_dashboard.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+    - name: Configure custom alerting rules for certificate expiry
+      ansible.builtin.command: kubectl apply -f -
+      args:
+        stdin: "{{ traefik_alert_rules_definition | to_nice_yaml }}"
+      vars:
+        traefik_alert_rules_definition:
+          apiVersion: monitoring.coreos.com/v1
+          kind: PrometheusRule
+          metadata:
+            name: traefik-alerting-rules
+            namespace: "{{ traefik_release_namespace }}"
+            labels:
+              release: kube-prometheus-stack
+          spec:
+            groups:
+              - name: traefik.rules
+                rules:
+                  - alert: TraefikTLSCertificatesExpiring
+                    annotations:
+                      message: >-
+                        {% raw %}The minimum number of days until a Traefik-served certificate expires is
+                        {{ printf "%.0f" $value }} days on {{ $labels.sans }} which is below the
+                        critical threshold of 7.{% endraw %}
+                      summary: A Traefik-served TLS certificate will expire very soon.
+                    expr: |
+                      max by (instance, sans) ((last_over_time(traefik_tls_certs_not_after{}[5m]) - time()) / 86400) < 7
+                    for: 5m
+                    labels:
+                      severity: critical
+                  - alert: TraefikTLSCertificatesExpiringSoon
+                    annotations:
+                      message: >-
+                        {% raw %}The minimum number of days until a Traefik-served certificate expires is
+                        {{ printf "%.0f" $value }} days on {{ $labels.sans }} which is less than 14
+                        but greater than 7.{% endraw %}
+                      summary: A Traefik-served TLS certificate will expire soon.
+                    expr: |
+                      max by (instance, sans) ((last_over_time(traefik_tls_certs_not_after{}[5m]) - time()) / 86400) < 14 > 7
+                    for: 5m
+                    labels:
+                      severity: warning
+      register: traefik_install_alert_rules
+      changed_when: traefik_install_alert_rules.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0

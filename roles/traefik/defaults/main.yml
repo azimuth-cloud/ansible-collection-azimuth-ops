@@ -1,0 +1,238 @@
+---
+# MIGRATION PHASES:
+### nginx ###
+# ingress-nginx serves all traffic and Traefik is not installed
+# If Traefik is installed, it is removed
+
+### traefik ###
+# Traefik serves all traffic
+# If ingress-nginx is installed:
+# * Traefik is installed alongside it, with a ClusterIP Service, and verified
+# * ingress-nginx is uninstalled, which deletes its LoadBalancer Service
+# * The Traefik Service is changed to a LoadBalancer, and verified
+# * If that fails, Traefik goes back to a ClusterIP Service and ingress-nginx is reinstalled
+# There is a short outage between removing the ingress-nginx Service and the Traefik Service
+# getting the load balancer
+
+# Migration phase is set by ingress_controller_migration_phase (default nginx), which also
+# controls whether the playbooks install ingress-nginx
+
+# The chart to use
+traefik_chart_repo: https://traefik.github.io/charts
+traefik_chart_name: traefik
+traefik_chart_version: 41.7.1
+
+# The chart to use for the Traefik CRDs
+traefik_crds_chart_repo: https://traefik.github.io/charts
+traefik_crds_chart_name: traefik-crds
+traefik_crds_chart_version: 1.18.0
+
+traefik_release_name: traefik
+traefik_release_namespace: traefik
+traefik_crds_release_name: traefik-crds
+
+traefik_wait_timeout: 10m
+
+# Release information for the ingress-nginx release that is being migrated from
+traefik_ingress_nginx_release_namespace: ingress-nginx
+traefik_ingress_nginx_release_name: ingress-nginx
+traefik_ingress_nginx_service_name: "{{ traefik_ingress_nginx_release_name }}-controller"
+
+# IngressClass that the ingress-nginx compatibility provider serves
+traefik_ingress_nginx_class_name: nginx
+traefik_ingress_nginx_controller_class: k8s.io/ingress-nginx
+
+# The name of the Service created by the Traefik chart
+traefik_service_name: >-
+  {{-
+    traefik_release_name
+    if traefik_chart_name in traefik_release_name
+    else "{}-{}".format(traefik_release_name, traefik_chart_name)
+  }}
+
+# The IP to request for the load balancer, if required
+traefik_service_load_balancer_ip:
+
+# Annotations for the Service
+traefik_service_annotations:
+  loadbalancer.openstack.org/keep-floatingip: "true"
+
+# The labels that select the Traefik pods
+traefik_pod_selector:
+  app.kubernetes.io/name: "{{ traefik_chart_name }}"
+  app.kubernetes.io/instance: "{{ traefik_release_name }}-{{ traefik_release_namespace }}"
+
+# The port of the traefik entrypoint, which serves the API
+traefik_api_port: 8080
+
+# The Service whose address is published in the Ingress statuses
+traefik_published_service: >-
+  {{-
+    "{}/{}".format(traefik_release_namespace, traefik_service_name)
+    if traefik_serving
+    else "{}/{}".format(traefik_ingress_nginx_release_namespace, traefik_ingress_nginx_service_name)
+  }}
+
+# The IngressClass for the Ingresses served by the ingress-nginx compatibility provider
+# While ingress-nginx is installed, it belongs to the ingress-nginx release
+traefik_ingress_nginx_class_definition:
+  apiVersion: networking.k8s.io/v1
+  kind: IngressClass
+  metadata:
+    name: "{{ traefik_ingress_nginx_class_name }}"
+  spec:
+    controller: "{{ traefik_ingress_nginx_controller_class }}"
+
+# The number of Traefik replicas
+traefik_replicas: "{{ 3 if (install_mode | default('singlenode')) == 'ha' else 1 }}"
+
+traefik_tls_redirect_enabled: "{{ ingress_tls_enabled | default(true) }}"
+
+traefik_prometheus_stack_enabled: "{{ ingress_nginx_prometheus_stack_enabled | default(true) }}"
+
+traefik_access_log_enabled: true
+
+# Enable check and rollback
+traefik_verify_enabled: true
+
+traefik_verify_probe_urls: >-
+  {{-
+    [
+      "{}://{}.{}/api/".format(
+        "https" if traefik_tls_redirect_enabled else "http",
+        ingress_azimuth_portal_subdomain | default("portal"),
+        ingress_base_domain
+      )
+    ]
+    if ingress_base_domain is defined
+    else []
+  }}
+
+traefik_verify_probe_status_codes:
+  - 200
+  - 301
+  - 302
+  - 307
+  - 308
+  - 401
+  - 403
+
+traefik_verify_retries: 12
+traefik_verify_delay: 5
+
+# The values for the traefik release
+traefik_release_defaults:
+  # Must be passed through to the values as an int.
+  deployment: "{{ {'replicas': traefik_replicas | int} }}"
+  podDisruptionBudget:
+    enabled: "{{ traefik_replicas | int > 1 }}"
+    maxUnavailable: 1
+  affinity: >-
+    {{-
+      {
+        "podAntiAffinity": {
+          "preferredDuringSchedulingIgnoredDuringExecution": [
+            {
+              "weight": 100,
+              "podAffinityTerm": {
+                "topologyKey": "kubernetes.io/hostname",
+                "labelSelector": {
+                  "matchLabels": traefik_pod_selector,
+                },
+              },
+            },
+          ],
+        },
+      }
+      if traefik_replicas | int > 1
+      else {}
+    }}
+  ingressClass:
+    # Traefik must not claim Ingresses that do not specify a class
+    isDefaultClass: false
+
+  # Enable the nginx provider and the kubernetes provider
+  providers:
+    kubernetesIngress:
+      publishedService:
+        pathOverride: "{{ traefik_published_service }}"
+
+    # Serves the existing nginx-class Ingresses
+    kubernetesIngressNGINX:
+      enabled: true
+      ingressClassByName: true
+      allowSnippetAnnotations: true
+      publishService:
+        enabled: true
+        pathOverride: "{{ traefik_published_service }}"
+
+  # While ingress-nginx is serving, the Service is only used to verify Traefik
+  service: >-
+    {{-
+      {
+        "annotations": traefik_service_annotations,
+        "spec": (
+          { "type": "LoadBalancer" } |
+            combine(
+              { "loadBalancerIP": traefik_service_load_balancer_ip }
+              if traefik_service_load_balancer_ip
+              else {}
+            )
+        ),
+      }
+      if traefik_serving
+      else { "spec": { "type": "ClusterIP" } }
+    }}
+
+  ports:
+    web:
+      http:
+        redirections:
+          entryPoint: >-
+            {{-
+              {
+                "to": "websecure",
+                "scheme": "https",
+                "permanent": True,
+                "priority": 1,
+              }
+              if traefik_tls_redirect_enabled
+              else {}
+            }}
+      transport:
+        respondingTimeouts:
+          readTimeout: 600
+          writeTimeout: 600
+          idleTimeout: 600
+    websecure:
+      transport:
+        respondingTimeouts:
+          readTimeout: 600
+          writeTimeout: 600
+          idleTimeout: 600
+
+  extraObjects: "{{ [traefik_ingress_nginx_class_definition] if traefik_serving else [] }}"
+
+  # Only exposed on the traefik entrypoint of the pods
+  api:
+    insecure: "{{ traefik_verify_enabled }}"
+  accessLog:
+    enabled: "{{ traefik_access_log_enabled }}"
+  metrics:
+    prometheus:
+      service:
+        enabled: "{{ traefik_prometheus_stack_enabled }}"
+      serviceMonitor:
+        enabled: "{{ traefik_prometheus_stack_enabled }}"
+
+traefik_release_overrides: {}
+traefik_release_values: >-
+  {{-
+    traefik_release_defaults |
+      combine(traefik_release_overrides, recursive = True)
+  }}
+
+# The values for the CRDs release
+# The chart defaults install only the Traefik CRDs
+traefik_crds_release_overrides: {}
+traefik_crds_release_values: "{{ traefik_crds_release_overrides }}"
