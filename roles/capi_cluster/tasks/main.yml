@@ -2,24 +2,38 @@
 - name: Deploy CAPI cluster
   when: capi_cluster_release_state == 'present'
   block:
-    - name: Install or upgrade cluster
-      kubernetes.core.helm:
-        chart_ref: "{{ capi_cluster_chart_name }}"
-        chart_repo_url: "{{ capi_cluster_chart_repo }}"
-        chart_version: "{{ capi_cluster_chart_version }}"
-        release_namespace: "{{ capi_cluster_release_namespace }}"
-        release_name: "{{ capi_cluster_release_name }}"
-        release_state: present
-        release_values: "{{ capi_cluster_release_values }}"
-        create_namespace: true
-        skip_schema_validation: "{{ capi_cluster_skip_schema_validation }}"
-      register: capi_cluster_helm_release
+    - name: Deploy capi cluster info config map
+      ansible.builtin.command: kubectl apply -f -
+      args:
+        stdin: "{{ capi_cluster_info_map_definition | to_nice_yaml }}"
+      vars:
+        capi_cluster_info_map_definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: capi-cluster-info
+            namespace: "flux-system"
+          data:
+            defaultDiskSize: "30"
+            defaultVolumeType: unencrypted
+            defaultAvailabilityZone: europe-nl-ams1
+            sshKeyPair: "{{ infra_deploy_keypair }}"
+            kubernetesVersion: "v1.35.7"
+            loadBalancerIP: ""
+            machineImageId: "{{ community_images_image_ids['kube_1_35'] }}"
+            apiserverLoadbalancerProvider: amphora
+
+    - name: Deploy capi-management-cluster-config
+      kubernetes.core.k8s:
+        state: present
+        template: "capi-management-cluster.yaml.j2"
+        kubeconfig: /home/ubuntu/.kube/config
 
     - name: Wait for cluster to become Available
       ansible.builtin.command: >-
         kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
           --for=condition=Available
-          --namespace {{ capi_cluster_release_namespace }}
+          --namespace azimuth
           --timeout 0s
       changed_when: false
       register: capi_cluster_ready
@@ -31,7 +45,7 @@
       ansible.builtin.command: >-
         kubectl wait clusters.cluster.x-k8s.io/{{ capi_cluster_release_name }}
           --for=condition=RollingOut=false
-          --namespace {{ capi_cluster_release_namespace }}
+          --namespace azimuth
           --timeout 0s
       changed_when: false
       register: capi_cluster_rollout
@@ -166,7 +180,7 @@
       ansible.builtin.command: >-
         kubectl annotate
           openstackclusters.infrastructure.cluster.x-k8s.io
-          {{ capi_cluster_release_name }}
+          capi-management-cluster
           janitor.capi.stackhpc.com/volumes-policy={{ capi_cluster_volumes_policy }}
           --overwrite
           --namespace {{ capi_cluster_release_namespace }}
@@ -175,7 +189,7 @@
     - name: Delete cluster
       kubernetes.core.helm:
         release_namespace: "{{ capi_cluster_release_namespace }}"
-        release_name: "{{ capi_cluster_release_name }}"
+        release_name: capi-management-cluster
         release_state: absent
       register: capi_cluster_helm_delete
       changed_when: true
