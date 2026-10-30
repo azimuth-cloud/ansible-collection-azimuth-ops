@@ -18,3 +18,4 @@
         if install_mode == 'ha'
         else ""
       }}
+    infra_external_ip: "{{ lookup('env', 'INGRESS_IP') }}"
