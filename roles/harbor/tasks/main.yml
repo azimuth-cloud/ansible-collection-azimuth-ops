@@ -20,7 +20,7 @@
         namespace: "{{ harbor_release_namespace }}"
       stringData:
         ca.crt: "{{ harbor_trust_bundle }}"
-  when: harbor_trust_bundle
+  when: harbor_trust_bundle is truthy
   register: kubectl_harbor_trust_bundle
   changed_when: kubectl_harbor_trust_bundle.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
@@ -39,7 +39,7 @@
       stringData:
         tls.crt: "{{ harbor_tls_wildcard_certificate }}"
         tls.key: "{{ harbor_tls_wildcard_key }}"
-  when: harbor_tls_wildcard_certificate
+  when: harbor_tls_wildcard_certificate is truthy
   register: kubectl_harbor_tls_cert
   changed_when: kubectl_harbor_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
