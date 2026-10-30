@@ -82,4 +82,3 @@
   kubernetes.core.k8s:
     state: present
     template: "flux-instance.yaml.j2"
-    kubeconfig: /home/ubuntu/.kube/config
