@@ -94,14 +94,14 @@
 
         - name: Ensure kube config directory exists
           ansible.builtin.file:
-            path: "{{ ansible_env.HOME }}/.kube"
+            path: "{{ ansible_facts.env.HOME }}/.kube"
             state: directory
             mode: u=rwx,g=rx,o=rx
 
         - name: Write kubeconfig file
           ansible.builtin.copy:
             content: "{{ k3s_kubeconfig.content | b64decode }}"
-            dest: "{{ ansible_env.HOME }}/.kube/config"
+            dest: "{{ ansible_facts.env.HOME }}/.kube/config"
             mode: u=rwx,g=r,o=r
 
     # For a single node install, we put the monitoring and ingress controller on the K3S cluster

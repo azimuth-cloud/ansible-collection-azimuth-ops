@@ -138,7 +138,7 @@ clusterapi_kustomization:
   patches: "{{ clusterapi_patches }}"
 
 # Use a directory in $HOME for the kustomization by default
-clusterapi_kustomization_directory: "{{ (ansible_env.HOME, 'clusterapi') | path_join }}"
+clusterapi_kustomization_directory: "{{ (ansible_facts.env.HOME, 'clusterapi') | path_join }}"
 
 # List of CAPO CRD resource types that may need stored version migration during upgrades
 clusterapi_capo_crds:

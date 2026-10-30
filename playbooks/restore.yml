@@ -11,7 +11,7 @@
 - name: Restore Velero backup
   hosts: k3s
   environment:
-    KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+    KUBECONFIG: "{{ ansible_facts.env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
   tasks:
     - name: Include tasks from Velero restore
       ansible.builtin.include_role:
@@ -26,7 +26,7 @@
     # In single node mode, use the default kubeconfig file
     kubeconfig_path: >-
       {{-
-        "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
+        "{}/kubeconfig-{}.yaml".format(ansible_facts.env.HOME, capi_cluster_release_name)
         if install_mode == 'ha'
         else ""
       }}

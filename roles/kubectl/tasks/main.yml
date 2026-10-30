@@ -14,6 +14,6 @@
 
 - name: Ensure kubectl shell completions are in .bashrc
   ansible.builtin.lineinfile:
-    path: "{{ ansible_env.HOME }}/.bashrc"
+    path: "{{ ansible_facts.env.HOME }}/.bashrc"
     line: source <(kubectl completion bash)
   when: kubectl_configure_bash_completions

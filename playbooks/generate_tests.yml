@@ -20,7 +20,7 @@
     # In single node mode, use the default kubeconfig file
     KUBECONFIG: >-
       {{-
-        "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
+        "{}/kubeconfig-{}.yaml".format(ansible_facts.env.HOME, capi_cluster_release_name)
         if install_mode == 'ha'
         else ""
       }}

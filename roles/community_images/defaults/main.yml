@@ -31,7 +31,7 @@ community_images_os_clouds_file_local: >-
     )
   }}
 #   The directory/path to upload the clouds.yaml to
-community_images_os_config_dir: "{{ ansible_env.HOME }}/.config/openstack"
+community_images_os_config_dir: "{{ ansible_facts.env.HOME }}/.config/openstack"
 community_images_os_clouds_file: "{{ community_images_os_config_dir }}/clouds.yaml"
 
 # The disk format for the target cloud

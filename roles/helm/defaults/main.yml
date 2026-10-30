@@ -6,8 +6,8 @@ helm_repo: https://github.com/helm/helm
 helm_version: v4.3.1
 # The OS variant and architecture to use
 # See https://github.com/helm/helm/releases for the available options
-helm_os: "{{ ansible_system | lower }}"
-helm_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+helm_os: "{{ ansible_facts.system | lower }}"
+helm_architecture: "{{ 'amd64' if ansible_facts.architecture == 'x86_64' else ansible_facts.architecture }}"
 # The name of the Helm archive
 helm_archive_name: helm-{{ helm_version }}-{{ helm_os }}-{{ helm_architecture }}.tar.gz
 # The URL of the Helm archive to download

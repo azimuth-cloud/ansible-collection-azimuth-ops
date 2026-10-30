@@ -40,8 +40,8 @@ flux_cli_repo: https://github.com/fluxcd/flux2
 # The Flux version to download
 flux_cli_version: v2.9.6
 # The OS variant and architecture to use
-flux_cli_os: "{{ ansible_system | lower }}"
-flux_cli_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+flux_cli_os: "{{ ansible_facts.system | lower }}"
+flux_cli_architecture: "{{ 'amd64' if ansible_facts.architecture == 'x86_64' else ansible_facts.architecture }}"
 # The name of the Flux archive
 flux_cli_archive_name: >-
   flux_{{ flux_cli_version.removeprefix('v') }}_{{ flux_cli_os }}_{{ flux_cli_architecture }}.tar.gz

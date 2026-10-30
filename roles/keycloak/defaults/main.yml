@@ -242,7 +242,7 @@ keycloak_operator_kustomization:
   patches: "{{ keycloak_operator_patches }}"
 
 # Use a directory in $HOME for the kustomization by default
-keycloak_operator_kustomization_directory: "{{ (ansible_env.HOME, 'keycloak-operator') | path_join }}"
+keycloak_operator_kustomization_directory: "{{ (ansible_facts.env.HOME, 'keycloak-operator') | path_join }}"
 
 # List of resources to watch for completeness
 keycloak_operator_watches:

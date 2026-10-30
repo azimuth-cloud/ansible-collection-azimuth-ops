@@ -69,14 +69,14 @@
 
     - name: Ensure kube config directory exists
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.kube"
+        path: "{{ ansible_facts.env.HOME }}/.kube"
         state: directory
         mode: u=rwx,g=rx,o=rx
 
     - name: Write kubeconfig file
       ansible.builtin.copy:
         content: "{{ k3s_kubeconfig.content | b64decode }}"
-        dest: "{{ ansible_env.HOME }}/.kube/config"
+        dest: "{{ ansible_facts.env.HOME }}/.kube/config"
         mode: u=rwx,g=,o=
 
     - name: Configure cloud images for Azimuth platforms
@@ -118,13 +118,13 @@
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.capi_cluster
           vars:
-            capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+            capi_cluster_kubeconfig_path: "{{ ansible_facts.env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
 
         # Install the Velero components on the capi cluster and configure the backup schedule
         # NOTE(sd109): Need to use block so that we can set `environment` variables
         - name: Configure Velero schedule
           environment:
-            KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+            KUBECONFIG: "{{ ansible_facts.env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
           when: velero_enabled
           block:
             - name: Configure Velero schedule

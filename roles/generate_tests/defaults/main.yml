@@ -1,14 +1,14 @@
 ---
 
 # The path for the test vars file
-generate_tests_vars_file: "{{ (ansible_env.HOME, 'testvars.yaml') | path_join }}"
+generate_tests_vars_file: "{{ (ansible_facts.env.HOME, 'testvars.yaml') | path_join }}"
 
 # The template to use for generating the test vars file
 generate_tests_vars_template: vars.yaml
 
 # The directory to generate the test suite files in
 # Use a directory in $HOME by default
-generate_tests_suite_directory: "{{ (ansible_env.HOME, 'test-suite') | path_join }}"
+generate_tests_suite_directory: "{{ (ansible_facts.env.HOME, 'test-suite') | path_join }}"
 
 #####
 # The Azimuth URL of the deployment under test
