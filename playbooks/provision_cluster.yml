@@ -98,13 +98,6 @@
     - name: Configure Azimuth HA cluster
       when: install_mode == 'ha'
       block:
-        - name: Install CertManager
-          ansible.builtin.include_role:
-            name: azimuth_cloud.azimuth_ops.certmanager
-          vars:
-            certmanager_monitoring_enabled: false
-            certmanager_acmehttp01issuer_enabled: false
-
         - name: Install Cluster API resources
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.clusterapi
