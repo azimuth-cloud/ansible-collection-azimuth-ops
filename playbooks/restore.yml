@@ -10,13 +10,15 @@
 # Restore the backup
 - name: Restore Velero backup
   hosts: k3s
-  environment:
-    KUBECONFIG: "{{ ansible_facts.env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
   tasks:
-    - name: Include tasks from Velero restore
-      ansible.builtin.include_role:
-        name: azimuth_cloud.azimuth_ops.velero
-        tasks_from: restore.yml
+    - name: Restore Velero backup using the HA cluster kubeconfig
+      environment:
+        KUBECONFIG: "{{ ansible_facts.env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+      block:
+        - name: Include tasks from Velero restore
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.velero
+            tasks_from: restore.yml
 
 # Install Azimuth components
 - name: Install Azimuth components
