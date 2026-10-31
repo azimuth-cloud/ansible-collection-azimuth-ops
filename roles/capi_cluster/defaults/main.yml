@@ -721,7 +721,7 @@ capi_cluster_release_values: >-
   }}
 
 # The name of the file into which the kubeconfig of the cluster should be output
-capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig"
+capi_cluster_kubeconfig_path: "{{ ansible_facts.env.HOME }}/kubeconfig"
 
 # Optional configuration for the creation of service account, secret and a clusterrole
 # to generate a long-lived, token-based kubeconfig.

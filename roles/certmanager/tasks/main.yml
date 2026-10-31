@@ -20,7 +20,7 @@
         namespace: "{{ certmanager_release_namespace }}"
       data:
         ca-certificates.crt: "{{ certmanager_trust_bundle }}"
-  when: certmanager_trust_bundle
+  when: certmanager_trust_bundle is truthy
   register: kubectl_install_trust_bundle
   changed_when: kubectl_install_trust_bundle.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 

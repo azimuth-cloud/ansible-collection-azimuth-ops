@@ -15,40 +15,42 @@
 # Gather required facts from the seed
 - name: Gather facts from the seed node
   hosts: k3s
-  environment:
-    # In HA mode, use the kubeconfig for the HA cluster
-    # In single node mode, use the default kubeconfig file
-    KUBECONFIG: >-
-      {{-
-        "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
-        if install_mode == 'ha'
-        else ""
-      }}
   tasks:
-    - name: Get installed cluster types
-      ansible.builtin.command: kubectl get clustertypes -o json
-      register: generate_tests_cluster_types_cmd
-      changed_when: false
+    - name: Retrieve information about Azimuth custom resources
+      environment:
+        # In HA mode, use the kubeconfig for the HA cluster
+        # In single node mode, use the default kubeconfig file
+        KUBECONFIG: >-
+          {{-
+            "{}/kubeconfig-{}.yaml".format(ansible_facts.env.HOME, capi_cluster_release_name)
+            if install_mode == 'ha'
+            else ""
+          }}
+      block:
+        - name: Get installed cluster types
+          ansible.builtin.command: kubectl get clustertypes -o json
+          register: generate_tests_cluster_types_cmd
+          changed_when: false
 
-    - name: Get installed Kubernetes templates
-      ansible.builtin.command: kubectl get clustertemplates -o json
-      register: generate_tests_kubernetes_templates_cmd
-      changed_when: false
+        - name: Get installed Kubernetes templates
+          ansible.builtin.command: kubectl get clustertemplates -o json
+          register: generate_tests_kubernetes_templates_cmd
+          changed_when: false
 
-    - name: Get installed Kubernetes app templates
-      ansible.builtin.command: kubectl get apptemplates.azimuth.stackhpc.com -o json
-      register: generate_tests_app_templates_cmd
-      changed_when: false
+        - name: Get installed Kubernetes app templates
+          ansible.builtin.command: kubectl get apptemplates.azimuth.stackhpc.com -o json
+          register: generate_tests_app_templates_cmd
+          changed_when: false
 
-    - name: Get installed Kubernetes version
-      ansible.builtin.command: k3s kubectl version --output json
-      changed_when: false
-      become: true
-      register: k3s_kubectl_version
+        - name: Get installed Kubernetes version
+          ansible.builtin.command: k3s kubectl version --output json
+          changed_when: false
+          become: true
+          register: k3s_kubectl_version
 
-    - name: Set kubectl version fact
-      ansible.builtin.set_fact:
-        kubectl_version: "{{ (k3s_kubectl_version.stdout | from_json).serverVersion.gitVersion.split('+') | first }}"
+        - name: Set kubectl version fact
+          ansible.builtin.set_fact:
+            kubectl_version: "{{ (k3s_kubectl_version.stdout | from_json).serverVersion.gitVersion.split('+') | first }}"
 
 # Generate the tests locally
 - name: Generate Azimuth tests

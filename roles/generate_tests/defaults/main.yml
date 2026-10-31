@@ -1,14 +1,14 @@
 ---
 
 # The path for the test vars file
-generate_tests_vars_file: "{{ (ansible_env.HOME, 'testvars.yaml') | path_join }}"
+generate_tests_vars_file: "{{ (ansible_facts.env.HOME, 'testvars.yaml') | path_join }}"
 
 # The template to use for generating the test vars file
 generate_tests_vars_template: vars.yaml
 
 # The directory to generate the test suite files in
 # Use a directory in $HOME by default
-generate_tests_suite_directory: "{{ (ansible_env.HOME, 'test-suite') | path_join }}"
+generate_tests_suite_directory: "{{ (ansible_facts.env.HOME, 'test-suite') | path_join }}"
 
 #####
 # The Azimuth URL of the deployment under test
@@ -119,6 +119,7 @@ generate_tests_caas_test_case_rstudio_service_monitoring_expected_title: Grafana
 # The test cases for the suite
 # By default, we generate a test case for each installed cluster type unless it is disabled
 generate_tests_caas_test_cases_default: >-
+  {% set generate_tests_caas_test_cases_default_tmp %}
   [
     {% for ctype in generate_tests_installed_cluster_types %}
     {% set ctype_var = ctype.metadata.name | replace('-', '_') %}
@@ -128,9 +129,9 @@ generate_tests_caas_test_cases_default: >-
       "name": "{{ lookup('vars', var_prefix ~ 'name', default = '') }}",
       "template": "{{ lookup('vars', var_prefix ~ 'template', default = '') }}",
       "tags": [
-        "{{ ctype.metadata.name }}",
+        "{{ ctype.metadata.name }}"
         {% for tag in lookup('vars', var_prefix ~ 'tags', default = []) %}
-        "{{ tag }}",
+        ,"{{ tag }}"
         {% endfor %}
       ],
       "create_timeout": "{{ lookup('vars', var_prefix ~ 'create_timeout', default = '') }}",
@@ -162,6 +163,8 @@ generate_tests_caas_test_cases_default: >-
     {% endif %}
     {% endfor %}
   ]
+  {% endset %}
+  {{- generate_tests_caas_test_cases_default_tmp | from_yaml }}
 generate_tests_caas_test_cases_extra: []
 generate_tests_caas_test_cases: >-
   {{- generate_tests_caas_test_cases_default + generate_tests_caas_test_cases_extra }}
@@ -229,6 +232,7 @@ generate_tests_kubernetes_test_cases_include_tags: >-
 generate_tests_kubernetes_test_cases_exclude_tags: []
 # The test cases for the suite
 generate_tests_kubernetes_test_cases_default: >-
+  {% set generate_tests_kubernetes_test_cases_default_tmp %}
   [
     {% for tpl in generate_tests_installed_kubernetes_templates %}
     {% set tpl_kube_version = tpl | json_query('spec.values.kubernetesVersion') %}
@@ -249,18 +253,20 @@ generate_tests_kubernetes_test_cases_default: >-
       "control_plane_size": "{{ generate_tests_kubernetes_test_case_control_plane_size }}",
       "worker_size": "{{ generate_tests_kubernetes_test_case_worker_size }}",
       "worker_count": {{ generate_tests_kubernetes_test_case_worker_count }},
-      "dashboard_enabled": {{ generate_tests_kubernetes_test_case_dashboard_enabled }},
-      "monitoring_enabled": {{ generate_tests_kubernetes_test_case_monitoring_enabled }},
+      "dashboard_enabled": {{ generate_tests_kubernetes_test_case_dashboard_enabled | bool | to_json }},
+      "monitoring_enabled": {{ generate_tests_kubernetes_test_case_monitoring_enabled | bool | to_json }},
       "loki_query": {{ generate_tests_kubernetes_test_case_loki_query | to_json }},
       "loki_limit": {{ generate_tests_kubernetes_test_case_loki_limit }},
       "loki_namespace": "{{ generate_tests_kubernetes_test_case_loki_namespace }}",
       "loki_service": "{{ generate_tests_kubernetes_test_case_loki_service }}",
       "loki_port": {{ generate_tests_kubernetes_test_case_loki_port }},
-      "run_apps_tests": {{ generate_tests_kubernetes_apps_suite_enabled and tpl_is_latest }},
+      "run_apps_tests": {{ (generate_tests_kubernetes_apps_suite_enabled | bool and tpl_is_latest) | to_json }},
     },
     {% endif %}
     {% endfor %}
   ]
+  {% endset %}
+  {{- generate_tests_kubernetes_test_cases_default_tmp | from_yaml }}
 generate_tests_kubernetes_test_cases_extra: []
 generate_tests_kubernetes_test_cases: >-
   {{- generate_tests_kubernetes_test_cases_default + generate_tests_kubernetes_test_cases_extra }}
@@ -346,6 +352,7 @@ generate_tests_kubernetes_apps_test_case_binderhub_service_binderhub_azimuth_jup
 
 # The test cases for the suite
 generate_tests_kubernetes_apps_test_cases_default: >-
+  {% set generate_tests_kubernetes_apps_test_cases_default_tmp %}
   [
     {% for app_tpl in generate_tests_installed_kubernetes_app_templates %}
     {% set tpl_var = app_tpl.metadata.name | replace('-', '_') %}
@@ -379,6 +386,8 @@ generate_tests_kubernetes_apps_test_cases_default: >-
     {% endif %}
     {% endfor %}
   ]
+  {% endset %}
+  {{- generate_tests_kubernetes_apps_test_cases_default_tmp | from_yaml }}
 generate_tests_kubernetes_apps_test_cases_extra: []
 generate_tests_kubernetes_apps_test_cases: >-
   {{- generate_tests_kubernetes_apps_test_cases_default + generate_tests_kubernetes_apps_test_cases_extra }}

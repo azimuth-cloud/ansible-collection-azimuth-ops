@@ -26,5 +26,5 @@
 
 - name: Ensure K9s shell completions are in .bashrc
   ansible.builtin.lineinfile:
-    path: "{{ ansible_env.HOME }}/.bashrc"
+    path: "{{ ansible_facts.env.HOME }}/.bashrc"
     line: source <(k9s completion bash)

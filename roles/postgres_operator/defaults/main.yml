@@ -21,7 +21,7 @@ pgo_kustomization:
   patches: "{{ pgo_kustomization_patches }}"
 
 # Use a directory in $HOME for the kustomization by default
-pgo_kustomization_directory: "{{ (ansible_env.HOME, 'postgres-operator') | path_join }}"
+pgo_kustomization_directory: "{{ (ansible_facts.env.HOME, 'postgres-operator') | path_join }}"
 
 # List of resources to watch for completeness
 pgo_watches:

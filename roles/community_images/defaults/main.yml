@@ -31,7 +31,7 @@ community_images_os_clouds_file_local: >-
     )
   }}
 #   The directory/path to upload the clouds.yaml to
-community_images_os_config_dir: "{{ ansible_env.HOME }}/.config/openstack"
+community_images_os_config_dir: "{{ ansible_facts.env.HOME }}/.config/openstack"
 community_images_os_clouds_file: "{{ community_images_os_config_dir }}/clouds.yaml"
 
 # The disk format for the target cloud
@@ -51,6 +51,7 @@ community_images_azimuth_images_manifest: >-
 # Generate community image specs for the images in the manifest
 # We don't use all the images
 community_images_azimuth_images: |-
+  {% set community_images_azimuth_images_manifest_tmp %}
   {
     {% for source_key, image in community_images_azimuth_images_manifest.items() %}
     {% if "kubernetes_version" in image %}
@@ -81,6 +82,8 @@ community_images_azimuth_images: |-
     {% endif %}
     {% endfor %}
   }
+  {% endset %}
+  {{- community_images_azimuth_images_manifest_tmp | from_yaml }}
 
 # Slurm images are published by the ansible-slurm-appliance repo - https://github.com/stackhpc/ansible-slurm-appliance/
 community_images_slurm_base_url: >-
