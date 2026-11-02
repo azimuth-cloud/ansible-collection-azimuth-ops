@@ -1,0 +1,22 @@
+---
+- name: Uninstall ingress-nginx
+  kubernetes.core.helm:
+    release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
+    release_name: "{{ traefik_ingress_nginx_release_name }}"
+    release_state: absent
+    wait: true
+    wait_timeout: "{{ traefik_wait_timeout }}"
+
+- name: Wait for ingress-nginx to release the load balancer
+  ansible.builtin.include_tasks: wait_released.yml
+  vars:
+    traefik_released:
+      namespace: "{{ traefik_ingress_nginx_release_namespace }}"
+      name: "{{ traefik_ingress_nginx_service_name }}"
+
+- name: Expose Traefik with a LoadBalancer Service
+  ansible.builtin.set_fact:
+    traefik_serving: true
+
+- name: Update Traefik release
+  ansible.builtin.include_tasks: release.yml

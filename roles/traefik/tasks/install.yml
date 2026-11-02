@@ -1,0 +1,15 @@
+---
+- name: Install Traefik CRDs
+  kubernetes.core.helm:
+    chart_ref: "{{ traefik_crds_chart_name }}"
+    chart_repo_url: "{{ traefik_crds_chart_repo }}"
+    chart_version: "{{ traefik_crds_chart_version }}"
+    release_namespace: "{{ traefik_release_namespace }}"
+    release_name: "{{ traefik_crds_release_name }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ traefik_wait_timeout }}"
+
+- name: Install Traefik release
+  ansible.builtin.include_tasks: release.yml

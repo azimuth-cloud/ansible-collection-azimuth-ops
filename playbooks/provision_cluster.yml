@@ -95,10 +95,17 @@
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
 
+        - name: Install Traefik ingress controller
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.traefik
+          when: "ingress_controller_enabled | default(true)"
+
         - name: Install Nginx ingress controller
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.ingress_nginx
-          when: "ingress_controller_enabled | default(true)"
+          when:
+            - "ingress_controller_enabled | default(true)"
+            - "ingress_controller_migration_phase | default('nginx') == 'nginx'"
 
     - name: Configure Azimuth HA cluster
       when: install_mode == 'ha'

@@ -1,0 +1,15 @@
+---
+- name: Install Traefik on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ traefik_chart_name }}"
+    chart_repo_url: "{{ traefik_chart_repo }}"
+    chart_version: "{{ traefik_chart_version }}"
+    release_namespace: "{{ traefik_release_namespace }}"
+    release_name: "{{ traefik_release_name }}"
+    release_values: "{{ traefik_release_values }}"
+    # The CRDs are managed by the CRDs release
+    skip_crds: true
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ traefik_wait_timeout }}"

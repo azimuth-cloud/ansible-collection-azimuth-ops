@@ -1,0 +1,17 @@
+---
+- name: Get ingress-nginx release
+  kubernetes.core.helm_info:
+    release_name: "{{ traefik_ingress_nginx_release_name }}"
+    release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
+  register: traefik_ingress_nginx_release
+
+- name: Get Traefik release
+  kubernetes.core.helm_info:
+    release_name: "{{ traefik_release_name }}"
+    release_namespace: "{{ traefik_release_namespace }}"
+  register: traefik_release
+
+- name: Set ingress controller state facts
+  ansible.builtin.set_fact:
+    traefik_ingress_nginx_installed: "{{ traefik_ingress_nginx_release.status is defined }}"
+    traefik_installed: "{{ traefik_release.status is defined }}"
