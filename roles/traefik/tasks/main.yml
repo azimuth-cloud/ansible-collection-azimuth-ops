@@ -15,10 +15,13 @@
     traefik_serving: "{{ traefik_phase == 'traefik' and not traefik_ingress_nginx_installed }}"
     traefik_migrating: "{{ traefik_phase == 'traefik' and traefik_ingress_nginx_installed }}"
 
+# On HA installs, Traefik is the ingress addon of the Cluster API cluster, which the capi_cluster
+# role has already installed or removed
 - name: Uninstall Traefik
   when:
     - traefik_phase == 'nginx'
     - traefik_installed
+    - not traefik_capi_addon | bool
   block:
     - name: Uninstall Traefik release
       kubernetes.core.helm:
@@ -38,7 +41,9 @@
 
 - name: Install Traefik
   ansible.builtin.include_tasks: install.yml
-  when: traefik_phase == 'traefik'
+  when:
+    - traefik_phase == 'traefik'
+    - not traefik_capi_addon | bool
 
 - name: Cut over from ingress-nginx to Traefik
   ansible.builtin.include_tasks: cutover.yml

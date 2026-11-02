@@ -121,11 +121,30 @@
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.clusterapi
 
+        - name: Configure ingress addons of Azimuth HA cluster
+          ansible.builtin.include_role:
+            name: azimuth_cloud.azimuth_ops.traefik
+            tasks_from: capi_cluster.yml
+          vars:
+            traefik_service_load_balancer_ip: "{{ capi_cluster_addons_ingress_load_balancer_ip }}"
+          when: "ingress_controller_enabled | default(true)"
+
         - name: Provision Azimuth HA cluster using Cluster API
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.capi_cluster
           vars:
             capi_cluster_kubeconfig_path: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+
+        - name: Migrate Azimuth HA cluster to Traefik ingress controller
+          environment:
+            KUBECONFIG: "{{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml"
+          when: "ingress_controller_enabled | default(true)"
+          block:
+            - name: Migrate to Traefik ingress controller
+              ansible.builtin.include_role:
+                name: azimuth_cloud.azimuth_ops.traefik
+              vars:
+                traefik_service_load_balancer_ip: "{{ capi_cluster_addons_ingress_load_balancer_ip }}"
 
         # Install the Velero components on the capi cluster and configure the backup schedule
         # NOTE(sd109): Need to use block so that we can set `environment` variables

@@ -6,6 +6,14 @@
     release_state: absent
     wait: true
     wait_timeout: "{{ traefik_wait_timeout }}"
+  when: not traefik_capi_addon | bool
+
+- name: Remove the ingress-nginx addon
+  ansible.builtin.include_tasks: capi_addons.yml
+  vars:
+    traefik_capi_ingress_nginx_enabled: false
+    traefik_capi_traefik_enabled: true
+  when: traefik_capi_addon | bool
 
 - name: Wait for ingress-nginx to release the load balancer
   ansible.builtin.include_tasks: wait_released.yml
