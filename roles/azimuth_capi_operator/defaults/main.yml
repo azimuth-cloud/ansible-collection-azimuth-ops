@@ -691,8 +691,8 @@ azimuth_capi_operator_cluster_template_defaults:
 azimuth_capi_operator_cluster_template_tenancy_catalogue_name: General
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_cluster_template_tenancy_catalogue_precedence: 100
-# If the app should be flagged as deprecated
-azimuth_capi_operator_cluster_template_tenancy_deprecated: false
+# If the app should be flagged as end of life
+azimuth_capi_operator_cluster_template_tenancy_eol: false
 # Tenancy-based access controls to apply to Kubernetes cluster templates
 # List of allowed tenancy IDs
 azimuth_capi_operator_cluster_template_tenancy_allow_list: "{{ platforms_tenancy_allow_list | default([]) }}"
@@ -713,7 +713,7 @@ azimuth_capi_operator_cluster_template_annotations:
   scheduling.azimuth.stackhpc.com/max-lifetime-hours: "{{ azimuth_capi_operator_cluster_max_lifetime_hours | string }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_cluster_template_tenancy_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_cluster_template_tenancy_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_cluster_template_tenancy_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_capi_operator_cluster_template_tenancy_eol | string }}"
 # By default, make a template for each Kubernetes release for which we have an image
 azimuth_capi_operator_cluster_templates_default: |-
   {
@@ -771,8 +771,8 @@ azimuth_capi_operator_app_templates_jupyterhub_description:
 azimuth_capi_operator_app_templates_jupyterhub_catalogue_name: General
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_app_templates_jupyterhub_catalogue_precedence: 100
-# If the app should be flagged as deprecated
-azimuth_capi_operator_app_templates_jupyterhub_deprecated: false
+# If the app should be flagged as end of life
+azimuth_capi_operator_app_templates_jupyterhub_eol: false
 # The number of versions to make available for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_keep_versions: 3
 # The sync frequency for the JupyterHub app template (default 24h)
@@ -796,7 +796,7 @@ azimuth_capi_operator_app_templates_jupyterhub_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_jupyterhub_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_jupyterhub_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_jupyterhub_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_jupyterhub_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_capi_operator_app_templates_jupyterhub_eol | string }}"
 # The spec for the JupyterHub app template
 azimuth_capi_operator_app_templates_jupyterhub_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_jupyterhub_annotations }}"
@@ -845,8 +845,8 @@ azimuth_capi_operator_app_templates_daskhub_description:
 azimuth_capi_operator_app_templates_daskhub_catalogue_name: General
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_app_templates_daskhub_catalogue_precedence: 100
-# If the app should be flagged as deprecated
-azimuth_capi_operator_app_templates_daskhub_deprecated: false
+# If the app should be flagged as end of life
+azimuth_capi_operator_app_templates_daskhub_eol: false
 # The number of versions to make available for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_keep_versions: 3
 # The sync frequency for the DaskHub app template (default 24h)
@@ -870,7 +870,7 @@ azimuth_capi_operator_app_templates_daskhub_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_daskhub_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_daskhub_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_daskhub_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_daskhub_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_capi_operator_app_templates_daskhub_eol | string }}"
 # The spec for the DaskHub app template
 azimuth_capi_operator_app_templates_daskhub_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_daskhub_annotations }}"
@@ -919,8 +919,8 @@ azimuth_capi_operator_app_templates_kubeflow_description:
 azimuth_capi_operator_app_templates_kubeflow_catalogue_name: GPU
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_app_templates_kubeflow_catalogue_precedence: 110
-# If the app should be flagged as deprecated
-azimuth_capi_operator_app_templates_kubeflow_deprecated: false
+# If the app should be flagged as end of life
+azimuth_capi_operator_app_templates_kubeflow_eol: false
 # The number of versions to make available for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_keep_versions: 3
 # The sync frequency for the kubeflow app template (default 24h)
@@ -944,7 +944,7 @@ azimuth_capi_operator_app_templates_kubeflow_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_kubeflow_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_kubeflow_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_kubeflow_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_kubeflow_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_capi_operator_app_templates_kubeflow_eol | string }}"
 # The spec for the kubeflow app template
 azimuth_capi_operator_app_templates_kubeflow_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_kubeflow_annotations }}"
@@ -993,8 +993,8 @@ azimuth_capi_operator_app_templates_binderhub_description:
 azimuth_capi_operator_app_templates_binderhub_catalogue_name: General
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_app_templates_binderhub_catalogue_precedence: 100
-# If the app should be flagged as deprecated
-azimuth_capi_operator_app_templates_binderhub_deprecated: false
+# If the app should be flagged as end of life
+azimuth_capi_operator_app_templates_binderhub_eol: false
 # The number of versions to make available for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_keep_versions: 3
 # The sync frequency for the binderhub app template (default 24h)
@@ -1021,7 +1021,7 @@ azimuth_capi_operator_app_templates_binderhub_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_binderhub_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_binderhub_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_binderhub_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_binderhub_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_capi_operator_app_templates_binderhub_eol | string }}"
 # The spec for the binderhub app template
 azimuth_capi_operator_app_templates_binderhub_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_binderhub_annotations }}"
@@ -1072,8 +1072,8 @@ azimuth_capi_operator_app_templates_huggingface_llm_description: |
 azimuth_capi_operator_app_templates_huggingface_catalogue_name: GPU
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_app_templates_huggingface_catalogue_precedence: 110
-# If the app should be flagged as deprecated
-azimuth_capi_operator_app_templates_huggingface_deprecated: false
+# If the app should be flagged as end of life
+azimuth_capi_operator_app_templates_huggingface_eol: false
 # The number of versions to make available for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_keep_versions: 3
 # The sync frequency for the huggingface_llm app template (default 24h)
@@ -1097,7 +1097,7 @@ azimuth_capi_operator_app_templates_huggingface_llm_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_huggingface_llm_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_huggingface_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_huggingface_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_huggingface_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_capi_operator_app_templates_huggingface_eol | string }}"
 # The spec for the huggingface_llm app template
 azimuth_capi_operator_app_templates_huggingface_llm_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_huggingface_llm_annotations }}"
@@ -1151,8 +1151,8 @@ azimuth_capi_operator_app_templates_danswer_description: A self-service platform
 azimuth_capi_operator_app_templates_danswer_catalogue_name: Preview
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_app_templates_danswer_catalogue_precedence: 150
-# If the app should be flagged as deprecated
-azimuth_capi_operator_app_templates_danswer_deprecated: false
+# If the app should be flagged as end of life
+azimuth_capi_operator_app_templates_danswer_eol: false
 # The number of versions to make available for the danswer app template
 azimuth_capi_operator_app_templates_danswer_keep_versions: 3
 # The sync frequency for the danswer app template (default 24h)
@@ -1197,7 +1197,7 @@ azimuth_capi_operator_app_templates_danswer_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_danswer_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_danswer_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_danswer_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_danswer_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_capi_operator_app_templates_danswer_eol | string }}"
 # The spec for the danswer app template
 azimuth_capi_operator_app_templates_danswer_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_danswer_annotations }}"
@@ -1251,8 +1251,8 @@ azimuth_capi_operator_app_templates_ragflow_description:
 azimuth_capi_operator_app_templates_ragflow_catalogue_name: Preview
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_app_templates_ragflow_catalogue_precedence: 150
-# If the app should be flagged as deprecated
-azimuth_capi_operator_app_templates_ragflow_deprecated: false
+# If the app should be flagged as end of life
+azimuth_capi_operator_app_templates_ragflow_eol: false
 # The number of versions to make available for the ragflow app template
 azimuth_capi_operator_app_templates_ragflow_keep_versions: 3
 # The sync frequency for the ragflow app template (default 24h)
@@ -1276,7 +1276,7 @@ azimuth_capi_operator_app_templates_ragflow_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_ragflow_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_ragflow_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_ragflow_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_ragflow_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_capi_operator_app_templates_ragflow_eol | string }}"
 # The spec for the ragflow app template
 azimuth_capi_operator_app_templates_ragflow_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_ragflow_annotations }}"
@@ -1330,8 +1330,8 @@ azimuth_capi_operator_app_templates_argocd_description:
 azimuth_capi_operator_app_templates_argocd_catalogue_name: General
 # Precedence of the catalogue relative to others
 azimuth_capi_operator_app_templates_argocd_catalogue_precedence: 100
-# If the app should be flagged as deprecated
-azimuth_capi_operator_app_templates_argocd_deprecated: false
+# If the app should be flagged as end of life
+azimuth_capi_operator_app_templates_argocd_eol: false
 # The number of versions to make available for the argocd app template
 azimuth_capi_operator_app_templates_argocd_keep_versions: 3
 # The sync frequency for the argocd app template (default 24h)
@@ -1355,7 +1355,7 @@ azimuth_capi_operator_app_templates_argocd_annotations:
   acl.azimuth.stackhpc.com/deny-regex: "{{ azimuth_capi_operator_app_templates_argocd_tenancy_deny_regex }}"
   catalogue.azimuth.stackhpc.com/catalogue-name: "{{ azimuth_capi_operator_app_templates_argocd_catalogue_name }}"
   catalogue.azimuth.stackhpc.com/catalogue-precedence: "{{ azimuth_capi_operator_app_templates_argocd_catalogue_precedence | string }}"
-  catalogue.azimuth.stackhpc.com/deprecated: "{{ azimuth_capi_operator_app_templates_argocd_deprecated | string }}"
+  catalogue.azimuth.stackhpc.com/eol: "{{ azimuth_capi_operator_app_templates_argocd_eol | string }}"
 # The spec for the argocd app template
 azimuth_capi_operator_app_templates_argocd_spec:
   annotations: "{{ azimuth_capi_operator_app_templates_argocd_annotations }}"
