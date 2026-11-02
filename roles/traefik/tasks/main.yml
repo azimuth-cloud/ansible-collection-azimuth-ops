@@ -48,3 +48,10 @@
 - name: Cut over from ingress-nginx to Traefik
   ansible.builtin.include_tasks: cutover.yml
   when: traefik_migrating
+
+- name: Verify Traefik
+  ansible.builtin.include_tasks: verify.yml
+  when:
+    - traefik_phase == 'traefik'
+    - not traefik_migrating
+    - traefik_verify_enabled
