@@ -5,6 +5,7 @@
 #     If ingress-nginx is installed, Traefik is installed alongside nginx
 #     with a ClusterIP Service and verified, then ingress-nginx is removed and Traefik
 #     takes over the load balancer.
+#     If that fails, ingress-nginx is reinstalled
 traefik_phase: "{{ ingress_controller_migration_phase | default('nginx') }}"
 
 # On HA installs, the chart and the CRDs come from the Traefik addon of capi-helm-charts
@@ -72,7 +73,7 @@ traefik_tls_redirect_enabled: "{{ ingress_tls_enabled | default(true) }}"
 
 traefik_access_log_enabled: true
 
-# Enable checks that Traefik is serving requests
+# Enable check and rollback
 traefik_verify_enabled: true
 
 traefik_verify_probe_urls: >-
