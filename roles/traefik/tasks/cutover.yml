@@ -1,4 +1,8 @@
 ---
+- name: Verify Traefik before the cutover
+  ansible.builtin.include_tasks: verify.yml
+  when: traefik_verify_enabled
+
 - name: Uninstall ingress-nginx
   kubernetes.core.helm:
     release_namespace: "{{ traefik_ingress_nginx_release_namespace }}"
@@ -28,3 +32,7 @@
 
 - name: Update Traefik release
   ansible.builtin.include_tasks: release.yml
+
+- name: Verify Traefik after the cutover
+  ansible.builtin.include_tasks: verify.yml
+  when: traefik_verify_enabled

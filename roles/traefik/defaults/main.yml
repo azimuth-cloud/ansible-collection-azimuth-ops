@@ -3,7 +3,7 @@
 # * nginx: ingress-nginx serves all traffic, and Traefik is removed if installed
 # * traefik: Traefik serves all traffic.
 #     If ingress-nginx is installed, Traefik is installed alongside nginx
-#     with a ClusterIP Service, then ingress-nginx is removed and Traefik
+#     with a ClusterIP Service and verified, then ingress-nginx is removed and Traefik
 #     takes over the load balancer.
 traefik_phase: "{{ ingress_controller_migration_phase | default('nginx') }}"
 
@@ -72,6 +72,43 @@ traefik_tls_redirect_enabled: "{{ ingress_tls_enabled | default(true) }}"
 
 traefik_access_log_enabled: true
 
+# Enable checks that Traefik is serving requests
+traefik_verify_enabled: true
+
+traefik_verify_probe_urls: >-
+  {{-
+    [
+      "{}://{}.{}/api/".format(
+        "https" if traefik_tls_redirect_enabled else "http",
+        ingress_azimuth_portal_subdomain | default("portal"),
+        ingress_base_domain
+      )
+    ]
+    if ingress_base_domain is defined
+    else []
+  }}
+
+traefik_verify_probe_status_codes:
+  - 200
+  - 301
+  - 302
+  - 307
+  - 308
+  - 401
+  - 403
+
+traefik_verify_retries: 12
+traefik_verify_delay: 5
+
+# Before Traefik has the load balancer, the probes are sent through a port-forward to the Traefik
+# Service, using these local ports
+traefik_verify_port_forward_http_port: 18080
+traefik_verify_port_forward_https_port: 18443
+
+# Once Traefik has the load balancer, send the probes to the load balancer's address
+# If false, the port-forward is used instead
+traefik_verify_external_probe_enabled: true
+
 # The values for the traefik release
 traefik_release_defaults:
   # Must be passed through to the values as an int.
@@ -105,7 +142,7 @@ traefik_release_defaults:
         enabled: true
         pathOverride: "{{ traefik_published_service }}"
 
-  # While ingress-nginx is serving, Traefik only has a ClusterIP Service
+  # While ingress-nginx is serving, the Service is only used to verify Traefik
   service:
     annotations:
       loadbalancer.openstack.org/keep-floatingip: "true"
@@ -155,6 +192,9 @@ traefik_release_defaults:
       else []
     }}
 
+  # Only exposed on the traefik entrypoint of the pods
+  api:
+    insecure: "{{ traefik_verify_enabled }}"
   accessLog:
     enabled: "{{ traefik_access_log_enabled }}"
 

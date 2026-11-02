@@ -1,0 +1,146 @@
+---
+# Pods that are terminating after a rollout are still Running, but are skipped
+- name: Get Traefik pods
+  ansible.builtin.command: >-
+    kubectl get pods
+      --namespace {{ traefik_release_namespace }}
+      --selector {{ traefik_pod_selector.items() | map('join', '=') | join(',') }}
+      --field-selector status.phase=Running
+      --output json
+  changed_when: false
+  register: traefik_verify_pods
+
+# Disabled routers and middlewares are listed in the output, and mean that their Ingresses use
+# ingress-nginx features that Traefik does not support, such as nginx configuration snippets
+- name: Check that Traefik has no disabled routers or middlewares
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - get
+      - --raw
+      - >-
+        /api/v1/namespaces/{{ traefik_release_namespace }}/pods/{{ item.0 }}:8080/proxy/api/http/{{ item.1 }}?status=disabled
+  loop: >-
+    {{
+      traefik_verify_pods.stdout |
+        from_json |
+        json_query('items[?metadata.deletionTimestamp == null].metadata.name') |
+        product(['routers', 'middlewares']) |
+        list
+    }}
+  loop_control:
+    label: "{{ item.0 }} {{ item.1 }}"
+  register: traefik_verify_api
+  until: traefik_verify_api.rc == 0 and traefik_verify_api.stdout | from_json | length == 0
+  retries: "{{ traefik_verify_retries }}"
+  delay: "{{ traefik_verify_delay }}"
+  changed_when: false
+
+- name: Get Ingresses
+  ansible.builtin.command: kubectl get ingress --all-namespaces --output json
+  changed_when: false
+  register: traefik_verify_ingresses
+
+- name: Set URLs to probe
+  ansible.builtin.set_fact:
+    # Only probe URLs whose host has an Ingress
+    traefik_verify_urls: >-
+      {{
+        traefik_verify_probe_urls |
+          select('search', '^https?://(' ~ (traefik_verify_ingress_hosts | map('regex_escape') | join('|')) ~ ')(/|$)') |
+          list
+        if traefik_verify_ingress_hosts
+        else []
+      }}
+    traefik_verify_external: "{{ traefik_serving and traefik_verify_external_probe_enabled | bool }}"
+  vars:
+    traefik_verify_ingress_hosts: >-
+      {{
+        traefik_verify_ingresses.stdout |
+          from_json |
+          json_query('items[].spec.rules[].host') |
+          unique
+      }}
+
+# Once Traefik has the load balancer, the probes go to its address
+# Otherwise they go through a port-forward to the Service, which works from hosts that cannot
+# reach the cluster network, such as the seed of an HA install
+- name: Probe URLs
+  when: traefik_verify_urls | length > 0
+  block:
+    - name: Get the load balancer address
+      ansible.builtin.command: >-
+        kubectl get service {{ traefik_service_name }}
+          --namespace {{ traefik_release_namespace }}
+          --output jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      changed_when: false
+      register: traefik_verify_external_address
+      until: traefik_verify_external_address.stdout | length > 0
+      retries: "{{ traefik_load_balancer_retries }}"
+      delay: "{{ traefik_load_balancer_delay }}"
+      when: traefik_verify_external
+
+    - name: Start port-forward to the Service
+      ansible.builtin.shell: >-
+        nohup kubectl port-forward
+        --namespace {{ traefik_release_namespace }}
+        service/{{ traefik_service_name }}
+        {{ traefik_verify_port_forward_http_port }}:80
+        {{ traefik_verify_port_forward_https_port }}:443
+        </dev/null >/dev/null 2>&1 &
+        echo $!
+      changed_when: false
+      register: traefik_verify_port_forward
+      when: not traefik_verify_external
+
+    - name: Wait for port-forward to be ready
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ item }}"
+        timeout: 30
+      loop:
+        - "{{ traefik_verify_port_forward_http_port }}"
+        - "{{ traefik_verify_port_forward_https_port }}"
+      when: not traefik_verify_external
+
+    - name: Probe URLs
+      ansible.builtin.command:
+        argv:
+          - curl
+          - --silent
+          - --insecure
+          - --output
+          - /dev/null
+          - --write-out
+          - "%{http_code}"
+          - --max-time
+          - "10"
+          - --connect-to
+          - "{{ item | urlsplit('hostname') }}:{{ traefik_verify_port }}:{{ traefik_verify_target }}"
+          - "{{ item }}"
+      loop: "{{ traefik_verify_urls }}"
+      vars:
+        traefik_verify_https: "{{ item | urlsplit('scheme') == 'https' }}"
+        traefik_verify_port: "{{ 443 if traefik_verify_https else 80 }}"
+        traefik_verify_target: >-
+          {{
+            traefik_verify_external_address.stdout ~ ":" ~ traefik_verify_port
+            if traefik_verify_external
+            else "127.0.0.1:{}".format(
+              traefik_verify_port_forward_https_port
+              if traefik_verify_https
+              else traefik_verify_port_forward_http_port
+            )
+          }}
+      register: traefik_verify_probes
+      until: traefik_verify_probes.stdout | int in traefik_verify_probe_status_codes
+      retries: "{{ traefik_verify_retries }}"
+      delay: "{{ traefik_verify_delay }}"
+      changed_when: false
+
+  always:
+    - name: Stop port-forward to the Service
+      ansible.builtin.command: kill {{ traefik_verify_port_forward.stdout }}
+      when: traefik_verify_port_forward.stdout is defined
+      changed_when: false
+      failed_when: false
