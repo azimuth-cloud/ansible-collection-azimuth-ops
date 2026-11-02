@@ -7,6 +7,7 @@
 #     takes over the load balancer.
 traefik_phase: "{{ ingress_controller_migration_phase | default('nginx') }}"
 
+# On HA installs, the chart and the CRDs come from the Traefik addon of capi-helm-charts
 traefik_chart_repo: https://traefik.github.io/charts
 traefik_chart_name: traefik
 traefik_chart_version: 41.7.1
@@ -38,9 +39,18 @@ traefik_service_name: >-
 # The IP to request for the load balancer, if required
 traefik_service_load_balancer_ip:
 
+# Wether ingress-nginx and Traefik are ingress addons of a Cluster API cluster
+traefik_capi_addon: "{{ (install_mode | default('singlenode')) == 'ha' }}"
+
 # How long to wait for a Service to get or release a load balancer
 traefik_load_balancer_retries: 60
 traefik_load_balancer_delay: 5
+
+# The kubeconfig of the Cluster API cluster, for HA installs
+traefik_capi_cluster_kubeconfig_path: >-
+  {{ ansible_env.HOME }}/kubeconfig-{{ capi_cluster_release_name }}.yaml
+# The kubeconfig of the cluster where the Cluster API cluster is defined
+traefik_capi_management_kubeconfig_path: "{{ ansible_env.HOME }}/.kube/config"
 
 # The labels that select the Traefik pods
 traefik_pod_selector:
@@ -56,7 +66,7 @@ traefik_published_service: >-
   }}
 
 # The number of Traefik replicas
-traefik_replicas: 1
+traefik_replicas: "{{ 3 if (install_mode | default('singlenode')) == 'ha' else 1 }}"
 
 traefik_tls_redirect_enabled: "{{ ingress_tls_enabled | default(true) }}"
 
@@ -66,6 +76,17 @@ traefik_access_log_enabled: true
 traefik_release_defaults:
   # Must be passed through to the values as an int.
   deployment: "{{ {'replicas': traefik_replicas | int} }}"
+  podDisruptionBudget:
+    enabled: true
+    maxUnavailable: 1
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels: "{{ traefik_pod_selector }}"
   ingressClass:
     # Traefik must not claim Ingresses that do not specify a class
     isDefaultClass: false

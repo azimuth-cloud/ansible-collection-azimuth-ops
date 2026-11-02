@@ -13,3 +13,12 @@
     create_namespace: true
     wait: true
     wait_timeout: "{{ traefik_wait_timeout }}"
+  when: not traefik_capi_addon | bool
+
+# Only used during the cutover, after ingress-nginx has been removed
+- name: Update the Traefik addon
+  ansible.builtin.include_tasks: capi_addons.yml
+  vars:
+    traefik_capi_ingress_nginx_enabled: false
+    traefik_capi_traefik_enabled: true
+  when: traefik_capi_addon | bool
