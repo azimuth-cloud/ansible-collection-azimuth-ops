@@ -82,3 +82,4 @@
   kubernetes.core.k8s:
     state: present
     template: "flux-instance.yaml.j2"
+    kubeconfig: "{{ kubeconfig_path }}" # {{ ansible_env.HOME }}/.kube/config

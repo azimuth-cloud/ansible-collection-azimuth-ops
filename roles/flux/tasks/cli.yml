@@ -1,23 +1,27 @@
 ---
 - name: Ensure Flux CLI unpack directory exists
+  become: true
   ansible.builtin.file:
     path: "{{ flux_cli_unpack_directory }}"
     state: directory
     mode: "0755"
 
 - name: Download and extract Flux CLI archive
+  become: true
   ansible.builtin.unarchive:
     remote_src: true
     src: "{{ flux_cli_archive_url }}"
     dest: "{{ flux_cli_unpack_directory }}"
 
 - name: Ensure Flux CLI binary directory exists
+  become: true
   ansible.builtin.file:
     path: "{{ flux_cli_bin_directory }}"
     state: directory
     mode: "0755"
 
 - name: Copy Flux CLI executable to binary directory
+  become: true
   ansible.builtin.copy:
     remote_src: true
     src: "{{ (flux_cli_unpack_directory, 'flux') | path_join }}"
