@@ -1,0 +1,18 @@
+---
+# Waits for the Service in traefik_released to give up its load balancer, which happens before the
+# load balancer finalizer is removed
+- name: Wait for the load balancer to be released
+  ansible.builtin.command: >-
+    kubectl get service {{ traefik_released.name }}
+      --namespace {{ traefik_released.namespace }}
+      --ignore-not-found
+      --output json
+  changed_when: false
+  register: traefik_released_cmd
+  until: >-
+    not traefik_released_cmd.stdout or
+    'service.kubernetes.io/load-balancer-cleanup' not in (
+      traefik_released_cmd.stdout | from_json
+    ).metadata.get('finalizers', [])
+  retries: "{{ traefik_load_balancer_retries }}"
+  delay: "{{ traefik_load_balancer_delay }}"
