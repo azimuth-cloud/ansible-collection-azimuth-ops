@@ -16,6 +16,6 @@
       {{-
         "{}/kubeconfig-{}.yaml".format(ansible_env.HOME, capi_cluster_release_name)
         if install_mode == 'ha'
-        else ""
+        else "{{ ansible_env.HOME }}/.kube/config"
       }}
     infra_external_ip: "{{ lookup('env', 'INGRESS_IP') }}"
