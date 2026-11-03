@@ -53,6 +53,9 @@ generate_tests_azimuth_url: >-
 # The template to use to generate the main suite file with setup and teardown
 generate_tests_suite_template: suite.robot
 
+# The template to use to generate the Azimuth resources file
+generate_tests_suite_azimuth_resources_template: azimuth.resource
+
 # The name for the suite
 generate_tests_suite_name: Azimuth Tests
 

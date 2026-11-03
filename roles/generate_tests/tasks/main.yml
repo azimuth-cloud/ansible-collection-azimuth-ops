@@ -55,6 +55,12 @@
     dest: "{{ (generate_tests_suite_directory, '__init__.robot') | path_join }}"
     mode: "0644"
 
+- name: Template azimuth resources file
+  ansible.builtin.template:
+    src: "{{ generate_tests_suite_azimuth_resources_template }}"
+    dest: "{{ (generate_tests_suite_directory, 'azimuth.resource') | path_join }}"
+    mode: "0644"
+
 - name: Generate test suite for CaaS appliances
   ansible.builtin.template:
     src: "{{ generate_tests_caas_suite_template }}"
