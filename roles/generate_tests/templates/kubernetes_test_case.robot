@@ -68,6 +68,7 @@ Verify {{ test_case_name }}
     ${dashboard} =  Get Kubernetes Cluster Service Url  ${cluster}  headlamp-client
     Open Zenith Service  ${dashboard}
     Wait Until Page Title Contains  Cluster
+{% endif %}
 {% if generate_tests_kubernetes_scheduling_enabled %}
     Assert Lease Resource End Time
     ...  kube-${kubernetes.cluster_names['{{ test_case_name }}']}
