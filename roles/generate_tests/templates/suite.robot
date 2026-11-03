@@ -20,7 +20,7 @@ Teardown Test Environment
 Assert Lease Resource End Time
     [Arguments]  ${lease_name}  ${expected_end_time}
     ${normalised_expected_end_time} =  Evaluate
-    ...  datetime.datetime.fromisoformat(expected_end_time.replace("Z", "+00:00")).astimezone(datetime.timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ...  datetime.datetime.fromisoformat(expected_end_time.replace("Z", "+00:00")).astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     ...  modules=datetime
     Wait Until Keyword Succeeds  2 minutes  10 seconds
     ...  Lease Resource Should Have End Time
