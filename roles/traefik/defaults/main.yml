@@ -40,7 +40,7 @@ traefik_service_name: >-
 # The IP to request for the load balancer, if required
 traefik_service_load_balancer_ip:
 
-# Wether ingress-nginx and Traefik are ingress addons of a Cluster API cluster
+# Whether ingress-nginx and Traefik are ingress addons of a Cluster API cluster
 traefik_capi_addon: "{{ (install_mode | default('singlenode')) == 'ha' }}"
 
 # How long to wait for a Service to get or release a load balancer
