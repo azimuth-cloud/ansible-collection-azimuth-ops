@@ -6,8 +6,8 @@ k9s_repo: https://github.com/derailed/k9s
 k9s_version: v0.51.0
 # The OS variant and architecture to use
 # See https://github.com/derailed/k9s/releases for the available options
-k9s_os: "{{ ansible_system }}"
-k9s_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+k9s_os: "{{ ansible_facts.system }}"
+k9s_architecture: "{{ 'amd64' if ansible_facts.architecture == 'x86_64' else ansible_facts.architecture }}"
 # The name of the K9s archive
 k9s_archive_name: "k9s_{{ k9s_os }}_{{ k9s_architecture }}.tar.gz"
 # The URL of the K9s archive to download

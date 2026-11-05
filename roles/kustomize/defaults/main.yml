@@ -6,8 +6,8 @@ kustomize_repo: https://github.com/kubernetes-sigs/kustomize
 kustomize_version: v5.8.3
 # The OS variant and architecture to use
 # See https://github.com/kubernetes-sigs/kustomize/releases for the available options
-kustomize_os: "{{ ansible_system | lower }}"
-kustomize_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+kustomize_os: "{{ ansible_facts.system | lower }}"
+kustomize_architecture: "{{ 'amd64' if ansible_facts.architecture == 'x86_64' else ansible_facts.architecture }}"
 # The name of the kustomize archive
 kustomize_archive_name: kustomize_{{ kustomize_version }}_{{ kustomize_os }}_{{ kustomize_architecture }}.tar.gz
 # The URL of the kustomize archive to download
