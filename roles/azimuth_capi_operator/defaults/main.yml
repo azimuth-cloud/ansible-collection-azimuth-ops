@@ -757,7 +757,7 @@ azimuth_capi_operator_cluster_templates_flatcar: |-
           combine(
             {
               "label": "v" ~ kube_vn_no_prefix ~ " on Flatcar " ~ arch,
-              "description": "Kubernetes " ~ kube_vn_no_prefix ~ " with HA control plane on Flatcar Container Linux " ~ arch ~ ".",
+              "description": "Kubernetes " ~ kube_vn_no_prefix ~ " on Flatcar Container Linux " ~ arch ~ ".",
               "values": {
                 "kubernetesVersion": kube_vn_no_prefix,
                 "machineImageId": community_images_image_ids["flatcar_" ~ arch],
