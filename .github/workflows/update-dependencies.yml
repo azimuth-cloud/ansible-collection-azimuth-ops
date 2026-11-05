@@ -291,8 +291,8 @@ jobs:
           fi
           # Make sure the images we use have been published for the release
           for arch in amd64 arm64; do
-            curl -fsSLI -o /dev/null \
-              "$base_url/release-$version/ubuntu-24.04-server-cloudimg-$arch.img"
+            url="$base_url/release-$version/ubuntu-24.04-server-cloudimg-$arch.img"
+            curl -fsSLI -o /dev/null "$url" || { echo "Failed to get $url"; exit 1; }
           done
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
