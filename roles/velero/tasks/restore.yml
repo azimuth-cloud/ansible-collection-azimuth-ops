@@ -33,13 +33,43 @@
   changed_when: kubectl_velero_restore_conf.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
 - name: Wait for restore to complete
-  ansible.builtin.command: >-
-    kubectl wait restores.velero.io/{{ velero_restore_name }}
-      --for=jsonpath='{.status.phase}'=Completed
-      --namespace {{ velero_release_namespace }}
-      --timeout 0s
-  changed_when: false
-  register: velero_restore_complete
-  until: velero_restore_complete is succeeded
-  retries: 360
-  delay: 10
+  block:
+    # Wait for the restore to reach any terminal phase, so that we fail fast
+    # if the restore fails instead of waiting for it to become Completed
+    - name: Wait for restore to finish
+      ansible.builtin.command: >-
+        kubectl get restores.velero.io/{{ velero_restore_name }}
+          --namespace {{ velero_release_namespace }}
+          --output jsonpath='{.status.phase}'
+      changed_when: false
+      register: velero_restore_phase
+      until: >-
+        velero_restore_phase is succeeded and
+        velero_restore_phase.stdout in velero_restore_terminal_phases
+      retries: 360
+      delay: 10
+
+    - name: Fail if restore did not complete successfully
+      ansible.builtin.fail:
+        msg: "Restore finished in state '{{ velero_restore_phase.stdout }}'"
+      when: velero_restore_phase.stdout != "Completed"
+
+  rescue:
+    - name: Get restore details
+      ansible.builtin.command: >-
+        velero restore describe {{ velero_restore_name }}
+          --namespace {{ velero_release_namespace }}
+          --details
+      changed_when: false
+      failed_when: false
+      register: velero_restore_describe
+
+    - name: Show restore details
+      ansible.builtin.debug:
+        var: velero_restore_describe.stdout_lines
+
+    - name: Fail because restore did not complete
+      ansible.builtin.fail:
+        msg: >-
+          Restore {{ velero_restore_name }} did not complete
+          (phase: '{{ velero_restore_phase.stdout | default("unknown") }}').
