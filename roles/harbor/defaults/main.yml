@@ -36,12 +36,14 @@ harbor_ingress_subdomain_notary: "{{ ingress_harbor_notary_subdomain | default('
 # The host to use for the notary service
 harbor_ingress_host_notary: "{{ harbor_ingress_subdomain_notary }}.{{ harbor_ingress_base_domain }}"
 
-# At the time of writing, the Harbor chart doesn't support setting the ingress class
-# So we have to do it via the annotation
-_harbor_ingress_annotations:
-  kubernetes.io/ingress.class: "nginx"
+# Annotations to apply to the Harbor ingress
+harbor_ingress_annotations_default: {}
+
+# Ingress class name to apply to Harbor ingress
+harbor_ingress_class_name: "traefik"
+
 # Annotations to use for the ingress resources
-harbor_ingress_annotations: "{{ _harbor_ingress_annotations | combine(ingress_annotations | default({})) }}"
+harbor_ingress_annotations: "{{ harbor_ingress_annotations_default | combine(ingress_annotations | default({})) }}"
 
 # Indicates if TLS should be enabled
 harbor_tls_enabled: "{{ ingress_tls_enabled | default(True) }}"
@@ -123,6 +125,7 @@ harbor_release_defaults:
   expose:
     type: ingress
     ingress:
+      className: "{{ harbor_ingress_class_name }}"
       hosts:
         core: "{{ harbor_ingress_host_core }}"
         notary: "{{ harbor_ingress_host_notary }}"

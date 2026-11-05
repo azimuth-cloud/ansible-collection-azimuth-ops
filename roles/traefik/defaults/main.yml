@@ -1,0 +1,55 @@
+---
+
+# The chart to use
+traefik_chart_repo: https://traefik.github.io/charts
+traefik_chart_name: traefik
+traefik_chart_version: 41.0.2
+
+# Release information for the NGINX ingress controller release
+traefik_release_namespace: traefik
+traefik_release_name: traefik
+
+# The timeout to wait for NGINX ingress controller to become ready
+traefik_wait_timeout: 10m
+
+# enables the monitoring stack
+traefik_prometheus_stack_enabled: true
+
+# Redirect HTTP to HTTPS
+traefik_release_tls_redirect:
+  additionalArguments:
+    - --entryPoints.web.http.redirections.entryPoint.to=:443
+    - --entryPoints.web.http.redirections.entryPoint.scheme=https
+    - --entryPoints.web.http.redirections.entryPoint.permanent=true 
+
+# The values for the release
+traefik_release_defaults:
+  ports:
+    web:
+      transport:
+        respondingTimeouts:
+          readTimeout: 600
+          writeTimeout: 600
+          idleTimeout: 600
+    websecure:
+      transport:
+        respondingTimeouts:
+          readTimeout: 600
+          writeTimeout: 600
+          idleTimeout: 600
+  log:
+    level: DEBUG
+  accessLog:
+    enabled: true
+  metrics:
+    prometheus:
+      enabled: "{{ traefik_prometheus_stack_enabled }}"
+      serviceMonitor:
+        enabled: "{{ traefik_prometheus_stack_enabled }}"
+traefik_release_overrides: {}
+traefik_release_values: >-
+  {{-
+    traefik_release_defaults
+    | combine(traefik_release_tls_redirect if ingress_tls_enabled else {}, recursive = True) 
+    | combine(traefik_release_overrides, recursive = True)
+  }}
