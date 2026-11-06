@@ -2,7 +2,7 @@
 
 # The chart to use
 azimuth_capi_operator_chart_ref: "oci://quay.io/azimuth/azimuth-capi-operator-charts/azimuth-capi-operator"
-azimuth_capi_operator_chart_version: 0.26.1
+azimuth_capi_operator_chart_version: 0.26.0
 
 # By default, pin versions to azimuth-charts version associated with current Azimuth release
 azimuth_capi_operator_azimuth_charts_version: 0.16.0
