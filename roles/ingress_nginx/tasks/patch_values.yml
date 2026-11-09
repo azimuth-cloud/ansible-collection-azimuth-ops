@@ -6,7 +6,7 @@
   failed_when: false
 
 - name: Assert that HelmRelease CRD exists
-  assert:
+  ansible.builtin.assert:
     that: >-
       ingress_nginx_helmrelease_crd.rc != 0 and
       'NotFound' not in ingress_nginx_helmrelease_crd.stderr
