@@ -53,6 +53,19 @@
     dest: "{{ clusterapi_kustomization_directory }}/kustomization.yaml"
     mode: "0644"
 
+- name: Install Cluster API operator
+  kubernetes.core.helm:
+    chart_ref: "{{ clusterapi_operator_chart_name }}"
+    chart_repo_url: "{{ clusterapi_operator_chart_repo }}"
+    chart_version: "{{ clusterapi_operator_chart_version }}"
+    release_namespace: "{{ clusterapi_operator_release_namespace }}"
+    release_name: "{{ clusterapi_operator_release_name }}"
+    release_values: "{{ clusterapi_operator_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ clusterapi_operator_wait_timeout }}"
+
 - name: Retrieve all openstackclusters.infrastructure.cluster.x-k8s.io
   ansible.builtin.command: >-
     kubectl get
@@ -82,11 +95,39 @@
   when:
     - openstack_loadbalancer_provider == "ovn"
 
-- name: Install Cluster API resources
+- name: Install OpenStack Resource Controller
   ansible.builtin.command: >-
     kubectl apply --force-conflicts --server-side=true -k {{ clusterapi_kustomization_directory }}
   register: kubectl_clusterapi_resources
   changed_when: kubectl_clusterapi_resources.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+- name: Create Cluster API provider namespaces
+  ansible.builtin.command: kubectl create namespace {{ item }}
+  loop: "{{ clusterapi_providers | map(attribute = 'metadata.namespace') | unique }}"
+  register: clusterapi_provider_namespace_create
+  changed_when: clusterapi_provider_namespace_create.rc == 0
+  failed_when: >-
+    clusterapi_provider_namespace_create.rc != 0 and
+    "AlreadyExists" not in clusterapi_provider_namespace_create.stderr
+
+- name: Install Cluster API providers
+  ansible.builtin.command: kubectl apply --server-side=true -f -
+  args:
+    stdin: "{{ clusterapi_providers | map('to_nice_yaml') | join('---\n') }}"
+  register: clusterapi_providers_apply
+  changed_when: clusterapi_providers_apply.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
+
+- name: Wait for Cluster API providers to reach the requested version
+  ansible.builtin.command: >-
+    kubectl wait {{ provider.kind | lower }}/{{ provider.metadata.name }}
+      --namespace {{ provider.metadata.namespace }}
+      --for=jsonpath='{.status.installedVersion}'={{ provider.spec.version }}
+      --timeout {{ clusterapi_provider_wait_timeout }}
+  changed_when: false
+  loop: "{{ clusterapi_providers }}"
+  loop_control:
+    loop_var: provider
+    label: "{{ provider.metadata.namespace }}/{{ provider.kind }}/{{ provider.metadata.name }}"
 
 - name: Remove legacy CAPO mutating webhook
   ansible.builtin.command: kubectl delete mutatingwebhookconfiguration capo-mutating-webhook-configuration
