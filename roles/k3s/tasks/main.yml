@@ -45,6 +45,23 @@
     mode: u=rwx,g=rx,o=rx
   register: k3s_binary
 
+- name: Ensure k3s config directory exists
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write k3s server config file
+  ansible.builtin.copy:
+    content: "{{ k3s_server_config | to_nice_yaml }}"
+    dest: /etc/rancher/k3s/config.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  register: k3s_server_config_file
+
 - name: Install k3s server systemd unit file
   ansible.builtin.template:
     src: k3s-server.service.j2
@@ -65,7 +82,7 @@
     state: >-
       {{-
         'restarted'
-        if k3s_binary is changed or k3s_server_systemd_unit is changed
+        if k3s_binary is changed or k3s_server_systemd_unit is changed or k3s_server_config_file is changed
         else 'started'
       }}
     enabled: true

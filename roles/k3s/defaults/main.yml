@@ -1,4 +1,20 @@
 ---
+# Configuration for the k3s server, written to /etc/rancher/k3s/config.yaml
+# Keys are the k3s server flags without the leading dashes
+# Lists are merged with the defaults, e.g. 'disable' entries are added to traefik
+k3s_server_config_defaults: >-
+  {{ {} if k3s_traefik_enabled else {'disable': ['traefik']} }}
+# Operator-supplied configuration, e.g.
+#   k3s_server_config_overrides:
+#     cluster-cidr: 10.42.0.0/16,fd42:42::/56
+#     service-cidr: 10.43.0.0/16,fd42:43::/112
+# Note that dual-stack can only be enabled when the cluster is created
+k3s_server_config_overrides: {}
+k3s_server_config: >-
+  {{-
+    k3s_server_config_defaults |
+      combine(k3s_server_config_overrides, recursive=True, list_merge='append_rp')
+  }}
 
 k3s_repo: https://github.com/k3s-io/k3s
 k3s_version: v1.35.8+k3s1
