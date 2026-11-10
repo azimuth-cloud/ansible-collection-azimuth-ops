@@ -220,7 +220,7 @@ azimuth_caas_workstation_git_url: >-
       default("https://github.com/azimuth-cloud/caas-workstation.git")
   }}
 # The git version for the workstation
-azimuth_caas_workstation_default_git_version: 0.11.0
+azimuth_caas_workstation_default_git_version: 0.12.0
 # Catalogue the app is placed within
 azimuth_caas_workstation_catalogue_name: General
 # Precedence of the catalogue relative to others
