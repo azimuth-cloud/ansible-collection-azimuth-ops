@@ -8,12 +8,18 @@
   roles:
     - role: azimuth_cloud.azimuth_ops.alertmanager_config
       when: >-
-        (alertmanager_config_slack_webhook_url is defined and
-        alertmanager_config_slack_webhook_url) or
-        (alertmanager_config_slack_critical_webhook_url is defined and
-        alertmanager_config_slack_critical_webhook_url and
-        alertmanager_config_slack_warning_webhook_url is defined and
-        alertmanager_config_slack_warning_webhook_url)
+        (
+          alertmanager_config_slack_webhook_url is defined and
+          alertmanager_config_slack_webhook_url is truthy
+         )
+        or
+        (
+          alertmanager_config_slack_critical_webhook_url is defined and
+          alertmanager_config_slack_critical_webhook_url is truthy
+          and
+          alertmanager_config_slack_warning_webhook_url is defined and
+          alertmanager_config_slack_warning_webhook_url is truthy
+        )
     - role: azimuth_cloud.azimuth_ops.certmanager
     - role: azimuth_cloud.azimuth_ops.clusterapi
   environment:

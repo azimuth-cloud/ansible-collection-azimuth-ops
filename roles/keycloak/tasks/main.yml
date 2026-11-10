@@ -55,7 +55,7 @@
       stringData:
         user: "{{ keycloak_external_db_user }}"
         password: "{{ keycloak_external_db_password }}"
-  when: keycloak_external_db_url
+  when: keycloak_external_db_url is truthy
   register: kubectl_keycloak_db_secret
   changed_when: kubectl_keycloak_db_secret.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
@@ -87,7 +87,7 @@
         namespace: "{{ keycloak_namespace }}"
       stringData:
         trust-bundle.pem: "{{ keycloak_trust_bundle }}"
-  when: keycloak_trust_bundle
+  when: keycloak_trust_bundle is truthy
   register: kubectl_keycloak_trust_bundle
   changed_when: kubectl_keycloak_trust_bundle.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 
@@ -122,7 +122,7 @@
       stringData:
         tls.crt: "{{ keycloak_ingress_tls_certificate }}"
         tls.key: "{{ keycloak_ingress_tls_key }}"
-  when: keycloak_ingress_tls_certificate
+  when: keycloak_ingress_tls_certificate is truthy
   register: kubectl_keycloak_tls_cert
   changed_when: kubectl_keycloak_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 

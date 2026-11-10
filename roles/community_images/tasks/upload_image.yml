@@ -85,7 +85,7 @@
       block:
         - name: "Ensure all Glance checksums are the same for images named {{ community_images_image_spec.name }}"
           ansible.builtin.assert:
-            that: "{{ community_images_glance_checksum_list | unique | length == 1 }}"
+            that: community_images_glance_checksum_list | unique | length == 1
             fail_msg: |
               Expecting a single image with name {{ community_images_image_spec.name }} and
               os_hash_value {{ _community_images_image_spec_glance_checksum }}, found
