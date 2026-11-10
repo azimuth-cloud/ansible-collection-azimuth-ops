@@ -571,7 +571,7 @@ azimuth_caas_rstudio_git_url: >-
       default("https://github.com/azimuth-cloud/caas-r-studio-server.git")
   }}
 # The git version for the R-Studio appliance
-azimuth_caas_rstudio_default_git_version: 0.7.1
+azimuth_caas_rstudio_default_git_version: 0.8.0
 # Catalogue the app is placed within
 azimuth_caas_rstudio_catalogue_name: General
 # Precedence of the catalogue relative to others
