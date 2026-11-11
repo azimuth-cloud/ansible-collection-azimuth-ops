@@ -22,8 +22,6 @@
       when: azimuth_authentication_type == "oidc"
     - role: azimuth_cloud.azimuth_ops.certmanager
       when: certmanager_enabled or azimuth_kubernetes_enabled
-    # NOTE: this is kept to remove existing dashboard installs
-    - role: azimuth_cloud.azimuth_ops.kubernetes_dashboard
     - role: azimuth_cloud.azimuth_ops.helm_dashboard
     - role: azimuth_cloud.azimuth_ops.admin_dashboard_ingress
     - role: azimuth_cloud.azimuth_ops.azimuth_authorization_webhook
@@ -71,13 +69,6 @@
       ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.ingress_nginx
         tasks_from: patch_values.yml
-    # Workaround for new services on existing Clusters not getting added
-    # to Platforms after upgrades
-    - name: Restart CAPI Operator
-      ansible.builtin.include_role:
-        name: azimuth_cloud.azimuth_ops.azimuth_capi_operator
-        tasks_from: restart.yml
-      when: azimuth_kubernetes_enabled
 
   environment:
     KUBECONFIG: "{{ kubeconfig_path | default('') }}"
