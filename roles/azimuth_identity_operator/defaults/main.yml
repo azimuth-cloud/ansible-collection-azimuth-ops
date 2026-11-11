@@ -18,6 +18,9 @@ azimuth_identity_operator_metrics: true
 # Custom trust bundle for SSL verification
 azimuth_identity_operator_trust_bundle: "{{ system_trust_ca_bundle | default('') }}"
 
+# The logging level to use for the identity operator
+azimuth_identity_operator_logging_level: "{{ azimuth_operator_logging_level | default('info') }}"
+
 #####
 # TLS settings
 #####
@@ -193,6 +196,7 @@ azimuth_identity_operator_release_defaults:
         else None
       }}
   config:
+    loggingLevel: "{{ azimuth_identity_operator_logging_level }}"
     dex:
       host: "{{ azimuth_identity_operator_dex_host }}"
       ingressClassName: "{{ azimuth_identity_operator_dex_ingress_class }}"

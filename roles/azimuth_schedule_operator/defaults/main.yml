@@ -8,6 +8,9 @@ azimuth_schedule_operator_chart_version: 0.13.1
 azimuth_schedule_operator_release_namespace: "{{ azimuth_release_namespace | default('azimuth') }}"
 azimuth_schedule_operator_release_name: azimuth-schedule-operator
 
+# The logging level to use for the schedule operator
+azimuth_schedule_operator_logging_level: "{{ azimuth_operator_logging_level | default('info') }}"
+
 # Indicates whether Blazar support should be enabled in the schedule operator
 azimuth_schedule_operator_blazar_enabled: false
 # The interval at which Blazar leases are checked
@@ -23,6 +26,7 @@ azimuth_schedule_operator_release_defaults:
   config: >-
     {{-
       {
+        "loggingLevel": azimuth_schedule_operator_logging_level,
         "blazarEnabled": ("yes" if azimuth_schedule_operator_blazar_enabled else "no"),
         "defaultGracePeriod": azimuth_schedule_operator_default_grace_period,
       } |
