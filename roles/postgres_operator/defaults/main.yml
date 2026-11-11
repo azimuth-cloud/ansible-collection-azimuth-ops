@@ -1,4 +1,5 @@
 ---
+
 # The namespace in which the Postgres Operator should be deployed
 pgo_namespace: postgres-operator
 
@@ -9,7 +10,7 @@ pgo_repository: https://github.com/CrunchyData/postgres-operator-examples.git
 pgo_repository_version: be4cf56ee896c497e0fb30a6a982cf26f4ecbd58
 
 # List of bases to install
-pgo_kustomization_resources:
+pgo_kustomization_bases:
   - "{{ pgo_repository }}/kustomize/install/default?ref={{ pgo_repository_version }}"
 
 # List of patches to apply to the resources in the manifests
@@ -17,7 +18,7 @@ pgo_kustomization_patches: []
 # The kustomization to use for Cluster API
 pgo_kustomization:
   namespace: "{{ pgo_namespace }}"
-  resources: "{{ pgo_kustomization_resources }}"
+  bases: "{{ pgo_kustomization_bases }}"
   patches: "{{ pgo_kustomization_patches }}"
 
 # Use a directory in $HOME for the kustomization by default

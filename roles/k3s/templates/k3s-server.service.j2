@@ -20,4 +20,4 @@ TasksMax=infinity
 TimeoutStartSec=0
 Restart=always
 RestartSec=5s
-ExecStart=/usr/bin/k3s server
+ExecStart=/usr/bin/k3s server{% if not k3s_traefik_enabled %} --disable traefik{% endif %}
