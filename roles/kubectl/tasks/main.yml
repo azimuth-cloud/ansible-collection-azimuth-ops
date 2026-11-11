@@ -16,4 +16,3 @@
   ansible.builtin.lineinfile:
     path: "{{ ansible_env.HOME }}/.bashrc"
     line: source <(kubectl completion bash)
-  when: kubectl_configure_bash_completions

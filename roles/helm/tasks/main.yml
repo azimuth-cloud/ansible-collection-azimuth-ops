@@ -28,4 +28,3 @@
   ansible.builtin.lineinfile:
     path: "{{ ansible_env.HOME }}/.bashrc"
     line: source <(helm completion bash)
-  when: helm_configure_bash_completions
