@@ -330,6 +330,18 @@ jobs:
             chart_name_jsonpath: sealed_secrets_chart_name
             chart_version_jsonpath: sealed_secrets_chart_version
 
+          - key: traefik
+            path: ./roles/traefik/defaults/main.yml
+            chart_repo_jsonpath: traefik_chart_repo
+            chart_name_jsonpath: traefik_chart_name
+            chart_version_jsonpath: traefik_chart_version
+
+          - key: traefik-crds
+            path: ./roles/traefik/defaults/main.yml
+            chart_repo_jsonpath: traefik_crds_chart_repo
+            chart_name_jsonpath: traefik_crds_chart_name
+            chart_version_jsonpath: traefik_crds_chart_version
+
           - key: velero
             path: ./roles/velero/defaults/main.yml
             chart_repo_jsonpath: velero_chart_repo

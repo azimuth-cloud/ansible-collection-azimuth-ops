@@ -169,6 +169,13 @@ capi_cluster_etcd_blockdevice_volume_az: "nova"
 # Determines if the ingress controller should be enabled
 capi_cluster_addons_ingress_enabled: "{{ ingress_controller_enabled | default(true) }}"
 
+# Which ingress addons are enabled, set by the traefik role while migrating
+capi_cluster_addons_ingress_nginx_enabled: >-
+  {{ (ingress_controller_migration_phase | default('nginx')) == 'nginx' }}
+capi_cluster_addons_ingress_traefik_enabled: >-
+  {{ (ingress_controller_migration_phase | default('nginx')) == 'traefik' }}
+capi_cluster_addons_ingress_traefik_release_values: {}
+
 # A pre-allocated IP for the ingress load balancer
 # If given, this IP should have the wildcard domain assigned to it
 capi_cluster_addons_ingress_load_balancer_ip: >-
@@ -511,13 +518,16 @@ capi_cluster_release_defaults:
     # The Mellanox operator is only required for high-performance networking
     mellanoxNetworkOperator:
       enabled: false
-    # The NGINX ingress controller is required
+    # An ingress controller is required
     ingress:
       enabled: "{{ capi_cluster_addons_ingress_enabled }}"
+      allowNginxAndTraefik: true
       traefik:
-        enabled: false
+        enabled: "{{ capi_cluster_addons_ingress_traefik_enabled | bool }}"
+        release:
+          values: "{{ capi_cluster_addons_ingress_traefik_release_values }}"
       nginx:
-        enabled: true
+        enabled: "{{ capi_cluster_addons_ingress_nginx_enabled | bool }}"
         release:
           values:
             controller:
