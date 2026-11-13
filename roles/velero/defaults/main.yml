@@ -281,6 +281,13 @@ velero_restore_spec: >-
       combine(velero_restore_spec_overrides, recursive = True)
   }}
 
+# Restore phases after which Velero will make no further progress
+velero_restore_terminal_phases:
+  - Completed
+  - PartiallyFailed
+  - Failed
+  - FailedValidation
+
 # If true, allow restores from partially failed backups
 # If false (the default), only allow restores from backups that completed without error
 velero_restore_allow_partial: "{{ not (velero_restore_strict | default(True)) }}"
