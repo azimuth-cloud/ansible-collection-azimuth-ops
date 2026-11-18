@@ -25,6 +25,8 @@ ingress_nginx_release_defaults:
     # management cluster.
     config:
       annotations-risk-level: Critical
+      # CVE-2026-123007,CVE-2026-123633 mitigation
+      use-http2: false
     # Keep the Service and IngressClass when ingress-nginx is uninstalled.
     # Allows Traefik to take possession of these when we migrate.
     service:
