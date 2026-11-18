@@ -111,7 +111,8 @@ keycloak_spec_defaults:
     - name: metrics-enabled
       value: "true"
   env:
-    JAVA_OPTS_APPEND: "-XX:-UseBASE64Intrinsics"
+    - name: JAVA_OPTS_APPEND
+      value: "-XX:-UseBASE64Intrinsics"
 
 keycloak_spec_overrides: {}
 keycloak_spec: "{{ keycloak_spec_defaults | combine(keycloak_spec_overrides, recursive=True) }}"
