@@ -78,7 +78,7 @@ capi_cluster_registry_mirrors: {}
 # registry-1.docker.io:
 #   username: "<username>"
 #   password: "<password>"
-capi_cluster_registry_auth: {}
+capi_cluster_registry_auth: []
 
 # The internal network to use
 # Defaults to the network created by Terraform if available
@@ -434,7 +434,7 @@ capi_cluster_release_defaults:
         else {}
       }}
   trustedCAs: "{{ capi_cluster_trust_bundle }}"
-  registryAuth: "{{ capi_cluster_registry_auth }}"
+  registryAuth: "{{ capi_cluster_registry_auth | items2dict(key_name='registry_url', value_name='basic_auth') }}"
   registryMirrors: "{{ capi_cluster_registry_mirrors }}"
   apiServer: >-
     {{-
