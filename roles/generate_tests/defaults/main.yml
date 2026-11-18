@@ -261,7 +261,26 @@ generate_tests_kubernetes_test_cases_default: >-
     {% endif %}
     {% endfor %}
   ]
-generate_tests_kubernetes_test_cases_extra: []
+generate_tests_kubernetes_test_cases_extra: >-
+  [
+    {% for tpl in generate_tests_installed_kubernetes_templates %}
+    {% set tpl_kube_version = tpl | json_query('spec.values.kubernetesVersion') %}
+    {% set tpl_is_latest = tpl_kube_version is version(_generate_tests_kubernetes_latest_available_version, '==') %}
+    {% set tpl_deprecated = tpl.spec.deprecated | default(False) %}
+    {% set tpl_tags_include = tpl.spec.tags | default([]) | intersect(generate_tests_kubernetes_test_cases_include_tags) | length > 0 %}
+    {% set tpl_tags_exclude = tpl.spec.tags | default([]) | intersect(generate_tests_kubernetes_test_cases_exclude_tags) | length > 0 %}
+    {
+      "name": "Test external ingress controller",
+      "template": "kubernetes_ingress_test_case.robot",
+      "kubernetes_template": "{{ tpl.metadata.name }}",
+      "tags": ["{{ tpl.metadata.name }}"],
+      "control_plane_size": "{{ generate_tests_kubernetes_test_case_control_plane_size }}",
+      "worker_size": "{{ generate_tests_kubernetes_test_case_worker_size }}",
+      "worker_count": "{{ generate_tests_kubernetes_test_case_worker_count }}",
+    },
+    {% endfor %}
+  ]
+
 generate_tests_kubernetes_test_cases: >-
   {{- generate_tests_kubernetes_test_cases_default + generate_tests_kubernetes_test_cases_extra }}
 
