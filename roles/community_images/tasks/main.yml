@@ -20,7 +20,10 @@
 
     - name: Ensure OpenStack CLI (and SDK) are available
       ansible.builtin.pip:
-        name: python-openstackclient
+        name:
+          - python-openstackclient
+          # openstacksdk 4.23.0 is broken.
+          - openstacksdk!=4.23.0
         virtualenv: "{{ community_images_venv_path }}"
         virtualenv_command: python3 -m venv
 
