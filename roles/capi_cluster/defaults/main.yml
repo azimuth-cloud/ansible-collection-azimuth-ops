@@ -530,6 +530,8 @@ capi_cluster_release_defaults:
               # management cluster.
               config:
                 annotations-risk-level: Critical
+                # CVE-2026-123007,CVE-2026-123633 mitigation
+                use-http2: false
               service: >-
                 {{-
                   {
