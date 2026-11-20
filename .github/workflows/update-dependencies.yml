@@ -330,6 +330,24 @@ jobs:
             chart_name_jsonpath: sealed_secrets_chart_name
             chart_version_jsonpath: sealed_secrets_chart_version
 
+          - key: sveltos-controller
+            path: ./roles/sveltos/defaults/main.yml
+            chart_repo_jsonpath: sveltos_controller_chart_repo
+            chart_name_jsonpath: sveltos_controller_chart_name
+            chart_version_jsonpath: sveltos_controller_chart_version
+
+          - key: sveltos-crds
+            path: ./roles/sveltos/defaults/main.yml
+            chart_repo_jsonpath: sveltos_crds_chart_repo
+            chart_name_jsonpath: sveltos_crds_chart_name
+            chart_version_jsonpath: sveltos_crds_chart_version
+
+          - key: sveltos-dashboard
+            path: ./roles/sveltos/defaults/main.yml
+            chart_repo_jsonpath: sveltos_dashboard_chart_repo
+            chart_name_jsonpath: sveltos_dashboard_chart_name
+            chart_version_jsonpath: sveltos_dashboard_chart_version
+
           - key: velero
             path: ./roles/velero/defaults/main.yml
             chart_repo_jsonpath: velero_chart_repo

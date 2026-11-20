@@ -22,6 +22,8 @@
       when: azimuth_authentication_type == "oidc"
     - role: azimuth_cloud.azimuth_ops.certmanager
       when: certmanager_enabled or azimuth_kubernetes_enabled
+    - role: azimuth_cloud.azimuth_ops.sveltos
+      when: sveltos_enabled
     - role: azimuth_cloud.azimuth_ops.helm_dashboard
     - role: azimuth_cloud.azimuth_ops.admin_dashboard_ingress
     - role: azimuth_cloud.azimuth_ops.azimuth_authorization_webhook

@@ -1,0 +1,58 @@
+---
+
+#####
+# Sveltos installation using Helm
+#####
+
+# Indicates whether Sveltos should be installed
+sveltos_enabled: false
+
+# Indicates whether the monitoring should be enabled
+sveltos_monitoring_enabled: true
+
+# The namespace to install all the Sveltos releases into
+sveltos_release_namespace: projectsveltos
+
+# The timeout to wait for each release to become ready
+sveltos_wait_timeout: 10m
+
+# The chart to use for the Custom Resource Definitions
+# This release owns the CRDs, so that they are upgraded along with the chart
+sveltos_crds_chart_repo: https://projectsveltos.github.io/helm-charts
+sveltos_crds_chart_name: sveltos-crds
+sveltos_crds_chart_version: 1.17.0
+sveltos_crds_release_name: sveltos-crds
+
+# The chart to use for the controllers
+sveltos_controller_chart_repo: https://projectsveltos.github.io/helm-charts
+sveltos_controller_chart_name: projectsveltos
+sveltos_controller_chart_version: 1.17.0
+sveltos_controller_release_name: projectsveltos
+
+# The values for the controller release
+sveltos_controller_release_defaults:
+  agent:
+    managementCluster: true
+  prometheus:
+    enabled: "{{ sveltos_monitoring_enabled }}"
+sveltos_controller_release_overrides: {}
+sveltos_controller_release_values: >-
+  {{-
+    sveltos_controller_release_defaults |
+      combine(sveltos_controller_release_overrides, recursive = True)
+  }}
+
+# The chart to use for the dashboard
+sveltos_dashboard_chart_repo: https://projectsveltos.github.io/helm-charts
+sveltos_dashboard_chart_name: sveltos-dashboard
+sveltos_dashboard_chart_version: 1.17.0
+sveltos_dashboard_release_name: sveltos-dashboard
+
+# The values for the dashboard release
+sveltos_dashboard_release_defaults: {}
+sveltos_dashboard_release_overrides: {}
+sveltos_dashboard_release_values: >-
+  {{-
+    sveltos_dashboard_release_defaults |
+      combine(sveltos_dashboard_release_overrides, recursive = True)
+  }}

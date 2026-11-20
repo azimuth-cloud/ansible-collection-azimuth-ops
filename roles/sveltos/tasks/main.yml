@@ -1,0 +1,58 @@
+---
+- name: Check that Prometheus Operator CRDs are available
+  when: sveltos_monitoring_enabled
+  block:
+    - name: Check for ServiceMonitor CRD
+      ansible.builtin.command: kubectl get crd servicemonitors.monitoring.coreos.com
+      register: sveltos_servicemonitor_crd_check
+      failed_when: false
+      changed_when: false
+
+    - name: Assert that ServiceMonitor CRD is present
+      ansible.builtin.assert:
+        that: sveltos_servicemonitor_crd_check.rc == 0
+        fail_msg: >-
+          The ServiceMonitor CRD (servicemonitors.monitoring.coreos.com) was not found.
+          Install kube-prometheus-stack before Sveltos, or set
+          sveltos_monitoring_enabled: false.
+        quiet: true
+
+- name: Install Sveltos CRDs on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ sveltos_crds_chart_name }}"
+    chart_repo_url: "{{ sveltos_crds_chart_repo }}"
+    chart_version: "{{ sveltos_crds_chart_version }}"
+    release_namespace: "{{ sveltos_release_namespace }}"
+    release_name: "{{ sveltos_crds_release_name }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ sveltos_wait_timeout }}"
+
+- name: Install Sveltos controller on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ sveltos_controller_chart_name }}"
+    chart_repo_url: "{{ sveltos_controller_chart_repo }}"
+    chart_version: "{{ sveltos_controller_chart_version }}"
+    release_namespace: "{{ sveltos_release_namespace }}"
+    release_name: "{{ sveltos_controller_release_name }}"
+    release_values: "{{ sveltos_controller_release_values }}"
+    # The CRDs are managed by the sveltos-crds release
+    skip_crds: true
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ sveltos_wait_timeout }}"
+
+- name: Install Sveltos dashboard on target Kubernetes cluster
+  kubernetes.core.helm:
+    chart_ref: "{{ sveltos_dashboard_chart_name }}"
+    chart_repo_url: "{{ sveltos_dashboard_chart_repo }}"
+    chart_version: "{{ sveltos_dashboard_chart_version }}"
+    release_namespace: "{{ sveltos_release_namespace }}"
+    release_name: "{{ sveltos_dashboard_release_name }}"
+    release_values: "{{ sveltos_dashboard_release_values }}"
+    atomic: true
+    create_namespace: true
+    wait: true
+    wait_timeout: "{{ sveltos_wait_timeout }}"
