@@ -31,6 +31,11 @@ Create {{ test_case_name }}
 {% if test_case.monitoring_enabled is not defined or test_case.monitoring_enabled %}
     ${config} =  Enable Monitoring For Kubernetes Config  ${config}
 {% endif %}
+{% if test_case.ingress_enabled %}
+    ${test_case_external_ip} =  Find Free Or Allocate External Ip
+    ${config} =  Enable Ingress For Kubernetes Config  ${config}
+    ...  ${test_case_external_ip.external_ip}
+{% endif %}
     ${cluster} =  Create Kubernetes Cluster  ${config}
 
 {% if generate_tests_include_upgrade_tests %}
@@ -62,6 +67,13 @@ Verify {{ test_case_name }}
     ${monitoring} =  Get Kubernetes Cluster Service Url  ${cluster}  monitoring
     Open Zenith Service  ${monitoring}
     Wait Until Page Title Contains  Grafana
+{% endif %}
+{% if test_case.ingress_enabled %}
+    ${ip_address} =  Get Loadbalancer Ip Address  ${cluster.id}
+    ...  traefik
+    ...  traefik
+    Enable Traefik Healthcheck  ${cluster.id}
+    Check Traefik Ingress Route  ${ip_address}
 {% endif %}
 
 {% if generate_tests_kubernetes_collect_logs_from_loki | default(False) %}
