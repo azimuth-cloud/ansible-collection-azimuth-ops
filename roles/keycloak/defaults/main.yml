@@ -1,5 +1,4 @@
 ---
-
 # The namespace to install Keycloak in
 keycloak_namespace: keycloak-system
 
@@ -111,6 +110,10 @@ keycloak_spec_defaults:
   additionalOptions:
     - name: metrics-enabled
       value: "true"
+  env:
+    - name: JAVA_OPTS_APPEND
+      value: "-XX:-UseBASE64Intrinsics"
+
 keycloak_spec_overrides: {}
 keycloak_spec: "{{ keycloak_spec_defaults | combine(keycloak_spec_overrides, recursive=True) }}"
 
