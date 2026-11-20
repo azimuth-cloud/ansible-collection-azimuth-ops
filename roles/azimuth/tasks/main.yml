@@ -196,9 +196,9 @@
     scheme: "{{ 'https' if azimuth_ingress_tls_enabled else 'http' }}"
     host: "{{ azimuth_ingress_host }}"
   block:
-    - name: Print Azimuth URL
-      ansible.builtin.debug:
-        msg: "Azimuth UI available at {{ scheme }}://{{ host }}"
+    - name: Save URL as a persistent fact
+      ansible.builtin.set_fact:
+        azimuth_portal_url: "{{ scheme }}://{{ host }}"
 
     - name: Write Azimuth URL to env file on localhost
       ansible.builtin.copy:
