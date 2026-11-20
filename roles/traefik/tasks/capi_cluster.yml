@@ -1,0 +1,59 @@
+---
+- name: Get kubeconfig for the Cluster API cluster
+  ansible.builtin.command: >-
+    kubectl get secret {{ capi_cluster_release_name }}-kubeconfig
+      --namespace {{ capi_cluster_release_namespace | default('default') }}
+      --ignore-not-found
+      --output jsonpath='{.data.value}'
+  environment:
+    KUBECONFIG: "{{ traefik_capi_management_kubeconfig_path }}"
+  changed_when: false
+  register: traefik_capi_cluster_kubeconfig_cmd
+
+- name: Get ingress controller state of the Cluster API cluster
+  when: traefik_capi_cluster_kubeconfig_cmd.stdout | length > 0
+  environment:
+    KUBECONFIG: "{{ traefik_capi_cluster_kubeconfig_path }}"
+  block:
+    - name: Write kubeconfig file for the Cluster API cluster
+      ansible.builtin.copy:
+        content: "{{ traefik_capi_cluster_kubeconfig_cmd.stdout | b64decode }}"
+        dest: "{{ traefik_capi_cluster_kubeconfig_path }}"
+        mode: u=rw,g=,o=
+
+    - name: Get ingress controller state
+      ansible.builtin.include_tasks: state.yml
+
+# Traefik has the floating IP, and must release it before ingress-nginx can be installed
+- name: Remove Traefik before reinstalling ingress-nginx
+  when:
+    - traefik_phase == 'nginx'
+    - traefik_installed | default(false)
+    - not traefik_ingress_nginx_installed | default(false)
+  environment:
+    KUBECONFIG: "{{ traefik_capi_cluster_kubeconfig_path }}"
+  block:
+    - name: Remove the Traefik addon
+      ansible.builtin.include_tasks: capi_addons.yml
+      vars:
+        traefik_serving: false
+        traefik_capi_ingress_nginx_enabled: false
+        traefik_capi_traefik_enabled: false
+
+    - name: Wait for Traefik to release the load balancer
+      ansible.builtin.include_tasks: wait_released.yml
+      vars:
+        traefik_released:
+          namespace: "{{ traefik_release_namespace }}"
+          name: "{{ traefik_service_name }}"
+
+# In the traefik phase, ingress-nginx is left installed, and Traefik is installed with a ClusterIP
+- name: Configure the ingress addons for the capi_cluster role
+  ansible.builtin.include_tasks: capi_addons.yml
+  vars:
+    traefik_serving: >-
+      {{ traefik_phase == 'traefik' and not traefik_ingress_nginx_installed | default(false) }}
+    traefik_capi_ingress_nginx_enabled: >-
+      {{ traefik_phase == 'nginx' or traefik_ingress_nginx_installed | default(false) }}
+    traefik_capi_traefik_enabled: "{{ traefik_phase == 'traefik' }}"
+    traefik_capi_update: false
