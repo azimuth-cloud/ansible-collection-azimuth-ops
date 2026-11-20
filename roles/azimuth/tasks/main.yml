@@ -31,7 +31,7 @@
       stringData:
         tls.crt: "{{ azimuth_ingress_tls_certificate }}"
         tls.key: "{{ azimuth_ingress_tls_key }}"
-  when: azimuth_ingress_tls_certificate
+  when: azimuth_ingress_tls_certificate is truthy
   register: azimuth_kubectl_wildcard_tls_cert
   changed_when: azimuth_kubectl_wildcard_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 

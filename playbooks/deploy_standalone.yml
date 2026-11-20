@@ -25,7 +25,7 @@
 
     - name: System setup
       become: true
-      when: configure_system_resources | default (false)
+      when: configure_system_resources | default(false) | bool
       block:
         - name: Update packages
           ansible.builtin.apt:
@@ -94,14 +94,14 @@
 
         - name: Ensure kube config directory exists
           ansible.builtin.file:
-            path: "{{ ansible_env.HOME }}/.kube"
+            path: "{{ ansible_facts.env.HOME }}/.kube"
             state: directory
             mode: u=rwx,g=rx,o=rx
 
         - name: Write kubeconfig file
           ansible.builtin.copy:
             content: "{{ k3s_kubeconfig.content | b64decode }}"
-            dest: "{{ ansible_env.HOME }}/.kube/config"
+            dest: "{{ ansible_facts.env.HOME }}/.kube/config"
             mode: u=rwx,g=r,o=r
 
     # For a single node install, we put the monitoring and ingress controller on the K3S cluster
@@ -113,12 +113,12 @@
         - name: Install Kube-Prometheus-Stack
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.kube_prometheus_stack
-          when: deploy_prometheus_stack | default(false)
+          when: deploy_prometheus_stack | default(false) | bool
 
         - name: Install Nginx ingress controller
           ansible.builtin.include_role:
             name: azimuth_cloud.azimuth_ops.ingress_nginx
-          when: "ingress_controller_enabled | default(true)"
+          when: "ingress_controller_enabled | default(true) | bool"
 
 # Install Azimuth
 - name: Install and configure Azimuth

@@ -60,11 +60,11 @@
     src: "{{ generate_tests_caas_suite_template }}"
     dest: "{{ (generate_tests_suite_directory, 'caas_suite.robot') | path_join }}"
     mode: "0644"
-  when: generate_tests_caas_suite_enabled
+  when: generate_tests_caas_suite_enabled | bool
 
 - name: Generate test suite for Kubernetes templates
   ansible.builtin.template:
     src: "{{ generate_tests_kubernetes_suite_template }}"
     dest: "{{ (generate_tests_suite_directory, 'kubernetes_suite.robot') | path_join }}"
     mode: "0644"
-  when: generate_tests_kubernetes_suite_enabled
+  when: generate_tests_kubernetes_suite_enabled | bool

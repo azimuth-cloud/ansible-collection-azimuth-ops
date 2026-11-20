@@ -10,8 +10,8 @@ velero_enabled: false
 # Velero CLI archive URL
 velero_cli_repo: https://github.com/vmware-tanzu/velero
 velero_cli_version: v1.18.4
-velero_cli_os: "{{ ansible_system | lower }}"
-velero_cli_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+velero_cli_os: "{{ ansible_facts.system | lower }}"
+velero_cli_arch: "{{ 'amd64' if ansible_facts.architecture == 'x86_64' else ansible_facts.architecture }}"
 velero_cli_archive_name: >-
   velero-{{ velero_cli_version }}-{{ velero_cli_os }}-{{ velero_cli_arch }}.tar.gz
 velero_cli_archive_url: >-
@@ -260,7 +260,7 @@ velero_restore_backup_name: "{{ undef(hint='velero_restore_backup_name is requir
 
 # Name of restore object to create
 velero_restore_name: >-
-  {{ velero_restore_backup_name }}-{{ "%Y%m%d%H%M%S" | strftime(ansible_date_time.epoch) }}
+  {{ velero_restore_backup_name }}-{{ "%Y%m%d%H%M%S" | strftime(ansible_facts.date_time.epoch) }}
 
 # Resources that require their status to be restored in order to function correctly
 velero_restore_include_resource_status:

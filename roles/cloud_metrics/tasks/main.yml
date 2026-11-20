@@ -107,7 +107,7 @@
       stringData:
         tls.crt: "{{ cloud_metrics_grafana_ingress_tls_certificate }}"
         tls.key: "{{ cloud_metrics_grafana_ingress_tls_key }}"
-  when: cloud_metrics_grafana_ingress_tls_certificate
+  when: cloud_metrics_grafana_ingress_tls_certificate is truthy
   register: kubectl_grafana_tls_cert
   changed_when: kubectl_grafana_tls_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 

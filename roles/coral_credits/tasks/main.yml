@@ -49,7 +49,7 @@
       stringData:
         tls.crt: "{{ coral_credits_ingress_tls_certificate }}"
         tls.key: "{{ coral_credits_ingress_tls_key }}"
-  when: coral_credits_ingress_tls_certificate
+  when: coral_credits_ingress_tls_certificate is truthy
   register: kubectl_coral_wildcard_cert
   changed_when: kubectl_coral_wildcard_cert.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
 

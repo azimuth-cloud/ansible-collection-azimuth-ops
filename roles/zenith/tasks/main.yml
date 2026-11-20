@@ -22,7 +22,7 @@
       stringData:
         tls.crt: "{{ zenith_ingress_tls_wildcard_certificate }}"
         tls.key: "{{ zenith_ingress_tls_wildcard_key }}"
-  when: zenith_ingress_tls_wildcard_certificate
+  when: zenith_ingress_tls_wildcard_certificate is truthy
   register: zenith_ingress_tls_wildcard_certificate_install
   changed_when: >-
     zenith_ingress_tls_wildcard_certificate_install.stdout_lines | select('match', '(?!.*unchanged$)') | length > 0
