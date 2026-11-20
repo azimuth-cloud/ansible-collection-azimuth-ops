@@ -69,6 +69,7 @@
       ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.ingress_nginx
         tasks_from: patch_values.yml
+      when: azimuth_kubernetes_enabled
 
   environment:
     KUBECONFIG: "{{ kubeconfig_path | default('') }}"
