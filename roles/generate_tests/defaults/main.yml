@@ -270,7 +270,7 @@ generate_tests_kubernetes_test_cases_extra: >-
     {% set tpl_tags_include = tpl.spec.tags | default([]) | intersect(generate_tests_kubernetes_test_cases_include_tags) | length > 0 %}
     {% set tpl_tags_exclude = tpl.spec.tags | default([]) | intersect(generate_tests_kubernetes_test_cases_exclude_tags) | length > 0 %}
     {
-      "name": "Test external ingress controller",
+      "name": "Test external ingress controller on {{ tpl.metadata.name }}",
       "template": "kubernetes_ingress_test_case.robot",
       "kubernetes_template": "{{ tpl.metadata.name }}",
       "tags": ["{{ tpl.metadata.name }}"],

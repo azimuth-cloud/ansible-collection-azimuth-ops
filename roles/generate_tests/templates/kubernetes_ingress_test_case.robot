@@ -39,8 +39,11 @@ Verify {{ test_case_name }}
     ${cluster} =  Wait For Kubernetes Cluster Nodes Ready  ${cluster.id}
     ${cluster} =  Wait For Kubernetes Cluster Addons Deployed  ${cluster.id}
     ${cluster} =  Wait For Kubernetes Cluster Ready  ${cluster.id}
+    ${ip_address} =  Get Loadbalancer Ip Address  ${cluster.id}
+    ...  traefik
+    ...  traefik
     Enable Traefik Healthcheck  ${cluster.id}
-    Check Traefik Ingress Route  ${ test_case_external_ip }
+    Check Traefik Ingress Route  ${ip_address}
 
 Fetch Console Logs {{ test_case_name }}
     [Tags]  {{ (test_case_tags + ["logs"]) | join('  ') }}
