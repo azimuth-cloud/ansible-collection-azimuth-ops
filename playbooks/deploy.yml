@@ -69,6 +69,10 @@
       ansible.builtin.include_role:
         name: azimuth_cloud.azimuth_ops.ingress_nginx
         tasks_from: patch_values.yml
+    - name: Print portal URL
+      ansible.builtin.debug:
+        msg: "Deployment complete! Access azimuth protal at: {{ azimuth_portal_url }}"
+      when: azimuth_portal_url is defined
 
   environment:
     KUBECONFIG: "{{ kubeconfig_path | default('') }}"

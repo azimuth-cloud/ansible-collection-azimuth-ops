@@ -210,3 +210,7 @@
       when: azimuth_url_envfile != ""
       vars:
         azimuth_url_envfile: "{{ lookup('env', 'AZIMUTH_URL_ENVFILE') }}"
+
+    - name: Save URL as a persistent fact
+      ansible.builtin.set_fact:
+        azimuth_portal_url: "{{ scheme }}://{{ host }}"
