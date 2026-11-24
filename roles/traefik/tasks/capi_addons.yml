@@ -1,0 +1,17 @@
+---
+- name: Configure the ingress addons # noqa: var-naming[no-role-prefix]
+  ansible.builtin.set_fact:
+    capi_cluster_addons_ingress_nginx_enabled: "{{ traefik_capi_ingress_nginx_enabled | bool }}"
+    capi_cluster_addons_ingress_traefik_enabled: "{{ traefik_capi_traefik_enabled | bool }}"
+    capi_cluster_addons_ingress_traefik_release_values: "{{ traefik_release_values }}"
+
+- name: Update the Cluster API cluster
+  when: traefik_capi_update | default(true)
+  environment:
+    KUBECONFIG: "{{ traefik_capi_management_kubeconfig_path }}"
+  block:
+    - name: Update the Cluster API cluster
+      ansible.builtin.include_role:
+        name: azimuth_cloud.azimuth_ops.capi_cluster
+      vars:
+        capi_cluster_kubeconfig_path: "{{ traefik_capi_cluster_kubeconfig_path }}"
