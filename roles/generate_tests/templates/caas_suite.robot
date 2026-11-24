@@ -3,6 +3,7 @@
 Name          {{ generate_tests_caas_suite_name }}
 Library       Azimuth
 Library       Collections
+Resource      azimuth.resource
 Test Tags     {{ generate_tests_caas_default_test_tags | join("  ") }}
 Test Timeout  {{ generate_tests_caas_default_test_timeout }}
 
