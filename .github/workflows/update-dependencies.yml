@@ -43,12 +43,6 @@ jobs:
             prereleases: "yes"
             version_jsonpath: dependencies['git+https://github.com/azimuth-cloud/ansible-collection-terraform.git']
 
-          # - key: ansible-slurm-appliance
-          #   path: ./roles/azimuth_caas_operator/defaults/main.yml
-          #   repository: stackhpc/ansible-slurm-appliance
-          #   prereleases: "yes"
-          #   version_jsonpath: azimuth_caas_stackhpc_slurm_appliance_git_version
-
           - key: azimuth
             path: ./roles/azimuth/defaults/main.yml
             repository: azimuth-cloud/azimuth
@@ -256,6 +250,95 @@ jobs:
           body: >
             This PR was created automatically to update
             ${{ matrix.key }} to ${{ steps.next.outputs.version }}.
+          labels: |
+            automation
+            dependency-update
+
+
+  # The Slurm appliance version must be updated together with the image built for it
+  propose_slurm_appliance_update:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+      id-token: write
+    name: ansible-slurm-appliance
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check for most recent GitHub release
+        id: next
+        uses: azimuth-cloud/github-actions/github-latest-release@master
+        with:
+          repository: stackhpc/ansible-slurm-appliance
+
+      - name: Extract image base URL
+        id: image-info
+        uses: azimuth-cloud/github-actions/config-extract@master
+        with:
+          path: ./roles/community_images/defaults/main.yml
+          outputs: |
+            base_url=community_images_slurm_base_url
+
+      - name: Find image for release
+        id: image
+        env:
+          VERSION: ${{ steps.next.outputs.version }}
+          BASE_URL: ${{ steps.image-info.outputs.base_url }}
+        run: |
+          set -eo pipefail
+          repo_url=https://raw.githubusercontent.com/stackhpc/ansible-slurm-appliance
+          image="$(
+            curl -fsSL "$repo_url/$VERSION/environments/.stackhpc/tofu/cluster_image.auto.tfvars.json" |
+              jq -r '.cluster_image.RL9 // empty'
+          )"
+          if [ -z "$image" ]; then
+            echo "Unable to determine RL9 image for $VERSION" >&2
+            exit 1
+          fi
+          # Make sure the image has been published
+          curl -fsSI -o /dev/null "$BASE_URL/$image"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Update appliance version
+        uses: azimuth-cloud/github-actions/config-update@master
+        with:
+          path: ./roles/azimuth_caas_operator/defaults/main.yml
+          updates: |
+            azimuth_caas_stackhpc_slurm_appliance_git_version=${{ steps.next.outputs.version }}
+
+      - name: Update appliance image
+        uses: azimuth-cloud/github-actions/config-update@master
+        with:
+          path: ./roles/community_images/defaults/main.yml
+          updates: |
+            community_images_slurm_openhpc_image=${{ steps.image.outputs.image }}
+
+      - name: Generate app token for PR
+        uses: azimuth-cloud/github-actions/generate-app-token@master
+        id: generate-app-token
+        with:
+          repository: ${{ github.repository }}
+          app-id: ${{ secrets.AUTOMATION_APP_ID }}
+          app-private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+
+      - name: Propose changes via PR if required
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          token: ${{ steps.generate-app-token.outputs.token }}
+          commit-message: >-
+            Update ansible-slurm-appliance to ${{ steps.next.outputs.version }}
+          branch: update-dependency/ansible-slurm-appliance
+          delete-branch: true
+          title: >-
+            Update ansible-slurm-appliance to ${{ steps.next.outputs.version }}
+          body: >
+            This PR was created automatically to update
+            ansible-slurm-appliance to ${{ steps.next.outputs.version }}
+            and the openhpc image to ${{ steps.image.outputs.image }}.
           labels: |
             automation
             dependency-update
