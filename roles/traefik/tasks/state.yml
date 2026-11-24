@@ -15,3 +15,26 @@
   ansible.builtin.set_fact:
     traefik_ingress_nginx_installed: "{{ traefik_ingress_nginx_release.status is defined }}"
     traefik_installed: "{{ traefik_release.status is defined }}"
+
+- name: Check that ingress-nginx is not installed elsewhere
+  when:
+    - traefik_phase == 'traefik'
+    - not traefik_ingress_nginx_installed
+  block:
+    - name: Get the Helm release that owns the nginx IngressClass
+      ansible.builtin.command: >-
+        kubectl get ingressclass nginx --ignore-not-found
+          --output jsonpath='{.metadata.annotations.meta\.helm\.sh/release-namespace}/{.metadata.annotations.meta\.helm\.sh/release-name}'
+      changed_when: false
+      register: traefik_ingress_nginx_class_owner
+
+    - name: Fail if another release owns the nginx IngressClass
+      ansible.builtin.fail:
+        msg: >-
+          ingress-nginx was not found at {{ traefik_ingress_nginx_release_namespace }}/{{
+          traefik_ingress_nginx_release_name }}, but the nginx IngressClass belongs to the Helm
+          release {{ traefik_ingress_nginx_class_owner.stdout }}. Set
+          traefik_ingress_nginx_release_namespace and traefik_ingress_nginx_release_name to match.
+      when: >-
+        traefik_ingress_nginx_class_owner.stdout not in
+          ['', '/', traefik_release_namespace ~ '/' ~ traefik_release_name]
