@@ -13,6 +13,9 @@ azimuth_apps_operator_release_name: azimuth-apps-operator
 # The timeout to wait for apps operator to become ready
 azimuth_apps_operator_wait_timeout: 10m
 
+# The logging level to use for the apps operator
+azimuth_apps_operator_logging_level: "{{ azimuth_operator_logging_level | default('info') }}"
+
 # toggle for metrics
 azimuth_apps_operator_metrics: true
 
@@ -61,6 +64,7 @@ azimuth_apps_operator_zenith_client_debug: false
 # Default values for the Zenith operator chart
 azimuth_apps_operator_zenith_operator_defaults:
   config:
+    loggingLevel: "{{ azimuth_apps_operator_logging_level }}"
     registrarAdminUrl: "{{ azimuth_apps_operator_zenith_registrar_admin_url }}"
     sshdHost: "{{ azimuth_apps_operator_zenith_sshd_host }}"
     sshdPort: "{{ azimuth_apps_operator_zenith_sshd_port }}"
