@@ -1,8 +1,7 @@
 ---
 # The chart to use
-azimuth_caas_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-caas-operator
-azimuth_caas_operator_chart_name: azimuth-caas-operator
-azimuth_caas_operator_chart_version: 0.24.2
+azimuth_caas_operator_chart_ref: oci://quay.io/azimuth/azimuth-caas-operator-charts/azimuth-caas-operator
+azimuth_caas_operator_chart_version: 0.24.3
 
 # Release information for the operator release
 # Use the same namespace as Azimuth by default
