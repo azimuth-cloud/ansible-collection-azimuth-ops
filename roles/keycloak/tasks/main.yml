@@ -334,6 +334,10 @@
         validate_certs: "{{ keycloak_validate_certs }}"
         status_code:
           - 204
+      register: keycloak_admin_role_req
+      retries: 60
+      delay: 10
+      until: keycloak_admin_role_req.status != 503
       vars:
         keycloak_admin_user_id: >-
           {{-
@@ -365,6 +369,11 @@
     validate_certs: "{{ keycloak_validate_certs }}"
     status_code:
       - 204
+  register: keycloak_master_realm_req
+  # Keycloak can restart after the initial token request succeeds.
+  retries: 60
+  delay: 10
+  until: keycloak_master_realm_req.status != 503
 
 - name: Delete the Keycloak bootstrap admin user
   ansible.builtin.uri:
@@ -378,6 +387,10 @@
     validate_certs: "{{ keycloak_validate_certs }}"
     status_code:
       - 204
+  register: keycloak_bootstrap_user_delete_req
+  retries: 60
+  delay: 10
+  until: keycloak_bootstrap_user_delete_req.status != 503
   when:
     - keycloak_realm_users_req.json is defined
     - keycloak_bootstrap_admin_username in (keycloak_realm_users_req.json | map(attribute="username"))
